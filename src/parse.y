@@ -89,14 +89,16 @@ void yyerror(char *);
 
 %nonassoc FUNCTION PARAMETER
 
-%left MOD
-
 %nonassoc LOWER_THEN_ELSE
-%nonassoc WHILE UNTIL DO IF FOR SUM PROD TO BY IN THEN ELSE CALL RETURNTOK
+%nonassoc WHILE UNTIL DO IF FOR SUM PROD TO BY IN THEN ELSE RETURNTOK
 
 %left LOGICAL_XOR LOGICAL_OR
 %left LOGICAL_AND
 %right LOGICAL_NOT
+
+%left MOD
+
+%nonassoc CALL
 
 %right EQUALS
 
@@ -302,6 +304,9 @@ identlist:	identlist ',' ident
 	;
 
 exprlist:	exprlist ',' expr
+	/* We ignore the NEXTROW mark after a comma as it's just a return
+	 * breaking a long vector */
+	|	exprlist ',' NEXTROW expr
 	|	expr { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
 	;
 	

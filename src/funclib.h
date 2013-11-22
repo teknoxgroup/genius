@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2003 George Lebl
  *
  * Author: George Lebl
  *
@@ -19,12 +19,12 @@
  * USA.
  */
 
-#ifndef _FUNCLIB_H_
-#define _FUNCLIB_H_
+#ifndef FUNCLIB_H_
+#define FUNCLIB_H_
 
 /*add the routines to the dictionary*/
 void gel_funclib_addall(void);
 /*remove all cached floating point values*/
 void gel_break_fp_caches(void);
 
-#endif
+#endif /* FUNCLIB_H_ */

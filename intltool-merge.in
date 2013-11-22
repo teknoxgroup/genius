@@ -186,7 +186,7 @@ sub print_help
 ## Sub for printing error messages
 sub print_error
 {
-    print "Try `${PROGRAM} --help' for more information.\n";
+    print STDERR "Try `${PROGRAM} --help' for more information.\n";
     exit;
 }
 
@@ -265,7 +265,7 @@ sub get_po_encoding
 
     if (!$encoding) 
     {
-        print "Warning: no encoding found in $in_po_file. Assuming ISO-8859-1\n";
+        print STDERR "Warning: no encoding found in $in_po_file. Assuming ISO-8859-1\n" unless $QUIET_ARG;
         $encoding = "ISO-8859-1";
     }
 
@@ -303,6 +303,8 @@ sub get_newest_po_age
 	my $file_age = -M $file;
 	$newest_age = $file_age if !$newest_age || $file_age < $newest_age;
     }
+
+    $newest_age = 0 if !$newest_age;
 
     return $newest_age;
 }
@@ -364,7 +366,7 @@ sub create_translation_database
             } 
             else 
             {
-		print "WARNING: $po_file is not in UTF-8 but $encoding, converting...\n";
+		print STDERR "WARNING: $po_file is not in UTF-8 but $encoding, converting...\n" unless $QUIET_ARG;;
 
                 my $iconv = $ENV{"INTLTOOL_ICONV"} || "iconv";
                 open PO_FILE, "$iconv -f $encoding -t UTF-8 $po_file|";	

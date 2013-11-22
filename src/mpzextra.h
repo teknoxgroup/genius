@@ -19,25 +19,24 @@
  * USA.
  */
 
-#ifndef _MATOP_H_
-#define _MATOP_H_
+#ifndef MPZEXTRA_H
+#define MPZEXTRA_H
 
 #include "mpwrap.h"
 
-/*declarations of structures*/
-#include "structs.h"
+gboolean mympz_strong_pseudoprime_test (mpz_srcptr n, mpz_srcptr b);
+gboolean mympz_is_prime (mpz_srcptr n, int miller_rabin_reps);
+gboolean mympz_miller_rabin_test_sure (mpz_srcptr n);
 
-#include "matrixw.h"
+extern long int mympz_is_prime_miller_rabin_reps;
 
-gboolean gel_is_matrix_value_only (GelMatrixW *m);
-gboolean gel_is_matrix_value_only_real (GelMatrixW *m);
-gboolean gel_is_matrix_value_only_rational (GelMatrixW *m);
-gboolean gel_is_matrix_value_only_integer (GelMatrixW *m);
-void gel_matrix_conjugate_transpose (GelMatrixW *m);
-void gel_value_matrix_multiply (GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2, mpw_ptr modulo);
-gboolean gel_value_matrix_det (GelCtx *ctx, mpw_t rop, GelMatrixW *m);
-/*NOTE: if simul is passed then we assume that it's the same size as m*/
-/* return FALSE if singular */
-gboolean gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean uppertriang, gboolean stopsing, mpw_ptr detop, GelMatrixW *simul);
+typedef struct {
+	mpz_t num;
+	unsigned long exp; 
+} GelFactor;
 
-#endif
+GArray * mympz_pollard_rho_factorize (mpz_srcptr t);
+void mympz_factorization_free (GArray *fact);
+
+
+#endif /* MPZEXTRA_H */

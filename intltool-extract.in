@@ -147,12 +147,12 @@ sub help{
 
 ## Sub for printing error messages
 sub error{
-    print "Try `${PROGRAM} --help' for more information.\n";
+    print STDERR "Try `${PROGRAM} --help' for more information.\n";
     exit;
 }
 
 sub message {
-    print "Generating C format header file for translation.\n";
+    print "Generating C format header file for translation.\n" unless $QUIET_ARG;
 }
 
 sub extract {
@@ -242,7 +242,7 @@ sub type_keys {
 sub type_xml {
     ### For generic translatable XML files ###
         
-    while ($input =~ /\s_$w+=\"([^"]+)\"/sg) { # "
+    while ($input =~ /\s_$w+\s*=\s*\"([^"]+)\"/sg) { # "
         $messages{entity_decode_minimal($1)} = [];
     }
 

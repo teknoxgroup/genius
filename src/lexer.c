@@ -647,7 +647,7 @@ char *yytext;
 #line 1 "lexer.l"
 #define INITIAL 0
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2003 George Lebl
  *
  * Author: George Lebl
  *
@@ -706,12 +706,12 @@ int yylex(void);
 
 static GHashTable *fp_hash = NULL;
 
-void my_yy_open(FILE *fp);
-void my_yy_parse(FILE *fp);
-void my_yy_close(FILE *fp);
+void gel_lexer_open(FILE *fp);
+void gel_lexer_parse(FILE *fp);
+void gel_lexer_close(FILE *fp);
 
 void
-my_yy_open(FILE *fp)
+gel_lexer_open(FILE *fp)
 {
 	YY_BUFFER_STATE buf;
 	if(!fp_hash)
@@ -726,7 +726,7 @@ my_yy_open(FILE *fp)
 }
 
 void
-my_yy_parse(FILE *fp)
+gel_lexer_parse(FILE *fp)
 {
 	YY_BUFFER_STATE buf;
 
@@ -739,7 +739,7 @@ my_yy_parse(FILE *fp)
 }
 
 void
-my_yy_close(FILE *fp)
+gel_lexer_close(FILE *fp)
 {
 	YY_BUFFER_STATE buf;
 
@@ -2045,6 +2045,7 @@ register char *yy_bp;
 #endif	/* ifndef YY_NO_UNPUT */
 
 
+#ifndef YY_NO_INPUT
 #ifdef __cplusplus
 static int yyinput()
 #else
@@ -2117,7 +2118,7 @@ static int input()
 
 	return c;
 	}
-
+#endif /* YY_NO_INPUT */
 
 #ifdef YY_USE_PROTOS
 void yyrestart( FILE *input_file )

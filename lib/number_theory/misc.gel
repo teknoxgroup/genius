@@ -1,20 +1,5 @@
 # Miscellaneous number theory functions
 
-function IsOdd(n) = (
- if not IsValue(n) or not IsInteger(n) then
- (
-  error("IsOdd: argument must be an integer");
-  bailout;
- );
- (n % 2)
-)
-SetHelp("IsOdd","number_theory","Tests if an integer is odd")
-protect("IsOdd")
-
-function IsEven(n) = not IsOdd(n)
-SetHelp("IsEven","number_theory","Tests if an integer is even")
-protect("IsEven")
-
 function IsNthPower(n,k) =
  (
   if not IsRational (n) then
@@ -87,3 +72,67 @@ protect("RemoveFactor");
 function PowerMod(a,b,m) = a^b mod m
 SetHelp("PowerMod","number_theory","Compute a^b mod m");
 protect("PowerMod");
+
+function AreRelativelyPrime(a,b) = (gcd(a,b) == 1)
+SetHelp("AreRelativelyPrime","number_theory","Are a and b relatively prime?");
+protect("AreRelativelyPrime");
+
+function LeastAbsoluteResidue(a,n) = (
+  	if not IsInteger(a) or not IsPositiveInteger(n) then
+	   (
+	    error("LeastAbsoluteResidue: arguments must be integers");
+	    bailout;
+	   );
+	b = a mod n;
+	if (-b+n) < b then
+		b-n
+	else
+		b
+)
+SetHelp("LeastAbsoluteResidue", "number_theory", "Return the residue of a mod n with the least absolute value (in the interval -n/2 to n/2)");
+protect("LeastAbsoluteResidue");
+
+SetHelp("ChineseRemainder", "number_theory", "Find the x that solves the system given by the vector a and modulo the elements of m, using the Chinese Remainder Theorem");
+function ChineseRemainder(a,m) = (
+  M=MatrixProduct(m);
+  ( sum i=1 to elements(a) do (
+      Mi = (M/m@(i));
+      a@(i)*Mi*(Mi^-1 mod m@(i))
+    )
+  ) % M
+)
+protect("ChineseRemainder");
+SetHelpAlias ("ChineseRemainder", "CRT")
+CRT = ChineseRemainder
+protect("CRT")
+
+SetHelp("ConvertToBase", "number_theory", "Convert a number to a vector of powers for elements in base b");
+function ConvertToBase(n,b) = (
+  if not IsInteger(n) or n < 0 or not IsInteger(b) or b <= 1 then
+   (
+    error("ConvertToBase: arguments must be integers with n >= 0 and b > 1");
+    bailout;
+   );
+  ret = null;
+  while n != 0 do (
+    r = n % b;
+    n = (n-r)/b;
+    ret = [ret;r];
+  );
+  ret
+)
+protect("ConvertToBase");
+
+SetHelp("ConvertFromBase", "number_theory", "Convert a vector of values indicating powers of b to a number");
+function ConvertFromBase(v,b) = (
+  n = 0;
+  if not IsMatrix(v) or not IsInteger(b) or b <= 1 then
+   (
+    error("ConvertFromBase: bad arguments");
+    bailout;
+   );
+  for i=1 to elements(v) do
+    n = n + v@(i)*b^(i-1);
+  n
+)
+protect("ConvertFromBase");

@@ -80,7 +80,6 @@ GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
-GNOME_INTERFACE_VERSION = @GNOME_INTERFACE_VERSION@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
@@ -154,7 +153,7 @@ bin_PROGRAMS = gnome-genius genius
 
 libexec_PROGRAMS = genius-readline-helper-fifo
 
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
+gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
 
 
 gnome_genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
@@ -167,13 +166,13 @@ genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helpe
 genius_readline_helper_fifo_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
 
 genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			eval.h
+plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		mpzextra.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			lexer.h			eval.h
 
 
 plugin_LTLIBRARIES = libtestplugin.la
@@ -211,19 +210,19 @@ PROGRAMS =  $(bin_PROGRAMS) $(libexec_PROGRAMS)
 
 gnome_genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) \
 gnome-genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) \
-mpwrap.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
-compil.$(OBJEXT) lexer.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) \
-plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
+mpwrap.$(OBJEXT) mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) \
+matop.$(OBJEXT) compil.$(OBJEXT) lexer.$(OBJEXT) parseutil.$(OBJEXT) \
+inter.$(OBJEXT) plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
 genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT) \
 graphing.$(OBJEXT)
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
 genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
 util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) mpwrap.$(OBJEXT) \
-matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) compil.$(OBJEXT) \
-parseutil.$(OBJEXT) inter.$(OBJEXT) lexer.$(OBJEXT) plugin.$(OBJEXT) \
-plugread_nongnome.$(OBJEXT) parse.$(OBJEXT) genius_lists.$(OBJEXT) \
-utype.$(OBJEXT) geloutput.$(OBJEXT)
+mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
+compil.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) lexer.$(OBJEXT) \
+plugin.$(OBJEXT) plugread_nongnome.$(OBJEXT) parse.$(OBJEXT) \
+genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
 genius_readline_helper_fifo_OBJECTS =  genius_lists.$(OBJEXT) \
@@ -510,15 +509,16 @@ dict.o: dict.c ../config.h eval.h mpwrap.h structs.h dict.h util.h \
 	funclib.h compil.h
 eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
 	util.h matrix.h matrixw.h matop.h compil.h utype.h
-funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
-	funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
+funclib.o: funclib.c ../config.h mpwrap.h mpzextra.h eval.h structs.h \
+	dict.h funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
 geloutput.o: geloutput.c ../config.h structs.h mpwrap.h geloutput.h
 genius-readline-helper.o: genius-readline-helper.c
 genius.o: genius.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
 	dict.h inter.h geloutput.h lexer.h plugin.h
 genius_lists.o: genius_lists.c
 gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
-	util.h dict.h eval.h geloutput.h graphing.h plugin.h inter.h
+	util.h dict.h eval.h lexer.h geloutput.h graphing.h plugin.h \
+	inter.h
 graphing.o: graphing.c ../config.h calc.h structs.h mpwrap.h eval.h \
 	util.h dict.h funclib.h matrixw.h matrix.h compil.h plugin.h \
 	geloutput.h graphing.h
@@ -532,6 +532,7 @@ matrix.o: matrix.c ../config.h matrix.h
 matrixw.o: matrixw.c ../config.h structs.h mpwrap.h eval.h matrix.h \
 	matrixw.h
 mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
+mpzextra.o: mpzextra.c ../config.h calc.h structs.h mpwrap.h mpzextra.h
 parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
 	calc.h matrix.h matrixw.h parseutil.h extra.h
 parseutil.o: parseutil.c ../config.h structs.h mpwrap.h eval.h dict.h \

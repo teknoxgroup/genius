@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2003 George Lebl
  *
  * Author: George Lebl
  *
@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <limits.h>
 #include "mpwrap.h"
+#include "mpzextra.h"
 #include "eval.h"
 #include "dict.h"
 #include "funclib.h"
@@ -53,133 +54,34 @@ static int e_iscached = FALSE;
 static mpw_t golden_ratio_cache;
 static int golden_ratio_iscached = FALSE;
 
-/* As calculated by Thomas Papanikolaou taken from
- * http://www.cecm.sfu.ca/projects/ISC/dataB/isc/C/gamma.txt */
-const char *euler_constant =
-"0.5772156649015328606065120900824024310421593359399235988057672348848677267776\
-646709369470632917467495146314472498070824809605040144865428362241739976449235\
-362535003337429373377376739427925952582470949160087352039481656708532331517766\
-115286211995015079847937450857057400299213547861466940296043254215190587755352\
-673313992540129674205137541395491116851028079842348775872050384310939973613725\
-530608893312676001724795378367592713515772261027349291394079843010341777177808\
-815495706610750101619166334015227893586796549725203621287922655595366962817638\
-879272680132431010476505963703947394957638906572967929601009015125195950922243\
-501409349871228247949747195646976318506676129063811051824197444867836380861749\
-455169892792301877391072945781554316005002182844096053772434203285478367015177\
-394398700302370339518328690001558193988042707411542227819716523011073565833967\
-348717650491941812300040654693142999297779569303100503086303418569803231083691\
-640025892970890985486825777364288253954925873629596133298574739302373438847070\
-370284412920166417850248733379080562754998434590761643167103146710722370021810\
-745044418664759134803669025532458625442225345181387912434573501361297782278288\
-148945909863846006293169471887149587525492366493520473243641097268276160877595\
-088095126208404544477992299157248292516251278427659657083214610298214617951957\
-959095922704208989627971255363217948873764210660607065982561990102880756125199\
-137511678217643619057058440783573501580056077457934213144988500786415171615194\
-565706170432450750081687052307890937046143066848179164968425491504967243121837\
-838753564894950868454102340601622508515583867234944187880440940770106883795111\
-307872023426395226920971608856908382511378712836820491178925944784861991185293\
-910293099059255266917274468920443869711147174571574573203935209122316085086827\
-558890109451681181016874975470969366671210206304827165895049327314860874940207\
-006742590918248759621373842311442653135029230317517225722162832488381124589574\
-386239870375766285513033143929995401853134141586212788648076110030152119657800\
-681177737635016818389733896639868957932991456388644310370608078174489957958324\
-579418962026049841043922507860460362527726022919682995860988339013787171422691\
-788381952984456079160519727973604759102510995779133515791772251502549293246325\
-028747677948421584050759929040185576459901862692677643726605711768133655908815\
-548107470000623363725288949554636971433012007913085552639595497823023144039149\
-740494746825947320846185246058776694882879530104063491722921858008706770690427\
-926743284446968514971825678095841654491851457533196406331199373821573450874988\
-325560888873528019019155089688554682592454445277281730573010806061770113637731\
-824629246600812771621018677446849595142817901451119489342288344825307531187018\
-609761224623176749775564124619838564014841235871772495542248201615176579940806\
-296834242890572594739269638633838743805471319676429268372490760875073785283702\
-304686503490512034227217436689792848629729088926789777032624623912261888765300\
-577862743606094443603928097708133836934235508583941126709218734414512187803276\
-150509478055466300586845563152454605315113252818891079231491311032344302450933\
-450003076558648742229717700331784539150566940159988492916091140029486902088485\
-381697009551566347055445221764035862939828658131238701325358800625686626926997\
-767737730683226900916085104515002261071802554659284938949277595897540761559933\
-782648241979506418681437881718508854080367996314239540091964388750078900000627\
-997942809886372992591977765040409922037940427616817837156686530669398309165243\
-227059553041766736640116792959012930537449718308004275848635083808042466735093\
-559832324116969214860649892763624432958854873789701489713343538448002890466650\
-902845376896223983048814062730540879591189670574938544324786914808533770264067\
-758081275458731117636478787430739206642011251352727499617545053085582356683068\
-322917676677041035231535032510124656386156706449847132695969330167866138333333\
-441657900605867497103646895174569597181553764078377650184278345991842015995431\
-449047725552306147670165993416390660912054005322158902091340802782251533852899\
-511665452245869185993671220132150144801424230986254604488672569343148870491593\
-044640189164502022405495386291847586293077889350643771596606909604681243702305\
-465703160679992587166675247219409777980186362625633582526279422393254860132693\
-530701388937436923842878938512764740856548650281563067740442203064403756826309\
-102917514572234441050369317711452170888907446416048688701083862311426128441425\
-960956370400619200579335034155242624026206465693543061258526583452192121497771\
-878069586608516334922104836737994592594340379560002192785418379417760203365594\
-673078879838084816314678241492354649148876683368407492893865281863048589820354\
-818624383848175997635849075180791480634943916284705482200754945348986133827235\
-730922190030740096800337666844932505567654937530318112516410552492384077645149\
-842395762012781552322944928854557853820248918942441857095919558208100071578384\
-039627479985817880888865716830699436060735990421068511427913169699596792300828\
-988156097538338059109360341252998656790389568795673455083362907823862638563490\
-747319275278740166557531190111543470018186256971261120126852923129937161403906\
-965112224816615082353643982396620532633322248505191593682690715004315589871802\
-783353845448309107249498057880961717996337167036554180041464667538719586948483\
-331543583330641935929487420951478832347748481418149776871694413640056645156936\
-116524161555734141935424721373067468333849054426626038372788217552709930958141\
-026136979500786465876771608630804460749802801576962675913897794772214337515470\
-829345879123898433055067223474969984942486706721502569273529585065869588997486\
-535562186958043997125168976654169862653862891977542187721939605817001104236414\
-158780810386172101557551923711160049880682291618097732421958328974869227183979\
-190467716542668138893379296036815457939611339621922245430151580631743708405608\
-536416031384982969518566952612822123716939368130321296561939718710207098007948\
-833910197535104307441823448833331796978277332091143324514305086573457500687391\
-475470777577559918467118308583660159437193718449039061770232536567977596744475\
-747511584195746700997345002454428406585024508585646392791246119879093693072019\
-804029303603738838430742162821201635386466226097198958436799430572030149638050\
-832232365825557724534237187737439818333306454662906993311125973721950274646899\
-065457155440303917835419756434315739034883866750542742161831050060550464223545\
-708427393549359051762717479299472398908632970101905610107742690926475235740304\
-630159243442464900834188630859320685522507790910195858895314328799817570981916\
-829315940453005632543314488517357302698256937253469964013440871580108145287865\
-790408663637945071108505104241797691911292615132010316363498086606948624407800\
-668400671696221463718114777268341846646364242734053003138077349611998146861768\
-585463120816316479893796426373835661893831371098328956490521148813402974238886\
-863154313297876579912545424333856347200268129048994955042698088213026726358153\
-248067538790323057421040330149788786752377860705468861472100992632942510887801\
-970284117922402591091466584809257857192786282147667074087863519714256292427867\
-028407703241437569931883243331559002433304769111009247979118006286202213707800\
-621725732904735994398883139279927969397063567628116694054128859081982023838277\
-035483496879734048888293016736770941584654400954862465146101353913496855912040\
-236361872150992980651905861682815302875042754525860533196343259577747881343723\
-939499124380614375449859068607518563142725525564259396701498041425981823785257\
-682943639596562438852065654807103884546394453770191784571874101186223227802525\
-194362657438242256093567692582387749116073775945140144703190224153559112506138\
-178297421264982641618724606313340891926702359795802365841631755679233566210123\
-133584549459059006998420067226025116774384736482438571540714626594564239112717\
-078030637141692638644010057131095896063264963755295676936468941051795200061645\
-202188435340473018243930514881984593076296404445687762416528716207276731860632\
-540801428874571198657307471701886603687970364770854852871670003622928528837468\
-246605881411754047446061676354303739923756596593696708792316774468569310838210\
-783048315919643002144125970228906320317410114936648095290301171633453191792293\
-924242877283787234956992923213609223494722645824375509451533552011761289751733\
-951371782933287158609438662701179184155458726489825139255594379519731786744876\
-992532617942338129994127939860264424519600605436818664670986594436593015437629\
-148697959769499653352721002002096791043948254724411334224487005463765684086676\
-215337362746159120547008629057169825735370523976123123841256434941178949861582\
-859702097109703919635216812258224756271951938272828520914718237534365525402074\
-620306673047695247009441381456178282666319613967359367257264603388494642489472\
-448978481596715306153846712236987128231978476931105716623637326207595971180401\
-514389623170601958570982381392466613527913695637655904861676205129740998314965\
-597860253410129454399867288300624408440186181511750687088764671609799292017769\
-624963301575829259618849485872002292248060628812177873383145882551293953651088\
-191865120044923154983947731473578688973142047310945381464822632102331079439597\
-462852354129575191063558792300195618131294612030157576340159785681751749842377\
-882447375398247457599686770740854557432942402678193848220354096210606072192499\
-082510485400318496319986322156908909761405310716511312932685349852440286448293\
-470591608586995981988903959955918110764134466588145254256588153545028884739975\
-324327809021522569521844145298650835512983980226238264974881811581525034599749\
-";
+static gboolean
+check_argument_integer (GelETree **a, int argnum, const char *funcname)
+{
+	if (a[argnum]->type != VALUE_NODE ||
+	    mpw_is_complex(a[argnum]->val.value) ||
+	    ! mpw_is_integer (a[argnum]->val.value)) {
+		char *s = g_strdup_printf (_("%s: argument number %d not an integer"), funcname, argnum+1);
+		(*errorout)(s);
+		g_free (s);
+		return FALSE;
+	}
+	return TRUE;
+}
 
+static gboolean
+check_argument_positive_integer (GelETree **a, int argnum, const char *funcname)
+{
+	if (a[argnum]->type != VALUE_NODE ||
+	    mpw_is_complex(a[argnum]->val.value) ||
+	    ! mpw_is_integer (a[argnum]->val.value) ||
+	    mpw_sgn (a[argnum]->val.value) < 0) {
+		char *s = g_strdup_printf (_("%s: argument number %d not a positive integer"), funcname, argnum+1);
+		(*errorout)(s);
+		g_free (s);
+		return FALSE;
+	}
+	return TRUE;
+}
 
 void
 gel_break_fp_caches (void)
@@ -436,12 +338,8 @@ rand_op (GelCtx *ctx, GelETree * * a, int *exception)
 		GelMatrix *m;
 		int size, i;
 
-		if (a[0]->type != VALUE_NODE ||
-		    mpw_is_complex(a[0]->val.value) ||
-		     ! mpw_is_integer (a[0]->val.value)) {
-			(*errorout)(_("rand: arguments must be integers"));
+		if ( ! check_argument_integer (a, 0, "rand"))
 			return NULL;
-		}
 
 		size = get_nonnegative_integer (a[0]->val.value, "rand");
 		if (size < 0)
@@ -468,15 +366,9 @@ rand_op (GelCtx *ctx, GelETree * * a, int *exception)
 		GelMatrix *m;
 		int sizex, sizey, i, j;
 
-		if (a[0]->type != VALUE_NODE ||
-		    a[1]->type != VALUE_NODE ||
-		    mpw_is_complex(a[0]->val.value) ||
-		    mpw_is_complex(a[1]->val.value) ||
-		    ! mpw_is_integer (a[0]->val.value) ||
-		    ! mpw_is_integer (a[1]->val.value)) {
-			(*errorout)(_("rand: arguments must be integers"));
+		if ( ! check_argument_integer (a, 0, "rand") ||
+		     ! check_argument_integer (a, 1, "rand"))
 			return NULL;
-		}
 
 		sizey = get_nonnegative_integer (a[0]->val.value, "rand");
 		if (sizey < 0)
@@ -524,12 +416,8 @@ randint_op (GelCtx *ctx, GelETree * * a, int *exception)
 	if (args == 1) {
 		mpw_t fr; 
 
-		if (a[0]->type != VALUE_NODE ||
-		    mpw_is_complex(a[0]->val.value) ||
-		    ! mpw_is_integer (a[0]->val.value)) {
-			(*errorout)(_("randint: arguments must be integers"));
+		if ( ! check_argument_integer (a, 0, "randint"))
 			return NULL;
-		}
 
 		mpw_init (fr);
 		mpw_randint (fr, a[0]->val.value);
@@ -544,15 +432,9 @@ randint_op (GelCtx *ctx, GelETree * * a, int *exception)
 		GelMatrix *m;
 		int size, i;
 
-		if (a[0]->type != VALUE_NODE ||
-		    a[1]->type != VALUE_NODE ||
-		    mpw_is_complex (a[0]->val.value) ||
-		    mpw_is_complex (a[1]->val.value) ||
-		    ! mpw_is_integer (a[0]->val.value) ||
-		    ! mpw_is_integer (a[1]->val.value)) {
-			(*errorout)(_("randint: arguments must be integers"));
+		if ( ! check_argument_integer (a, 0, "randint") ||
+		     ! check_argument_integer (a, 1, "randint"))
 			return NULL;
-		}
 
 		size = get_nonnegative_integer (a[1]->val.value, "randint");
 		if (size < 0)
@@ -589,18 +471,10 @@ randint_op (GelCtx *ctx, GelETree * * a, int *exception)
 		GelMatrix *m;
 		int sizex, sizey, i, j;
 
-		if (a[0]->type != VALUE_NODE ||
-		    a[1]->type != VALUE_NODE ||
-		    a[2]->type != VALUE_NODE ||
-		    mpw_is_complex (a[0]->val.value) ||
-		    mpw_is_complex (a[1]->val.value) ||
-		    mpw_is_complex (a[2]->val.value) ||
-		    ! mpw_is_integer (a[0]->val.value) ||
-		    ! mpw_is_integer (a[1]->val.value) ||
-		    ! mpw_is_integer (a[2]->val.value)) {
-			(*errorout)(_("randint: arguments must be integers"));
+		if ( ! check_argument_integer (a, 0, "randint") ||
+		     ! check_argument_integer (a, 1, "randint") ||
+		     ! check_argument_integer (a, 2, "randint"))
 			return NULL;
-		}
 
 		sizey = get_nonnegative_integer (a[1]->val.value, "randint");
 		if (sizey < 0)
@@ -1037,7 +911,7 @@ EulerConstant_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
 	mpw_t e;
 	mpw_init (e);
-	mpw_set_str_float (e, euler_constant, 10);
+	mpw_euler_constant (e);
 	return gel_makenum_use (e);
 }
 
@@ -1467,6 +1341,50 @@ ln_op(GelCtx *ctx, GelETree * * a, int *exception)
 	return gel_makenum_use(fr);
 }
 
+static GelETree *
+log2_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_t fr;
+
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],log2_op,"log2");
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("log2: argument not a number"));
+		return NULL;
+	}
+	mpw_init(fr);
+	mpw_log2(fr,a[0]->val.value);
+	if(error_num) {
+		error_num = 0;
+		mpw_clear(fr);
+		return NULL;
+	}
+	return gel_makenum_use(fr);
+}
+
+static GelETree *
+log10_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_t fr;
+
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],log10_op,"log10");
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("log10: argument not a number"));
+		return NULL;
+	}
+	mpw_init(fr);
+	mpw_log10(fr,a[0]->val.value);
+	if(error_num) {
+		error_num = 0;
+		mpw_clear(fr);
+		return NULL;
+	}
+	return gel_makenum_use(fr);
+}
+
 /*gcd function*/
 static GelETree *
 gcd2_op(GelCtx *ctx, GelETree * * a, int *exception)
@@ -1800,6 +1718,50 @@ IsPerfectPower_op(GelCtx *ctx, GelETree * * a, int *exception)
 	}
 }
 
+static GelETree *
+IsEven_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],IsEven_op,"IsEven");
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("IsEven: argument must be a number"));
+		return NULL;
+	}
+
+	if(mpw_even_p(a[0]->val.value)) {
+		return gel_makenum_ui(1);
+	} else {
+		if(error_num) {
+			error_num = 0;
+			return NULL;
+		}
+		return gel_makenum_ui(0);
+	}
+}
+
+static GelETree *
+IsOdd_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],IsOdd_op,"IsOdd");
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("IsOdd: argument must be a number"));
+		return NULL;
+	}
+
+	if(mpw_odd_p(a[0]->val.value)) {
+		return gel_makenum_ui(1);
+	} else {
+		if(error_num) {
+			error_num = 0;
+			return NULL;
+		}
+		return gel_makenum_ui(0);
+	}
+}
+
 /*max function for two elements */
 static GelETree *
 max2_op (GelCtx *ctx, GelETree * * a, int *exception)
@@ -2033,19 +1995,31 @@ zeros_op (GelCtx *ctx, GelETree * * a, int *exception)
 	if(a[0]->type!=VALUE_NODE ||
 	   mpw_is_complex (a[0]->val.value) ||
 	   !mpw_is_integer(a[0]->val.value) ||
-	   a[1]->type!=VALUE_NODE ||
-	   mpw_is_complex (a[1]->val.value) ||
-	   !mpw_is_integer(a[1]->val.value)) {
+	   (a[1] != NULL &&
+	    (a[1]->type!=VALUE_NODE ||
+	     mpw_is_complex (a[1]->val.value) ||
+	     !mpw_is_integer(a[1]->val.value)))) {
 		(*errorout)(_("zeros: arguments not an integers"));
+		return NULL;
+	}
+
+	if (a[1] != NULL && a[2] != NULL) {
+		(*errorout)(_("zeros: too many arguments"));
 		return NULL;
 	}
 
 	rows = get_nonnegative_integer (a[0]->val.value, "zeros");
 	if (rows < 0)
 		return NULL;
-	cols = get_nonnegative_integer (a[1]->val.value, "zeros");
-	if (cols < 0)
-		return NULL;
+	if (a[1] != NULL) {
+		cols = get_nonnegative_integer (a[1]->val.value, "zeros");
+		if (cols < 0)
+			return NULL;
+	} else {
+		/* In this case we want a row vector */
+		cols = rows;
+		rows = 1;
+	}
 
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
@@ -2067,19 +2041,31 @@ ones_op (GelCtx *ctx, GelETree * * a, int *exception)
 	if(a[0]->type!=VALUE_NODE ||
 	   mpw_is_complex (a[0]->val.value) ||
 	   !mpw_is_integer(a[0]->val.value) ||
-	   a[1]->type!=VALUE_NODE ||
-	   mpw_is_complex (a[1]->val.value) ||
-	   !mpw_is_integer(a[1]->val.value)) {
-		(*errorout)(_("ones: argument not an integer"));
+	   (a[1] != NULL &&
+	    (a[1]->type!=VALUE_NODE ||
+	     mpw_is_complex (a[1]->val.value) ||
+	     !mpw_is_integer(a[1]->val.value)))) {
+		(*errorout)(_("ones: arguments not an integers"));
+		return NULL;
+	}
+
+	if (a[1] != NULL && a[2] != NULL) {
+		(*errorout)(_("ones: too many arguments"));
 		return NULL;
 	}
 
 	rows = get_nonnegative_integer (a[0]->val.value, "ones");
 	if (rows < 0)
 		return NULL;
-	cols = get_nonnegative_integer (a[1]->val.value, "ones");
-	if (cols < 0)
-		return NULL;
+	if (a[1] != NULL) {
+		cols = get_nonnegative_integer (a[1]->val.value, "ones");
+		if (cols < 0)
+			return NULL;
+	} else {
+		/* In this case we want a row vector */
+		cols = rows;
+		rows = 1;
+	}
 
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
@@ -2099,6 +2085,8 @@ ones_op (GelCtx *ctx, GelETree * * a, int *exception)
 static GelETree *
 rows_op(GelCtx *ctx, GelETree * * a, int *exception)
 {
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_ui (0);
 	if(a[0]->type!=MATRIX_NODE) {
 		(*errorout)(_("rows: argument not a matrix"));
 		return NULL;
@@ -2108,6 +2096,8 @@ rows_op(GelCtx *ctx, GelETree * * a, int *exception)
 static GelETree *
 columns_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_ui (0);
 	if(a[0]->type!=MATRIX_NODE) {
 		(*errorout)(_("columns: argument not a matrix"));
 		return NULL;
@@ -2117,6 +2107,8 @@ columns_op (GelCtx *ctx, GelETree * * a, int *exception)
 static GelETree *
 elements_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_ui (0);
 	if(a[0]->type!=MATRIX_NODE) {
 		(*errorout)(_("elements: argument not a matrix"));
 		return NULL;
@@ -2266,7 +2258,7 @@ det_op(GelCtx *ctx, GelETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(ret);
-	if(!gel_value_matrix_det(ret,a[0]->mat.matrix)) {
+	if(!gel_value_matrix_det (ctx, ret, a[0]->mat.matrix)) {
 		mpw_clear(ret);
 		return NULL;
 	}
@@ -2285,7 +2277,7 @@ ref_op(GelCtx *ctx, GelETree * * a, int *exception)
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_copy(a[0]->mat.matrix);
-	gel_value_matrix_gauss(n->mat.matrix, FALSE, FALSE, FALSE, NULL, NULL);
+	gel_value_matrix_gauss (ctx, n->mat.matrix, FALSE, FALSE, FALSE, NULL, NULL);
 	n->mat.quoted = 0;
 	return n;
 }
@@ -2302,9 +2294,143 @@ rref_op(GelCtx *ctx, GelETree * * a, int *exception)
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_copy(a[0]->mat.matrix);
-	gel_value_matrix_gauss(n->mat.matrix, TRUE, FALSE, FALSE, NULL, NULL);
+	gel_value_matrix_gauss (ctx, n->mat.matrix, TRUE, FALSE, FALSE, NULL, NULL);
 	n->mat.quoted = 0;
 	return n;
+}
+
+static GelEFunc *
+get_reference (GelETree *a, const char *err)
+{
+	if(a->type == OPERATOR_NODE &&
+	   a->op.oper == E_REFERENCE) {
+		GelETree *arg = a->op.args;
+		g_assert(arg);
+		if(arg->type != IDENTIFIER_NODE ||
+		   d_lookup_global (arg->id.id) == NULL) {
+			(*errorout) (err);
+			return NULL;
+		}
+		return d_lookup_global (arg->id.id);
+	} else {
+		(*errorout) (err);
+		return NULL;
+	}
+}
+
+static gboolean
+is_row_zero (GelMatrixW *m, int r)
+{
+	int i;
+	int w = gel_matrixw_width (m);
+	for (i = 0; i < w; i++) {
+		GelETree *node = gel_matrixw_set_index (m, i, r);
+		if (node != NULL &&
+		    (node->type != VALUE_NODE ||
+		     /* FIXME: perhaps use some zero tolerance */
+		     mpw_sgn (node->val.value) != 0)) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+/* FIXME: work in modulo mode */
+static GelETree *
+SolveLinearSystem_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	GelMatrixW *RM, *RV;
+	GelETree *n;
+	GelEFunc *retm = NULL;
+	GelEFunc *retv = NULL;
+	gboolean ret;
+
+	if(a[0]->type!=MATRIX_NODE ||
+	   !gel_is_matrix_value_only(a[0]->mat.matrix) ||
+	   a[1]->type!=MATRIX_NODE ||
+	   !gel_is_matrix_value_only(a[0]->mat.matrix)) {
+		(*errorout)(_("SolveLinearSystem: argument(s) not a value only matrix"));
+		return NULL;
+	}
+	if (gel_matrixw_height(a[0]->mat.matrix) != 
+	    gel_matrixw_height(a[1]->mat.matrix)) {
+		(*errorout)(_("SolveLinearSystem: matrices not of the same height"));
+		return NULL;
+	}
+
+	if (a[2] != NULL) {
+		retm = get_reference (a[2], _("SolveLinearSystem: third argument not a reference"));
+		if (retm == NULL) return NULL;
+		if (a[3] != NULL) {
+			retv = get_reference (a[3], _("SolveLinearSystem: fourth argument not a reference"));
+			if (retv == NULL) return NULL;
+		}
+	}
+
+	RM = gel_matrixw_copy(a[0]->mat.matrix);
+	RV = gel_matrixw_copy(a[1]->mat.matrix);
+
+	ret = gel_value_matrix_gauss (ctx, RM, TRUE, FALSE, FALSE, NULL, RV);
+
+	if (retm != NULL) {
+		GET_NEW_NODE(n);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = RM;
+		n->mat.quoted = 0;
+		d_set_value (retm, n);
+	} else {
+		gel_matrixw_free (RM);
+	}
+
+	if (retv != NULL) {
+		GET_NEW_NODE(n);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = gel_matrixw_copy (RV);
+		n->mat.quoted = 0;
+		d_set_value (retv, n);
+	}
+
+	if (ret) {
+		int r;
+		int h = gel_matrixw_height (RV);
+		r = gel_matrixw_width (a[0]->mat.matrix);
+		/* here we kill the zero rows such that only the
+		 * solution is returned */
+		if (r < h) {
+			GelMatrixW *tmp;
+			int *regx, *regy, i, w;
+			for (i = r; i < h; i++) {
+				if ( ! is_row_zero (RV, i)) {
+					/* Yaikes, this means there is
+					 * no solution! */
+					gel_matrixw_free (RV);
+					return gel_makenum_null ();
+				}
+			}
+			w = gel_matrixw_width (RV);
+			regx = g_new(int, w);
+			for (i = 0; i < w; i++)
+				regx[i] = i;
+			regy = g_new(int, r);
+			for (i = 0; i < r; i++)
+				regy[i] = i;
+
+			tmp = gel_matrixw_get_region (RV, regx, regy, w, r);
+			g_free (regx);
+			g_free (regy);
+
+			gel_matrixw_free (RV);
+			RV = tmp;
+		}
+		GET_NEW_NODE(n);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = RV;
+		n->mat.quoted = 0;
+		return n;
+	} else {
+		gel_matrixw_free (RV);
+		return gel_makenum_null ();
+	}
 }
 
 /* this is utterly stupid, but only used for small primes
@@ -2435,36 +2561,160 @@ LucasNumber_op(GelCtx *ctx, GelETree * * a, int *exception)
 }
 
 static GelETree *
-IsPrimeProbability_op(GelCtx *ctx, GelETree * * a, int *exception)
+IsPrime_op(GelCtx *ctx, GelETree * * a, int *exception)
 {
 	int ret;
+	mpz_ptr num;
+	mpz_t tmp;
 
-	if (a[0]->type == MATRIX_NODE ||
-	    a[1]->type == MATRIX_NODE)
-		return apply_func_to_matrixen (ctx, a[0], a[1],
-					       IsPrimeProbability_op,
-					       "IsPrimeProbability");
+	if (a[0]->type == MATRIX_NODE)
+		return apply_func_to_matrix (ctx, a[0], IsPrime_op, "IsPrime");
 
-	if(a[0]->type!=VALUE_NODE ||
-	   mpw_is_complex (a[0]->val.value) ||
-	   !mpw_is_integer(a[0]->val.value)) {
-		(*errorout)(_("IsPrimeProbability: argument not an integer"));
+	if ( ! check_argument_integer (a, 0, "IsPrime"))
 		return NULL;
-	}
 
-	if(a[1]->type!=VALUE_NODE ||
-	   mpw_is_complex (a[1]->val.value) ||
-	   !mpw_is_integer(a[1]->val.value)) {
-		(*errorout)(_("IsPrimeProbability: argument not an integer"));
-		return NULL;
-	}
+	MPW_MPZ_REAL (num, a[0]->val.value, tmp);
 
-	ret = mpw_probab_prime_p (a[0]->val.value, a[1]->val.value);
-	if (error_num != NO_ERROR) {
-		error_num = NO_ERROR;
-		return NULL;
-	}
+	ret = mympz_is_prime (num, -1);
+
+	MPW_MPZ_KILL (num, tmp);
+
 	return gel_makenum_ui (ret);
+}
+
+static GelETree *
+StrongPseudoprimeTest_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int ret;
+	mpz_ptr num;
+	mpz_t tmp;
+	mpz_ptr b;
+	mpz_t tmpb;
+
+	if (a[0]->type == MATRIX_NODE)
+		return apply_func_to_matrixen (ctx, a[0], a[1],
+					       StrongPseudoprimeTest_op,
+					       "StrongPseudoprimeTest");
+
+	if ( ! check_argument_positive_integer (a, 0, "StrongPseudoprimeTest") ||
+	     ! check_argument_positive_integer (a, 1, "StrongPseudoprimeTest"))
+		return NULL;
+
+	MPW_MPZ_REAL (num, a[0]->val.value, tmp);
+	MPW_MPZ_REAL (b, a[1]->val.value, tmpb);
+
+	ret = mympz_strong_pseudoprime_test (num, b);
+
+	MPW_MPZ_KILL (num, tmp);
+	MPW_MPZ_KILL (b, tmpb);
+
+	return gel_makenum_ui (ret);
+}
+
+static GelETree *
+MillerRabinTest_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int ret;
+	int reps;
+	mpz_ptr num;
+	mpz_t tmp;
+
+	if (a[0]->type == MATRIX_NODE)
+		return apply_func_to_matrixen (ctx, a[0], a[1],
+					       MillerRabinTest_op,
+					       "MillerRabinTest");
+
+	if ( ! check_argument_positive_integer (a, 0, "MillerRabinTest") ||
+	     ! check_argument_positive_integer (a, 1, "MillerRabinTest"))
+		return NULL;
+
+	reps = get_nonnegative_integer (a[1]->val.value, "MillerRabinTest");
+	MPW_MPZ_REAL (num, a[0]->val.value, tmp);
+
+	ret = mpz_millerrabin (num, reps);
+
+	MPW_MPZ_KILL (num, tmp);
+
+	return gel_makenum_ui (ret);
+}
+
+static GelETree *
+MillerRabinTestSure_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int ret;
+	mpz_ptr num;
+	mpz_t tmp;
+
+	if (a[0]->type == MATRIX_NODE)
+		return apply_func_to_matrix (ctx, a[0],
+					     MillerRabinTestSure_op,
+					     "MillerRabinTestSure");
+
+	if ( ! check_argument_positive_integer (a, 0, "MillerRabinTestSure"))
+		return NULL;
+	if (mpw_cmp_ui (a[0]->val.value, 2) <= 0) {
+		(*errorout)(_("MillerRabinTestSure: argument must be greater "
+			      "then 2"));
+		return NULL;
+	}
+
+	MPW_MPZ_REAL (num, a[0]->val.value, tmp);
+
+	ret = mympz_miller_rabin_test_sure (num);
+
+	MPW_MPZ_KILL (num, tmp);
+
+	return gel_makenum_ui (ret);
+}
+
+static GelETree *
+Factorize_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpz_ptr num;
+	mpz_t tmp;
+	GArray *fact;
+	GelETree *n;
+	GelMatrixW *mn;
+	int i;
+
+	if (a[0]->type == MATRIX_NODE)
+		return apply_func_to_matrix (ctx, a[0],
+					     Factorize_op,
+					     "Factorize");
+
+	if ( ! check_argument_integer (a, 0, "Factorize"))
+		return NULL;
+
+	MPW_MPZ_REAL (num, a[0]->val.value, tmp);
+
+	fact = mympz_pollard_rho_factorize (num);
+
+	MPW_MPZ_KILL (num, tmp);
+
+	/* error or interrupt or whatnot */
+	if (fact == NULL) {
+		if(exception) *exception = TRUE; /*raise exception*/
+		return NULL;
+	}
+
+	GET_NEW_NODE (n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = mn = gel_matrixw_new();
+	n->mat.quoted = 0;
+	gel_matrixw_set_size (mn, fact->len, 2);
+	
+	for (i = 0; i < fact->len; i++) {
+		GelFactor f = g_array_index (fact, GelFactor, i);
+		mpw_t num;
+		mpw_init (num);
+		mpw_set_mpz_use (num, f.num);
+		gel_matrixw_set_index (mn, i, 0) = gel_makenum_use (num);
+		gel_matrixw_set_index (mn, i, 1) = gel_makenum_ui (f.exp);
+	}
+
+	g_array_free (fact, TRUE /*free segment */);
+
+	return n;
 }
 
 static GelETree *
@@ -2967,6 +3217,170 @@ PolyToFunction_op(GelCtx *ctx, GelETree * * a, int *exception)
 }
 
 static GelETree *
+StringToASCII_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	GelETree *n;
+	const char *s;
+	int size;
+	int i;
+	GelMatrixW *m;
+
+	if(a[0]->type!=STRING_NODE) {
+		(*errorout)(_("StringToASCII: argument must be a string"));
+		return NULL;
+	}
+
+	s = a[0]->str.str;
+	size = strlen(s);
+	if (size == 0)
+		return gel_makenum_null ();
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = m = gel_matrixw_new();
+	n->mat.quoted = 0;
+	gel_matrixw_set_size (m, size, 1);
+	
+	for (i = 0; i < size; i++) {
+		gel_matrixw_set_index (m, i, 0) = gel_makenum_si (s[i]);
+	}
+
+	return n;
+}
+
+static GelETree *
+ASCIIToString_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	char *s;
+	int size;
+	int i;
+	GelMatrixW *m;
+
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_string ("");
+
+	if (a[0]->type != MATRIX_NODE) {
+		(*errorout)(_("ASCIIToString: argument must be a matrix"));
+		return NULL;
+	}
+
+	m = a[0]->mat.matrix;
+
+	size = gel_matrixw_elements (m);
+
+	s = g_new0 (char, size+1);
+
+	for (i = 0; i < size; i++) {
+		GelETree *t;
+		t = gel_matrixw_vindex (m, i);
+		if (t->type != VALUE_NODE ||
+		    mpw_is_complex (t->val.value) ||
+		    ! mpw_is_integer (t->val.value) ||
+		    mpw_sgn (t->val.value) < 0 ||
+		    mpw_cmp_ui (t->val.value, 256) >= 0) {
+			g_free (s);
+			(*errorout)(_("ASCIIToString: value out of range"));
+			return NULL;
+		}
+		s[i] = mpw_get_long (t->val.value);
+	}
+
+	return gel_makenum_string_use (s);
+}
+
+static int
+alphabet_value (char a, const char *alph)
+{
+	int i;
+	for (i = 0; alph[i] != '\0'; i++) {
+		if (alph[i] == a)
+			return i;
+	}
+	return -1;
+}
+
+static GelETree *
+StringToAlphabet_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	GelETree *n;
+	const char *s;
+	const char *alph;
+	int size;
+	int i;
+	GelMatrixW *m;
+
+	if (a[0]->type != STRING_NODE ||
+	    a[1]->type != STRING_NODE) {
+		(*errorout)(_("StringToAlphabet: arguments must be strings"));
+		return NULL;
+	}
+
+	s = a[0]->str.str;
+	alph = a[1]->str.str;
+	size = strlen(s);
+	if (size == 0)
+		return gel_makenum_null ();
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = m = gel_matrixw_new();
+	n->mat.quoted = 0;
+	gel_matrixw_set_size (m, size, 1);
+	
+	for (i = 0; i < size; i++) {
+		int val = alphabet_value (s[i], alph);
+		gel_matrixw_set_index (m, i, 0) = gel_makenum_si (val);
+	}
+
+	return n;
+}
+
+static GelETree *
+AlphabetToString_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	char *s;
+	const char *alph;
+	int size;
+	int alph_size;
+	int i;
+	GelMatrixW *m;
+
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_string ("");
+
+	if (a[0]->type != MATRIX_NODE ||
+	    a[1]->type != STRING_NODE) {
+		(*errorout)(_("AlphabetToString: argument must be a matrix and a string"));
+		return NULL;
+	}
+
+	m = a[0]->mat.matrix;
+	alph = a[1]->str.str;
+
+	size = gel_matrixw_elements (m);
+	alph_size = strlen (alph);
+
+	s = g_new0 (char, size+1);
+
+	for (i = 0; i < size; i++) {
+		GelETree *t;
+		t = gel_matrixw_vindex (m, i);
+		if (t->type != VALUE_NODE ||
+		    mpw_is_complex (t->val.value) ||
+		    ! mpw_is_integer (t->val.value) ||
+		    mpw_sgn (t->val.value) < 0 ||
+		    mpw_cmp_ui (t->val.value, alph_size) >= 0) {
+			g_free (s);
+			(*errorout)(_("AlphabetToString: value out of range"));
+			return NULL;
+		}
+		s[i] = alph[mpw_get_long (t->val.value)];
+	}
+
+	return gel_makenum_string_use (s);
+}
+
+static GelETree *
 SetHelp_op(GelCtx *ctx, GelETree * * a, int *exception)
 {
 	if(a[0]->type!=STRING_NODE ||
@@ -3301,6 +3715,49 @@ unprotect_op(GelCtx *ctx, GelETree * * a, int *exception)
 }
 
 static GelETree *
+SetFunctionFlags_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	GelEFunc *f;
+	GelToken *tok;
+	int i;
+
+	if (a[0]->type != STRING_NODE) {
+		(*errorout)(_("SetFunctionFlags: argument must be a string"));
+		return NULL;
+	}
+
+	tok = d_intern (a[0]->str.str);
+	f = d_lookup_global (tok);
+	if (f == NULL) {
+		(*errorout)(_("SetFunctionFlags: undefined function"));
+		return NULL;
+	}
+
+	for (i = 1; a[i] != NULL; i++) {
+		if (a[i]->type != STRING_NODE) {
+			(*errorout)(_("SetFunctionFlags: flags argument must be a string"));
+		} else if (a[i]->str.str != NULL) {
+			if (g_ascii_strcasecmp (a[i]->str.str, "PropagateMod") == 0)
+				f->propagate_mod = 1;
+			else if (g_ascii_strcasecmp (a[i]->str.str, "NoModuloArguments") == 0)
+				f->no_mod_all_args = 1;
+		}
+	}
+
+	return gel_makenum_null();
+}
+
+static GelETree *
+GetCurrentModulo_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_ptr modulo = gel_find_pre_function_modulo (ctx);
+	if (modulo == NULL)
+		return gel_makenum_null ();
+	else
+		return gel_makenum (modulo);
+}
+
+static GelETree *
 set_FloatPrecision (GelETree * a)
 {
 	long bits;
@@ -3601,6 +4058,34 @@ get_IntegerOutputBase (void)
 	return gel_makenum_ui(calcstate.integer_output_base);
 }
 
+static GelETree *
+set_IsPrimeMillerRabinReps (GelETree * a)
+{
+	long reps;
+
+	if(a->type!=VALUE_NODE ||
+	   mpw_is_complex(a->val.value) ||
+	   !mpw_is_integer(a->val.value) ||
+	   mpw_sgn (a->val.value) <= 0) {
+		(*errorout)(_("IsPrimeMillerRabinReps: must be a positive integer"));
+		return NULL;
+	}
+
+	reps = mpw_get_long (a->val.value);
+	if (error_num) {
+		error_num = 0;
+		return NULL;
+	}
+
+	mympz_is_prime_miller_rabin_reps = reps;
+	return gel_makenum_ui (mympz_is_prime_miller_rabin_reps);
+}
+static GelETree *
+get_IsPrimeMillerRabinReps (void)
+{
+	return gel_makenum_ui (mympz_is_prime_miller_rabin_reps);
+}
+
 /*add the routines to the dictionary*/
 void
 gel_funclib_addall(void)
@@ -3622,6 +4107,7 @@ gel_funclib_addall(void)
 	new_category ("equation_solving", _("Equation Solving"));
 	new_category ("statistics", _("Statistics"));
 	new_category ("polynomial", _("Polynomials"));
+	new_category ("sets", _("Set Theory"));
 	new_category ("misc", _("Miscellaneous"));
 
 	/* FIXME: add more help fields */
@@ -3670,7 +4156,9 @@ gel_funclib_addall(void)
 	FUNC (SetHelpAlias, 2, "id,alias", "basic", _("Sets up a help alias"));
 
 	VFUNC (rand, 1, "size", "numeric", _("Generate random float"));
+	f->no_mod_all_args = 1;
 	VFUNC (randint, 2, "max,size", "numeric", _("Generate random integer"));
+	f->no_mod_all_args = 1;
 
 	PARAMETER (FloatPrecision, _("Floating point precision"));
 	PARAMETER (MaxDigits, _("Maximum digits to display"));
@@ -3681,6 +4169,8 @@ gel_funclib_addall(void)
 	PARAMETER (FullExpressions, _("Print full expressions, even if more then a line"));
 	PARAMETER (ResultsAsFloats, _("Convert all results to floats before printing"));
 	PARAMETER (ScientificNotation, _("Use scientific notation"));
+
+	PARAMETER (IsPrimeMillerRabinReps, _("Number of extra Miller-Rabin tests to run on a number before declaring it a prime in IsPrime"));
 
 	/* secret functions */
 	d_addfunc(d_makebifunc(d_intern("ni"),ni_op,0));
@@ -3715,6 +4205,9 @@ gel_funclib_addall(void)
 	ALIAS (SquareRoot, 1, sqrt);
 	FUNC (exp, 1, "x", "numeric", _("The exponential function"));
 	FUNC (ln, 1, "x", "numeric", _("The natural logarithm"));
+	FUNC (log2, 1, "x", "numeric", _("Logarithm of x base 2"));
+	ALIAS (lg, 1, log2);
+	FUNC (log10, 1, "x", "numeric", _("Logarithm of x base 10"));
 	FUNC (round, 1, "x", "numeric", _("Round a number"));
 	ALIAS (Round, 1, round);
 	FUNC (floor, 1, "x", "numeric", _("Get the highest integer less then or equal to n"));
@@ -3736,11 +4229,17 @@ gel_funclib_addall(void)
 	FUNC (IsPerfectPower, 1, "n", "number_theory", _("Check a number for being any perfect power (a^b)"));
 	FUNC (Prime, 1, "n", "number_theory", _("Return the n'th prime (up to a limit)"));
 	ALIAS (prime, 1, Prime);
+	FUNC (IsEven, 1, "n", "number_theory", _("Tests if an integer is even"));
+	FUNC (IsOdd, 1, "n", "number_theory", _("Tests if an integer is odd"));
 
 	FUNC (NextPrime, 1, "n", "number_theory", _("Returns the least prime greater than n (if n is positive)"));
 	FUNC (LucasNumber, 1, "n", "number_theory", _("Returns the n'th Lucas number"));
-	FUNC (IsPrimeProbability, 2, "n,reps", "number_theory", _("Returns 0 if composite, 1 if probably prime, 2 if definately prime"));
 	FUNC (ModInvert, 2, "n,m", "number_theory", _("Returns inverse of n mod m"));
+	FUNC (IsPrime, 1, "n", "number_theory", _("Tests primality of integers, for numbers greater then 25*10^9 false positive is with low probability depending on IsPrimeMillerRabinReps"));
+	FUNC (StrongPseudoprimeTest, 2, "n,b", "number_theory", _("Run the strong pseudoprime test base b on n"));
+	FUNC (MillerRabinTest, 2, "n,reps", "number_theory", _("Use the Miller-Rabin primality test on n, reps number of times.  The probability of false positive is (1/4)^reps"));
+	FUNC (MillerRabinTestSure, 1, "n", "number_theory", _("Use the Miller-Rabin primality test on n with enough bases that assuming the Generalized Reimann Hypothesis the result is deterministic"));
+	FUNC (Factorize, 1, "n", "number_theory", _("Return factorization of a number as a matrix"));
 
 	VFUNC (max, 2, "a,args", "numeric", _("Returns the maximum of arguments or matrix"));
 	VALIAS (Max, 2, max);
@@ -3762,9 +4261,12 @@ gel_funclib_addall(void)
 	ALIAS (ImaginaryPart, 1, Im);
 
 	FUNC (I, 1, "n", "matrix", _("Make an identity matrix of a given size"));
+	f->no_mod_all_args = 1;
 	ALIAS (eye, 1, I);
-	FUNC (zeros, 2, "rows,columns", "matrix", _("Make an matrix of all zeros"));
-	FUNC (ones, 2, "rows,columns", "matrix", _("Make an matrix of all ones"));
+	VFUNC (zeros, 2, "rows,columns", "matrix", _("Make an matrix of all zeros (or a row vector)"));
+	f->no_mod_all_args = 1;
+	VFUNC (ones, 2, "rows,columns", "matrix", _("Make an matrix of all ones (or a row vector)"));
+	f->no_mod_all_args = 1;
 
 	FUNC (rows, 1, "M", "matrix", _("Get the number of rows of a matrix"));
 	FUNC (columns, 1, "M", "matrix", _("Get the number of columns of a matrix"));
@@ -3772,11 +4274,15 @@ gel_funclib_addall(void)
 	FUNC (elements, 1, "M", "matrix", _("Get the number of elements of a matrix"));
 
 	FUNC (ref, 1, "M", "linear_algebra", _("Get the row echelon form of a matrix"));
+	f->propagate_mod = 1;
 	ALIAS (REF, 1, ref);
 	ALIAS (RowEchelonForm, 1, ref);
 	FUNC (rref, 1, "M", "linear_algebra", _("Get the reduced row echelon form of a matrix"));
+	f->propagate_mod = 1;
 	ALIAS (RREF, 1, rref);
 	ALIAS (ReducedRowEchelonForm, 1, rref);
+	VFUNC (SolveLinearSystem, 3, "M,V,args", "linear_algebra", _("Solve linear system Mx=V, return solution V if there is a unique solution, null otherwise.  Extra two reference parameters can optionally be used to get the reduced M and V."));
+	f->propagate_mod = 1;
 
 	FUNC (det, 1, "M", "linear_algebra", _("Get the determinant of a matrix"));
 	ALIAS (Determinant, 1, det);
@@ -3820,8 +4326,16 @@ gel_funclib_addall(void)
 	FUNC (Combinations, 2, "k,n", "combinatorics", _("Get all combinations of k numbers from 1 to n as a vector of vectors"));
 	FUNC (Permutations, 2, "k,n", "combinatorics", _("Get all permutations of k numbers from 1 to n as a vector of vectors"));
 
+	FUNC (StringToASCII, 1, "str", "misc", _("Convert a string to a vector of ASCII values"));
+	FUNC (ASCIIToString, 1, "vec", "misc", _("Convert a vector of ASCII values to a string"));
+
+	FUNC (StringToAlphabet, 2, "str,alphabet", "misc", _("Convert a string to a vector of 0-based alphabet values (positions in the alphabet string), -1's for unknown letters"));
+	FUNC (AlphabetToString, 2, "vec,alphabet", "misc", _("Convert a vector of 0-based alphabet values (positions in the alphabet string) to a string"));
+
 	FUNC (protect, 1, "id", "basic", _("Protect a variable from being modified"));
 	FUNC (unprotect, 1, "id", "basic", _("Unprotect a variable from being modified"));
+	VFUNC (SetFunctionFlags, 2, "id,flags", "basic", _("Set flags for a function, currently \"PropagateMod\" and \"NoModuloArguments\""));
+	FUNC (GetCurrentModulo, 0, "", "basic", _("Get current modulo from the context outside the function"));
 
 	/*temporary until well done internal functions are done*/
 	_internal_ln_function = d_makeufunc(d_intern("<internal>ln"),

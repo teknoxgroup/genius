@@ -128,6 +128,7 @@ GelETree * gel_makenum_d (double num);
 GelETree * gel_makenum_null(void);
 GelETree * gel_makenum_identifier (GelToken *id);
 GelETree * gel_makenum_string (const char *str);
+GelETree * gel_makenum_string_use (char *str);
 /* FIXME: implement GelETree * gel_makenum_polynomial (...); */
 GelETree * makeoperator(int oper, GSList **stack);
 
@@ -173,6 +174,9 @@ void try_to_do_precalc(GelETree *n);
 GSList * gel_subst_local_vars (GSList *, GelETree *n);
 
 void gel_mod_node (GelCtx *ctx, GelETree *n);
+gboolean gel_mod_integer_rational (mpw_t num, mpw_t mod);
+
+mpw_ptr gel_find_pre_function_modulo (GelCtx *ctx);
 
 #define GET_ABCDE(n,a,b,c,d,e) { \
 	(a) = (n)->op.args; \

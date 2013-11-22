@@ -65,8 +65,8 @@ typedef union {
 # define	LOGICAL_OR	310
 # define	LOGICAL_AND	311
 # define	LOGICAL_NOT	312
-# define	MOD	313
-# define	LOWER_THEN_ELSE	314
+# define	LOWER_THEN_ELSE	313
+# define	MOD	314
 # define	ELTELTBACKDIV	315
 # define	UMINUS	316
 # define	UPLUS	317

@@ -45,9 +45,8 @@
 #define EDEBUG(x) ;
 #endif
 
-/* Note: this won't be completely mem-debug friendly,
- * only free_trees are for now ignored with this */
-/* #define MEM_DEBUG_FRIENDLY 1*/
+/* Note: this won't be completely mem-debug friendly, but only mostly */
+/* #define MEM_DEBUG_FRIENDLY 1 */
 
 extern calcstate_t calcstate;
 
@@ -96,8 +95,12 @@ ge_remove_stack_array(GelCtx *ctx)
 	if(!next) return FALSE;
 
 	/*push it onto the list of free stack entries*/
+#ifdef MEM_DEBUG_FRIENDLY
+	g_free (ctx->stack);
+#else /* MEM_DEBUG_FRIENDLY */
 	ctx->stack->next = free_stack;
 	free_stack = ctx->stack;
+#endif /* MEM_DEBUG_FRIENDLY */
 
 	ctx->stack = next;
 	ctx->topstack = &((ctx)->stack->stack[STACK_SIZE]);
@@ -215,6 +218,36 @@ branches(int op)
 	return 0;
 }
 
+mpw_ptr
+gel_find_pre_function_modulo (GelCtx *ctx)
+{
+	GelEvalStack *stack = ctx->stack;
+	gpointer *iter = ctx->topstack;
+	gpointer *last = NULL;
+	if ((gpointer)iter == (gpointer)stack) {
+		if (stack->next == NULL)
+			return NULL;
+		stack = stack->next;
+		iter = &(stack->stack[STACK_SIZE]);
+	}
+	while ((int)(*(iter-1)) != GE_FUNCCALL) {
+		last = iter;
+		iter -= 2;
+		if ((gpointer)iter == (gpointer)stack) {
+			if (stack->next == NULL)
+				return NULL;
+			stack = stack->next;
+			iter = &(stack->stack[STACK_SIZE]);
+		}
+	}
+
+	if (last == NULL || (int)(*(last-1)) != GE_SETMODULO) {
+		return NULL;
+	} else {
+		return *(last-2);
+	}
+}
+
 GelETree *
 gel_makenum_null (void)
 {
@@ -243,6 +276,18 @@ gel_makenum_string (const char *str)
 	GET_NEW_NODE (n);
 	n->type = STRING_NODE;
 	n->str.str = g_strdup (str); 
+	n->any.next = NULL;
+
+	return n;
+}
+
+GelETree *
+gel_makenum_string_use (char *str)
+{
+	GelETree *n;
+	GET_NEW_NODE (n);
+	n->type = STRING_NODE;
+	n->str.str = str; 
 	n->any.next = NULL;
 
 	return n;
@@ -1232,8 +1277,8 @@ cmpstringop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	return TRUE;
 }
 
-static gboolean
-mod_integer_rational (mpw_t num, mpw_t mod)
+gboolean
+gel_mod_integer_rational (mpw_t num, mpw_t mod)
 {
 	if (mpw_is_complex (num)) {
 		/* also on rationals but as integers */
@@ -1335,7 +1380,7 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 		default: g_assert_not_reached();
 		}
 		if (!skipmod && ctx->modulo != NULL) {
-			if ( ! mod_integer_rational (res, ctx->modulo)) {
+			if ( ! gel_mod_integer_rational (res, ctx->modulo)) {
 				error_num = NUMERICAL_MPW_ERROR;
 			}
 		}
@@ -1585,6 +1630,7 @@ matrix_pow_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	GelMatrixW *res = NULL;
 	GelMatrixW *m;
 	int free_m = FALSE;
+	mpw_ptr old_modulo;
 
 	m = l->mat.matrix;
 	quote = l->mat.quoted;
@@ -1632,12 +1678,17 @@ matrix_pow_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		}
 
 		m = gel_matrixw_copy(m);
-		if(!gel_value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi)) {
+		/* FIXME: unfortunately the modulo logic of gauss is fucked */
+		old_modulo = ctx->modulo;
+		ctx->modulo = NULL;
+		if(!gel_value_matrix_gauss(ctx,m,TRUE,FALSE,TRUE,NULL,mi)) {
+			ctx->modulo = old_modulo;
 			(*errorout)(_("Matrix appears singular and can't be inverted"));
 			gel_matrixw_free(m);
 			gel_matrixw_free(mi);
 			return TRUE;
 		}
+		ctx->modulo = old_modulo;
 		gel_matrixw_free(m);
 		m = mi;
 		free_m = TRUE;
@@ -1710,6 +1761,7 @@ pure_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	GelMatrixW *m1,*m2;
 	GelMatrixW *mi,*toinvert;
 	GelMatrixW *res;
+	mpw_ptr old_modulo;
 
 	m1 = l->mat.matrix;
 	m2 = r->mat.matrix;
@@ -1742,12 +1794,17 @@ pure_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		toinvert = m2;
 
 	toinvert = gel_matrixw_copy(toinvert);
-	if(!gel_value_matrix_gauss(toinvert,TRUE,FALSE,TRUE,NULL,mi)) {
+	/* FIXME: unfortunately the modulo logic of gauss is fucked */
+	old_modulo = ctx->modulo;
+	ctx->modulo = NULL;
+	if(!gel_value_matrix_gauss(ctx,toinvert,TRUE,FALSE,TRUE,NULL,mi)) {
+		ctx->modulo = old_modulo;
 		(*errorout)(_("Matrix appears singular and can't be inverted"));
 		gel_matrixw_free(mi);
 		gel_matrixw_free(toinvert);
 		return TRUE;
 	}
+	ctx->modulo = old_modulo;
 	gel_matrixw_free(toinvert);
 
 	/* Mod if in modulo mode */
@@ -1782,6 +1839,7 @@ value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	int quote;
 	GelMatrixW *m;
 	GelMatrixW *mi;
+	mpw_ptr old_modulo;
 
 	m = r->mat.matrix;
 	quote = r->mat.quoted;
@@ -1803,12 +1861,17 @@ value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 					gel_makenum_ui(1);
 
 	m = gel_matrixw_copy(m);
-	if(!gel_value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi)) {
+	/* FIXME: unfortunately the modulo logic of gauss is fucked */
+	old_modulo = ctx->modulo;
+	ctx->modulo = NULL;
+	if(!gel_value_matrix_gauss(ctx,m,TRUE,FALSE,TRUE,NULL,mi)) {
+		ctx->modulo = old_modulo;
 		(*errorout)(_("Matrix appears singular and can't be inverted"));
 		gel_matrixw_free(mi);
 		gel_matrixw_free(m);
 		return TRUE;
 	}
+	ctx->modulo = old_modulo;
 	gel_matrixw_free(m);
 	m = mi;
 
@@ -1873,7 +1936,7 @@ static void
 mod_node (GelETree *n, mpw_ptr mod)
 {
 	if(n->type == VALUE_NODE) {
-		if ( ! mod_integer_rational (n->val.value, mod)) {
+		if ( ! gel_mod_integer_rational (n->val.value, mod)) {
 			GelETree *nn;
 			GET_NEW_NODE(nn);
 			nn->type = OPERATOR_NODE;
@@ -1997,7 +2060,7 @@ funcname(GelCtx *ctx, GelETree *n, GelETree *l)			\
 }
 #define PRIM_NUM_FUNC_2(funcname,mpwfunc) \
 static int							\
-funcname(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)		\
+funcname(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)	\
 {								\
 	mpw_t res;						\
 								\
@@ -2279,8 +2342,13 @@ evl_new (GelETree *cond, GelETree *body, gboolean is_while, gboolean body_first)
 static inline void
 evl_free(GelEvalLoop *evl)
 {
+#ifdef MEM_DEBUG_FRIENDLY
+	memset (evl, 0, sizeof (GelEvalLoop));
+	g_free (evl);
+#else
 	(GelEvalLoop *)evl->condition = free_evl;
 	free_evl = evl;
+#endif
 }
 
 static void
@@ -2317,8 +2385,12 @@ evf_new (GelEvalForType type,
 static inline void
 evf_free(GelEvalFor *evf)
 {
+#ifdef MEM_DEBUG_FRIENDLY
+	g_free (evf);
+#else
 	(GelEvalFor *)evf->body = free_evf;
 	free_evf = evf;
+#endif
 }
 
 static inline GelEvalForIn *
@@ -2344,8 +2416,12 @@ evfi_new (GelEvalForType type, GelMatrixW *mat, GelETree *body, GelETree *orig_b
 static inline void
 evfi_free(GelEvalForIn *evfi)
 {
+#ifdef MEM_DEBUG_FRIENDLY
+	g_free (evfi);
+#else
 	(GelEvalForIn *)evfi->body = free_evfi;
 	free_evfi = evfi;
+#endif
 }
 
 static gboolean
@@ -2385,6 +2461,11 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 			return TRUE;
 		}
 		ret = (*f->data.func)(ctx,NULL,&exception);
+		/* interruption happened during the function, which
+		   means an exception */
+		if (interrupted) {
+			exception = TRUE;
+		}
 		if(exception) {
 			if(ret)
 				gel_freetree(ret);
@@ -2775,6 +2856,7 @@ iter_pop_stack(GelCtx *ctx)
 					int n_flag;
 					GE_PEEK_STACK(ctx,data,n_flag);
 					g_assert(n_flag==GE_POST);
+					freetree_full (data, TRUE, FALSE);
 					if(flag==GE_AND)
 						gel_makenum_ui_from(data,0);
 					else
@@ -2787,6 +2869,7 @@ iter_pop_stack(GelCtx *ctx)
 					int n_flag;
 					GE_PEEK_STACK(ctx,data,n_flag);
 					g_assert(n_flag==GE_POST);
+					freetree_full (data, TRUE, FALSE);
 					if(flag==GE_AND)
 						gel_makenum_ui_from(data,1);
 					else
@@ -2888,6 +2971,7 @@ iter_pop_stack(GelCtx *ctx)
 				EDEBUG("    LOOP LOOP BODY FINISHED");
 
 				GET_LR(n,l,r);
+				gel_freetree (evl->condition);
 				if (evl->body_first)
 					evl->condition = copynode (r);
 				else
@@ -3148,7 +3232,29 @@ iter_push_args(GelCtx *ctx, GelETree *args)
 }
 
 /*make first argument the "current",
-  push no modulo on the rest of arguments
+ *and push all other args.  evaluate with no modulo. */
+static inline void
+iter_push_args_no_modulo (GelCtx *ctx, GelETree *args)
+{
+	GelETree *li;
+
+	ctx->post = FALSE;
+	ctx->current = args;
+	if (ctx->modulo != NULL) {
+		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+
+		/* Make modulo NULL */
+		ctx->modulo = NULL;
+	}
+
+	/* FIXME: this may (will!) be the wrong order I think */
+	for(li=args->any.next;li;li=li->any.next) {
+		GE_PUSH_STACK(ctx,li,GE_PRE);
+	}
+}
+
+/*make first argument the "current",
+  push no modulo on the second argument
   go into "pre" mode and push all other ones*/
 static inline void
 iter_push_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
@@ -3156,7 +3262,6 @@ iter_push_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
 	ctx->post = FALSE;
 	ctx->current = args;
 	if (ctx->modulo != NULL) {
-		/* FIXME: perhaps we can just clear ctx->modulo here */
 		mpw_ptr ptr = g_new (struct _mpw_t, 1);
 		mpw_init_set (ptr, ctx->modulo);
 
@@ -3231,24 +3336,24 @@ iter_push_matrix(GelCtx *ctx, GelETree *n, GelMatrixW *m)
 	}
 }
 
-static gboolean
-iter_funccallop(GelCtx *ctx, GelETree *n)
+static GelEFunc *
+get_func_from_arg (GelCtx *ctx, GelETree *n, gboolean silent)
 {
 	GelEFunc *f;
 	GelETree *l;
-	
+
 	GET_L(n,l);
-	
-	EDEBUG("    FUNCCALL");
-	
+
 	if(l->type == IDENTIFIER_NODE) {
 		f = d_lookup_global(l->id.id);
 		if(!f) {
-			char buf[256];
-			g_snprintf(buf,256,_("Function '%s' used uninitialized"),
-				   l->id.id->token);
-			(*errorout)(buf);
-			goto funccall_done_ok;
+			if ( ! silent) {
+				char buf[256];
+				g_snprintf(buf,256,_("Function '%s' used uninitialized"),
+					   l->id.id->token);
+				(*errorout)(buf);
+			}
+			return NULL;
 		}
 	} else if(l->type == FUNCTION_NODE) {
 		f = l->func.func;
@@ -3258,23 +3363,41 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 		GET_L(l,ll);
 		f = d_lookup_global(ll->id.id);
 		if(!f) {
-			char buf[256];
-			g_snprintf(buf,256,_("Variable '%s' used uninitialized"),
-				   ll->id.id->token);
-			(*errorout)(buf);
-			goto funccall_done_ok;
+			if ( ! silent) {
+				char buf[256];
+				g_snprintf(buf,256,_("Variable '%s' used uninitialized"),
+					   ll->id.id->token);
+				(*errorout)(buf);
+			}
+			return NULL;
 		} else if(f->type != GEL_REFERENCE_FUNC) {
-			char buf[256];
-			g_snprintf(buf,256,_("Can't dereference '%s'!"),
-				   ll->id.id->token);
-			(*errorout)(buf);
-			goto funccall_done_ok;
+			if ( ! silent) {
+				char buf[256];
+				g_snprintf(buf,256,_("Can't dereference '%s'!"),
+					   ll->id.id->token);
+				(*errorout)(buf);
+			}
+			return NULL;
 		}
 		f = f->data.ref;
 	} else {
-		(*errorout)(_("Can't call a non-function!"));
-		goto funccall_done_ok;
+		if ( ! silent)
+			(*errorout)(_("Can't call a non-function!"));
+		return NULL;
 	}
+	return f;
+}
+
+static gboolean
+iter_funccallop(GelCtx *ctx, GelETree *n)
+{
+	GelEFunc *f;
+	
+	EDEBUG("    FUNCCALL");
+
+	f = get_func_from_arg (ctx, n, FALSE /* silent */);
+	if (f == NULL)
+		goto funccall_done_ok;
 	
 	g_assert(f);
 	
@@ -3299,7 +3422,7 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 		GSList *li;
 		GelETree *ali;
 		GelToken *last_arg = NULL;
-		
+
 		EDEBUG("     USER FUNC PUSHING CONTEXT");
 
 		d_addcontext();
@@ -3385,8 +3508,10 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 
 		GE_PUSH_STACK(ctx,ctx->current,GE_FUNCCALL);
 
-		/* push current modulo */
-		if (ctx->modulo != NULL) {
+		/* push current modulo if we are not propagating it
+		 * to the function */
+		if ( ! f->propagate_mod &&
+		    ctx->modulo != NULL) {
 			GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
 			ctx->modulo = NULL;
 		}
@@ -3396,6 +3521,12 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 	} else if(f->type == GEL_BUILTIN_FUNC) {
 		int exception = FALSE;
 		GelETree *ret;
+		mpw_ptr old_modulo;
+
+		old_modulo = ctx->modulo;
+		if ( ! f->propagate_mod) {
+			ctx->modulo = NULL;
+		}
 
 		if (n->op.nargs > 1) {
 			GelETree **r;
@@ -3409,6 +3540,15 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 			g_free (r);
 		} else {
 			ret = (*f->data.func)(ctx,NULL,&exception);
+		}
+		if ( ! f->propagate_mod) {
+			g_assert (ctx->modulo == NULL);
+			ctx->modulo = old_modulo;
+		}
+		/* interruption happened during the function, which
+		   means an exception */
+		if (interrupted) {
+			exception = TRUE;
 		}
 		if(exception) {
 			if(ret)
@@ -3622,6 +3762,28 @@ iter_forinloop(GelCtx *ctx, GelETree *n)
 	GET_LRR(n,ident,from,body);
 	
 	EDEBUG("   ITER FORIN LOOP");
+
+	/* If there is nothing to sum */
+	if (from->type == NULL_NODE) {
+		/* replace n with the appropriate nothingness */
+		freetree_full (n, TRUE, FALSE);
+		switch (n->op.oper) {
+		case E_FORIN_CONS:
+			n->type = NULL_NODE;
+			break;
+		case E_SUMIN_CONS:
+			gel_makenum_ui_from (n, 0);
+			break;
+		case E_PRODIN_CONS:
+			gel_makenum_ui_from (n, 1);
+			break;
+		default:
+			g_assert_not_reached ();
+			break;
+		}
+		iter_pop_stack (ctx);
+		return;
+	}
 
 	if(from->type != VALUE_NODE &&
 	   from->type != MATRIX_NODE) {
@@ -4809,7 +4971,6 @@ iter_operator_pre(GelCtx *ctx)
 	case E_CMP_CMP:
 	case E_LOGICAL_XOR:
 	case E_LOGICAL_NOT:
-	case E_CALL:
 	case E_RETURN:
 	case E_GET_VELEMENT:
 	case E_GET_ELEMENT:
@@ -4822,13 +4983,27 @@ iter_operator_pre(GelCtx *ctx)
 		iter_push_args (ctx, n->op.args);
 		break;
 
+	case E_CALL:
+		EDEBUG("  CHANGE CALL TO DIRECTCALL AND EVAL THE FIRST ARGUMENT");
+		n->op.oper = E_DIRECTCALL;
+		GE_PUSH_STACK (ctx, n, GE_PRE);
+		/* eval first argument */
+		ctx->current = n->op.args;
+		ctx->post = FALSE;
+		break;
+
 	/*in case of DIRECTCALL we don't evaluate the first argument*/
 	case E_DIRECTCALL:
 		/*if there are arguments to evaluate*/
 		if(n->op.args->any.next) {
+			GelEFunc *f;
 			EDEBUG("  DIRECT:PUSH US AS POST AND 2nd AND HIGHER ARGS AS PRE");
 			GE_PUSH_STACK(ctx,n,GE_POST);
-			iter_push_args (ctx, n->op.args->any.next);
+			f = get_func_from_arg (ctx, n, TRUE /* silent */);
+			if (f != NULL && f->no_mod_all_args)
+				iter_push_args_no_modulo (ctx, n->op.args->any.next);
+			else
+				iter_push_args (ctx, n->op.args->any.next);
 		} else {
 			EDEBUG("  DIRECT:JUST GO TO POST");
 			/*just go to post immediately*/
@@ -4998,7 +5173,12 @@ iter_operator_post(GelCtx *ctx)
 		if(!iter_call2(ctx,&prim_table[n->op.oper],n))
 			return FALSE;
 		if (ctx->modulo != NULL &&
-		    n->type == VALUE_NODE)
+		    (n->type == VALUE_NODE ||
+		     /* FIXME: note, most matrix operations already
+		      * mod, so this will just make things slower,
+		      * but currently it is needed for correct
+		      * behaviour */
+		     n->type == MATRIX_NODE))
 			mod_node (n, ctx->modulo);
 		iter_pop_stack(ctx);
 		break;
@@ -5013,7 +5193,12 @@ iter_operator_post(GelCtx *ctx)
 		if(!iter_call1(ctx,&prim_table[n->op.oper],n))
 			return FALSE;
 		if (ctx->modulo != NULL &&
-		    n->type == VALUE_NODE)
+		    (n->type == VALUE_NODE ||
+		     /* FIXME: note, most matrix operations already
+		      * mod, so this will just make things slower,
+		      * but currently it is needed for correct
+		      * behaviour */
+		     n->type == MATRIX_NODE))
 			mod_node (n, ctx->modulo);
 		iter_pop_stack(ctx);
 		break;
