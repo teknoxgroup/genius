@@ -1,3 +1,26 @@
+Wed Dec 23 15:18:56 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: fix minor leak
+
+	* src/eval.c: fix MEM_DEBUG_FRIENDLY compilation
+
+Wed Dec 23 14:09:21 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, src/util.c: fix use of strcpy
+
+Thu Dec 10 17:00:49 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c: fix matrix expansion.  After zeros were replaced
+	  the expression [0,I(2);0,0] would not include the last row.  This
+	  fixes AuxilliaryUnitMatrix and JordanBlock functions.
+
+	* src/geniustests.txt: add some tests for matrix expansion and the
+	  above functions
+
+Tue Nov 10 00:30:53 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.8
+
 Tue Nov 10 00:19:56 2009  Jiri (George) Lebl <jirka@5z.com>
 
 	* configure.in: require gtk/glib 2.12
