@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNOME-utils 0.13\n"
-"POT-Creation-Date: 1999-05-24 19:20-0700\n"
+"POT-Creation-Date: 1999-06-22 06:51-0700\n"
 "PO-Revision-Date: 1998-09-03 05:33:03+0900\n"
 "Last-Translator: Sung-Hyun Nam <namsh@lgic.co.kr>\n"
 "Language-Team: Korean <ko@li.org>\n"
@@ -13,120 +13,124 @@ msgstr ""
 "Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gnome-genius.c:189 src/gnome-genius.c:607
+#: src/gnome-genius.c:188 src/gnome-genius.c:612
 msgid "GnomENIUS Calculator"
 msgstr "GnomENIUS 계산기"
 
 #. another comments
-#: src/gnome-genius.c:194
+#: src/gnome-genius.c:193
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
-#: src/gnome-genius.c:312
+#: src/gnome-genius.c:311
 msgid "GnomENIUS Calculator setup"
 msgstr "GnomENIUS 계산기 환경설정"
 
-#: src/gnome-genius.c:318
+#: src/gnome-genius.c:317
 msgid "Output"
 msgstr ""
 
-#: src/gnome-genius.c:321
+#: src/gnome-genius.c:320
 msgid "Number output options"
 msgstr ""
 
-#: src/gnome-genius.c:331
+#: src/gnome-genius.c:330
 msgid "Maximum digits to output (0=unlimited)"
 msgstr ""
 
-#: src/gnome-genius.c:351
+#: src/gnome-genius.c:350
 msgid "Results as floats"
 msgstr ""
 
-#: src/gnome-genius.c:359
+#: src/gnome-genius.c:358
 msgid "Floats in scientific notation"
 msgstr ""
 
-#: src/gnome-genius.c:368
+#: src/gnome-genius.c:367
 msgid "Error/Info output options"
 msgstr ""
 
-#: src/gnome-genius.c:376
+#: src/gnome-genius.c:375
 msgid "Display errors in a dialog"
 msgstr ""
 
-#: src/gnome-genius.c:384
+#: src/gnome-genius.c:383
 msgid "Display information messages in a dialog"
 msgstr ""
 
-#: src/gnome-genius.c:396
+#: src/gnome-genius.c:395
 msgid "Precision"
 msgstr ""
 
-#: src/gnome-genius.c:399
+#: src/gnome-genius.c:398
 msgid "Floating point precision"
 msgstr ""
 
-#: src/gnome-genius.c:406
+#: src/gnome-genius.c:405
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
 "and new variables will be affected."
 msgstr ""
 
-#: src/gnome-genius.c:415
+#: src/gnome-genius.c:414
 msgid "Floating point precision (bits)"
 msgstr ""
 
-#: src/gnome-genius.c:439
+#: src/gnome-genius.c:438
 msgid "Terminal"
 msgstr ""
 
-#: src/gnome-genius.c:442
+#: src/gnome-genius.c:441
 msgid "Terminal options"
 msgstr ""
 
-#: src/gnome-genius.c:451
+#: src/gnome-genius.c:450
 msgid "Scrollback lines"
 msgstr ""
 
-#: src/gnome-genius.c:474
+#: src/gnome-genius.c:473
 msgid "Font:"
 msgstr ""
 
-#: src/gnome-genius.c:513
+#: src/gnome-genius.c:512
 msgid "Can not open file!"
 msgstr ""
 
-#: src/gnome-genius.c:542
+#: src/gnome-genius.c:541
 msgid "Load GEL file"
 msgstr ""
 
-#: src/gnome-genius.c:564
+#: src/gnome-genius.c:563
 msgid "_Load"
 msgstr ""
 
-#: src/gnome-genius.c:564
+#: src/gnome-genius.c:563
 msgid "Load and execute a file in genius"
 msgstr ""
 
-#: src/gnome-genius.c:575
+#: src/gnome-genius.c:574
 msgid "_Interrupt"
 msgstr ""
 
-#: src/gnome-genius.c:575 src/gnome-genius.c:595
+#: src/gnome-genius.c:574 src/gnome-genius.c:600
 msgid "Interrupt current calculation"
 msgstr ""
 
-#: src/gnome-genius.c:587
+#: src/gnome-genius.c:590
 #, fuzzy
 msgid "_Calculator"
 msgstr "계산기"
 
-#: src/gnome-genius.c:595
+#: src/gnome-genius.c:592
+msgid "_Plugins"
+msgstr ""
+
+#: src/gnome-genius.c:600
 msgid "Interrupt"
 msgstr ""
 
-#: src/genius.c:182 src/gnome-genius.c:850
+#: src/genius.c:187 src/gnome-genius.c:882
 #, c-format
 msgid ""
 "Genius %s\n"
@@ -210,7 +214,7 @@ msgid ""
 "(should be %d)"
 msgstr ""
 
-#: src/eval.c:1344 src/eval.c:3210
+#: src/eval.c:1344 src/eval.c:3209
 msgid "Extraneous return value!"
 msgstr ""
 
@@ -260,144 +264,144 @@ msgstr ""
 msgid "Cannot compare non value-only matrixes"
 msgstr ""
 
-#: src/eval.c:2422 src/eval.c:3418
+#: src/eval.c:2422 src/eval.c:3419
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
 
-#: src/eval.c:2496
+#: src/eval.c:2495
 msgid "Can't add/subtract two matricies of different sizes"
 msgstr ""
 
-#: src/eval.c:2573
+#: src/eval.c:2572
 msgid "Can't multiply matricies of wrong sizes"
 msgstr ""
 
-#: src/eval.c:2615
+#: src/eval.c:2614
 msgid "Powers are defined on (square matrix)^(integer) only"
 msgstr ""
 
-#: src/eval.c:2648 src/eval.c:2757 src/eval.c:2805
+#: src/eval.c:2647 src/eval.c:2756 src/eval.c:2804
 msgid "Matrix appears singular and can't be inverted"
 msgstr ""
 
-#: src/eval.c:2742
+#: src/eval.c:2741
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr ""
 
-#: src/eval.c:2790
+#: src/eval.c:2789
 msgid "Can't divide by a non-square matrix"
 msgstr ""
 
-#: src/eval.c:2842
+#: src/eval.c:2841
 msgid "Can't operate on a non value-only matrix"
 msgstr ""
 
-#: src/eval.c:2967
+#: src/eval.c:2966
 msgid "Can't transpose non-matrix"
 msgstr ""
 
-#: src/eval.c:2995 src/eval.c:3054
+#: src/eval.c:2994 src/eval.c:3053
 msgid "Index works only on matricies"
 msgstr ""
 
-#: src/eval.c:3010
+#: src/eval.c:3009
 msgid "Matrix index out of range"
 msgstr ""
 
-#: src/eval.c:3081
+#: src/eval.c:3080
 msgid "Index out of range"
 msgstr ""
 
-#: src/eval.c:3219
+#: src/eval.c:3218
 msgid "Can't evaluate return value!"
 msgstr ""
 
-#: src/eval.c:3250
+#: src/eval.c:3249
 msgid "Called 'continue' outside of a loop"
 msgstr ""
 
-#: src/eval.c:3264
+#: src/eval.c:3263
 msgid "Called 'break' outside of a loop"
 msgstr ""
 
-#: src/calc.c:547 src/eval.c:3276
+#: src/calc.c:501 src/eval.c:3275
 msgid "Unexpected operator!"
 msgstr ""
 
-#: src/eval.c:3377
+#: src/eval.c:3378
 msgid "Cannot compare matrixes"
 msgstr ""
 
-#: src/calc.c:700 src/eval.c:3470
+#: src/calc.c:654 src/eval.c:3471
 msgid "Unexpected node!"
 msgstr ""
 
-#: src/eval.c:3529
+#: src/eval.c:3530
 msgid "Could not evaluate predicate into a numeric boolean value!"
 msgstr ""
 
-#: src/calc.c:514 src/calc.c:521
+#: src/calc.c:468 src/calc.c:475
 msgid "Bad identifier for function node!"
 msgstr ""
 
-#: src/calc.c:618
+#: src/calc.c:572
 msgid "NULL tree!"
 msgstr ""
 
-#: src/calc.c:659
+#: src/calc.c:613
 msgid "NULL function!"
 msgstr ""
 
 #. variable and reference functions should
 #. never be in the etree
-#: src/calc.c:691
+#: src/calc.c:645
 msgid "Unexpected function type!"
 msgstr ""
 
-#: src/calc.c:839
+#: src/calc.c:793
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
 msgstr ""
 
-#: src/calc.c:872 src/calc.c:881 src/calc.c:886 src/calc.c:892 src/calc.c:900
-#: src/calc.c:906 src/calc.c:913 src/calc.c:922 src/calc.c:928 src/calc.c:937
+#: src/calc.c:826 src/calc.c:835 src/calc.c:840 src/calc.c:846 src/calc.c:854
+#: src/calc.c:860 src/calc.c:867 src/calc.c:876 src/calc.c:882 src/calc.c:891
 msgid "Badly formed record"
 msgstr ""
 
-#: src/calc.c:875
+#: src/calc.c:829
 msgid "Record out of place"
 msgstr ""
 
-#: src/calc.c:948
+#: src/calc.c:902
 msgid "Missing value for function"
 msgstr ""
 
-#: src/calc.c:978 src/calc.c:1028 src/calc.c:1055
+#: src/calc.c:932 src/calc.c:982 src/calc.c:1009
 #, c-format
 msgid "Can't open file: '%s'"
 msgstr ""
 
-#: src/calc.c:1207
+#: src/calc.c:1161
 msgid "ERROR: Probably corrupt stack!"
 msgstr "에러: 스택이 깨진 것 같음!"
 
-#: src/calc.c:1224
+#: src/calc.c:1178
 msgid "ERROR: Can't execute more things at once!"
 msgstr ""
 
-#: src/calc.c:1357 src/calc.c:1359 src/calc.c:1365
+#: src/calc.c:1311 src/calc.c:1313 src/calc.c:1319
 msgid "ERROR: "
 msgstr "에러: "
 
-#: src/calc.c:1357
+#: src/calc.c:1311
 msgid " before newline"
 msgstr ""
 
-#: src/calc.c:1359
+#: src/calc.c:1313
 msgid " at end of input"
 msgstr ""
 
-#: src/calc.c:1365
+#: src/calc.c:1319
 msgid " before '"
 msgstr ""
 
@@ -441,64 +445,87 @@ msgstr ""
 msgid "Can't do factorials of negative numbers!"
 msgstr ""
 
-#: src/mpwrap.c:2516
+#: src/mpwrap.c:2515
 msgid "0^0 is undefined"
 msgstr ""
 
-#: src/mpwrap.c:3259 src/mpwrap.c:4072 src/mpwrap.c:4084
+#: src/mpwrap.c:3258 src/mpwrap.c:4071 src/mpwrap.c:4083
 msgid "Can't compare complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3468 src/mpwrap.c:3483 src/mpwrap.c:3534 src/mpwrap.c:3557
-#: src/mpwrap.c:3570 src/mpwrap.c:3615
+#: src/mpwrap.c:3467 src/mpwrap.c:3482 src/mpwrap.c:3533 src/mpwrap.c:3556
+#: src/mpwrap.c:3569 src/mpwrap.c:3614
 msgid "Division by zero!"
 msgstr ""
 
-#: src/mpwrap.c:3624
+#: src/mpwrap.c:3623
 msgid "Can't modulo complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3637
+#: src/mpwrap.c:3636
 msgid "Can't GCD complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3649
+#: src/mpwrap.c:3648
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3661
+#: src/mpwrap.c:3660
 msgid "Can't get legendre symbols complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3671
+#: src/mpwrap.c:3670
 msgid "perfect_square: can't work on complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3764
+#: src/mpwrap.c:3763
 msgid "ln: can't take logarithm of 0"
 msgstr ""
 
-#: src/mpwrap.c:4122
+#: src/mpwrap.c:4121
 msgid "Can't make factorials of complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4299 src/mpwrap.c:4310 src/mpwrap.c:4321
+#: src/mpwrap.c:4298 src/mpwrap.c:4309 src/mpwrap.c:4320
 msgid "Can't determine type of a complex number"
 msgstr ""
 
-#: src/mpwrap.c:4402
+#: src/mpwrap.c:4401
 msgid "Can't convert complex number into integer"
 msgstr ""
 
-#: src/mpwrap.c:4408
+#: src/mpwrap.c:4407
 msgid "Can't convert real number to integer"
 msgstr ""
 
-#: src/mpwrap.c:4412
+#: src/mpwrap.c:4411
 msgid "Integer too large for this operation"
 msgstr ""
 
-#: src/genius.c:217 src/genius.c:266
+#: src/genius.c:80
+#, c-format
+msgid "line %d: %s\n"
+msgstr ""
+
+#: src/genius.c:165
+#, c-format
+msgid ""
+"Genius %s usage:\n"
+"\n"
+"genius [options] [files]\n"
+"\n"
+"\t--precision=num   \tFloating point precision [256]\n"
+"\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
+"\t--[no]floatresult \tAll results as floats [OFF]\n"
+"\t--[no]scinot      \tResults in scientific notation [OFF]\n"
+"\t--[no]readline    \tUse readline if it is available [ON]\n"
+"\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
+"\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
+"\t                  \t(always on when compiling) [OFF]\n"
+"\n"
+msgstr ""
+
+#: src/genius.c:222 src/genius.c:271
 msgid "Can't open file"
 msgstr ""
 

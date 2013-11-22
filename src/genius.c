@@ -45,6 +45,8 @@
 #include "dict.h"
 #include "inter.h"
 
+#include "plugin.h"
+
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -75,7 +77,7 @@ puterror(char *s)
 	if(file)
 		fprintf(stderr,"%s:%d: %s\n",file,line,s);
 	else if(line>0)
-		fprintf(stderr,"line %d: %s\n",line,s);
+		fprintf(stderr,_("line %d: %s\n"),line,s);
 	else
 		fprintf(stderr,"%s\n",s);
 }
@@ -160,20 +162,23 @@ main(int argc, char *argv[])
 				fprintf(stderr,"Unknown argument '%s'!\n\n",
 					argv[i]);
 			}
-			printf("Genius %s usage:\n\n"
+			printf(_("Genius %s usage:\n\n"
 			       "genius [options] [files]\n\n"
 			       "\t--precision=num   \tFloating point precision [256]\n"
 			       "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
 			       "\t--[no]floatresult \tAll results as floats [OFF]\n"
 			       "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
-			       "\t--[no]readline    \tUse readline even if it is available [ON]\n"
+			       "\t--[no]readline    \tUse readline if it is available [ON]\n"
 			       "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
 			       "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
-			       "\t                  \t(always on when compiling) [OFF]\n\n",
+			       "\t                  \t(always on when compiling) [OFF]\n\n"),
 			      VERSION);
 			exit(1);
 		}
 	}
+
+	read_plugin_list();
+
 	if(do_compile)
 		be_quiet = TRUE;
 	inter = isatty(0) && !files && !do_compile;

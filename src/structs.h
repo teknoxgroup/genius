@@ -76,6 +76,7 @@ typedef enum {
 	NULL_NODE,
 	VALUE_NODE,
 	MATRIX_NODE,
+	/*SET_NODE,*/
 	OPERATOR_NODE,
 	IDENTIFIER_NODE,
 	STRING_NODE,
@@ -103,6 +104,12 @@ struct _ETreeMatrix {
 	MatrixW *matrix;
 	guint quoted:1;
 };
+
+/*struct _ETreeSet {
+	ETreeType type;
+	GList *set;
+	guint multiset:1;
+};*/
 
 struct _ETreeOperator {
 	ETreeType type;

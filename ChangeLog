@@ -1,3 +1,56 @@
+Tue Jun 22 06:51:08 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.4
+
+Fri Jun 18 05:25:27 1999  George Lebl  <jirka@5z.com>
+
+	* configure.in: added check for glib 1.2+, and for gmodule
+
+	* src/Makefile.am: add building of test.plugin, building of a test
+	  plugin shared lib, installing some headers etc ...
+
+	* src/plugin.[ch]: the plugin loading "interface" using gmodule
+
+	* src/gnome-genius.c: add a menu for loading plugins
+
+	* src/plug_api.h: a very simple beginning plugin API
+
+Tue Jun 15 02:26:19 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: apply fix from Squeak <squeak@xirr.com>
+
+Mon Jun 14 07:04:44 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: fix memleak 
+
+1999-06-05  Tomas Ogren  <stric@ing.umu.se>
+
+	* src/genius.c: Fixed some i18n and a grammatical error
+	* configure.in: Added sv to ALL_LINGUAS
+
+Tue Jun 01 10:18:17 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: fix problems with negative exponents in mpw_pow_z
+
+Mon May 31 13:05:26 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: fixed a bug with negative small integer exponents 
+
+	* src/geniustests.txt: added tests for the above
+
+Fri May 28 11:19:40 1999  George Lebl  <jirka@5z.com>
+
+	* src/*.c: include config.h in all the files, there were some which
+	  didn't have this (whoops)
+
+Thu May 27 09:02:28 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: apply fix from Squeak <squeak@xirr.com> to fix segfault
+
+Wed May 26 19:37:15 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.3
+
 Mon May 24 16:35:51 1999  George Lebl  <jirka@5z.com>
 
 	* src/{lexer.l,parser.y}: fixed up a bit the new syntax and took out
@@ -17,7 +70,7 @@ Mon May 17 23:55:50 1999  George Lebl  <jirka@5z.com>
 	* src/strucs.h,src/*.c: changed ETree to be a union of structs to
 	  do the polymorphism in a nicer manner and to allow more future
 	  extention, this requires some changes to any code using ETree's
-	  (if anybody has done anything lik that)
+	  (if anybody has done anything like that)
 
 	* src/*.c: fixed miscellaneous bugs
 

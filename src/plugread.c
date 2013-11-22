@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+ * Copyright (C) 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -22,11 +22,13 @@
 /*This file requires gnome, use readplugin_nongnome.c for the simpler, dumber,
   non-gnome version*/
 
-#include <config.h>
+#include "config.h"
+
 #include <gnome.h>
 #include <glib.h>
 #include <string.h>
 #include "calc.h"
+#include "plugin.h"
 #include "plugread.h"
 
 plugin_t *
@@ -35,6 +37,9 @@ readplugin(char *dir_name,char *file_name)
 	char *p;
 	char *name;
 	char *file;
+	char *copyright;
+	char *author;
+	char *description;
 	plugin_t *plg;
 
 	p = g_strconcat("=",dir_name,"/",file_name,
@@ -43,6 +48,9 @@ readplugin(char *dir_name,char *file_name)
 	g_free(p);
 	name = gnome_config_get_translated_string("Name");
 	file = gnome_config_get_string("File");
+	copyright = gnome_config_get_translated_string("Copyright");
+	author = gnome_config_get_string("Author");
+	description = gnome_config_get_translated_string("Description");
 	gnome_config_pop_prefix();
 	p = g_strconcat("=",dir_name,"/",file_name,
 			"=",NULL);
@@ -51,10 +59,16 @@ readplugin(char *dir_name,char *file_name)
 	if(!name || !*name || !file || !*file) {
 		g_free(name);
 		g_free(file);
+		g_free(copyright);
+		g_free(author);
+		g_free(description);
 		return NULL;
 	}
-	plg = g_new(plugin_t,1);
+	plg = g_new0(plugin_t,1);
 	plg->name = name;
 	plg->file = file;
+	plg->copyright = copyright;
+	plg->author = author;
+	plg->description = description;
 	return plg;
 }

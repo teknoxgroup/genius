@@ -37,12 +37,11 @@
 #include "util.h"
 #include "dict.h"
 
+#include "plugin.h"
 #include "inter.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
-
-#define d(x) ;
 
 /*Globals:*/
 
@@ -581,10 +580,16 @@ static GnomeUIInfo help_menu[] = {
 	GNOMEUIINFO_MENU_ABOUT_ITEM(aboutcb,NULL),
 	GNOMEUIINFO_END,
 };
+
+static GnomeUIInfo plugin_menu[] = {
+	GNOMEUIINFO_END,
+};
   
 static GnomeUIInfo genius_menu[] = {
 	GNOMEUIINFO_MENU_FILE_TREE(file_menu),
 	GNOMEUIINFO_SUBTREE(N_("_Calculator"),calc_menu),
+#define PLUGIN_MENU 2
+	GNOMEUIINFO_SUBTREE(N_("_Plugins"),plugin_menu),
 	GNOMEUIINFO_MENU_SETTINGS_TREE(settings_menu),
 	GNOMEUIINFO_MENU_HELP_TREE(help_menu),
 	GNOMEUIINFO_END,
@@ -750,6 +755,12 @@ catch_interrupts(GtkWidget *w, GdkEvent *e)
 	return FALSE;
 }
 
+static void
+open_plugin_cb(GtkWidget *w, plugin_t * plug)
+{
+	open_plugin(plug);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -758,6 +769,7 @@ main(int argc, char *argv[])
 	GtkTooltips *tips;
 	char *file;
 	char buf[256];
+	GnomeUIInfo *plugins;
 	
 	pipe(torl);
 	pipe(fromrl);
@@ -771,6 +783,8 @@ main(int argc, char *argv[])
 	textdomain(PACKAGE);
 
 	gnome_init("genius", NULL, argc, argv);
+
+	read_plugin_list();
 
 	/*read gnome_config parameters */
 	get_properties();
@@ -816,6 +830,24 @@ main(int argc, char *argv[])
 	
 	w = gtk_vscrollbar_new (GTK_ADJUSTMENT (ZVT_TERM (zvt)->adjustment));
 	gtk_box_pack_start(GTK_BOX(hbox),w,FALSE,FALSE,0);
+	
+	if(plugin_list) {
+		GList *li;
+		int i;
+		plugins = g_new0(GnomeUIInfo,g_list_length(plugin_list)+1);
+		genius_menu[PLUGIN_MENU].moreinfo = plugins;
+		
+		for(i=0,li=plugin_list;li;li=g_list_next(li),i++) {
+			plugin_t *plug = li->data;
+			plugins[i].type = GNOME_APP_UI_ITEM;
+			plugins[i].label = g_strdup(plug->name);
+			plugins[i].hint = g_strdup(plug->description);
+			plugins[i].moreinfo = GTK_SIGNAL_FUNC(open_plugin_cb);
+			plugins[i].user_data = plug;
+			plugins[i].pixmap_type = GNOME_APP_PIXMAP_NONE;
+		}
+		plugins[i].type = GNOME_APP_UI_ENDOFINFO;
+	}
 
 	/*set up the menu*/
         gnome_app_create_menus(GNOME_APP(window), genius_menu);

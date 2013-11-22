@@ -19,6 +19,8 @@
  * USA.
  */
 %{
+#include "config.h"
+
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,14 +183,14 @@ null		{ DO_RET; return '.'; }
 			matrix_entry++;
 			parenth_depth++;
 			NO_RET;
-			return yytext[0];
+			return '[';
 		}
 
 [\t ]*[]]	{
 			matrix_entry--;
 			parenth_depth--;
 			DO_RET;
-			return yytext[0];
+			return ']';
 		}
 			
 

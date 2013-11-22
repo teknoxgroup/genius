@@ -1,4 +1,4 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4a from Makefile.am
 
 # Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
@@ -46,9 +46,10 @@ AUTOMAKE = @AUTOMAKE@
 AUTOHEADER = @AUTOHEADER@
 
 INSTALL = @INSTALL@
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
+INSTALL_STRIP_FLAG =
 transform = @program_transform_name@
 
 NORMAL_INSTALL = :
@@ -130,6 +131,10 @@ Utilitiesdir = $(datadir)/apps/Utilities
 Librarydir = $(datadir)/genius/gel
 Plugindescdir = $(datadir)/genius/plugins
 
+plugindir = $(libdir)/genius
+
+plugin_includedir = $(includedir)/genius
+
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
 CFLAGS = @CFLAGS@ @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
@@ -141,23 +146,31 @@ bin_PROGRAMS = @GNOME_GENIUS@ genius
 
 EXTRA_PROGRAMS = gnome-genius
 
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			parseutil.h		parseutil.c		inter.c			inter.h			plugread.c		plugread.h		parse.y
+gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y
 
 
 gnome_genius_LDADD =  	$(GNOME_LIBDIR) 	$(GNOMEUI_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@ZVT_LIBS@ 	@READLINE_LIB@
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			plugread_nongnome.c		plugread.h		parse.y
+genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y
 
 
 genius_LDADD =  	-lm 	$(GLIB_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@READLINE_LIB@
+
+
+plugin_include_HEADERS =  	plug_api.h		structs.h		calc.h			eval.h
+
+
+plugin_LTLIBRARIES = libtestplugin.la
+
+libtestplugin_la_SOURCES =  	plug_api.h			testplugin.c
 
 
 BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES =  $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin.in
 
 Utilities_DATA = gnome-genius.desktop
 
@@ -169,19 +182,24 @@ MOSTLYCLEANFILES = lib.cgel
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
-PROGRAMS =  $(bin_PROGRAMS)
+LTLIBRARIES =  $(plugin_LTLIBRARIES)
 
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
+libtestplugin_la_LDFLAGS = 
+libtestplugin_la_LIBADD = 
+libtestplugin_la_OBJECTS =  testplugin.lo
+PROGRAMS =  $(bin_PROGRAMS)
+
 gnome_genius_OBJECTS =  calc.o eval.o gnome-genius.o util.o dict.o \
 funclib.o mpwrap.o matrix.o matrixw.o matop.o compil.o lexer.o \
-parseutil.o inter.o plugread.o parse.o
+parseutil.o inter.o plugin.o plugread.o parse.o
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
 genius_OBJECTS =  calc.o eval.o genius.o util.o dict.o funclib.o \
 mpwrap.o matrix.o matrixw.o matop.o compil.o parseutil.o inter.o \
-lexer.o plugread_nongnome.o parse.o
+lexer.o plugin.o plugread_nongnome.o parse.o
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
@@ -192,15 +210,17 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
 DATA =  $(Library_DATA) $(Plugindesc_DATA) $(Utilities_DATA)
 
+HEADERS =  $(plugin_include_HEADERS)
+
 DIST_COMMON =  Makefile.am Makefile.in lexer.c parse.c
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
-SOURCES = $(gnome_genius_SOURCES) $(genius_SOURCES)
-OBJECTS = $(gnome_genius_OBJECTS) $(genius_OBJECTS)
+SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES)
+OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -213,29 +233,29 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-mostlyclean-binPROGRAMS:
+mostlyclean-pluginLTLIBRARIES:
 
-clean-binPROGRAMS:
-	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+clean-pluginLTLIBRARIES:
+	-test -z "$(plugin_LTLIBRARIES)" || rm -f $(plugin_LTLIBRARIES)
 
-distclean-binPROGRAMS:
+distclean-pluginLTLIBRARIES:
 
-maintainer-clean-binPROGRAMS:
+maintainer-clean-pluginLTLIBRARIES:
 
-install-binPROGRAMS: $(bin_PROGRAMS)
+install-pluginLTLIBRARIES: $(plugin_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(bindir)
-	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	$(mkinstalldirs) $(DESTDIR)$(plugindir)
+	@list='$(plugin_LTLIBRARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	    echo "$(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(plugindir)/$$p"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL) $$p $(DESTDIR)$(plugindir)/$$p; \
 	  else :; fi; \
 	done
 
-uninstall-binPROGRAMS:
+uninstall-pluginLTLIBRARIES:
 	@$(NORMAL_UNINSTALL)
-	list='$(bin_PROGRAMS)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	list='$(plugin_LTLIBRARIES)'; for p in $$list; do \
+	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(plugindir)/$$p; \
 	done
 
 .c.o:
@@ -275,6 +295,34 @@ clean-libtool:
 distclean-libtool:
 
 maintainer-clean-libtool:
+
+libtestplugin.la: $(libtestplugin_la_OBJECTS) $(libtestplugin_la_DEPENDENCIES)
+	$(LINK) -rpath $(plugindir) $(libtestplugin_la_LDFLAGS) $(libtestplugin_la_OBJECTS) $(libtestplugin_la_LIBADD) $(LIBS)
+
+mostlyclean-binPROGRAMS:
+
+clean-binPROGRAMS:
+	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+
+distclean-binPROGRAMS:
+
+maintainer-clean-binPROGRAMS:
+
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	@list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	  else :; fi; \
+	done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	list='$(bin_PROGRAMS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	done
 
 gnome-genius: $(gnome_genius_OBJECTS) $(gnome_genius_DEPENDENCIES)
 	@rm -f gnome-genius
@@ -350,6 +398,21 @@ uninstall-UtilitiesDATA:
 	  rm -f $(DESTDIR)$(Utilitiesdir)/$$p; \
 	done
 
+install-plugin_includeHEADERS: $(plugin_include_HEADERS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(plugin_includedir)
+	@list='$(plugin_include_HEADERS)'; for p in $$list; do \
+	  if test -f "$$p"; then d= ; else d="$(srcdir)/"; fi; \
+	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(plugin_includedir)/$$p"; \
+	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(plugin_includedir)/$$p; \
+	done
+
+uninstall-plugin_includeHEADERS:
+	@$(NORMAL_UNINSTALL)
+	list='$(plugin_include_HEADERS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(plugin_includedir)/$$p; \
+	done
+
 tags: TAGS
 
 ID: $(HEADERS) $(SOURCES) $(LISP)
@@ -387,42 +450,13 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h plugread.h parse.h
-compil.o: compil.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h matrix.h matrixw.h compil.h
-dict.o: dict.c eval.h mpwrap.h structs.h dict.h util.h funclib.h \
-	compil.h
-eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h compil.h
-funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
-	funclib.h calc.h matrix.h matrixw.h matop.h
-genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
-	inter.h
-gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
-	util.h dict.h inter.h
-inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h inter.h
-lexer.o: lexer.c mpwrap.h eval.h structs.h dict.h calc.h parse.h util.h
-matop.o: matop.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h
-matrix.o: matrix.c matrix.h
-matrixw.o: matrixw.c structs.h mpwrap.h eval.h matrix.h matrixw.h
-mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
-parse.o: parse.c structs.h mpwrap.h eval.h dict.h util.h calc.h matrix.h \
-	matrixw.h parseutil.h
-parseutil.o: parseutil.c structs.h mpwrap.h eval.h dict.h util.h calc.h \
-	matrix.h matrixw.h parseutil.h
-plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugread.h
-plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
-	mpwrap.h plugread.h
-util.o: util.c ../config.h util.h
 
 info-am:
 info: info-am
@@ -435,23 +469,27 @@ installcheck: installcheck-am
 install-exec-am: install-binPROGRAMS
 install-exec: install-exec-am
 
-install-data-am: install-LibraryDATA install-PlugindescDATA \
-		install-UtilitiesDATA
+install-data-am: install-pluginLTLIBRARIES install-LibraryDATA \
+		install-PlugindescDATA install-UtilitiesDATA \
+		install-plugin_includeHEADERS
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
-uninstall-am: uninstall-binPROGRAMS uninstall-LibraryDATA \
-		uninstall-PlugindescDATA uninstall-UtilitiesDATA
+uninstall-am: uninstall-pluginLTLIBRARIES uninstall-binPROGRAMS \
+		uninstall-LibraryDATA uninstall-PlugindescDATA \
+		uninstall-UtilitiesDATA uninstall-plugin_includeHEADERS
 uninstall: uninstall-am
-all-am: Makefile $(PROGRAMS) $(DATA)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
 all-redirect: all-am
 install-strip:
-	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
 installdirs:
-	$(mkinstalldirs)  $(DESTDIR)$(bindir) $(DESTDIR)$(Librarydir) \
-		$(DESTDIR)$(Plugindescdir) $(DESTDIR)$(Utilitiesdir)
+	$(mkinstalldirs)  $(DESTDIR)$(plugindir) $(DESTDIR)$(bindir) \
+		$(DESTDIR)$(Librarydir) $(DESTDIR)$(Plugindescdir) \
+		$(DESTDIR)$(Utilitiesdir) \
+		$(DESTDIR)$(plugin_includedir)
 
 
 mostlyclean-generic:
@@ -466,44 +504,50 @@ distclean-generic:
 
 maintainer-clean-generic:
 	-test -z "lexerlparsehparsec$(BUILT_SOURCES)" || rm -f lexerl parseh parsec $(BUILT_SOURCES)
-mostlyclean-am:  mostlyclean-binPROGRAMS mostlyclean-compile \
-		mostlyclean-libtool mostlyclean-tags \
-		mostlyclean-generic
+mostlyclean-am:  mostlyclean-pluginLTLIBRARIES mostlyclean-compile \
+		mostlyclean-libtool mostlyclean-binPROGRAMS \
+		mostlyclean-tags mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
-clean-am:  clean-binPROGRAMS clean-compile clean-libtool clean-tags \
-		clean-generic mostlyclean-am
+clean-am:  clean-pluginLTLIBRARIES clean-compile clean-libtool \
+		clean-binPROGRAMS clean-tags clean-generic \
+		mostlyclean-am
 
 clean: clean-am
 
-distclean-am:  distclean-binPROGRAMS distclean-compile distclean-libtool \
-		distclean-tags distclean-generic clean-am
+distclean-am:  distclean-pluginLTLIBRARIES distclean-compile \
+		distclean-libtool distclean-binPROGRAMS distclean-tags \
+		distclean-generic clean-am
 	-rm -f libtool
 
 distclean: distclean-am
 
-maintainer-clean-am:  maintainer-clean-binPROGRAMS \
+maintainer-clean-am:  maintainer-clean-pluginLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
-		maintainer-clean-tags maintainer-clean-generic \
-		distclean-am
+		maintainer-clean-binPROGRAMS maintainer-clean-tags \
+		maintainer-clean-generic distclean-am
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
 
 maintainer-clean: maintainer-clean-am
 
-.PHONY: mostlyclean-binPROGRAMS distclean-binPROGRAMS clean-binPROGRAMS \
-maintainer-clean-binPROGRAMS uninstall-binPROGRAMS install-binPROGRAMS \
+.PHONY: mostlyclean-pluginLTLIBRARIES distclean-pluginLTLIBRARIES \
+clean-pluginLTLIBRARIES maintainer-clean-pluginLTLIBRARIES \
+uninstall-pluginLTLIBRARIES install-pluginLTLIBRARIES \
 mostlyclean-compile distclean-compile clean-compile \
 maintainer-clean-compile mostlyclean-libtool distclean-libtool \
-clean-libtool maintainer-clean-libtool uninstall-LibraryDATA \
+clean-libtool maintainer-clean-libtool mostlyclean-binPROGRAMS \
+distclean-binPROGRAMS clean-binPROGRAMS maintainer-clean-binPROGRAMS \
+uninstall-binPROGRAMS install-binPROGRAMS uninstall-LibraryDATA \
 install-LibraryDATA uninstall-PlugindescDATA install-PlugindescDATA \
-uninstall-UtilitiesDATA install-UtilitiesDATA tags mostlyclean-tags \
-distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
-dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
-install-exec install-data-am install-data install-am install \
-uninstall-am uninstall all-redirect all-am all installdirs \
-mostlyclean-generic distclean-generic clean-generic \
+uninstall-UtilitiesDATA install-UtilitiesDATA \
+uninstall-plugin_includeHEADERS install-plugin_includeHEADERS tags \
+mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
+distdir info-am info dvi-am dvi check check-am installcheck-am \
+installcheck install-exec-am install-exec install-data-am install-data \
+install-am install uninstall-am uninstall all-redirect all-am all \
+installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
@@ -514,6 +558,10 @@ parse.h: parse.y
 	$(YACC) $(YFLAGS) $<
 	test -f y.tab.c && mv -f y.tab.c parse.c
 	test -f y.tab.h && mv -f y.tab.h parse.h
+
+test.plugin: test.plugin.in Makefile
+	sed -e 's,\@libdir\@,$(libdir),g' < $(srcdir)/test.plugin.in \
+	  > test.plugin.tmp && mv -f test.plugin.tmp test.plugin
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

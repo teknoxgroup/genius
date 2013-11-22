@@ -2,6 +2,9 @@ Utilitiesdir = $(datadir)/apps/Utilities
 Librarydir = $(datadir)/genius/gel
 Plugindescdir = $(datadir)/genius/plugins
 
+plugindir = $(libdir)/genius
+
+plugin_includedir = $(includedir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS += -d -t
@@ -46,8 +49,12 @@ gnome_genius_SOURCES = 	\
 	parseutil.c	\
 	inter.c		\
 	inter.h		\
+	plugin.c	\
+	plugin.h	\
 	plugread.c	\
 	plugread.h	\
+	plug_api.h	\
+	parse.h		\
 	parse.y
 
 gnome_genius_LDADD = \
@@ -87,8 +94,12 @@ genius_SOURCES = 	\
 	inter.c		\
 	inter.h		\
 	lexer.l		\
+	plugin.c	\
+	plugin.h	\
 	plugread_nongnome.c	\
 	plugread.h	\
+	plug_api.h	\
+	parse.h		\
 	parse.y
 
 genius_LDADD = \
@@ -99,11 +110,23 @@ genius_LDADD = \
 	$(INTLLIBS) \
 	@READLINE_LIB@
 
+plugin_include_HEADERS = \
+	plug_api.h	\
+	structs.h	\
+	calc.h		\
+	eval.h
+
+plugin_LTLIBRARIES = libtestplugin.la
+
+libtestplugin_la_SOURCES =	\
+	plug_api.h		\
+	testplugin.c
+
 BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES += $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin.in
 
 Utilities_DATA = gnome-genius.desktop
 
@@ -120,3 +143,10 @@ parse.h: parse.y
 	$(YACC) $(YFLAGS) $<
 	test -f y.tab.c && mv -f y.tab.c parse.c
 	test -f y.tab.h && mv -f y.tab.h parse.h
+
+test.plugin: test.plugin.in Makefile
+## Why do a sed and then an mv?  To avoid problems if the user
+## interrupts.
+	sed -e 's,\@libdir\@,$(libdir),g' < $(srcdir)/test.plugin.in \
+	  > test.plugin.tmp && mv -f test.plugin.tmp test.plugin
+

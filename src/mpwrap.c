@@ -2353,16 +2353,6 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 	MpwRealNum r={0};
 
 	switch(op1->type) {
-	case MPW_RATIONAL:
-		mpwl_init_type(&r,MPW_RATIONAL);
-		mpz_pow_ui(mpq_numref(r.data.rval),
-			   mpq_numref(op1->data.rval),e);
-		mpz_pow_ui(mpq_denref(r.data.rval),
-			   mpq_denref(op1->data.rval),e);
-		/*the exponent was negative! reverse the result!*/
-		if(reverse)
-			mpq_inv(r.data.rval,r.data.rval);
-		break;
 	case MPW_NATIVEINT:
 		if(!reverse) {
 			mpwl_init_type(&r,MPW_INTEGER);
@@ -2388,6 +2378,16 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 			mpz_set_ui(mpq_numref(r.data.rval),1);
 		}
 		break;
+	case MPW_RATIONAL:
+		mpwl_init_type(&r,MPW_RATIONAL);
+		mpz_pow_ui(mpq_numref(r.data.rval),
+			   mpq_numref(op1->data.rval),e);
+		mpz_pow_ui(mpq_denref(r.data.rval),
+			   mpq_denref(op1->data.rval),e);
+		/*the exponent was negative! reverse the result!*/
+		if(reverse)
+			mpq_inv(r.data.rval,r.data.rval);
+		break;
 	case MPW_FLOAT:
 		mpwl_init_type(&r,MPW_FLOAT);
 		mympf_pow_ui(r.data.fval,op1->data.fval,e);
@@ -2402,33 +2402,22 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 static void
 mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 {
+	int reverse = FALSE;;
 	if(op2->type!=MPW_INTEGER) {
 		error_num=INTERNAL_MPW_ERROR;
 		return;
 	}
+	
+	reverse = FALSE;
+	if(mpz_sgn(op2->data.ival)<0) {
+		reverse = TRUE;
+		mpz_neg(op2->data.ival,op2->data.ival);
+	}
 
 	if(mpz_cmp_ui(op2->data.ival,ULONG_MAX)>0) {
 		MpwRealNum r={0};
-		int reverse = FALSE;;
-		
-		if(mpz_sgn(op2->data.ival)<0) {
-			reverse = TRUE;
-			mpz_neg(op2->data.ival,op2->data.ival);
-		}
 
 		switch(op1->type) {
-		case MPW_RATIONAL:
-			mpwl_init_type(&r,MPW_RATIONAL);
-			mympz_pow_z(mpq_numref(r.data.rval),
-				    mpq_numref(op1->data.rval),
-				    op2->data.ival);
-			mympz_pow_z(mpq_denref(r.data.rval),
-				    mpq_denref(op1->data.rval),
-				    op2->data.ival);
-			/*the exponent was negative! reverse the result!*/
-			if(reverse)
-				mpq_inv(r.data.rval,r.data.rval);
-			break;
 		case MPW_NATIVEINT:
 			if(!reverse) {
 				mpwl_init_type(&r,MPW_INTEGER);
@@ -2458,6 +2447,18 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 				mpz_set_ui(mpq_numref(r.data.rval),1);
 			}
 			break;
+		case MPW_RATIONAL:
+			mpwl_init_type(&r,MPW_RATIONAL);
+			mympz_pow_z(mpq_numref(r.data.rval),
+				    mpq_numref(op1->data.rval),
+				    op2->data.ival);
+			mympz_pow_z(mpq_denref(r.data.rval),
+				    mpq_denref(op1->data.rval),
+				    op2->data.ival);
+			/*the exponent was negative! reverse the result!*/
+			if(reverse)
+				mpq_inv(r.data.rval,r.data.rval);
+			break;
 		case MPW_FLOAT:
 			mpwl_init_type(&r,MPW_FLOAT);
 			mympf_pow_z(r.data.fval,op1->data.fval,
@@ -2467,18 +2468,16 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 				mpf_ui_div(r.data.fval,1,r.data.fval);
 			break;
 		}
-		if(reverse)
-			mpz_neg(op2->data.ival,op2->data.ival);
-
 		mpwl_move(rop,&r);
 	} else {
 		if(mpz_sgn(op2->data.ival)==0)
 			mpwl_set_ui(rop,1);
-		else if(mpz_sgn(op2->data.ival)>0)
-			mpwl_pow_ui(rop,op1,mpz_get_ui(op2->data.ival),FALSE);
-		else
-			mpwl_pow_ui(rop,op1,mpz_get_ui(op2->data.ival),TRUE);
+		else 
+			mpwl_pow_ui(rop,op1,mpz_get_ui(op2->data.ival),reverse);
 	}
+
+	if(reverse)
+		mpz_neg(op2->data.ival,op2->data.ival);
 }
 
 static int
@@ -2531,7 +2530,7 @@ mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		else if(op2->data.nval>0)
 			mpwl_pow_ui(rop,op1,op2->data.nval,FALSE);
 		else
-			mpwl_pow_ui(rop,op1,op2->data.nval,TRUE);
+			mpwl_pow_ui(rop,op1,-(op2->data.nval),TRUE);
 		break;
 	case MPW_FLOAT: return mpwl_pow_f(rop,op1,op2);
 	case MPW_RATIONAL: return mpwl_pow_q(rop,op1,op2);

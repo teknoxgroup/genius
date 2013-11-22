@@ -47,7 +47,6 @@
 #include "funclib.h"
 #include "matrixw.h"
 #include "compil.h"
-#include "plugread.h"
 
 #include "mpwrap.h"
 
@@ -103,53 +102,8 @@ int interrupted = FALSE;
 static GList *curfile = NULL;
 static GList *curline = NULL;
 
-GList *plugin_list = NULL;
-
 /*from lexer.l*/
 int my_yyinput(void);
-
-void
-read_plugin_list(void)
-{
-	GList *li;
-	DIR *dir;
-	char *dir_name;
-	struct dirent *dent;
-
-	/*free the previous list*/
-	for(li=plugin_list;li;li=g_list_next(li)) {
-		plugin_t *plg = li->data;
-		g_free(plg->file);
-		g_free(plg->name);
-		g_free(plg);
-	}
-	g_list_free(plugin_list);
-	plugin_list = NULL;
-	
-	dir_name = g_strconcat(LIBRARY_DIR,"/plugins",NULL);
-	dir = opendir(dir_name);
-	if(!dir) {
-		g_free(dir_name);
-		return;
-	}
-	while((dent = readdir (dir)) != NULL) {
-		char *p;
-		plugin_t *plg;
-		if(dent->d_name[0] == '.' &&
-		   (dent->d_name[1] == '\0' ||
-		    (dent->d_name[1] == '.' &&
-		     dent->d_name[2] == '\0')))
-			continue;
-		p = strrchr(dent->d_name,'.');
-		if(!p || strcmp(p,".plugin")!=0)
-			continue;
-		plg = readplugin(dir_name,dent->d_name);
-		if(plg)
-			plugin_list = g_list_prepend(plugin_list,plg);
-	}
-	g_free(dir_name);
-	plugin_list = g_list_reverse(plugin_list);
-}
 
 void
 add_description(char *func, char *desc)

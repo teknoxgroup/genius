@@ -1,53 +1,55 @@
 
 /*  A Bison parser, made from parse.y
- by  GNU Bison version 1.25
+ by  GNU Bison version 1.27
   */
 
 #define YYBISON 1  /* Identify Bison output.  */
 
-#define	STARTTOK	258
-#define	LOADFILE	259
-#define	LOADFILE_GLOB	260
-#define	NUMBER	261
-#define	STRING	262
-#define	FUNCID	263
-#define	FUNCTION	264
-#define	CALL	265
-#define	RETURNTOK	266
-#define	BAILOUT	267
-#define	EXCEPTION	268
-#define	CONTINUE	269
-#define	BREAK	270
-#define	WHILE	271
-#define	UNTIL	272
-#define	FOR	273
-#define	DO	274
-#define	IF	275
-#define	THEN	276
-#define	ELSE	277
-#define	TO	278
-#define	BY	279
-#define	IN	280
-#define	AT	281
-#define	REGION_SEP	282
-#define	SEPAR	283
-#define	EQUALS	284
-#define	EQ_CMP	285
-#define	NE_CMP	286
-#define	CMP_CMP	287
-#define	LT_CMP	288
-#define	GT_CMP	289
-#define	LE_CMP	290
-#define	GE_CMP	291
-#define	LOGICAL_XOR	292
-#define	LOGICAL_OR	293
-#define	LOGICAL_AND	294
-#define	LOGICAL_NOT	295
-#define	LOWER_THEN_ELSE	296
-#define	UMINUS	297
-#define	UPLUS	298
+#define	STARTTOK	257
+#define	LOADFILE	258
+#define	LOADFILE_GLOB	259
+#define	NUMBER	260
+#define	STRING	261
+#define	FUNCID	262
+#define	FUNCTION	263
+#define	CALL	264
+#define	RETURNTOK	265
+#define	BAILOUT	266
+#define	EXCEPTION	267
+#define	CONTINUE	268
+#define	BREAK	269
+#define	WHILE	270
+#define	UNTIL	271
+#define	FOR	272
+#define	DO	273
+#define	IF	274
+#define	THEN	275
+#define	ELSE	276
+#define	TO	277
+#define	BY	278
+#define	IN	279
+#define	AT	280
+#define	REGION_SEP	281
+#define	SEPAR	282
+#define	EQUALS	283
+#define	EQ_CMP	284
+#define	NE_CMP	285
+#define	CMP_CMP	286
+#define	LT_CMP	287
+#define	GT_CMP	288
+#define	LE_CMP	289
+#define	GE_CMP	290
+#define	LOGICAL_XOR	291
+#define	LOGICAL_OR	292
+#define	LOGICAL_AND	293
+#define	LOGICAL_NOT	294
+#define	LOWER_THEN_ELSE	295
+#define	UMINUS	296
+#define	UPLUS	297
 
 #line 21 "parse.y"
+
+#include "config.h"
 
 #include <glib.h>
 #include <string.h>
@@ -70,7 +72,7 @@ extern char *loadfile;
 extern char *loadfile_glob;
 
 
-#line 44 "parse.y"
+#line 46 "parse.y"
 typedef union {
 	mpw_t val;
 	char *id;
@@ -93,7 +95,7 @@ typedef union {
 #define	YYFLAG		-32768
 #define	YYNTBASE	65
 
-#define YYTRANSLATE(x) ((unsigned)(x) <= 298 ? yytranslate[x] : 74)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 297 ? yytranslate[x] : 74)
 
 static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,    52,
@@ -121,11 +123,11 @@ static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-     2,     2,     2,     2,     2,     1,     2,     3,     4,     5,
-     6,     7,     8,     9,    10,    11,    12,    13,    14,    15,
-    16,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-    26,    27,    28,    29,    30,    31,    32,    33,    34,    35,
-    36,    37,    38,    39,    40,    41,    50,    51
+     2,     2,     2,     2,     2,     1,     3,     4,     5,     6,
+     7,     8,     9,    10,    11,    12,    13,    14,    15,    16,
+    17,    18,    19,    20,    21,    22,    23,    24,    25,    26,
+    27,    28,    29,    30,    31,    32,    33,    34,    35,    36,
+    37,    38,    39,    40,    41,    50,    51
 };
 
 #if YYDEBUG != 0
@@ -185,15 +187,15 @@ static const short yyrhs[] = {     3,
 
 #if YYDEBUG != 0
 static const short yyrline[] = { 0,
-    98,    99,   100,   101,   102,   103,   104,   107,   108,   110,
-   111,   112,   113,   114,   115,   116,   117,   118,   120,   121,
-   122,   123,   124,   125,   127,   128,   129,   130,   131,   132,
-   133,   134,   135,   136,   137,   138,   139,   140,   141,   142,
-   143,   144,   145,   146,   153,   154,   155,   156,   157,   158,
-   159,   160,   161,   162,   163,   164,   165,   166,   167,   168,
-   170,   171,   173,   174,   175,   177,   178,   179,   180,   181,
-   182,   183,   184,   185,   187,   188,   191,   194,   197,   198,
-   204,   205,   208,   209,   212,   213,   216
+   100,   101,   102,   103,   104,   105,   106,   109,   110,   112,
+   113,   114,   115,   116,   117,   118,   119,   120,   122,   123,
+   124,   125,   126,   127,   129,   130,   131,   132,   137,   138,
+   139,   140,   141,   143,   144,   145,   146,   147,   148,   149,
+   150,   151,   152,   153,   160,   161,   162,   163,   164,   165,
+   166,   167,   168,   169,   170,   171,   172,   173,   174,   175,
+   177,   178,   180,   181,   182,   184,   185,   186,   187,   188,
+   189,   190,   191,   192,   194,   195,   198,   201,   204,   205,
+   211,   212,   215,   216,   219,   220,   223
 };
 #endif
 
@@ -205,10 +207,10 @@ static const char * const yytname[] = {   "$","error","$undefined.","STARTTOK",
 "BAILOUT","EXCEPTION","CONTINUE","BREAK","WHILE","UNTIL","FOR","DO","IF","THEN",
 "ELSE","TO","BY","IN","AT","REGION_SEP","SEPAR","EQUALS","EQ_CMP","NE_CMP","CMP_CMP",
 "LT_CMP","GT_CMP","LE_CMP","GE_CMP","LOGICAL_XOR","LOGICAL_OR","LOGICAL_AND",
-"LOGICAL_NOT","LOWER_THEN_ELSE","'+'","'-'","'*'","'/'","'%'","'''","'!'","'^'",
-"UMINUS","UPLUS","'\\n'","'('","')'","'|'","','","'['","']'","'`'","'{'","'}'",
-"'&'","'.'","':'","fullexpr","expr","deref","ident","funcdef","identlist","exprlist",
-"matrixrows","reg", NULL
+"LOGICAL_NOT","LOWER_THEN_ELSE","'+'","'-'","'*'","'/'","'%'","'\\''","'!'",
+"'^'","UMINUS","UPLUS","'\\n'","'('","')'","'|'","','","'['","']'","'`'","'{'",
+"'}'","'&'","'.'","':'","fullexpr","expr","deref","ident","funcdef","identlist",
+"exprlist","matrixrows","reg", NULL
 };
 #endif
 
@@ -567,6 +569,7 @@ static const short yycheck[] = {     2,
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
 #line 3 "/usr/lib/bison.simple"
+/* This file comes from bison-1.27.  */
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -583,46 +586,66 @@ static const short yycheck[] = {     2,
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330,
+   Boston, MA 02111-1307, USA.  */
 
 /* As a special exception, when this file is copied by Bison into a
    Bison output file, you may use that output file without restriction.
    This special exception was added by the Free Software Foundation
    in version 1.24 of Bison.  */
 
-#ifndef alloca
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else /* not GNU C.  */
-#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi)
-#include <alloca.h>
-#else /* not sparc */
-#if defined (MSDOS) && !defined (__TURBOC__)
-#include <malloc.h>
-#else /* not MSDOS, or __TURBOC__ */
-#if defined(_AIX)
-#include <malloc.h>
- #pragma alloca
-#else /* not MSDOS, __TURBOC__, or _AIX */
-#ifdef __hpux
-#ifdef __cplusplus
-extern "C" {
-void *alloca (unsigned int);
-};
-#else /* not __cplusplus */
-void *alloca ();
-#endif /* not __cplusplus */
-#endif /* __hpux */
-#endif /* not _AIX */
-#endif /* not MSDOS, or __TURBOC__ */
-#endif /* not sparc.  */
-#endif /* not GNU C.  */
-#endif /* alloca not defined.  */
-
 /* This is the parser code that is written into each bison parser
   when the %semantic_parser declaration is not specified in the grammar.
   It was written by Richard Stallman by simplifying the hairy parser
   used when %semantic_parser is specified.  */
+
+#ifndef YYSTACK_USE_ALLOCA
+#ifdef alloca
+#define YYSTACK_USE_ALLOCA
+#else /* alloca not defined */
+#ifdef __GNUC__
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#else /* not GNU C.  */
+#if (!defined (__STDC__) && defined (sparc)) || defined (__sparc__) || defined (__sparc) || defined (__sgi) || (defined (__sun) && defined (__i386))
+#define YYSTACK_USE_ALLOCA
+#include <alloca.h>
+#else /* not sparc */
+/* We think this test detects Watcom and Microsoft C.  */
+/* This used to test MSDOS, but that is a bad idea
+   since that symbol is in the user namespace.  */
+#if (defined (_MSDOS) || defined (_MSDOS_)) && !defined (__TURBOC__)
+#if 0 /* No need for malloc.h, which pollutes the namespace;
+	 instead, just don't use alloca.  */
+#include <malloc.h>
+#endif
+#else /* not MSDOS, or __TURBOC__ */
+#if defined(_AIX)
+/* I don't know what this was needed for, but it pollutes the namespace.
+   So I turned it off.   rms, 2 May 1997.  */
+/* #include <malloc.h>  */
+ #pragma alloca
+#define YYSTACK_USE_ALLOCA
+#else /* not MSDOS, or __TURBOC__, or _AIX */
+#if 0
+#ifdef __hpux /* haible@ilog.fr says this works for HPUX 9.05 and up,
+		 and on HPUX 10.  Eventually we can turn this on.  */
+#define YYSTACK_USE_ALLOCA
+#define alloca __builtin_alloca
+#endif /* __hpux */
+#endif
+#endif /* not _AIX */
+#endif /* not MSDOS, or __TURBOC__ */
+#endif /* not sparc */
+#endif /* not GNU C */
+#endif /* alloca not defined */
+#endif /* YYSTACK_USE_ALLOCA not defined */
+
+#ifdef YYSTACK_USE_ALLOCA
+#define YYSTACK_ALLOC alloca
+#else
+#define YYSTACK_ALLOC malloc
+#endif
 
 /* Note: there must be only one dollar sign in this file.
    It is replaced by the list of actions, each action
@@ -632,8 +655,8 @@ void *alloca ();
 #define yyclearin	(yychar = YYEMPTY)
 #define YYEMPTY		-2
 #define YYEOF		0
-#define YYACCEPT	return(0)
-#define YYABORT 	return(1)
+#define YYACCEPT	goto yyacceptlab
+#define YYABORT 	goto yyabortlab
 #define YYERROR		goto yyerrlab1
 /* Like YYERROR except do call yyerror.
    This remains here temporarily to ease the
@@ -714,12 +737,12 @@ int yydebug;			/*  nonzero means print parse trace	*/
 #ifndef YYMAXDEPTH
 #define YYMAXDEPTH 10000
 #endif
-
-/* Prevent warning if -Wstrict-prototypes.  */
-#ifdef __GNUC__
-int yyparse (void);
-#endif
 
+/* Define __yy_memcpy.  Note that the size argument
+   should be passed with type unsigned int, because that is what the non-GCC
+   definitions require.  With GCC, __builtin_memcpy takes an arg
+   of type size_t, but it can handle unsigned int.  */
+
 #if __GNUC__ > 1		/* GNU C and GNU C++ define this.  */
 #define __yy_memcpy(TO,FROM,COUNT)	__builtin_memcpy(TO,FROM,COUNT)
 #else				/* not GNU C or C++ */
@@ -731,7 +754,7 @@ static void
 __yy_memcpy (to, from, count)
      char *to;
      char *from;
-     int count;
+     unsigned int count;
 {
   register char *f = from;
   register char *t = to;
@@ -746,10 +769,10 @@ __yy_memcpy (to, from, count)
 /* This is the most reliable way to avoid incompatibilities
    in available built-in functions on various systems.  */
 static void
-__yy_memcpy (char *to, char *from, int count)
+__yy_memcpy (char *to, char *from, unsigned int count)
 {
-  register char *f = from;
   register char *t = to;
+  register char *f = from;
   register int i = count;
 
   while (i-- > 0)
@@ -759,7 +782,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/lib/bison.simple"
+#line 216 "/usr/lib/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -779,6 +802,15 @@ __yy_memcpy (char *to, char *from, int count)
 #define YYPARSE_PARAM_ARG
 #define YYPARSE_PARAM_DECL
 #endif /* not YYPARSE_PARAM */
+
+/* Prevent warning if -Wstrict-prototypes.  */
+#ifdef __GNUC__
+#ifdef YYPARSE_PARAM
+int yyparse (void *);
+#else
+int yyparse (void);
+#endif
+#endif
 
 int
 yyparse(YYPARSE_PARAM_ARG)
@@ -808,6 +840,7 @@ yyparse(YYPARSE_PARAM_ARG)
 #endif
 
   int yystacksize = YYINITDEPTH;
+  int yyfree_stacks = 0;
 
 #ifdef YYPURE
   int yychar;
@@ -892,18 +925,32 @@ yynewstate:
       if (yystacksize >= YYMAXDEPTH)
 	{
 	  yyerror("parser stack overflow");
+	  if (yyfree_stacks)
+	    {
+	      free (yyss);
+	      free (yyvs);
+#ifdef YYLSP_NEEDED
+	      free (yyls);
+#endif
+	    }
 	  return 2;
 	}
       yystacksize *= 2;
       if (yystacksize > YYMAXDEPTH)
 	yystacksize = YYMAXDEPTH;
-      yyss = (short *) alloca (yystacksize * sizeof (*yyssp));
-      __yy_memcpy ((char *)yyss, (char *)yyss1, size * sizeof (*yyssp));
-      yyvs = (YYSTYPE *) alloca (yystacksize * sizeof (*yyvsp));
-      __yy_memcpy ((char *)yyvs, (char *)yyvs1, size * sizeof (*yyvsp));
+#ifndef YYSTACK_USE_ALLOCA
+      yyfree_stacks = 1;
+#endif
+      yyss = (short *) YYSTACK_ALLOC (yystacksize * sizeof (*yyssp));
+      __yy_memcpy ((char *)yyss, (char *)yyss1,
+		   size * (unsigned int) sizeof (*yyssp));
+      yyvs = (YYSTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yyvsp));
+      __yy_memcpy ((char *)yyvs, (char *)yyvs1,
+		   size * (unsigned int) sizeof (*yyvsp));
 #ifdef YYLSP_NEEDED
-      yyls = (YYLTYPE *) alloca (yystacksize * sizeof (*yylsp));
-      __yy_memcpy ((char *)yyls, (char *)yyls1, size * sizeof (*yylsp));
+      yyls = (YYLTYPE *) YYSTACK_ALLOC (yystacksize * sizeof (*yylsp));
+      __yy_memcpy ((char *)yyls, (char *)yyls1,
+		   size * (unsigned int) sizeof (*yylsp));
 #endif
 #endif /* no yyoverflow */
 
@@ -1064,336 +1111,336 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 98 "parse.y"
+#line 100 "parse.y"
 { YYACCEPT; ;
     break;}
 case 2:
-#line 99 "parse.y"
+#line 101 "parse.y"
 { loadfile = yyvsp[-1].id; YYACCEPT; ;
     break;}
 case 3:
-#line 100 "parse.y"
+#line 102 "parse.y"
 { loadfile_glob = yyvsp[-1].id; YYACCEPT; ;
     break;}
 case 4:
-#line 101 "parse.y"
+#line 103 "parse.y"
 { YYACCEPT; ;
     break;}
 case 5:
-#line 102 "parse.y"
+#line 104 "parse.y"
 { push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; ;
     break;}
 case 6:
-#line 103 "parse.y"
+#line 105 "parse.y"
 { return_ret = TRUE; yyclearin; YYABORT; ;
     break;}
 case 7:
-#line 104 "parse.y"
+#line 106 "parse.y"
 { return_ret = TRUE; ;
     break;}
 case 8:
-#line 107 "parse.y"
+#line 109 "parse.y"
 { PUSH_ACT(E_SEPAR); ;
     break;}
 case 9:
-#line 108 "parse.y"
+#line 110 "parse.y"
 { push_null(); PUSH_ACT(E_SEPAR);
 					  push_spacer(); ;
     break;}
 case 10:
-#line 110 "parse.y"
+#line 112 "parse.y"
 { push_spacer(); ;
     break;}
 case 11:
-#line 111 "parse.y"
+#line 113 "parse.y"
 { PUSH_ACT(E_EQUALS); ;
     break;}
 case 12:
-#line 112 "parse.y"
+#line 114 "parse.y"
 { PUSH_ACT(E_ABS); ;
     break;}
 case 13:
-#line 113 "parse.y"
+#line 115 "parse.y"
 { PUSH_ACT(E_PLUS); ;
     break;}
 case 14:
-#line 114 "parse.y"
+#line 116 "parse.y"
 { PUSH_ACT(E_MINUS); ;
     break;}
 case 15:
-#line 115 "parse.y"
+#line 117 "parse.y"
 { PUSH_ACT(E_MUL); ;
     break;}
 case 16:
-#line 116 "parse.y"
+#line 118 "parse.y"
 { PUSH_ACT(E_DIV); ;
     break;}
 case 17:
-#line 117 "parse.y"
+#line 119 "parse.y"
 { PUSH_ACT(E_MOD); ;
     break;}
 case 18:
-#line 118 "parse.y"
+#line 120 "parse.y"
 { PUSH_ACT(E_CMP_CMP); ;
     break;}
 case 19:
-#line 120 "parse.y"
+#line 122 "parse.y"
 { PUSH_ACT(E_EQ_CMP); ;
     break;}
 case 20:
-#line 121 "parse.y"
+#line 123 "parse.y"
 { PUSH_ACT(E_NE_CMP); ;
     break;}
 case 21:
-#line 122 "parse.y"
+#line 124 "parse.y"
 { PUSH_ACT(E_LT_CMP); ;
     break;}
 case 22:
-#line 123 "parse.y"
+#line 125 "parse.y"
 { PUSH_ACT(E_GT_CMP); ;
     break;}
 case 23:
-#line 124 "parse.y"
+#line 126 "parse.y"
 { PUSH_ACT(E_LE_CMP); ;
     break;}
 case 24:
-#line 125 "parse.y"
+#line 127 "parse.y"
 { PUSH_ACT(E_GE_CMP); ;
     break;}
 case 25:
-#line 127 "parse.y"
+#line 129 "parse.y"
 { PUSH_ACT(E_LOGICAL_AND); ;
     break;}
 case 26:
-#line 128 "parse.y"
+#line 130 "parse.y"
 { PUSH_ACT(E_LOGICAL_OR); ;
     break;}
 case 27:
-#line 129 "parse.y"
+#line 131 "parse.y"
 { PUSH_ACT(E_LOGICAL_XOR); ;
     break;}
 case 28:
-#line 130 "parse.y"
+#line 132 "parse.y"
 { PUSH_ACT(E_LOGICAL_NOT); ;
     break;}
 case 29:
-#line 131 "parse.y"
+#line 137 "parse.y"
 { PUSH_ACT(E_FACT); ;
     break;}
 case 30:
-#line 132 "parse.y"
+#line 138 "parse.y"
 { PUSH_ACT(E_TRANSPOSE); ;
     break;}
 case 31:
-#line 133 "parse.y"
+#line 139 "parse.y"
 { PUSH_ACT(E_NEG); ;
     break;}
 case 33:
-#line 135 "parse.y"
+#line 141 "parse.y"
 { PUSH_ACT(E_EXP); ;
     break;}
 case 34:
-#line 136 "parse.y"
+#line 143 "parse.y"
 { PUSH_ACT(E_GET_VELEMENT); ;
     break;}
 case 35:
-#line 137 "parse.y"
+#line 144 "parse.y"
 { PUSH_ACT(E_GET_ELEMENT); ;
     break;}
 case 36:
-#line 138 "parse.y"
+#line 145 "parse.y"
 { PUSH_ACT(E_GET_REGION); ;
     break;}
 case 37:
-#line 139 "parse.y"
+#line 146 "parse.y"
 { PUSH_ACT(E_GET_REGION); ;
     break;}
 case 38:
-#line 140 "parse.y"
+#line 147 "parse.y"
 { PUSH_ACT(E_GET_REGION); ;
     break;}
 case 39:
-#line 141 "parse.y"
+#line 148 "parse.y"
 { PUSH_ACT(E_GET_ROW_REGION); ;
     break;}
 case 40:
-#line 142 "parse.y"
+#line 149 "parse.y"
 { PUSH_ACT(E_GET_ROW_REGION); ;
     break;}
 case 41:
-#line 143 "parse.y"
+#line 150 "parse.y"
 { PUSH_ACT(E_GET_COL_REGION); ;
     break;}
 case 42:
-#line 144 "parse.y"
+#line 151 "parse.y"
 { PUSH_ACT(E_GET_COL_REGION); ;
     break;}
 case 43:
-#line 145 "parse.y"
+#line 152 "parse.y"
 { if(!push_matrix(FALSE)) {SYNTAX_ERROR;} ;
     break;}
 case 44:
-#line 146 "parse.y"
+#line 153 "parse.y"
 { if(!push_matrix(TRUE)) {SYNTAX_ERROR;} ;
     break;}
 case 45:
-#line 153 "parse.y"
+#line 160 "parse.y"
 {SYNTAX_ERROR;;
     break;}
 case 46:
-#line 154 "parse.y"
+#line 161 "parse.y"
 {SYNTAX_ERROR;;
     break;}
 case 47:
-#line 155 "parse.y"
+#line 162 "parse.y"
 {SYNTAX_ERROR;;
     break;}
 case 48:
-#line 156 "parse.y"
+#line 163 "parse.y"
 { PUSH_ACT(E_WHILE_CONS); ;
     break;}
 case 49:
-#line 157 "parse.y"
+#line 164 "parse.y"
 { PUSH_ACT(E_UNTIL_CONS); ;
     break;}
 case 50:
-#line 158 "parse.y"
+#line 165 "parse.y"
 { PUSH_ACT(E_DOWHILE_CONS); ;
     break;}
 case 51:
-#line 159 "parse.y"
+#line 166 "parse.y"
 { PUSH_ACT(E_DOUNTIL_CONS); ;
     break;}
 case 52:
-#line 160 "parse.y"
+#line 167 "parse.y"
 { PUSH_ACT(E_FOR_CONS); ;
     break;}
 case 53:
-#line 161 "parse.y"
+#line 168 "parse.y"
 { PUSH_ACT(E_FORBY_CONS); ;
     break;}
 case 54:
-#line 162 "parse.y"
+#line 169 "parse.y"
 { PUSH_ACT(E_FORIN_CONS); ;
     break;}
 case 55:
-#line 163 "parse.y"
+#line 170 "parse.y"
 { PUSH_ACT(E_IF_CONS); ;
     break;}
 case 56:
-#line 164 "parse.y"
+#line 171 "parse.y"
 { PUSH_ACT(E_IFELSE_CONS); ;
     break;}
 case 58:
-#line 166 "parse.y"
+#line 173 "parse.y"
 { PUSH_ACT(E_REFERENCE); ;
     break;}
 case 60:
-#line 168 "parse.y"
+#line 175 "parse.y"
 { push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_DIRECTCALL); ;
     break;}
 case 61:
-#line 170 "parse.y"
+#line 177 "parse.y"
 { PUSH_ACT(E_DIRECTCALL); ;
     break;}
 case 62:
-#line 171 "parse.y"
+#line 178 "parse.y"
 { push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_CALL); ;
     break;}
 case 63:
-#line 173 "parse.y"
+#line 180 "parse.y"
 { PUSH_ACT(E_CALL); ;
     break;}
 case 64:
-#line 174 "parse.y"
+#line 181 "parse.y"
 { PUSH_ACT(E_CALL); ;
     break;}
 case 65:
-#line 175 "parse.y"
+#line 182 "parse.y"
 { push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_CALL); ;
     break;}
 case 66:
-#line 177 "parse.y"
+#line 184 "parse.y"
 { PUSH_ACT(E_EQUALS); ;
     break;}
 case 69:
-#line 180 "parse.y"
+#line 187 "parse.y"
 { PUSH_ACT(E_RETURN); ;
     break;}
 case 70:
-#line 181 "parse.y"
+#line 188 "parse.y"
 { PUSH_ACT(E_BAILOUT); ;
     break;}
 case 71:
-#line 182 "parse.y"
+#line 189 "parse.y"
 { PUSH_ACT(E_EXCEPTION); ;
     break;}
 case 72:
-#line 183 "parse.y"
+#line 190 "parse.y"
 { PUSH_ACT(E_CONTINUE); ;
     break;}
 case 73:
-#line 184 "parse.y"
+#line 191 "parse.y"
 { PUSH_ACT(E_BREAK); ;
     break;}
 case 74:
-#line 185 "parse.y"
+#line 192 "parse.y"
 { stack_push(&evalstack,
 						     makenum_use(yyvsp[0].val)); ;
     break;}
 case 75:
-#line 187 "parse.y"
+#line 194 "parse.y"
 { PUSH_STRING(yyvsp[0].id); ;
     break;}
 case 76:
-#line 188 "parse.y"
+#line 195 "parse.y"
 { push_null(); ;
     break;}
 case 77:
-#line 191 "parse.y"
+#line 198 "parse.y"
 { PUSH_ACT(E_DEREFERENCE); ;
     break;}
 case 78:
-#line 194 "parse.y"
+#line 201 "parse.y"
 { PUSH_IDENTIFIER(yyvsp[0].id); g_free(yyvsp[0].id); ;
     break;}
 case 79:
-#line 197 "parse.y"
+#line 204 "parse.y"
 { if(!push_func()) {SYNTAX_ERROR;} ;
     break;}
 case 80:
-#line 198 "parse.y"
+#line 205 "parse.y"
 { if(!push_marker(EXPRLIST_START_NODE))
 						{SYNTAX_ERROR;}
 					  if(!push_func())
 					  	{SYNTAX_ERROR;} ;
     break;}
 case 82:
-#line 205 "parse.y"
+#line 212 "parse.y"
 { if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} ;
     break;}
 case 84:
-#line 209 "parse.y"
+#line 216 "parse.y"
 { if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} ;
     break;}
 case 85:
-#line 212 "parse.y"
+#line 219 "parse.y"
 { if(!push_matrix_row()) {SYNTAX_ERROR;} ;
     break;}
 case 86:
-#line 213 "parse.y"
+#line 220 "parse.y"
 { if(!push_matrix_row()) {SYNTAX_ERROR;} if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} ;
     break;}
 case 87:
-#line 216 "parse.y"
+#line 223 "parse.y"
 { PUSH_ACT(E_REGION_SEP); ;
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/lib/bison.simple"
+#line 542 "/usr/lib/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1588,6 +1635,30 @@ yyerrhandle:
 
   yystate = yyn;
   goto yynewstate;
+
+ yyacceptlab:
+  /* YYACCEPT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 0;
+
+ yyabortlab:
+  /* YYABORT comes here.  */
+  if (yyfree_stacks)
+    {
+      free (yyss);
+      free (yyvs);
+#ifdef YYLSP_NEEDED
+      free (yyls);
+#endif
+    }
+  return 1;
 }
-#line 219 "parse.y"
+#line 226 "parse.y"
 

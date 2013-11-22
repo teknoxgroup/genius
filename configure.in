@@ -1,7 +1,7 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.4.3)
+AM_INIT_AUTOMAKE(genius,0.4.4)
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
 
@@ -12,7 +12,7 @@ AC_PROG_YACC
 AM_PROG_LEX
 AC_ARG_PROGRAM
 AM_PROG_LIBTOOL
-AM_PATH_GLIB
+AM_PATH_GLIB(1.2.0,,,gmodule)
 
 GNOME_COMPILE_WARNINGS
 
@@ -68,7 +68,7 @@ AC_SUBST(CPPFLAGS)
 AC_SUBST(LDFLAGS)
 
 dnl ## internationalization support
-ALL_LINGUAS="de es fr it ko cs no ga pt"
+ALL_LINGUAS="cs es fr it ko no pt sv"
 AM_GNU_GETTEXT
 AC_LINK_FILES($nls_cv_header_libgt, $nls_cv_header_intl)
 

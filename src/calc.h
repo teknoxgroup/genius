@@ -45,15 +45,6 @@ typedef struct _calcstate_t {
 	int scientific_notation; /*always scientific notation*/
 } calcstate_t;
 
-typedef struct _plugin_t {
-	char *file;
-	char *name;
-} plugin_t;
-
-/*read or reread the plugin list from the share/genius/plugins directory*/
-void read_plugin_list(void);
-extern GList *plugin_list;
-
 /*so we can use and set the yyparse function for parse errors*/
 int yyparse(void);
 

@@ -2426,7 +2426,6 @@ op_two_nodes(ETree *rr, ETree *ll, int oper)
 		n->op.args = g_list_append(NULL,copynode(arg[0]));
 		n->op.args = g_list_append(n->op.args,copynode(arg[1]));
 		n->op.nargs = 2;
-		mpw_clear(res);
 		return n;
 	}
 }
@@ -3298,8 +3297,10 @@ evalcomp(ETree *n)
 	int oper;
 	r = g_new(ETree *,n->comp.nargs);
 
-	if(evalargs(n->comp.args,r,TRUE)==2)
+	if(evalargs(n->comp.args,r,TRUE)==2) {
+		g_free(r);
 		return NULL;
+	}
 	
 	for(ri=r,li=n->comp.comp;li;li=g_list_next(li),ri++) {
 		int lev;

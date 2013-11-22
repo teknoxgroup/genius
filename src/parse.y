@@ -19,6 +19,8 @@
  * USA.
  */
 %{
+#include "config.h"
+
 #include <glib.h>
 #include <string.h>
 #include "structs.h"
@@ -128,11 +130,16 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr LOGICAL_OR expr	{ PUSH_ACT(E_LOGICAL_OR); }
 	|	expr LOGICAL_XOR expr	{ PUSH_ACT(E_LOGICAL_XOR); }
 	|	LOGICAL_NOT expr	{ PUSH_ACT(E_LOGICAL_NOT); }
+	
+	/*|	expr IN expr		{ PUSH_ACT(E_EXISTS_IN); }
+	|	expr LOGICAL_NOT IN expr	{ PUSH_ACT(E_NOT_EXISTS_IN); }*/
+
 	|	expr '!'		{ PUSH_ACT(E_FACT); }
 	|	expr '\''		{ PUSH_ACT(E_TRANSPOSE); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
 	|	'+' expr %prec UPLUS
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
+	
 	|	expr AT expr ')'	{ PUSH_ACT(E_GET_VELEMENT); }
 	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
 	|	expr AT reg ',' expr ')' { PUSH_ACT(E_GET_REGION); }
