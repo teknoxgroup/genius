@@ -1,6 +1,6 @@
-# Makefile.in generated automatically by automake 1.4 from Makefile.am
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
 
-# Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
 # This Makefile.in is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -63,40 +63,49 @@ AS = @AS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
+CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 DATADIRNAME = @DATADIRNAME@
 DLLTOOL = @DLLTOOL@
+ECHO = @ECHO@
+EXEEXT = @EXEEXT@
+EXTRA_WARNING_CFLAGS = @EXTRA_WARNING_CFLAGS@
+GCONFTOOL = @GCONFTOOL@
+GCONF_CONFIG_SOURCE = @GCONF_CONFIG_SOURCE@
 GENCAT = @GENCAT@
-GLIB_CFLAGS = @GLIB_CFLAGS@
-GLIB_CONFIG = @GLIB_CONFIG@
-GLIB_LIBS = @GLIB_LIBS@
+GENIUS_CFLAGS = @GENIUS_CFLAGS@
+GENIUS_LIBS = @GENIUS_LIBS@
+GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
-GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
-GNOMEUI_LIBS = @GNOMEUI_LIBS@
-GNOME_APPLETS_LIBS = @GNOME_APPLETS_LIBS@
-GNOME_CAPPLET_LIBS = @GNOME_CAPPLET_LIBS@
-GNOME_CONFIG = @GNOME_CONFIG@
-GNOME_GENIUS = @GNOME_GENIUS@
-GNOME_INCLUDEDIR = @GNOME_INCLUDEDIR@
-GNOME_LIBDIR = @GNOME_LIBDIR@
-GNOME_LIBS = @GNOME_LIBS@
-GNOME_SUPPORT = @GNOME_SUPPORT@
-GNORBA_CFLAGS = @GNORBA_CFLAGS@
-GNORBA_LIBS = @GNORBA_LIBS@
-GTKXMHTML_LIBS = @GTKXMHTML_LIBS@
-GTK_CFLAGS = @GTK_CFLAGS@
-GTK_CONFIG = @GTK_CONFIG@
-GTK_LIBS = @GTK_LIBS@
+GNOME_INTERFACE_VERSION = @GNOME_INTERFACE_VERSION@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
+INSTALL_GCONF_CONFIG_SOURCE = @INSTALL_GCONF_CONFIG_SOURCE@
 INSTOBJEXT = @INSTOBJEXT@
 INTLDEPS = @INTLDEPS@
 INTLLIBS = @INTLLIBS@
 INTLOBJS = @INTLOBJS@
-LD = @LD@
+INTLTOOL_CAVES_RULE = @INTLTOOL_CAVES_RULE@
+INTLTOOL_DESKTOP_RULE = @INTLTOOL_DESKTOP_RULE@
+INTLTOOL_DIRECTORY_RULE = @INTLTOOL_DIRECTORY_RULE@
+INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
+INTLTOOL_KEYS_RULE = @INTLTOOL_KEYS_RULE@
+INTLTOOL_MERGE = @INTLTOOL_MERGE@
+INTLTOOL_OAF_RULE = @INTLTOOL_OAF_RULE@
+INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_PONG_RULE = @INTLTOOL_PONG_RULE@
+INTLTOOL_PROP_RULE = @INTLTOOL_PROP_RULE@
+INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
+INTLTOOL_SERVER_RULE = @INTLTOOL_SERVER_RULE@
+INTLTOOL_SHEET_RULE = @INTLTOOL_SHEET_RULE@
+INTLTOOL_SOUNDLIST_RULE = @INTLTOOL_SOUNDLIST_RULE@
+INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
+INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
+INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
 LIBTOOL = @LIBTOOL@
@@ -105,25 +114,22 @@ MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
-NM = @NM@
-ORBIT_CFLAGS = @ORBIT_CFLAGS@
-ORBIT_CONFIG = @ORBIT_CONFIG@
-ORBIT_IDL = @ORBIT_IDL@
-ORBIT_LIBS = @ORBIT_LIBS@
+OBJDUMP = @OBJDUMP@
+OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
+PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
+POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
-PTHREAD_LIB = @PTHREAD_LIB@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
+STRIP = @STRIP@
 TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
-XPM_LIBS = @XPM_LIBS@
+WARN_CFLAGS = @WARN_CFLAGS@
 YACC = @YACC@
-ZVT_LIBS = @ZVT_LIBS@
-cflags_set = @cflags_set@
 cxxflags_set = @cxxflags_set@
 l = @l@
 
@@ -137,25 +143,29 @@ plugin_includedir = $(includedir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
-CFLAGS = @CFLAGS@ @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
 
-INCLUDES =  	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	-DLOCALEDIR=\"$(datadir)/locale\" 	-I$(includedir) 	$(GMP_INCLUDEDIR) 	$(GNOME_INCLUDEDIR)
-
-
-bin_PROGRAMS = @GNOME_GENIUS@ genius
-
-EXTRA_PROGRAMS = gnome-genius
-
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y
+INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_builddir)						$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
 
 
-gnome_genius_LDADD =  	$(GNOME_LIBDIR) 	$(GNOMEUI_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@ZVT_LIBS@ 	@READLINE_LIB@ 	@TERMCAP_LIB@
+bin_PROGRAMS = gnome-genius genius genius-readline-helper
+
+gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y
+gnome_genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_LDADD =  	-lm 	$(GLIB_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@READLINE_LIB@ 	@TERMCAP_LIB@
+genius_readline_helper_SOURCES =   	genius_lists.c				genius-readline-helper.c
+
+
+# FIXME: no need for so many libs
+genius_readline_helper_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+
+
+genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+
+
+genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 plugin_include_HEADERS =  	plug_api.h		structs.h		calc.h			eval.h
@@ -170,15 +180,13 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES =  $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin.in
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop test.plugin.in # lib.gel 
 
 Utilities_DATA = gnome-genius.desktop
 
-Library_DATA = lib.gel lib.cgel
+# Library_DATA = lib.gel lib.cgel
 
 Plugindesc_DATA = test.plugin
-
-MOSTLYCLEANFILES = lib.cgel
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -190,25 +198,37 @@ LIBS = @LIBS@
 libtestplugin_la_LDFLAGS = 
 libtestplugin_la_LIBADD = 
 libtestplugin_la_OBJECTS =  testplugin.lo
+bin_PROGRAMS =  gnome-genius$(EXEEXT) genius$(EXEEXT) \
+genius-readline-helper$(EXEEXT)
 PROGRAMS =  $(bin_PROGRAMS)
 
-gnome_genius_OBJECTS =  calc.o eval.o gnome-genius.o util.o dict.o \
-funclib.o mpwrap.o matrix.o matrixw.o matop.o compil.o lexer.o \
-parseutil.o inter.o plugin.o plugread.o parse.o
+gnome_genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) \
+gnome-genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) \
+mpwrap.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
+compil.$(OBJEXT) lexer.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) \
+plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
+genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT)
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
-genius_OBJECTS =  calc.o eval.o genius.o util.o dict.o funclib.o \
-mpwrap.o matrix.o matrixw.o matop.o compil.o parseutil.o inter.o \
-lexer.o plugin.o plugread_nongnome.o parse.o
+genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
+util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) mpwrap.$(OBJEXT) \
+matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) compil.$(OBJEXT) \
+parseutil.$(OBJEXT) inter.$(OBJEXT) lexer.$(OBJEXT) plugin.$(OBJEXT) \
+plugread_nongnome.$(OBJEXT) parse.$(OBJEXT) genius_lists.$(OBJEXT) \
+utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
+genius_readline_helper_OBJECTS =  genius_lists.$(OBJEXT) \
+genius-readline-helper.$(OBJEXT)
+genius_readline_helper_DEPENDENCIES = 
+genius_readline_helper_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DATA =  $(Library_DATA) $(Plugindesc_DATA) $(Utilities_DATA)
+DATA =  $(Plugindesc_DATA) $(Utilities_DATA)
 
 HEADERS =  $(plugin_include_HEADERS)
 
@@ -217,14 +237,14 @@ DIST_COMMON =  Makefile.am Makefile.in lexer.c parse.c
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
-TAR = tar
+TAR = gtar
 GZIP_ENV = --best
-SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES)
-OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS)
+SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES) $(genius_readline_helper_SOURCES)
+OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS) $(genius_readline_helper_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
-.SUFFIXES: .S .c .l .lo .o .s .y
+.SUFFIXES: .S .c .l .lo .o .obj .s .y
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps src/Makefile
 
@@ -261,6 +281,11 @@ uninstall-pluginLTLIBRARIES:
 .c.o:
 	$(COMPILE) -c $<
 
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
 .s.o:
 	$(COMPILE) -c $<
 
@@ -269,6 +294,7 @@ uninstall-pluginLTLIBRARIES:
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
 
 clean-compile:
 
@@ -324,13 +350,17 @@ uninstall-binPROGRAMS:
 	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	done
 
-gnome-genius: $(gnome_genius_OBJECTS) $(gnome_genius_DEPENDENCIES)
-	@rm -f gnome-genius
+gnome-genius$(EXEEXT): $(gnome_genius_OBJECTS) $(gnome_genius_DEPENDENCIES)
+	@rm -f gnome-genius$(EXEEXT)
 	$(LINK) $(gnome_genius_LDFLAGS) $(gnome_genius_OBJECTS) $(gnome_genius_LDADD) $(LIBS)
 
-genius: $(genius_OBJECTS) $(genius_DEPENDENCIES)
-	@rm -f genius
+genius$(EXEEXT): $(genius_OBJECTS) $(genius_DEPENDENCIES)
+	@rm -f genius$(EXEEXT)
 	$(LINK) $(genius_LDFLAGS) $(genius_OBJECTS) $(genius_LDADD) $(LIBS)
+
+genius-readline-helper$(EXEEXT): $(genius_readline_helper_OBJECTS) $(genius_readline_helper_DEPENDENCIES)
+	@rm -f genius-readline-helper$(EXEEXT)
+	$(LINK) $(genius_readline_helper_LDFLAGS) $(genius_readline_helper_OBJECTS) $(genius_readline_helper_LDADD) $(LIBS)
 .l.c:
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) $< && mv $(LEX_OUTPUT_ROOT).c $@
 .y.c:
@@ -340,25 +370,6 @@ genius: $(genius_OBJECTS) $(genius_DEPENDENCIES)
 	else :; fi
 parse.h: parse.c
 
-
-install-LibraryDATA: $(Library_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(Librarydir)
-	@list='$(Library_DATA)'; for p in $$list; do \
-	  if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Librarydir)/$$p"; \
-	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Librarydir)/$$p; \
-	  else if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(Librarydir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(Librarydir)/$$p; \
-	  fi; fi; \
-	done
-
-uninstall-LibraryDATA:
-	@$(NORMAL_UNINSTALL)
-	list='$(Library_DATA)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(Librarydir)/$$p; \
-	done
 
 install-PlugindescDATA: $(Plugindesc_DATA)
 	@$(NORMAL_INSTALL)
@@ -450,13 +461,57 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
+calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
+	dict.h funclib.h matrixw.h matrix.h compil.h plugin.h \
+	geloutput.h lexer.h parse.h
+compil.o: compil.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h matrix.h matrixw.h compil.h
+dict.o: dict.c ../config.h eval.h mpwrap.h structs.h dict.h util.h \
+	funclib.h compil.h
+eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h matrix.h matrixw.h matop.h compil.h utype.h
+funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
+	funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
+geloutput.o: geloutput.c ../config.h structs.h mpwrap.h geloutput.h
+genius-readline-helper.o: genius-readline-helper.c ../config.h
+genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
+	inter.h geloutput.h lexer.h plugin.h
+genius_lists.o: genius_lists.c
+gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
+	util.h dict.h geloutput.h plugin.h inter.h
+inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h plugin.h \
+	inter.h
+lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
+	parse.h util.h
+matop.o: matop.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h funclib.h matrix.h matrixw.h matop.h
+matrix.o: matrix.c ../config.h matrix.h
+matrixw.o: matrixw.c ../config.h structs.h mpwrap.h eval.h matrix.h \
+	matrixw.h
+mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
+parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
+	calc.h matrix.h matrixw.h parseutil.h extra.h
+parseutil.o: parseutil.c ../config.h structs.h mpwrap.h eval.h dict.h \
+	util.h calc.h matrix.h matrixw.h parseutil.h extra.h
+plugin.o: plugin.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
+	dict.h funclib.h matrixw.h matrix.h compil.h parse.h plug_api.h \
+	plugin.h plugread.h
+plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugin.h \
+	plugread.h
+plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
+	mpwrap.h plugin.h plugread.h
+testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h calc.h \
+	structs.h mpwrap.h geloutput.h
+util.o: util.c ../config.h util.h
+utype.o: utype.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h funclib.h matrix.h matrixw.h matop.h compil.h utype.h
 
 info-am:
 info: info-am
@@ -469,17 +524,16 @@ installcheck: installcheck-am
 install-exec-am: install-binPROGRAMS
 install-exec: install-exec-am
 
-install-data-am: install-pluginLTLIBRARIES install-LibraryDATA \
-		install-PlugindescDATA install-UtilitiesDATA \
-		install-plugin_includeHEADERS
+install-data-am: install-pluginLTLIBRARIES install-PlugindescDATA \
+		install-UtilitiesDATA install-plugin_includeHEADERS
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
 uninstall-am: uninstall-pluginLTLIBRARIES uninstall-binPROGRAMS \
-		uninstall-LibraryDATA uninstall-PlugindescDATA \
-		uninstall-UtilitiesDATA uninstall-plugin_includeHEADERS
+		uninstall-PlugindescDATA uninstall-UtilitiesDATA \
+		uninstall-plugin_includeHEADERS
 uninstall: uninstall-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
 all-redirect: all-am
@@ -487,13 +541,11 @@ install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(plugindir) $(DESTDIR)$(bindir) \
-		$(DESTDIR)$(Librarydir) $(DESTDIR)$(Plugindescdir) \
-		$(DESTDIR)$(Utilitiesdir) \
+		$(DESTDIR)$(Plugindescdir) $(DESTDIR)$(Utilitiesdir) \
 		$(DESTDIR)$(plugin_includedir)
 
 
 mostlyclean-generic:
-	-test -z "$(MOSTLYCLEANFILES)" || rm -f $(MOSTLYCLEANFILES)
 
 clean-generic:
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
@@ -503,7 +555,7 @@ distclean-generic:
 	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
 
 maintainer-clean-generic:
-	-test -z "lexerlparsehparsec$(BUILT_SOURCES)" || rm -f lexerl parseh parsec $(BUILT_SOURCES)
+	-test -z "lexercparsehparsec$(BUILT_SOURCES)" || rm -f lexerc parseh parsec $(BUILT_SOURCES)
 mostlyclean-am:  mostlyclean-pluginLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-binPROGRAMS \
 		mostlyclean-tags mostlyclean-generic
@@ -539,9 +591,8 @@ mostlyclean-compile distclean-compile clean-compile \
 maintainer-clean-compile mostlyclean-libtool distclean-libtool \
 clean-libtool maintainer-clean-libtool mostlyclean-binPROGRAMS \
 distclean-binPROGRAMS clean-binPROGRAMS maintainer-clean-binPROGRAMS \
-uninstall-binPROGRAMS install-binPROGRAMS uninstall-LibraryDATA \
-install-LibraryDATA uninstall-PlugindescDATA install-PlugindescDATA \
-uninstall-UtilitiesDATA install-UtilitiesDATA \
+uninstall-binPROGRAMS install-binPROGRAMS uninstall-PlugindescDATA \
+install-PlugindescDATA uninstall-UtilitiesDATA install-UtilitiesDATA \
 uninstall-plugin_includeHEADERS install-plugin_includeHEADERS tags \
 mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
 distdir info-am info dvi-am dvi check check-am installcheck-am \
@@ -551,8 +602,10 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-lib.cgel: lib.gel genius
-	$(top_builddir)/src/genius --compile lib.gel > lib.cgel
+# MOSTLYCLEANFILES = lib.cgel
+
+# lib.cgel: lib.gel genius
+#	$(top_builddir)/src/genius --compile lib.gel > temp.cgel && mv -f temp.cgel lib.cgel
 
 parse.h: parse.y
 	$(YACC) $(YFLAGS) $<

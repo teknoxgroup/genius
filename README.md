@@ -1,30 +1,12 @@
 Genius Calculator
 =================
 
-------------------------------------------------------------------
-NOTE: if you are using the vi mode of readline and the gui version
-of genius (gnome-genius), you need to patch readline since there
-is a bug in readline that makes it lock up. I've sent a patch to
-the maintainers. In the meantime apply the readline-4.0.patch.
-------------------------------------------------------------------
-
 Although it's under heavy development, it's actually very usable.
 I use it myself as my desktop calculator.
 
 To make myself look important, I also made up an official looking name for
 the programming language of Genius, it's called GEL, (Genius Extention
 Language) :)
-
-Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
-
-- need to make more built-in functions!
-- complete matrix support, right it is not complete
-- CORBA interface
-- do a code clean-up (such as split up eval.[ch]) and make the names of
-  types, functions and variables more consistent
-- clean up calc.[ch] to be a better "interface to the calculator"
-- profile and make the code leaner and meaner
-- optimize the engine a bit more
 
 Features of Genius:
 
@@ -39,8 +21,13 @@ Features of Genius:
  * anonymous functions
  * matrix support
  * complex numbers
- * modular arithmetic
  * more ...
+
+Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
+
+- profile and make the code leaner and meaner
+- optimize the engine a bit more
+- fix modular arithmetic
 
 How to use this thing: (this is just a quick description)
 
@@ -97,7 +84,7 @@ fact is used
 
 NOTE2: built in functions with 0 usually act like variables
 
-Current built in functions:
+Current built in functions (NOT COMPLETE AND OUT OF DATE):
 
 name:		# of arguments:		description:
 
@@ -206,8 +193,8 @@ is_real		1 (anything)		returns true if the argument is a
 is_integer	1 (anything)		returns true if the argument is a
 					non complex integer value
 is_rational	1 (anything)		returns true if the argument is a
-					non complex rational value, note that
-					it returns false for integers!
+					non complex rational value (an
+					integer is rational)
 is_float	1 (anything)		returns true if the argument is a
 					non complex floating point value
 
@@ -233,7 +220,7 @@ polytofunc	1 (vector)		convert the polynomial into a function
 					identifier for use
 
 
-Functions in the standard library (lib.gel):
+Functions in the standard library (lib.gel) (OUT OF DATE):
 
 name:		# of arguments:		description:
 
@@ -357,9 +344,20 @@ it to a variable name you effectively define a function
 
 for example:
 
-function sum(a,b,c) = a+b+c
+function addup(a,b,c) = a+b+c
 
-then "sum(1,1,1)" yields 3
+then "addup(1,1,1)" yields 3
+
+Variable argument lists:
+
+If you include "..." after the last argument name, then genius will allow
+any number of arguments to be passed in place of that argument.  If no arguments
+were passed then that argument will be set to null.  Else it will be a horizontal
+vector with all the arguments.  For example:
+
+function f(a,b...) = b
+
+Then "f(1,2,3)" yields "[2,3]", while "f(1)" yields a null
 
 Absoulte value:
 
@@ -396,13 +394,20 @@ a;b		separator, just evaluates both but returns only b
 a=b		assignment operator asigns b to a (a must be a valid lvalue)
 |a|		absolute value
 a^b		exponentiation
+a.^b		element by element exponentiation
 a+b		addition
 a-b		subtraction
 a*b		multiplication
+a.*b		element by element multiplication
 a/b		division
+a./b		element by element division
+a\b		back division
+a.\b		element by element back division
 a%b		the mod operator
+a.%b		element by element the mod operator
 a mod b		mod evaluation operator (a evaluated mod b)
 a!		factorial operator
+a!!		double factorial operator
 a==b		equality operator (returns 1 or 0)
 a!=b		inequality operator (returns 1 or 0)
 a<>b		alternative inequality operator (returns 1 or 0)
@@ -416,7 +421,8 @@ not a		logical not
 -a		negation operator
 &a		variable referencing (to pass a reference to something)
 *a		variable dereferencing (to access a referenced varible)
-a'		matrix transpose
+a'		matrix conjugate transpose
+a.'		matrix transpose
 a@(b,c)		get element of a matrix
 a@(b,)		get row of a matrix
 a@(,c)		get column of a matrix
@@ -504,6 +510,26 @@ print numbers 1,2,3 and 4 in this order you could do:
 
 for n in [1,2:3,4] do print(n)
 
+If you wish to run through the rows and columns of a matrix, you can use
+the RowsOf and ColumnsOf functions which return a vector of the rows or
+columns of the matrix.  So
+
+for n in RowsOf ([1,2:3,4]) do print(n)
+
+will print out [1,2] and then [3,4].
+
+Sums and Products
+
+sum <identifier> = <from> to <to> do <body>
+sum <identifier> = <from> to <to> by <increment> do <body>
+sum <identifier> in <matrix> do <body>
+prod <identifier> = <from> to <to> do <body>
+prod <identifier> = <from> to <to> by <increment> do <body>
+prod <identifier> in <matrix> do <body>
+
+If you substitute 'for' with 'sum' or 'prod', then you will get a sum or
+a product instead of a for loop.  Instead of returning the last value,
+these will return the sum or the product of the values respectively.
 
 And now the comparison operators:
 
@@ -613,7 +639,7 @@ enter the matrix separating values by commas and rows by semicolons, or
 separating values by tabs and rows by returns, or any combination of the
 two. So to enter a 3x3 matrix of numbers 1-9 you could do
 
-[1,2,3:4,5,6:7,8,9]
+[1,2,3;4,5,6;7,8,9]
 
 or
 
@@ -627,7 +653,7 @@ or
  4,5,6
  7,8,9]
 
-Do not use both ':' and return at once on the same line though. You can
+Do not use both ';' and return at once on the same line though. You can
 however use tabs and commas together, as long as you use at most 1 comma
 to separate values. To enter tabs inside the command line version, you have
 to do M-Tab (usually Alt-Tab), or however else you have your .inputrc set
@@ -675,7 +701,7 @@ You can transpose a matrix by using the ' operator, example:
 We transpose the second vector to make matrix multiplication possible.
 
 
-Modular evaluation:
+Modular evaluation (doesn't currently work):
 
 Sometimes when working with large numbers, it might be faster if results
 are modded after each calculation. So there is a modular evaluation operator
@@ -763,6 +789,8 @@ unescaped as they are for strings. Example:
 load program1.gel program2.gel
 load "Weird File Name With SPACES.gel"
 
+There are also cd, pwd and ls commands built in
+
 
 Calculator parameters:
 
@@ -770,14 +798,20 @@ There are several parameters that one can set that control the behaviour
 of the calculator. You can either use functions with the prefixes get_ or
 set_. The available parameters are:
 
-float_prec		the floating point precision
-max_digits		the maximum digits in a result
-results_as_floats	if the results should be always printed as floats
-scientific_notation	if floats should be in scientific notation
-full_expressions	boolean, should we print out full expressions
+float_prec		The floating point precision
+max_digits		The maximum digits in a result
+results_as_floats	If the results should be always printed as floats
+scientific_notation	If floats should be in scientific notation
+full_expressions	Boolean, should we print out full expressions
 			for non-numeric return values (longer then a line)
-max_errors		the maximum number of errors to return on one
+max_errors		The maximum number of errors to return on one
 			evaluation
+mixed_fractions		If fractions should be printed as mixed fractions
+		        such as "1 1/3" rather then "4/3"
+integer_output_base	The base that will be used to output integers
+output_style		A string, can be "normal", "latex" or "troff"
+			and it will effect how matrices (and perhaps other
+			stuff) is printed, useful for pasting into documents
 
 You can use the parameters just like a variable, and you can put the name
 on the left side of an equals sign. However, the parameters are not treated
@@ -826,14 +860,9 @@ EXAMPLE PROGRAM in GEL:
     definition (although there is a compatibility bc like define keyword
     which will likely disappear in the forseeable future)
 
-    here's an iterative version:
+    Here's a smaller, nicer, iterative version:
 
-    function f(x) = (
-	    r=x;
-	    while (x>1) do
-		    (x=x-1;r=r*x);
-	    r
-    )
+    function f(x) = prod k=1 to x do k
 
     Here's a larger example, this basically redefines the internal ref
     function to calculate the same thing, but written in GEL:
@@ -882,11 +911,6 @@ EXAMPLE PROGRAM in GEL:
 
 
 ****************************************************************************
-
-NOTE: GMP sefaults on some very large numbers so factorials of large numbers
-will do this ... I'll try to catch those before they happen, but I don't
-see this as a high priority ... the listbox will segfault anyway on such
-numbers :)
 
 Requirements:
 	- lex (tested under flex)

@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -29,19 +29,27 @@
 
 /* builtin primitives */
 enum {
-	E_SEPAR = 1,
+	E_SEPAR = 0,
 	E_EQUALS,
+	E_PARAMETER,
 	E_ABS,
 	E_PLUS,
 	E_MINUS,
 	E_MUL,
+	E_ELTMUL,
 	E_DIV,
+	E_ELTDIV,
 	E_BACK_DIV,
+	E_ELT_BACK_DIV,
 	E_MOD,
+	E_ELTMOD,
 	E_NEG,
 	E_EXP,
+	E_ELTEXP,
 	E_FACT,
+	E_DBLFACT,
 	E_TRANSPOSE,
+	E_CONJUGATE_TRANSPOSE,
 	E_IF_CONS,
 	E_IFELSE_CONS,
 	E_WHILE_CONS,
@@ -51,6 +59,12 @@ enum {
 	E_FOR_CONS,
 	E_FORBY_CONS,
 	E_FORIN_CONS,
+	E_SUM_CONS,
+	E_SUMBY_CONS,
+	E_SUMIN_CONS,
+	E_PROD_CONS,
+	E_PRODBY_CONS,
+	E_PRODIN_CONS,
 	E_EQ_CMP,
 	E_NE_CMP,
 	E_CMP_CMP,
@@ -63,11 +77,12 @@ enum {
 	E_LOGICAL_XOR,
 	E_LOGICAL_NOT,
 	E_REGION_SEP,
+	E_REGION_SEP_BY,
 	E_GET_VELEMENT,
 	E_GET_ELEMENT,
-	E_GET_REGION,
 	E_GET_ROW_REGION,
 	E_GET_COL_REGION,
+	E_QUOTE,
 	E_REFERENCE,
 	E_DEREFERENCE,
 	E_DIRECTCALL,
@@ -78,85 +93,113 @@ enum {
 	E_CONTINUE,
 	E_BREAK,
 	E_MOD_CALC,
+	E_OPER_LAST
+};
+
+
+
+/*table of operators, at least the primitive types*/
+enum {
+	GO_VALUE=1<<0,
+	GO_MATRIX=1<<1,
+	GO_STRING=1<<2,
+	GO_FUNCTION=1<<3,
+};
+typedef gboolean (*GelEvalFunc)(GelCtx *ctx, GelETree *n, ...);
+/*primitive operations can be like this*/
+typedef struct _GelOperPrim GelOperPrim;
+struct _GelOperPrim {
+	guint32 arg[3]; /*bitmap of allowable types for arguments*/
+	GelEvalFunc evalfunc;
+};
+#define OP_TABLE_LEN 10
+typedef struct _GelOper GelOper;
+struct _GelOper {
+	GelOperPrim prim[OP_TABLE_LEN];
 };
 
 /*functions for manipulating a tree*/
-ETree * makenum(mpw_t num);
-ETree * makenum_use(mpw_t num); /*don't create a new number*/
-ETree * makenum_ui(unsigned long num);
-ETree * makenum_si(long num);
-ETree * makenum_null(void);
-ETree * makeoperator(int oper, GList **stack);
+GelETree * gel_makenum(mpw_t num);
+GelETree * gel_makenum_use(mpw_t num); /*don't create a new number*/
+GelETree * gel_makenum_ui(unsigned long num);
+GelETree * gel_makenum_si(long num);
+GelETree * gel_makenum_null(void);
+GelETree * gel_makenum_identifier (GelToken *id);
+GelETree * gel_makenum_string (const char *str);
+GelETree * makeoperator(int oper, GSList **stack);
+
+/*make new node, but don't actually get a new GelETree, just stick it
+  into an already allocated but unused structure*/
+void gel_makenum_from(GelETree *n, mpw_t num);
+void gel_makenum_use_from(GelETree *n, mpw_t num); /*don't create a new number*/
+void gel_makenum_ui_from(GelETree *n, unsigned long num);
+void gel_makenum_si_from(GelETree *n, long num);
+void gel_makenum_null_from(GelETree *n);
 
 /*returns the number of args for an operator, or -1 if it takes up till
   exprlist marker -2 if it takes 1 past the marker for the first argument*/
-int branches(int op);
+int branches(int op) G_GNUC_CONST;
 
 /*copy a node*/
-ETree * copynode(ETree *o);
-
-/*copy node but use the args from r*/
-ETree * copynode_args(ETree *o, ETree *r[]);
+GelETree * copynode(GelETree *o);
 
 /*functions for reclaiming memory*/
-void freetree(ETree *n);
+void gel_freetree(GelETree *n);
 
-/*evaluate a treenode, the treenode will become a number node*/
-/*returns a newly allocated tree, doesn't hurt n, if do_ret is false,
-  returns 0x1 or a tree on success and NULL on exception*/
-ETree *evalnode_full(ETree *n,int do_ret);
-#define evalnode(n) evalnode_full((n),TRUE)
+/* you need to get, then free an evaluation context*/
+GelCtx * eval_get_context(void);
+void eval_free_context(GelCtx *ctx);
+/* evaluate tree*/
+GelETree * eval_etree(GelCtx *ctx, GelETree *etree);
 
 /*return TRUE if node is true (a number node !=0, or nonempty string),
   false otherwise*/
-int isnodetrue(ETree *n, int *bad_node);
-int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
+int isnodetrue(GelETree *n, int *bad_node);
 
 /*call a function (arguments should have already been evaluated)*/
-ETree * funccall(EFunc *func, ETree **args, int nargs);
+GelETree * funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
+void gel_expandmatrix (GelETree *n);
 
-ETree * gather_comparisons(ETree *n);
-ETree * replace_parameters(ETree *n);
+GelETree * gather_comparisons(GelETree *n);
+void replace_equals (GelETree *n, gboolean in_expression);
+void try_to_do_precalc(GelETree *n);
+
+/* return a list of used local functions (copies of) */
+GSList * gel_subst_local_vars (GSList *, GelETree *n);
 
 #define GET_ABCDE(n,a,b,c,d,e) { \
-	a = n->op.args->data; \
-	b = n->op.args->next->data; \
-	c = n->op.args->next->next->data; \
-	d = n->op.args->next->next->next->data; \
-	e = n->op.args->next->next->next->next->data; \
+	(a) = (n)->op.args; \
+	(b) = (n)->op.args->any.next; \
+	(c) = (n)->op.args->any.next->any.next; \
+	(d) = (n)->op.args->any.next->any.next->any.next; \
+	(e) = (n)->op.args->any.next->any.next->any.next->any.next; \
 }
 #define GET_ABCD(n,a,b,c,d) { \
-	a = n->op.args->data; \
-	b = n->op.args->next->data; \
-	c = n->op.args->next->next->data; \
-	d = n->op.args->next->next->next->data; \
+	(a) = (n)->op.args; \
+	(b) = (n)->op.args->any.next; \
+	(c) = (n)->op.args->any.next->any.next; \
+	(d) = (n)->op.args->any.next->any.next->any.next; \
 }
 #define GET_LRR(n,l,r,rr) { \
-	l = n->op.args->data; \
-	r = n->op.args->next->data; \
-	rr = n->op.args->next->next->data; \
+	(l) = (n)->op.args; \
+	(r) = (n)->op.args->any.next; \
+	(rr) = (n)->op.args->any.next->any.next; \
 }
-#define GET_LRR(n,l,r,rr) { \
-	l = n->op.args->data; \
-	r = n->op.args->next->data; \
-	rr = n->op.args->next->next->data; \
-}
-#define GET_LR(n,l,r) { l = n->op.args->data; r = n->op.args->next->data; }
-#define GET_L(n,l) { l = n->op.args->data; }
+#define GET_LR(n,l,r) { (l) = (n)->op.args; (r) = (n)->op.args->any.next; }
+#define GET_L(n,l) { (l) = (n)->op.args; }
+
+extern GelETree *free_trees;
 
 #define GET_NEW_NODE(n) {				\
 	if(!free_trees)					\
-		n = g_new(ETree,1);			\
+		n = g_new(GelETree,1);			\
 	else {						\
 		n = free_trees;				\
-		free_trees = free_trees->next;		\
+		free_trees = free_trees->any.next;	\
 	}						\
 }
 
-#define EMPTY_RET ((void *)0x1)
-
-extern EFunc *_internal_ln_function;
-extern EFunc *_internal_exp_function;
-
+extern GelEFunc *_internal_ln_function;
+extern GelEFunc *_internal_exp_function;
 
 #endif

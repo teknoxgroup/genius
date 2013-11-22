@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -39,9 +39,9 @@ char * appendstr(char *s,char *p);
 /*allocate new space in s for p and prepend it*/
 char * prependstr(char *s,char *p);
 
-/*stack operations using GList*/
-void stack_push(GList **stack, gpointer data);
-gpointer stack_pop(GList **stack);
+/*stack operations using GSList*/
+void stack_push(GSList **stack, gpointer data);
+gpointer stack_pop(GSList **stack);
 
 /*escape/unescape \n\t\r\b\a\"\\ ... unescape also \<anything>==<anything>,
   nounescape means characters which to leave escaped*/
@@ -51,6 +51,6 @@ char *escape_string(char *s);
 
 /*get the terminal width, 80 is returned if we fail somehow*/
 /*this function is not defined in util.c but in the appropriate main file!!!*/
-int get_term_width(void);
+/*int get_term_width(void);*/
 
 #endif

@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,12 +21,7 @@
 
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -41,15 +36,11 @@
 
 #include "compil.h"
 
-extern void (*errorout)(char *);
-
-extern ETree *free_trees;
-
 /*sort of weird encoding, use 'a'+upper 4 bits and 'a'+lower 4 bits*/
 static void
-append_string(GString *gs,char *s)
+append_string (GString *gs,const char *s)
 {
-	char *p;
+	const char *p;
 	char out[3]="aa";
 	for(p=s;*p;p++) {
 		out[0]='a'+((*p)&0xF);
@@ -59,11 +50,12 @@ append_string(GString *gs,char *s)
 }
 
 /*sort of weird encoding, use 'a'+upper 4 bits and 'a'+lower 4 bits*/
-static char *
-decode_string(char *s)
+char *
+gel_decode_string (const char *s)
 {
 	int len = strlen(s);
-	char *p,*pp,*ps;
+	const char *ps;
+	char *p,*pp;
 	if(len%2 == 1)
 		return NULL;
 	
@@ -81,33 +73,42 @@ decode_string(char *s)
 	return p;
 }
 
+char *
+gel_encode_string (const char *s)
+{
+	GString *gs = g_string_new (NULL);
+	append_string (gs, s);
+	return g_string_free (gs, FALSE);
+}
+
 static void
-compile_node(ETree *t,GString *gs)
+gel_compile_node(GelETree *t,GString *gs)
 {
 	char *s;
 	int i,j;
-	GList *li;
+	GSList *li;
+	GelETree *ali;
 	g_string_sprintfa(gs,";%d",t->type);
 	switch(t->type) {
 	case NULL_NODE:
 		break;
 	case VALUE_NODE:
-		s = mpw_getstring(t->val.value,0,FALSE,FALSE);
+		s = mpw_getstring(t->val.value,0,FALSE,FALSE,FALSE,10);
 		g_string_append_c(gs,';');
 		g_string_append(gs,s);
 		g_free(s);
 		break;
 	case MATRIX_NODE:
-		g_string_sprintfa(gs,";%dx%d;%d",matrixw_width(t->mat.matrix),
-				 matrixw_height(t->mat.matrix),
+		g_string_sprintfa(gs,";%dx%d;%d",gel_matrixw_width(t->mat.matrix),
+				 gel_matrixw_height(t->mat.matrix),
 				 t->mat.quoted);
-		for(i=0;i<matrixw_width(t->mat.matrix);i++) {
-			for(j=0;j<matrixw_height(t->mat.matrix);j++) {
-				ETree *tt = matrixw_set_index(t->mat.matrix,i,j);
+		for(i=0;i<gel_matrixw_width(t->mat.matrix);i++) {
+			for(j=0;j<gel_matrixw_height(t->mat.matrix);j++) {
+				GelETree *tt = gel_matrixw_set_index(t->mat.matrix,i,j);
 				if(!tt) g_string_append(gs,";0");
 				else {
 					g_string_append(gs,";N");
-					compile_node(tt,gs);
+					gel_compile_node(tt,gs);
 				}
 			}
 		}
@@ -115,9 +116,8 @@ compile_node(ETree *t,GString *gs)
 	case OPERATOR_NODE:
 		g_string_sprintfa(gs,";%d;%d",t->op.oper,
 				  t->op.nargs);
-		for(li=t->op.args;li;li=g_list_next(li)) {
-			ETree *tt = li->data;
-			compile_node(tt,gs);
+		for(ali=t->op.args;ali;ali=ali->any.next) {
+			gel_compile_node(ali,gs);
 		}
 		break;
 	case IDENTIFIER_NODE:
@@ -132,24 +132,24 @@ compile_node(ETree *t,GString *gs)
 		}
 		break;
 	case FUNCTION_NODE:
-		g_assert(t->func.func->type==USER_FUNC);
+		g_assert(t->func.func->type==GEL_USER_FUNC);
 		g_assert(t->func.func->id==NULL);
 		g_string_sprintfa(gs,";%d",t->func.func->nargs);
-		for(li=t->func.func->named_args;li;li=g_list_next(li)) {
-			Token *tok = li->data;
+		g_string_sprintfa(gs,";%d",t->func.func->vararg);
+		for(li=t->func.func->named_args;li;li=g_slist_next(li)) {
+			GelToken *tok = li->data;
 			g_string_sprintfa(gs,";%s",tok->token);
 		}
-		compile_node(t->func.func->data.user,gs);
+		gel_compile_node(t->func.func->data.user,gs);
 		break;
 	case COMPARISON_NODE:
 		g_string_sprintfa(gs,";%d",t->comp.nargs);
-		for(li=t->comp.comp;li;li=g_list_next(li)) {
+		for(li=t->comp.comp;li;li=g_slist_next(li)) {
 			int oper = GPOINTER_TO_INT(li->data);
 			g_string_sprintfa(gs,";%d",oper);
 		}
-		for(li=t->comp.args;li;li=g_list_next(li)) {
-			ETree *tt = li->data;
-			compile_node(tt,gs);
+		for(ali=t->comp.args;ali;ali=ali->any.next) {
+			gel_compile_node(ali,gs);
 		}
 		break;
 	default:
@@ -158,34 +158,37 @@ compile_node(ETree *t,GString *gs)
 }
 
 char *
-compile_tree(ETree *t)
+gel_compile_tree(GelETree *t)
 {
 	GString *gs;
 	char *s;
 	
 	gs = g_string_new("T");
 	
-	compile_node(t,gs);
+	gel_compile_node(t,gs);
 	
 	s = gs->str;
 	g_string_free(gs,FALSE);
 	return s;
 }
 
-static ETree *
-decompile_node(void)
+static GelETree *
+gel_decompile_node(void)
 {
-	ETree *n;
+	GelETree *n;
 	char *p;
-	int type=-1;
-	int nargs=-1;
+	int type = -1;
+	int nargs = -1;
+	int vararg = -1;
 	int quote;
 	int oper;
 	int i,j;
 	int w,h;
-	MatrixW *m;
-	GList *li,*oli;
-	EFunc *func;
+	GelMatrixW *m;
+	GelETree *li = NULL;
+	GelETree *args;
+	GSList *oli;
+	GelEFunc *func;
 	mpw_t tmp;
 
 	p = strtok(NULL,";");
@@ -195,13 +198,13 @@ decompile_node(void)
 
 	switch(type) {
 	case NULL_NODE:
-		return makenum_null();
+		return gel_makenum_null();
 	case VALUE_NODE:
 		p = strtok(NULL,";");
 		if(!p) return NULL;
 		mpw_init(tmp);
 		mpw_set_str(tmp,p,10);
-		return makenum_use(tmp);
+		return gel_makenum_use(tmp);
 	case MATRIX_NODE:
 		p = strtok(NULL,";");
 		if(!p) return NULL;
@@ -216,24 +219,24 @@ decompile_node(void)
 		sscanf(p,"%d",&quote);
 		if(quote==-1) return NULL;
 
-		m = matrixw_new();
-		matrixw_set_size(m,w,h);
+		m = gel_matrixw_new();
+		gel_matrixw_set_size(m,w,h);
 		for(i=0;i<w;i++) {
 			for(j=0;j<h;j++) {
 				p = strtok(NULL,";");
 				if(!p) {
-					matrixw_free(m);
+					gel_matrixw_free(m);
 					return NULL;
 				}
 				if(*p=='N') {
-					ETree *tt = decompile_node();
+					GelETree *tt = gel_decompile_node();
 					if(!tt) {
-						matrixw_free(m);
+						gel_matrixw_free(m);
 						return NULL;
 					}
-					matrixw_set_index(m,i,j)=tt;
+					gel_matrixw_set_index(m,i,j)=tt;
 				} else if(*p!='0') {
-					matrixw_free(m);
+					gel_matrixw_free(m);
 					return NULL;
 				}
 			}
@@ -255,20 +258,28 @@ decompile_node(void)
 		sscanf(p,"%d",&nargs);
 		if(nargs==-1) return NULL;
 		
-		li = NULL;
+		args = li = NULL;
 		for(i=0;i<nargs;i++) {
-			ETree *tt = decompile_node();
+			GelETree *tt = gel_decompile_node();
 			if(!tt) {
-				g_list_foreach(li,(GFunc)freetree,NULL);
-				g_list_free(li);
+				while(args) {
+					li = args->any.next;
+					gel_freetree(args);
+					args = li;
+				}
 				return NULL;
 			}
-			li = g_list_append(li,tt);
+			if(!args) {
+				args = li = tt;
+			} else {
+				li = li->any.next = tt;
+			}
+			li->any.next = NULL;
 		}
 
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
-		n->op.args = li;
+		n->op.args = args;
 		n->op.nargs = nargs;
 		n->op.oper = oper;
 		return n;
@@ -286,7 +297,7 @@ decompile_node(void)
 		if(*p=='E')
 			p = g_strdup("");
 		else {
-			p = decode_string(p);
+			p = gel_decode_string(p);
 			if(!p) return NULL;
 		}
 		GET_NEW_NODE(n);
@@ -300,24 +311,30 @@ decompile_node(void)
 		sscanf(p,"%d",&nargs);
 		if(nargs==-1) return NULL;
 
-		li = NULL;
+		p = strtok(NULL,";");
+		if(!p) return NULL;
+		sscanf(p,"%d",&vararg);
+		if (vararg == -1) return NULL;
+
+		oli = NULL;
 		for(i=0;i<nargs;i++) {
 			p = strtok(NULL,";");
 			if(!p) {
-				g_list_free(li);
+				g_slist_free(oli);
 				return NULL;
 			}
-			li = g_list_append(li,d_intern(p));
+			oli = g_slist_append(oli,d_intern(p));
 		}
 		
-		n = decompile_node();
+		n = gel_decompile_node();
 		if(!n) {
-			g_list_free(li);
+			g_slist_free(oli);
 			return NULL;
 		}
 
-		func = d_makeufunc(NULL,n,li,nargs);
+		func = d_makeufunc(NULL,n,oli,nargs, NULL);
 		func->context = -1;
+		func->vararg = vararg ? 1 : 0;
 
 		GET_NEW_NODE(n);
 		n->type = FUNCTION_NODE;
@@ -333,33 +350,41 @@ decompile_node(void)
 		for(i=0;i<nargs-1;i++) {
 			p = strtok(NULL,";");
 			if(!p) {
-				g_list_free(oli);
+				g_slist_free(oli);
 				return NULL;
 			}
 			j = -1;
 			sscanf(p,"%d",&j);
 			if(j==-1) {
-				g_list_free(oli);
+				g_slist_free(oli);
 				return NULL;
 			}
-			oli = g_list_append(oli,GINT_TO_POINTER(j));
+			oli = g_slist_append(oli,GINT_TO_POINTER(j));
 		}
 
-		li = NULL;
+		args = li = NULL;
 		for(i=0;i<nargs;i++) {
-			ETree *tt = decompile_node();
+			GelETree *tt = gel_decompile_node();
 			if(!tt) {
-				g_list_foreach(li,(GFunc)freetree,NULL);
-				g_list_free(li);
-				g_list_free(oli);
+				while(args) {
+					li = args->any.next;
+					gel_freetree(args);
+					args = li;
+				}
+				g_slist_free(oli);
 				return NULL;
 			}
-			li = g_list_append(li,tt);
+			if(!args) {
+				args = li = tt;
+			} else {
+				li = li->any.next = tt;
+			}
+			li->any.next = NULL;
 		}
 
 		GET_NEW_NODE(n);
 		n->type = COMPARISON_NODE;
-		n->comp.args = li;
+		n->comp.args = args;
 		n->comp.nargs = nargs;
 		n->comp.comp = oli;
 		return n;
@@ -368,10 +393,10 @@ decompile_node(void)
 	}
 }
 
-ETree *
-decompile_tree(char *s)
+GelETree *
+gel_decompile_tree(char *s)
 {
-	ETree *t;
+	GelETree *t;
 	char *p;
 	
 	if(!s) return NULL;
@@ -383,7 +408,7 @@ decompile_tree(char *s)
 		return NULL;
 	}
 	
-	t = decompile_node();
+	t = gel_decompile_node();
 	if(!t) {
 		(*errorout)(_("Bad tree record when decompiling"));
 		return NULL;

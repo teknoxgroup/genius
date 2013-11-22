@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -20,12 +20,7 @@
  */
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <stdlib.h>
 #include <dirent.h>
@@ -57,15 +52,10 @@
 #include "plugin.h"
 #include "plugread.h"
 
-GList *plugin_list = NULL;
+GSList *plugin_list = NULL;
 
 static GHashTable *opened = NULL;
 static GHashTable *info = NULL;
-
-extern void (*errorout)(char *);
-extern void (*infoout)(char *);
-
-int is_gui = FALSE;
 
 static void
 free_plugin(plugin_t *plg)
@@ -87,8 +77,8 @@ read_plugin_list(void)
 	struct dirent *dent;
 
 	/*free the previous list*/
-	g_list_foreach(plugin_list,(GFunc)free_plugin,NULL);
-	g_list_free(plugin_list);
+	g_slist_foreach(plugin_list,(GFunc)free_plugin,NULL);
+	g_slist_free(plugin_list);
 	plugin_list = NULL;
 	
 	dir_name = g_strconcat(LIBRARY_DIR,"/plugins",NULL);
@@ -110,21 +100,22 @@ read_plugin_list(void)
 			continue;
 		plg = readplugin(dir_name,dent->d_name);
 		if(plg) {
-			if(plg->gui && !is_gui)
+			if(plg->gui && !genius_is_gui)
 				free_plugin(plg);
 			else
-				plugin_list = g_list_prepend(plugin_list,plg);
+				plugin_list = g_slist_prepend(plugin_list,plg);
 		}
 	}
+	closedir (dir);
 	g_free(dir_name);
-	plugin_list = g_list_reverse(plugin_list);
+	plugin_list = g_slist_reverse(plugin_list);
 }
 
 void
 open_plugin(plugin_t *plug)
 {
 	GModule *mod;
-	PluginInfo *inf;
+	GelPluginInfo *inf;
 	if(!opened)
 		opened = g_hash_table_new(g_str_hash,g_str_equal);
 	if(!info)
@@ -140,7 +131,7 @@ open_plugin(plugin_t *plug)
 		g_hash_table_insert(opened,g_strdup(plug->file),mod);
 	}
 	if(!(inf=g_hash_table_lookup(info,mod))) {
-		PluginInfo *(*init_func)(void);
+		GelPluginInfo *(*init_func)(void);
 		
 		if(!g_module_symbol(mod,"init_func",(gpointer *)&init_func) ||
 		   !init_func || 

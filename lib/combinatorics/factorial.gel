@@ -1,0 +1,165 @@
+## Some combinatorial functions
+
+# Subfactorial
+# Subfactorial(n)=n! times \sum_{k=1}^n (-1)^k/k!
+# This is the number of permutations of n objects that leaves none of the
+# objects unchanged.
+
+SetHelp("Catalan","combinatorics","Get n'th catalan number");
+function Catalan(n) = (
+	if(IsMatrix(n)) then
+		return ApplyOverMatrix(n,Catalan)
+	else if(not IsValue(n) or not IsInteger(n) or n<0) then
+		(error("Catalan: argument not an integer >= 0");bailout);
+	nCr(2*n,n)/(n+1)
+);
+protect("Catalan")
+
+## Factorial
+## Defined by n! = n(n-1)(n-2)...
+SetHelp("Factorial","combinatorics","Factorial: n(n-1)(n-2)...");
+function Factorial(n) = (
+	if not IsValue(n) or not IsInteger(n) or n < 0 then
+		(error("Factorial: argument not an integer >= 0");bailout);
+	n!
+)
+protect("Factorial")
+
+## Double Factorial
+## Defined by n!! = n(n-2)(n-4)...
+SetHelp("DoubleFactorial","combinatorics","Double factorial: n(n-2)(n-4)...");
+function DoubleFactorial(n) = (
+	if not IsValue(n) or not IsInteger(n) or n < 0 then
+		(error("DoubleFactorial: argument not an integer >= 0");bailout);
+	n!!
+)
+protect("DoubleFactorial")
+
+SetHelp ("RisingFactorial", "combinatorics", "(Puchhammer) Rising factorial: (n)_k = n(n+1)...(n+(k-1))")
+## (Puchhammer) Rising factorial: (n)_k = n(n+1)...(n+(k-1))
+function RisingFactorial(n,k) =
+ (
+  if IsInteger(n) then return (n+k-1)!/(n-1)!
+  else
+   (
+   # Return trivial values
+    product=1;
+   # Compute non-trivial values
+    for i=0 to (k-1) do
+    product=product*(n+i);
+    return product
+  );
+ )
+protect("RisingFactorial")
+SetHelpAlias ("RisingFactorial", "Puchhammer")
+Puchhammer = RisingFactorial
+protect("Puchhammer")
+
+# Falling factorial: (n)_k = n(n-1)...(n-(k-1))
+SetHelp ("FallingFactorial", "combinatorics", "Falling factorial: (n)_k = n(n-1)...(n-(k-1))")
+function FallingFactorial(n,k) =
+(
+  if IsInteger(n) then return (n)!/(n-k)!
+  else
+   (
+   # Return trivial values
+    product=1;
+   # Compute non-trivial values
+    for i=0 to (k-1) do
+    product=product*(n-i);
+    return product
+   );
+)
+protect("FallingFactorial");
+
+## Binomial Coefficients
+
+SetHelp("nPr","combinatorics","Calculate permutations");
+function nPr(n,r) = (
+	if(IsMatrix(n) or IsMatrix(r)) then
+		return ApplyOverMatrix2(n,r,nPr)
+	else if(not IsReal(n) or not IsInteger(r)) then
+		(error("nPr: arguments not real and an integer");bailout)
+	else if(r<0 or n<0 or r>n) then
+		0
+	else if(IsInteger(n)) then
+		(n!)/((n-r)!)
+	else (
+		ret = 1;
+		i=0;
+		while(i<r) do (
+			ret = ret*(n-i);
+			i = i+1
+		);
+		ret
+	)
+);
+protect("nPr")
+
+SetHelp("nCr","combinatorics","Calculate combinations (binomial coefficient)");
+function nCr(n,r) = (
+	if(IsMatrix(n) or IsMatrix(r)) then
+		return ApplyOverMatrix2(n,r,nCr)
+	else if(not IsReal(n) or not IsInteger(r)) then
+		(error("nCr: arguments not real and an integer");bailout)
+	else if(r<0 or n<0 or r>n) then
+		0
+	else if(IsInteger(n)) then
+		(n!)/(r!*(n-r)!)
+	else (
+		ret = 1;
+		i=0;
+		while(i<r) do (
+			ret = ret*(n-i);
+			i = i+1
+		);
+		ret/(r!)
+	)
+);
+protect("nCr")
+SetHelpAlias ("nCr", "Binomial")
+Binomial=nCr;
+protect("Binomial");
+
+## Multinomial Coefficients
+## Multinomial([a,b,c])=(a+b+c)!/a!b!c!
+SetHelp ("Multinomial", "combinatorics", "Calculate multinomial coefficients")
+function Multinomial(v,arg...) = (
+	if not IsMatrix(v) and not IsValue(v) then
+		(error("Multinomial: argument not a value or vector");bailout);
+	# Not perfect argument checking
+
+	if IsNull (arg) then
+		m = [v]
+	else
+		m = [v, arg];
+
+	MatrixSum(m)!/MatrixProduct(ApplyOverMatrix(m,`(x)=x!))
+)
+protect("Multinomial");
+
+SetHelp("Pascal","combinatorics","Get the pascal's triangle as a matrix");
+function Pascal(i) = (
+	if not IsInteger(i) then
+		(error("Pascal: argument not an integer");bailout)
+	else if i<0 then
+		(error("Pascal: argument is negative");bailout);
+	m = SetMatrixSize ([0],i+1,i+1);
+	for y = 0 to i do (
+		for x = 0 to y do (
+			m@(y+1,x+1) = nCr(y,x)
+		)
+	);
+	m
+);
+protect("Pascal")
+
+SetHelp("Triangular", "combinatorics", "Calculate the nth triangular number");
+function Triangular(nth) = (
+        if IsMatrix(nth) then
+                return ApplyOverMatrix(nth, triangular)
+	else if not IsInteger(nth) or not nth>=0 then
+		(error("Trianglular: argument not an integer larger then or equal to 0");bailout);
+	(nth*(nth+1))/2
+);
+protect("Triangular")

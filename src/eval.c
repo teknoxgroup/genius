@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,12 +21,7 @@
 
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -36,74 +31,109 @@
 #include "calc.h"
 #include "dict.h"
 #include "util.h"
-#include "funclib.h"
 #include "matrix.h"
 #include "matrixw.h"
 #include "matop.h"
 #include "compil.h"
+#include "utype.h"
+
+/*#define EVAL_DEBUG 1*/
+
+#ifdef EVAL_DEBUG
+#define EDEBUG(x) puts(x)
+#else
+#define EDEBUG(x) ;
+#endif
 
 extern calc_error_t error_num;
 extern calcstate_t calcstate;
 
-/*if we "return" we jump out of the current function using an exception and
-  set this, if we are at the top most context, this is what is "returned to
-  the "screen"*/
-ETree *returnval = NULL;
-/*similiar case for bailout and exception*/
-int inbailout = FALSE;
-int inexception = FALSE;
-enum {
-	LOOPOUT_NOTHING=0,
-	LOOPOUT_CONTINUE=1,
-	LOOPOUT_BREAK=2
-};
-int loopout = 0;
-GSList *inloop = NULL; /*on loop entry and function antry prepend 1 or 0
-			 and on exit pop the first value*/
-
-extern void (*errorout)(char *);
-
-ETree *free_trees = NULL;
+GelETree *free_trees = NULL;
+static GelEvalStack *free_stack = NULL;
+static GelEvalLoop *free_evl = NULL;
+static GelEvalFor *free_evf = NULL;
+static GelEvalForIn *free_evfi = NULL;
 
 extern GHashTable *uncompiled;
 
 extern int interrupted;
 
-/*the mod calculation stack*/
-GList *mods = NULL;
+extern char *genius_params[];
 
-static char *params[] = {
-	"float_prec",
-	"max_digits",
-	"results_as_floats",
-	"scientific_notation",
-	"full_expressions",
-	"max_errors",
-	NULL
-};
+static inline void
+ge_add_stack_array(GelCtx *ctx)
+{
+	GelEvalStack *newstack;
+	if(!free_stack) {
+		newstack = g_new(GelEvalStack,1);
+	} else {
+		newstack = free_stack;
+		free_stack = free_stack->next;
+	}
+	
+	newstack->next = ctx->stack;
+	ctx->stack = newstack;
+	/*the array is at the beginning of the structure*/
+	ctx->topstack = (gpointer *)newstack;
+	EDEBUG("ADDING STACK ARRAY");
+}
 
+/*we assume that a stack always exists*/
+#define GE_PUSH_STACK(thectx,pointer,flag) { \
+	if((thectx)->topstack == &((thectx)->stack->stack[STACK_SIZE]))	\
+	 	ge_add_stack_array(thectx);				\
+	*((thectx)->topstack ++) = (pointer);				\
+	*((thectx)->topstack ++) = GINT_TO_POINTER(flag);		\
+}
 
-#define IS_MOD ((!mods)?FALSE:(!(mods->data)?FALSE:TRUE))
-#define GET_MOD ((!mods)?NULL:mods->data)
-#define PUSH_MOD(num) {							\
-			if(num) {					\
-				mpw_ptr m = g_new0(struct _mpw_t,1);	\
-				mpw_set(m,(num));			\
-				mods=g_list_prepend(mods,m);		\
-			} else {					\
-				mods=g_list_prepend(mods,NULL);		\
-			}						\
-		      }
-#define POP_MOD {							\
-			if(mods) {					\
-				mpw_ptr mod = mods->data;		\
-				if(mod) {				\
-					mpw_clear(mod);			\
-					g_free(mod);			\
-				}					\
-				mods=g_list_remove(mods,mods->data);	\
-			}						\
-		}
+static inline gboolean
+ge_remove_stack_array(GelCtx *ctx)
+{
+	GelEvalStack *next = ctx->stack->next;
+	if(!next) return FALSE;
+
+	/*push it onto the list of free stack entries*/
+	ctx->stack->next = free_stack;
+	free_stack = ctx->stack;
+
+	ctx->stack = next;
+	ctx->topstack = &((ctx)->stack->stack[STACK_SIZE]);
+	EDEBUG("REMOVING STACK ARRAY");
+	return TRUE;
+}
+
+#define GE_POP_STACK(thectx,pointer,flag) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack ||		\
+	   ge_remove_stack_array(ctx)) {				\
+		(flag) = GPOINTER_TO_INT(*(-- (thectx)->topstack));	\
+		(pointer) = *(-- (thectx)->topstack);			\
+	} else {							\
+		(flag) = GE_EMPTY_STACK;				\
+		(pointer) = NULL;					\
+	}								\
+}
+
+#define GE_PEEK_STACK(ctx,pointer,flag) { \
+	if((ctx)->topstack != (gpointer *)(ctx)->stack) {		\
+		(flag) = GPOINTER_TO_INT(*((ctx)->topstack - 1));	\
+		(pointer) = *((ctx)->topstack - 2);			\
+	} else if((ctx)->stack->next) {					\
+		gpointer *a = (gpointer) &((ctx)->stack->next->next);	\
+		(flag) = GPOINTER_TO_INT(*(--a));			\
+		(pointer) = *(--a);					\
+	} else {							\
+		(flag) = GE_EMPTY_STACK;				\
+		(pointer) = NULL;					\
+	}								\
+}
+
+#define GE_BLIND_POP_STACK(ctx) { \
+	if((ctx)->topstack != (gpointer *)(ctx)->stack ||	\
+	   ge_remove_stack_array(ctx)) {			\
+		(ctx)->topstack -= 2;				\
+	}							\
+}
+
 
 /*returns the number of args for an operator, or -1 if it takes up till
   exprlist marker or -2 if it takes one more for the first argument*/
@@ -113,17 +143,25 @@ branches(int op)
 	switch(op) {
 		case E_SEPAR: return 2;
 		case E_EQUALS: return 2;
+		case E_PARAMETER: return 3;
 		case E_ABS: return 1;
 		case E_PLUS: return 2;
 		case E_MINUS: return 2;
 		case E_MUL: return 2;
+		case E_ELTMUL: return 2;
 		case E_DIV: return 2;
+		case E_ELTDIV: return 2;
 		case E_BACK_DIV: return 2;
+		case E_ELT_BACK_DIV: return 2;
 		case E_MOD: return 2;
+		case E_ELTMOD: return 2;
 		case E_NEG: return 1;
 		case E_EXP: return 2;
+		case E_ELTEXP: return 2;
 		case E_FACT: return 1;
+		case E_DBLFACT: return 1;
 		case E_TRANSPOSE: return 1;
+		case E_CONJUGATE_TRANSPOSE: return 1;
 		case E_IF_CONS: return 2;
 		case E_IFELSE_CONS: return 3;
 		case E_WHILE_CONS: return 2;
@@ -133,6 +171,12 @@ branches(int op)
 		case E_FOR_CONS: return 4;
 		case E_FORBY_CONS: return 5;
 		case E_FORIN_CONS: return 3;
+		case E_SUM_CONS: return 4;
+		case E_SUMBY_CONS: return 5;
+		case E_SUMIN_CONS: return 3;
+		case E_PROD_CONS: return 4;
+		case E_PRODBY_CONS: return 5;
+		case E_PRODIN_CONS: return 3;
 		case E_EQ_CMP: return 2;
 		case E_NE_CMP: return 2;
 		case E_CMP_CMP: return 2;
@@ -145,11 +189,12 @@ branches(int op)
 		case E_LOGICAL_XOR: return 2;
 		case E_LOGICAL_NOT: return 1;
 		case E_REGION_SEP: return 2;
+		case E_REGION_SEP_BY: return 3;
 		case E_GET_VELEMENT: return 2;
 		case E_GET_ELEMENT: return 3;
-		case E_GET_REGION: return 3;
 		case E_GET_ROW_REGION: return 2;
 		case E_GET_COL_REGION: return 2;
+		case E_QUOTE: return 1;
 		case E_REFERENCE: return 1;
 		case E_DEREFERENCE: return 1;
 		case E_DIRECTCALL: return -2;
@@ -164,19 +209,43 @@ branches(int op)
 	return 0;
 }
 
-ETree *
-makenum_null(void)
+GelETree *
+gel_makenum_null (void)
 {
-	ETree *n;
-	GET_NEW_NODE(n);
+	GelETree *n;
+	GET_NEW_NODE (n);
 	n->type = NULL_NODE;
 	return n;
 }
 
-ETree *
-makenum_ui(unsigned long num)
+GelETree *
+gel_makenum_identifier (GelToken *id)
 {
-	ETree *n;
+	GelETree *n;
+	GET_NEW_NODE (n);
+	n->type = IDENTIFIER_NODE;
+	n->id.id = id; 
+	n->any.next = NULL;
+
+	return n;
+}
+
+GelETree *
+gel_makenum_string (const char *str)
+{
+	GelETree *n;
+	GET_NEW_NODE (n);
+	n->type = STRING_NODE;
+	n->str.str = g_strdup (str); 
+	n->any.next = NULL;
+
+	return n;
+}
+
+GelETree *
+gel_makenum_ui(unsigned long num)
+{
+	GelETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	mpw_init(n->val.value);
@@ -184,10 +253,10 @@ makenum_ui(unsigned long num)
 	return n;
 }
 
-ETree *
-makenum_si(long num)
+GelETree *
+gel_makenum_si(long num)
 {
-	ETree *n;
+	GelETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	mpw_init(n->val.value);
@@ -195,10 +264,10 @@ makenum_si(long num)
 	return n;
 }
 
-ETree *
-makenum(mpw_t num)
+GelETree *
+gel_makenum(mpw_t num)
 {
-	ETree *n;
+	GelETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	mpw_init_set(n->val.value,num);
@@ -206,67 +275,330 @@ makenum(mpw_t num)
 }
 
 /*don't create a new number*/
-ETree *
-makenum_use(mpw_t num)
+GelETree *
+gel_makenum_use(mpw_t num)
 {
-	ETree *n;
+	GelETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	memcpy(n->val.value,num,sizeof(struct _mpw_t));
 	return n;
 }
 
-ETree *
-makeoperator(int oper, GList **stack)
+void
+gel_makenum_null_from(GelETree *n)
 {
-	ETree *n;
+	n->type = NULL_NODE;
+}
+
+void
+gel_makenum_ui_from(GelETree *n, unsigned long num)
+{
+	n->type=VALUE_NODE;
+	mpw_init(n->val.value);
+	mpw_set_ui(n->val.value,num);
+}
+
+void
+gel_makenum_si_from(GelETree *n, long num)
+{
+	n->type=VALUE_NODE;
+	mpw_init(n->val.value);
+	mpw_set_si(n->val.value,num);
+}
+
+void
+gel_makenum_from(GelETree *n, mpw_t num)
+{
+	n->type=VALUE_NODE;
+	mpw_init_set(n->val.value,num);
+}
+
+/*don't create a new number*/
+void
+gel_makenum_use_from(GelETree *n, mpw_t num)
+{
+	n->type=VALUE_NODE;
+	memcpy(n->val.value,num,sizeof(struct _mpw_t));
+}
+
+static inline void
+freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
+{
+
+	if(!n)
+		return;
+	switch(n->type) {
+	case NULL_NODE: break;
+	case VALUE_NODE:
+		mpw_clear(n->val.value);
+		break;
+	case MATRIX_NODE:
+		if(n->mat.matrix)
+			gel_matrixw_free(n->mat.matrix);
+		break;
+	case OPERATOR_NODE:
+		if(freeargs) {
+			while(n->op.args) {
+				GelETree *a = n->op.args;
+				n->op.args = a->any.next;
+				freetree_full(a,TRUE,TRUE);
+			}
+		}
+		break;
+	case IDENTIFIER_NODE:
+		/*was this a fake token, to an anonymous function*/
+		if(!n->id.id->token) {
+			/*XXX:where does the function go?*/
+			g_slist_free(n->id.id->refs);
+			g_free(n->id.id);
+		}
+		break;
+	case STRING_NODE:
+		g_free(n->str.str);
+		break;
+	case FUNCTION_NODE:
+		d_freefunc(n->func.func);
+		break;
+	case COMPARISON_NODE:
+		if(freeargs) {
+			while(n->comp.args) {
+				GelETree *a = n->comp.args;
+				n->comp.args = a->any.next;
+				freetree_full(a,TRUE,TRUE);
+			}
+		}
+		g_slist_free(n->comp.comp);
+		break;
+	case USERTYPE_NODE:
+		gel_free_user_variable_data(n->ut.ttype,n->ut.data);
+		break;
+	case MATRIX_ROW_NODE:
+		if(freeargs) {
+			while(n->row.args) {
+				GelETree *a = n->row.args;
+				n->row.args = a->any.next;
+				freetree_full(a,TRUE,TRUE);
+			}
+		}
+		break;
+	case SPACER_NODE:
+		if(freeargs && n->sp.arg)
+			gel_freetree(n->sp.arg);
+		break;
+	default: break;
+	}
+	if(kill) {
+		/*put onto the free list*/
+		n->any.next = free_trees;
+		free_trees = n;
+	}
+}
+
+void
+gel_freetree(GelETree *n)
+{
+	freetree_full(n,TRUE,TRUE);
+}
+
+static inline void
+freenode(GelETree *n)
+{
+	freetree_full(n,FALSE,TRUE);
+}
+
+static inline void
+copynode_to(GelETree *empty, GelETree *o)
+{
+	switch(o->type) {
+	case NULL_NODE:
+		empty->type = NULL_NODE;
+		empty->any.next = o->any.next;
+		break;
+	case VALUE_NODE:
+		empty->type = VALUE_NODE;
+		empty->any.next = o->any.next;
+		mpw_init_set(empty->val.value,o->val.value);
+		break;
+	case MATRIX_NODE:
+		empty->type = MATRIX_NODE;
+		empty->any.next = o->any.next;
+		empty->mat.matrix = gel_matrixw_copy(o->mat.matrix);
+		empty->mat.quoted = o->mat.quoted;
+		break;
+	case OPERATOR_NODE:
+		empty->type = OPERATOR_NODE;
+		empty->any.next = o->any.next;
+		empty->op.oper = o->op.oper;
+		empty->op.nargs = o->op.nargs;
+		empty->op.args = o->op.args;
+		if(empty->op.args) {
+			GelETree *li;
+			empty->op.args = copynode(empty->op.args);
+			for(li=empty->op.args;li->any.next;li=li->any.next) {
+				li->any.next = copynode(li->any.next);
+			}
+		}
+		break;
+	case IDENTIFIER_NODE:
+		empty->type = IDENTIFIER_NODE;
+		empty->any.next = o->any.next;
+		empty->id.id = o->id.id;
+		break;
+	case STRING_NODE:
+		empty->type = STRING_NODE;
+		empty->any.next = o->any.next;
+		empty->str.str = g_strdup(o->str.str);
+		break;
+	case FUNCTION_NODE:
+		empty->type = FUNCTION_NODE;
+		empty->any.next = o->any.next;
+		empty->func.func = d_copyfunc(o->func.func);
+		break;
+	case COMPARISON_NODE:
+		empty->type = COMPARISON_NODE;
+		empty->any.next = o->any.next;
+		empty->comp.nargs = o->comp.nargs;
+		empty->comp.args = o->comp.args;
+		if(empty->comp.args) {
+			GelETree *li;
+			empty->comp.args = copynode(empty->comp.args);
+			for(li=empty->comp.args;li->any.next;li=li->any.next) {
+				li->any.next = copynode(li->any.next);
+			}
+		}
+		empty->comp.comp = g_slist_copy(o->comp.comp);
+		break;
+	case USERTYPE_NODE:
+		empty->type = USERTYPE_NODE;
+		empty->any.next = o->any.next;
+		empty->ut.ttype = o->ut.ttype;
+		empty->ut.data = gel_copy_user_variable_data(o->ut.ttype,
+								o->ut.data);
+		break;
+	case MATRIX_ROW_NODE:
+		empty->type = MATRIX_ROW_NODE;
+		empty->any.next = o->any.next;
+		empty->row.nargs = o->row.nargs;
+		empty->row.args = o->row.args;
+		if(empty->row.args) {
+			GelETree *li;
+			empty->row.args = copynode(empty->row.args);
+			for(li=empty->row.args;li->any.next;li=li->any.next) {
+				li->any.next = copynode(li->any.next);
+			}
+		}
+		break;
+	case SPACER_NODE:
+		empty->type = SPACER_NODE;
+		empty->any.next = o->any.next;
+		if(o->sp.arg)
+			empty->sp.arg = copynode(o->sp.arg);
+		else
+			empty->sp.arg = NULL;
+		break;
+	default:
+		g_assert_not_reached();
+		break;
+	}
+}
+
+GelETree *
+copynode(GelETree *o)
+{
+	GelETree *n;
+
+	if(!o)
+		return NULL;
+
+	GET_NEW_NODE(n);
+	
+	copynode_to(n,o);
+	
+	return n;
+}
+
+static inline void
+replacenode(GelETree *to, GelETree *from)
+{
+	GelETree *next = to->any.next;
+	freetree_full(to,TRUE,FALSE);
+	memcpy(to,from,sizeof(GelETree));
+	/*put onto the free list*/
+	from->any.next = free_trees;
+	free_trees = from;
+	to->any.next = next;
+}
+static inline void
+copyreplacenode(GelETree *to, GelETree *from)
+{
+	GelETree *next = to->any.next;
+	freetree_full(to,TRUE,FALSE);
+	copynode_to(to,from);
+	to->any.next = next;
+}
+
+GelETree *
+makeoperator(int oper, GSList **stack)
+{
+	GelETree *n;
 	int args;
-	GList *list = NULL;
+	GelETree *list = NULL;
 	args = branches(oper);
 	if(args>=0) {
 		int i;
 		for(i=0;i<args;i++) {
-			ETree *tree = stack_pop(stack);
+			GelETree *tree = stack_pop(stack);
 			if(!tree)  {
-				g_list_foreach(list,(GFunc)freetree,NULL);
-				g_list_free(list); 
+				while(list) {
+					GelETree *a = list->any.next;
+					gel_freetree(list);
+					list = a;
+				}
 				return NULL;
 			}
-			list = g_list_prepend(list,tree);
+			tree->any.next = list;
+			list = tree;
 		}
 	} else {
 		int i=0;
 		for(;;) {
-			ETree *tree;
+			GelETree *tree;
 			tree = stack_pop(stack);
 			/*we have gone all the way to the top and haven't
 			  found a marker*/
 			if(!tree) {
-				g_list_foreach(list,(GFunc)freetree,NULL);
-				g_list_free(list); 
+				while(list) {
+					GelETree *a = list->any.next;
+					gel_freetree(list);
+					list = a;
+				}
 				return NULL;
 			}
 			if(tree->type==EXPRLIST_START_NODE) {
-				freetree(tree);
+				gel_freetree(tree);
 				/*pop one more in case of -2*/
 				if(args==-2) {
-					ETree *t;
+					GelETree *t;
 					t = stack_pop(stack);
 					/*we have gone all the way to the top
 					  whoops!*/
 					if(!t) {
-						g_list_foreach(list,
-							       (GFunc)freetree,
-							       NULL);
-						g_list_free(list); 
+						while(list) {
+							GelETree *a = list->any.next;
+							gel_freetree(list);
+							list = a;
+						}
 						return NULL;
 					}
-					list = g_list_prepend(list,t);
+					t->any.next = list;
+					list = t;
 					i++;
 				}
 				break;
 			}
-			list = g_list_prepend(list,tree);
+			tree->any.next = list;
+			list = tree;
 			i++;
 		}
 		args = i;
@@ -278,1906 +610,315 @@ makeoperator(int oper, GList **stack)
 	
 	n->op.args = list;
 	n->op.nargs = args;
+	
+	/*try_to_precalc_op(n);*/
 
 	return n;
-}
-
-static void
-freetree_full(ETree *n, int freeargs)
-{
-	GList *li;
-	if(!n)
-		return;
-	switch(n->type) {
-	case NULL_NODE: break;
-	case VALUE_NODE:
-		mpw_clear(n->val.value);
-		break;
-	case MATRIX_NODE:
-		if(n->mat.matrix)
-			matrixw_free(n->mat.matrix);
-		break;
-	case OPERATOR_NODE:
-		if(!freeargs) break;
-		for(li=n->op.args;li;li=g_list_next(li)) {
-			if(li->data)
-				freetree_full(li->data,TRUE);
-		}
-		g_list_free(n->op.args); 
-		break;
-	case IDENTIFIER_NODE:
-		/*was this a fake token, to an anonymous function*/
-		if(!n->id.id->token) {
-			/*XXX:where does the function go?*/
-			g_list_free(n->id.id->refs);
-			g_free(n->id.id);
-		}
-		break;
-	case STRING_NODE:
-		g_free(n->str.str);
-		break;
-	case FUNCTION_NODE:
-		freefunc(n->func.func);
-		break;
-	case COMPARISON_NODE:
-		for(li=n->comp.args;li;li=g_list_next(li)) {
-			if(li->data)
-				freetree_full(li->data,TRUE);
-		}
-		g_list_free(n->comp.args); 
-		g_list_free(n->comp.comp);
-		break;
-	case MATRIX_ROW_NODE:
-		for(li=n->row.args;li;li=g_list_next(li)) {
-			if(li->data)
-				freetree_full(li->data,TRUE);
-		}
-		g_list_free(n->row.args); 
-		break;
-	case SPACER_NODE:
-		if(freeargs && n->sp.arg)
-			freetree(n->sp.arg);
-		break;
-	default: break;
-	}
-	/*put onto the free list*/
-	n->next = free_trees;
-	free_trees = n;
-}
-
-void
-freetree(ETree *n)
-{
-	freetree_full(n,TRUE);
-}
-
-static void
-freenode(ETree *n)
-{
-	freetree_full(n,FALSE);
-}
-
-ETree *
-copynode(ETree *o)
-{
-	ETree *n;
-	GList *li;
-
-	if(!o)
-		return NULL;
-
-	GET_NEW_NODE(n);
-
-	memcpy(n,o,sizeof(ETree));
-
-	switch(n->type) {
-	case NULL_NODE: break;
-	case VALUE_NODE:
-		mpw_init_set(n->val.value,o->val.value);
-		break;
-	case MATRIX_NODE:
-		n->mat.matrix = matrixw_copy(o->mat.matrix);
-		break;
-	case OPERATOR_NODE:
-		n->op.args = NULL;
-		for(li = o->op.args;li!=NULL;li=g_list_next(li))
-			n->op.args = g_list_append(n->op.args,
-						   copynode(li->data));
-		break;
-	case IDENTIFIER_NODE: break;
-	case STRING_NODE:
-		n->str.str = g_strdup(o->str.str);
-		break;
-	case FUNCTION_NODE:
-		n->func.func = d_copyfunc(o->func.func);
-		break;
-	case COMPARISON_NODE:
-		n->comp.args = NULL;
-		for(li = o->comp.args;li!=NULL;li=g_list_next(li))
-			n->comp.args = g_list_append(n->comp.args,
-						     copynode(li->data));
-		n->comp.comp = g_list_copy(o->comp.comp);
-		break;
-	case MATRIX_ROW_NODE:
-		n->row.args = NULL;
-		for(li = o->row.args;li!=NULL;li=g_list_next(li))
-			n->row.args = g_list_append(n->row.args,
-						    copynode(li->data));
-		break;
-	case SPACER_NODE:
-		if(o->sp.arg)
-			n->sp.arg = copynode(n->sp.arg);
-	default: break;
-	}
-
-	return n;
-}
-
-/*evaluate arguments, will crash if the node doesn't have at least
-  one arg or isn't and operator, if modright is false then we don't
-  do modular arithmetic on it (for powers for example)*/
-static int
-evalargs(GList *args, ETree *ret[], int eval_first,int modright)
-{
-	GList *li;
-	int i;
-	int r = 0;
-	
-	/*if the first shouldn't be evaluated just pass it*/
-	if(!eval_first)
-		ret[0] = copynode(args->data);
-	else {
-		ret[0] = evalnode(args->data);
-		/*exception is signaled by NULL*/
-		if(!ret[0])
-			return 2;
-			
-	}
-	
-	for(i=1,li=args->next; li!=NULL; li=g_list_next(li),i++) {
-		if(!modright && i==1 && IS_MOD) {
-			PUSH_MOD(NULL);
-			ret[i] = evalnode(li->data);
-			POP_MOD;
-		} else
-			ret[i] = evalnode(li->data);
-		/*exception is signaled by NULL*/
-		if(!ret[i]) {
-			while(--i>=0)
-				freetree(ret[i]);
-			return 2;
-		}
-		/*unevaluated*/
-		/*FIXME: this needs to be some sort of exception
-		  or whatnot, with matrices, we won't be able to
-		  distinguish*/
-		if(ret[i]->type == IDENTIFIER_NODE ||
-		   (ret[i]->type == OPERATOR_NODE &&
-		    ret[i]->op.oper != E_REFERENCE))
-			r = 1;
-	}
-	return r;
 }
 
 /*need_colwise will return if we need column wise expansion*/
 static int
-expand_row(Matrix *dest, MatrixW *src, int di, int si, int *need_col, int *need_colwise)
+expand_row (GelMatrix *dest, GelMatrixW *src, int di, int si, gboolean *need_colwise)
 {
-	GList *ev = NULL;
-	GList *li;
 	int i;
-	int w = 1;
+	int height = 1;
 	int roww;
 	
 	roww = 0;
-	for(i=0;i<matrixw_width(src);i++) {
-		if(!matrixw_set_index(src,i,si)) continue;
+	for(i=0;i<gel_matrixw_width(src);i++) {
+		if(!gel_matrixw_set_index(src,i,si)) continue;
 		roww = i+1;
 	}
-	*need_col = roww;
 
 	for(i=0;i<roww;i++) {
-		ETree *et = matrixw_set_index(src,i,si);
-		if(et)
-			et = evalnode(et);
-		ev = g_list_prepend(ev,et);
-		if(!et || et->type != MATRIX_NODE)
-			continue;
-		if(matrixw_height(et->mat.matrix)>w)
-			w = matrixw_height(et->mat.matrix);
+		GelETree *et = gel_matrixw_set_index(src,i,si);
+		if(et && et->type == MATRIX_NODE &&
+		   gel_matrixw_height(et->mat.matrix)>height)
+			height = gel_matrixw_height(et->mat.matrix);
 	}
 	
-	matrix_set_at_least_size(dest,1,di+w);
+	gel_matrix_set_at_least_size(dest,1,di+height);
 	
-	for(li=ev,i=roww-1;i>=0;li=g_list_next(li),i--) {
+	for(i=roww-1;i>=0;i--) {
 		int x;
-		ETree *et = li->data;
+		GelETree *et = gel_matrixw_set_index(src,i,si);
+		gel_matrixw_set_index(src,i,si) = NULL;
 		
 		/*0 node*/
 		if(!et) {
-			for(x=0;x<w;x++)
-				matrix_index(dest,i,di+x) = NULL;
+			for(x=0;x<height;x++)
+				gel_matrix_index(dest,i,di+x) = NULL;
 		/*non-matrix node*/
 		} else if(et->type!=MATRIX_NODE) {
-			matrix_index(dest,i,di) = et;
-			for(x=1;x<w;x++)
-				matrix_index(dest,i,di+x) = copynode(et);
+			gel_matrix_index(dest,i,di) = et;
+			for(x=1;x<height;x++)
+				gel_matrix_index(dest,i,di+x) = copynode(et);
 		/*single column matrix, convert to regular nodes*/
-		} else if(matrixw_width(et->mat.matrix) == 1) {
+		} else if(gel_matrixw_width(et->mat.matrix) == 1) {
 			int xx;
-			matrixw_make_private(et->mat.matrix);
-			for(x=0;x<matrixw_height(et->mat.matrix);x++) {
-				matrix_index(dest,i,di+x) =
-					matrixw_set_index(et->mat.matrix,0,x);
-				matrixw_set_index(et->mat.matrix,0,x) = NULL;
+			gel_matrixw_make_private(et->mat.matrix);
+			for(x=0;x<gel_matrixw_height(et->mat.matrix);x++) {
+				gel_matrix_index(dest,i,di+x) =
+					gel_matrixw_set_index(et->mat.matrix,0,x);
+				gel_matrixw_set_index(et->mat.matrix,0,x) = NULL;
 			}
 			xx = 0;
-			for(x=matrixw_height(et->mat.matrix);x<w;x++) {
-				matrix_index(dest,i,di+x) =
-					copynode(matrix_index(dest,i,di+xx));
-				if((++xx)>=matrixw_height(et->mat.matrix))
+			for(x=gel_matrixw_height(et->mat.matrix);x<height;x++) {
+				gel_matrix_index(dest,i,di+x) =
+					copynode(gel_matrix_index(dest,i,di+xx));
+				if((++xx)>=gel_matrixw_height(et->mat.matrix))
 					xx=0;
 			}
-			freetree(et);
+			gel_freetree(et);
 		/*non-trivial matrix*/
 		} else {
 			int xx;
 
-			matrixw_make_private(et->mat.matrix);
-			
-			*need_col += matrixw_width(et->mat.matrix) - 1;
+			gel_matrixw_make_private(et->mat.matrix);
 
-			for(x=0;x<matrixw_height(et->mat.matrix);x++) {
-				ETree *n;
+			for(x=0;x<gel_matrixw_height(et->mat.matrix);x++) {
+				GelETree *n;
 				GET_NEW_NODE(n);
 				n->type = MATRIX_ROW_NODE;
 				
 				n->row.args = NULL;
-				for(xx=matrixw_width(et->mat.matrix)-1;xx>=0;xx--) {
-					n->row.args =
-						g_list_prepend(n->row.args,
-							       matrixw_set_index(et->mat.matrix,xx,x));
-					matrixw_set_index(et->mat.matrix,xx,x) = NULL;
+				for(xx=gel_matrixw_width(et->mat.matrix)-1;xx>=0;xx--) {
+					GelETree *t = gel_matrixw_set_index(et->mat.matrix,xx,x);
+					if(!t)
+						t = gel_makenum_ui(0);
+					t->any.next = n->row.args;
+					n->row.args = t;
+					gel_matrixw_set_index(et->mat.matrix,xx,x) = NULL;
 				}
-				n->row.nargs = matrixw_width(et->mat.matrix);
+				n->row.nargs = gel_matrixw_width(et->mat.matrix);
 				
-				matrix_index(dest,i,di+x) = n;
+				gel_matrix_index(dest,i,di+x) = n;
 
 				*need_colwise = TRUE;
 			}
 			xx = 0;
-			for(x=matrixw_height(et->mat.matrix);x<w;x++) {
-				matrix_index(dest,i,di+x) =
-					copynode(matrix_index(dest,i,di+xx));
-				if((++xx)>=matrixw_height(et->mat.matrix))
+			for(x=gel_matrixw_height(et->mat.matrix);x<height;x++) {
+				gel_matrix_index(dest,i,di+x) =
+					copynode(gel_matrix_index(dest,i,di+xx));
+				if((++xx)>=gel_matrixw_height(et->mat.matrix))
 					xx=0;
 			}
-			freetree(et);
+			gel_freetree(et);
 		}
 	}
 	
-	g_list_free(ev);
-	
-	return w;
+	return height;
 }
 
 
 static int
-expand_col(Matrix *dest, Matrix *src, int di[], int si, GList *roww)
+expand_col (GelMatrix *dest, GelMatrix *src, int si, int di, int w)
 {
 	int i;
-	int w;
-	int cols;
-	
-	cols = dest->width;
 
-	w = 1;
-	for(i=0;i<src->height;i++) {
-		ETree *et = matrix_index(src,si,i);
-		if(!et || et->type != MATRIX_ROW_NODE)
-			continue;
-		if(et->row.nargs>w)
-			w = et->row.nargs;
-	}
-	
-	for(i=0;i<src->height;roww=g_list_next(roww),i++) {
-		ETree *et = matrix_index(src,si,i);
-		int wid = GPOINTER_TO_INT(roww->data);
-		if(!et) continue;
-		else if(et->type != MATRIX_ROW_NODE) {
+	for (i = 0; i < src->height; i++) {
+		GelETree *et = gel_matrix_index (src, si, i);
+		if (et == NULL) {
 			int x;
-			int exp;
-			matrix_index(dest,di[i],i) = et;
-			
-			exp = MIN(w-1,cols-wid);
-			
-			roww->data = GINT_TO_POINTER(wid + exp);
-
-			for(x=1;x<=exp;x++)
-				matrix_index(dest,di[i]+x,i) =
-					copynode(et);
-			di[i] += x;
+			for (x = 0; x < w; x++)
+				gel_matrix_index (dest, di+x, i) = NULL;
+		} else if (et->type != MATRIX_ROW_NODE) {
+			int x;
+			gel_matrix_index (dest, di, i) = et;
+			for (x = 1; x < w; x++)
+				gel_matrix_index (dest, di+x, i) = copynode (et);
 		} else {
 			int x;
 			int xx;
-			int exp;
-			GList *li;
-			for(li=et->row.args,x=0;li!=NULL;li=g_list_next(li),x++)
-				matrix_index(dest,di[i]+x,i) = li->data;
-			exp = MIN(w-1,cols-wid);
-			roww->data = GINT_TO_POINTER(wid + exp);
-			xx = 0;
-			for(x=et->row.nargs;x<=exp;x++) {
-				matrix_index(dest,di[i]+x,i) =
-					copynode(matrix_index(dest,di[i]+xx,i));
-				if((++xx)>=et->row.nargs)
-					xx=0;
+			GelETree *iter;
+
+			iter = et->row.args;
+			for (iter = et->row.args, x=0; iter != NULL; x++) {
+				if (iter->type == VALUE_NODE &&
+				    mpw_is_integer (iter->val.value) &&
+				    mpw_sgn (iter->val.value) == 0) {
+					GelETree *next = iter->any.next;
+					gel_matrix_index (dest, di+x, i) = NULL;
+					iter->any.next = NULL;
+					gel_freetree (iter);
+					iter = next;
+				} else {
+					GelETree *old = iter;
+					gel_matrix_index (dest, di+x, i) = iter;
+					iter = iter->any.next;
+					old->any.next = NULL;
+				}
 			}
-			di[i] += x;
-			g_list_free(et->row.args);
-			et->row.args = NULL;
-			freenode(et);
+
+			xx = 0;
+			for (; x < w; x++) {
+				gel_matrix_index (dest, di+x, i) =
+					copynode (gel_matrix_index (dest, di+xx, i));
+				xx++;
+				if (xx >= et->row.nargs)
+					xx = 0;
+			}
+			freenode (et);
 		}
 	}
 	
 	return w;
+}
+
+static int
+get_cols (GelMatrix *m, int *colwidths)
+{
+	int i,j;
+	int maxcol;
+	int cols = 0;
+
+	for (i = 0; i < m->width; i++) {
+		maxcol = 1;
+		for (j = 0; j < m->height; j++) {
+			GelETree *et = gel_matrix_index (m, i, j);
+			if (et == NULL ||
+			    et->type != MATRIX_ROW_NODE)
+				continue;
+			if (et->row.nargs > maxcol)
+				maxcol = et->row.nargs;
+		}
+		colwidths[i] = maxcol;
+		cols += maxcol;
+	}
+	
+	return cols;
+}
+
+static gboolean
+mat_need_expand (GelMatrixW *m)
+{
+	int i, j;
+	for (i = 0; i < gel_matrixw_width (m); i++) {
+		for (j = 0; j < gel_matrixw_height (m); j++) {
+			GelETree *et = gel_matrixw_set_index (m, i, j);
+			if (et != NULL && et->type == MATRIX_NODE)
+				return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 /*evaluate a matrix (or try to), it will try to expand the matrix and
   put 0's into the empty, undefined, spots. For example, a matrix such
   as if b = [8,7]; a = [1,2:3,b]  should expand to, [1,2,2:3,8,7] */
-static ETree *
-evalmatrix(ETree *n)
+void
+gel_expandmatrix (GelETree *n)
 {
 	int i;
 	int k;
 	int cols;
-	ETree *nn;
-	Matrix *m = matrix_new();
-	int need_colwise = FALSE;
-	GList *roww = NULL;
-	MatrixW *nm;
-	int h;
+	GelMatrix *m;
+	gboolean need_colwise = FALSE;
+	GelMatrixW *nm;
+	int h,w;
 
 	nm = n->mat.matrix;
 
-	h = matrixw_height(nm);
-	matrix_set_size(m,matrixw_width(nm),h);
+	g_return_if_fail (n->type == MATRIX_NODE);
+
+	if ( ! mat_need_expand (nm))
+		return;
+
+	w = gel_matrixw_width (nm);
+	h = gel_matrixw_height (nm);
+
+	if (w == 1 && h == 1) {
+		GelETree *t = gel_matrixw_set_index (nm, 0, 0);
+		if (t != NULL &&
+		    t->type == MATRIX_NODE) {
+			if (nm->m->use == 1) {
+				gel_matrixw_set_index (nm, 0, 0) = NULL;
+			} else {
+				t = copynode (t);
+			}
+			replacenode (n, t);
+			return;
+		}
+	}
+
+	gel_matrixw_make_private (nm);
+
+	m = gel_matrix_new();
+	gel_matrix_set_size(m, w, h, TRUE /* padding */);
 	
-	cols = matrixw_width(nm);
+	cols = gel_matrixw_width (nm);
 	
-	for(i=0,k=0;i<h;i++) {
-		int c;
-		int w = expand_row(m,nm,k,i,&c,&need_colwise);
+	for (i = 0, k = 0; i < h; i++) {
+		int w;
+		w = expand_row (m, nm, k, i, &need_colwise);
 		k += w;
-		for(;w>0;w--)
-			roww = g_list_prepend(roww,GINT_TO_POINTER(c));
-
-		if(cols<c)
-			cols = c;
 	}
-	
-	roww = g_list_reverse(roww);
-	
-	if(need_colwise) {
-		Matrix *tm = matrix_new();
-		guint *di = g_new0(guint,k);
-		matrix_set_size(tm,cols,m->height);
-		for(i=0;i<m->width;i++)
-			expand_col(tm,m,di,i,roww);
-		g_free(di);
-		matrix_free(m);
+
+	if (need_colwise) {
+		int ii;
+		GelMatrix *tm = gel_matrix_new ();
+		int *colwidths = g_new (int, m->width);
+
+		cols = get_cols (m, colwidths);
+		gel_matrix_set_size (tm,cols,m->height, TRUE /* padding */);
+		for (i = 0, ii = 0; i < m->width; ii += colwidths[i], i++)
+			expand_col (tm, m, i, ii, colwidths[i]);
+		gel_matrix_free (m);
 		m = tm;
-	}
-	
-	g_list_free(roww);
 
-	GET_NEW_NODE(nn);
-	nn->type = MATRIX_NODE;
-	nn->mat.matrix = matrixw_new_with_matrix(m);
-	nn->mat.quoted = 0;
-	
-	return nn;
+		g_free (colwidths);
+	}
+
+	freetree_full (n, TRUE, FALSE);
+
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (m);
+	n->mat.quoted = 0;
 }
 
-/*evaluate a quoted matrix, so we just evaluate all nodes, but don't expand*/
-static ETree *
-qevalmatrix(ETree *n)
+static GelETree*
+get_func_call_node(GelEFunc *func, GelETree **args, int nargs)
 {
 	int i;
-	int j;
-	ETree *nn;
-	Matrix *m = matrix_new();
-	MatrixW *nm;
-	int w,h;
-	
-	nm = n->mat.matrix;
+	GelETree *l;
+	GelETree *ret;
+	GelETree *li = NULL;
 
-	w = matrixw_width(nm);
-	h = matrixw_height(nm);
-	matrix_set_size(m,w,h);
-	
-	for(i=0;i<w;i++) {
-		for(j=0;j<h;j++) {
-			ETree *e = matrixw_set_index(nm,i,j);
-			if(e)
-				matrix_index(m,i,j)=evalnode(e);
-		}
-	}
-
-	GET_NEW_NODE(nn);
-	nn->type = MATRIX_NODE;
-	nn->mat.matrix = matrixw_new_with_matrix(m);
-	nn->mat.quoted = 1;
-	
-	return nn;
-}
-
-static ETree *
-matrix_el_bailout_set(ETree *n, ETree *set, ETree *l, ETree *m, ETree *ll, ETree *rr)
-{
-	if(n) {
-		ETree *args1[3];
-		ETree *args2[2];
-		args1[0]=copynode(m);
-		if(ll) {
-			args1[1]=ll;
-			args1[2]=rr;
-		} else {
-			args1[1]=rr;
-			args1[2]=NULL;
-		}
-		args2[0]=copynode_args(l,args1);
-		args2[1]=set;
-		return copynode_args(n,args2);
-	} else {
-		ETree *args1[3];
-		args1[0]=m;
-		if(ll) {
-			args1[1]=ll;
-			args1[2]=rr;
-		} else {
-			args1[1]=rr;
-			args1[2]=NULL;
-		}
-		return copynode_args(l,args1);
-	}
-}
-
-static int
-get_matrix_index_num(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr, 
-		     ETree *num, ETree **ret)
-{
-	long i;
-	if(num->type != VALUE_NODE ||
-	   !mpw_is_integer(num->val.value)) {
-		(*errorout)(_("Wrong argument type as matrix index"));
-		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-		return -1;
-	}
-
-	i = mpw_get_long(num->val.value);
-	if(error_num) {
-		error_num = 0;
-		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-		return -1;
-	}
-	if(i>INT_MAX) {
-		(*errorout)(_("Matrix index too large"));
-		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-		return -1;
-	} else if(i<=0) {
-		(*errorout)(_("Matrix index less then 1"));
-		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-		return -1;
-	}
-	return i;
-}
-
-static int
-get_index_region(ETree *n, ETree *l, ETree *set, ETree *m,
-		 ETree *ll, ETree *rr, 
-		 ETree *num, ETree **ret, int *from, int *to)
-{
-	if(num->type == OPERATOR_NODE &&
-	   num->op.oper == E_REGION_SEP) {
-		g_assert(num->op.args);
-		g_assert(num->op.args->data);
-		g_assert(num->op.args->next->data);
-		*from = get_matrix_index_num(n,l,set,m,ll,rr,
-					     num->op.args->data,ret);
-		if(*from == -1) return FALSE;
-		*to = get_matrix_index_num(n,l,set,m,ll,rr,
-					   num->op.args->next->data,ret);
-		if(*to == -1) return FALSE;
-		if(*from>*to) {
-			(*errorout)(_("Matrix 'to' index less then 'from' index"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return FALSE;
-		}
-	} else {
-		*from = *to = get_matrix_index_num(n,l,set,m,ll,rr,num,ret);
-		if(*from == -1) return FALSE;
-	}
-	return TRUE;
-}
-
-static int
-get_matrix_index(ETree *n, ETree *l, ETree *set, ETree **m,
-		 ETree **ll, ETree **rr, 
-		 int do_row, int do_column,
-		 int *rowfrom, int *rowto,
-		 int *colfrom, int *colto,
-		 ETree **ret)
-{
-	if(do_row && do_column) {
-		GET_LRR(l,(*m),(*ll),(*rr));
-	} else if(do_row) {
-		GET_LR(l,(*m),(*ll));
-		*rr = NULL;
-	} else /*if(do_column)*/ {
-		GET_LR(l,(*m),(*rr));
-		*ll = NULL;
-	}
-
-	if(do_row) {
-		*ll = evalnode(*ll);
-		/*exception*/
-		if(!*ll) {
-			freetree(set);
-			return FALSE;
-		}
-	}
-	if(do_column) {
-		*rr = evalnode(*rr);
-		/*exception*/
-		if(!*rr) {
-			if(*ll) freetree(*ll);
-			freetree(set);
-			return FALSE;
-		}
-	}
-
-	/*if this is from the GET and not from SET, then evaluate m*/
-	if(!n) {
-		*m = evalnode(*m);
-		/*exception*/
-		if(!*m) {
-			if(*ll) freetree(*ll);
-			if(*rr) freetree(*rr);
-			freetree(set);
-			return FALSE;
-		}
-	}
-
-	if(do_row) {
-		if(!get_index_region(n,l,set,*m,*ll,*rr, 
-				    *ll,ret,rowfrom,rowto))
-			return FALSE;
-	}
-	if(do_column) {
-		if(!get_index_region(n,l,set,*m,*ll,*rr, 
-				    *rr,ret,colfrom,colto))
-			return FALSE;
-	}
-	return TRUE;
-}
-
-static MatrixW *
-get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr, 
-	     int *new_matrix, ETree **ret)
-{
-	MatrixW *mat = NULL;
-
-	if(m->type == IDENTIFIER_NODE) {
-		EFunc *f;
-		f = d_lookup_local(m->id.id);
-		if(!f) {
-			ETree *t;
-			GET_NEW_NODE(t);
-			t->type = MATRIX_NODE;
-			t->mat.matrix = matrixw_new();
-			t->mat.quoted = 0;
-			matrixw_set_size(t->mat.matrix,1,1);
-
-			f = d_makevfunc(m->id.id,t);
-			d_addfunc(f);
-			if(new_matrix) *new_matrix = TRUE;
-		} else if(f->type != USER_FUNC &&
-			  f->type != VARIABLE_FUNC) {
-			(*errorout)(_("Indexed Lvalue not user function"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return NULL;
-		}
-		if(!f->data.user) {
-			g_assert(uncompiled);
-			f->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-			g_hash_table_remove(uncompiled,f->id);
-			g_assert(f->data.user);
-		}
-		if(f->data.user->type != MATRIX_NODE) {
-			ETree *t;
-			GET_NEW_NODE(t);
-			t->type = MATRIX_NODE;
-			t->mat.matrix = matrixw_new();
-			t->mat.quoted = 0;
-			matrixw_set_size(t->mat.matrix,1,1);
-
-			d_set_value(f,t);
-			if(new_matrix) *new_matrix = TRUE;
-		}
-		mat = f->data.user->mat.matrix;
-	} else if(m->type == OPERATOR_NODE ||
-		  m->op.oper == E_DEREFERENCE) {
-		ETree *lll;
-		EFunc *f;
-		GET_L(m,lll);
-
-		if(lll->type != IDENTIFIER_NODE) {
-			(*errorout)(_("Dereference of non-identifier!"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return NULL;
-		}
-
-		f = d_lookup_local(lll->id.id);
-		if(!f) {
-			(*errorout)(_("Dereference of undefined variable!"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return NULL;
-		}
-		if(f->type!=REFERENCE_FUNC) {
-			(*errorout)(_("Dereference of non-reference!"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return NULL;
-		}
-
-		if(f->data.ref->type != USER_FUNC &&
-		   f->data.ref->type != VARIABLE_FUNC) {
-			(*errorout)(_("Indexed Lvalue not user function"));
-			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-			return NULL;
-		}
-		if(!f->data.ref->data.user) {
-			g_assert(uncompiled);
-			f->data.ref->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,f->data.ref->id));
-			g_hash_table_remove(uncompiled,f->id);
-			g_assert(f->data.user);
-		}
-		if(f->data.ref->data.user->type != MATRIX_NODE) {
-			ETree *t;
-			GET_NEW_NODE(t);
-			t->type = MATRIX_NODE;
-			t->mat.matrix = matrixw_new();
-			t->mat.quoted = 0;
-			matrixw_set_size(t->mat.matrix,1,1);
-
-			d_set_value(f->data.ref,t);
-			if(new_matrix) *new_matrix = TRUE;
-		}
-		mat = f->data.ref->data.user->mat.matrix;
-	} else {
-		(*errorout)(_("Indexed Lvalue not an identifier or a dereference"));
-		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
-		return NULL;
-	}
-	return mat;
-}
-
-static ETree *
-equalsop(ETree *n, int do_ret)
-{
-	ETree *l;
-	ETree *r;
-	ETree *set;
-	GET_LR(n,l,r);
-	
-	if(l->type != IDENTIFIER_NODE &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_VELEMENT) &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ELEMENT) &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_COL_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ROW_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE)) {
-		(*errorout)(_("Lvalue not an identifier/dereference/matrix location!"));
-		return copynode(n);
-	}
-
-	if(l->type == IDENTIFIER_NODE) {
-		set = evalnode(r);
-		/*exception*/
-		if(!set)
-			return NULL;
-		if(set->type == FUNCTION_NODE) {
-			if(do_ret)
-				d_addfunc(d_makerealfunc(set->func.func,l->id.id,FALSE));
-			else {
-				d_addfunc(d_makerealfunc(set->func.func,l->id.id,TRUE));
-				freetree(set);
-				set = EMPTY_RET;
-			}
-		} else if(set->type == OPERATOR_NODE &&
-			set->op.oper == E_REFERENCE) {
-			ETree *t = set->op.args->data;
-			EFunc *rf = d_lookup_global(t->id.id);
-			if(!rf) {
-				ETree *args[2];
-				(*errorout)(_("Referencing an undefined variable!"));
-				args[0]=copynode(l);
-				args[1]=set;
-				return copynode_args(n,args);
-			}
-			d_addfunc(d_makereffunc(l->id.id,rf));
-		} else {
-			if(do_ret)
-				d_addfunc(d_makevfunc(l->id.id,copynode(set)));
-			else {
-				d_addfunc(d_makevfunc(l->id.id,set));
-				set = EMPTY_RET;
-			}
-		}
-	} else if(l->op.oper == E_DEREFERENCE) {
-		ETree *ll;
-		EFunc *f;
-		GET_L(l,ll);
-
-		set = evalnode(r);
-		/*exception*/
-		if(!set)
-			return NULL;
-
-		if(ll->type != IDENTIFIER_NODE) {
-			ETree *args[2];
-			(*errorout)(_("Dereference of non-identifier!"));
-			args[0]=copynode(l);
-			args[1]=set;
-			return copynode_args(n,args);
-		}
-		
-		f = d_lookup_local(ll->id.id);
-		if(!f) {
-			ETree *args[2];
-			(*errorout)(_("Dereference of undefined variable!"));
-			args[0]=copynode(l);
-			args[1]=set;
-			return copynode_args(n,args);
-		}
-		if(f->type!=REFERENCE_FUNC) {
-			ETree *args[2];
-			(*errorout)(_("Dereference of non-reference!"));
-			args[0]=copynode(l);
-			args[1]=set;
-			return copynode_args(n,args);
-		}
-		
-		if(set->type == FUNCTION_NODE) {
-			if(do_ret)
-				d_setrealfunc(f->data.ref,set->func.func,FALSE);
-			else {
-				d_setrealfunc(f->data.ref,set->func.func,TRUE);
-				freetree(set);
-				set = EMPTY_RET;
-			}
-		} else if(set->type == OPERATOR_NODE &&
-			set->op.oper == E_REFERENCE) {
-			ETree *t = set->op.args->data;
-			EFunc *rf = d_lookup_global(t->id.id);
-			if(!rf) {
-				ETree *args[2];
-				(*errorout)(_("Referencing an undefined variable!"));
-				args[0]=copynode(l);
-				args[1]=set;
-				return copynode_args(n,args);
-			}
-			d_set_ref(f->data.ref,rf);
-		} else {
-			if(do_ret)
-				d_set_value(f->data.ref,copynode(set));
-			else {
-				d_set_value(f->data.ref,set);
-				set = EMPTY_RET;
-			}
-		}
-	} else if(l->op.oper == E_GET_ELEMENT) {
-		MatrixW *mat;
-		ETree *ll,*rr,*m;
-		ETree *ret = NULL;
-		int li,ri; 
-
-		set = evalnode(r);
-		/*exception*/
-		if(!set)
-			return NULL;
-		
-		if(!get_matrix_index(n,l,set,&m,&ll,&rr,TRUE,TRUE,
-				     &li,&li,&ri,&ri,&ret))
-			return ret;
-
-		if(!(mat = get_matrix_p(n,l,set,m,ll,rr,NULL,&ret)))
-			return ret;
-
-		freetree(ll);
-		freetree(rr);
-		
-		if(do_ret)
-			matrixw_set_element(mat,ri-1,li-1,set);
-		else {
-			matrixw_set_element(mat,ri-1,li-1,copynode(set));
-			set = EMPTY_RET;
-		}
-	} else if(l->op.oper == E_GET_VELEMENT) {
-		MatrixW *mat;
-		ETree *ll,*rr,*m;
-		ETree *ret = NULL;
-		int li; 
-
-		set = evalnode(r);
-		/*exception*/
-		if(!set)
-			return NULL;
-		
-		if(!get_matrix_index(n,l,set,&m,&ll,&rr,TRUE,FALSE,
-				     &li,&li,NULL,NULL,&ret))
-			return ret;
-
-		if(!(mat = get_matrix_p(n,l,set,m,ll,rr,NULL,&ret)))
-			return ret;
-
-		freetree(ll);
-		freetree(rr);
-		
-		if(matrixw_height(mat)==1) {
-			if(do_ret)
-				matrixw_set_element(mat,li-1,0,copynode(set));
-			else {
-				matrixw_set_element(mat,li-1,0,set);
-				set = EMPTY_RET;
-			}
-		} else if(matrixw_width(mat)==1) {
-			if(do_ret)
-				matrixw_set_element(mat,0,li-1,copynode(set));
-			else {
-				matrixw_set_element(mat,0,li-1,set);
-				set = EMPTY_RET;
-			}
-		} else {
-			int x,y;
-			x = (li-1)%matrixw_width(mat);
-			y = (li-1)/matrixw_width(mat);
-			if(do_ret)
-				matrixw_set_element(mat,x,y,copynode(set));
-			else {
-				matrixw_set_element(mat,x,y,set);
-				set = EMPTY_RET;
-			}
-		}
-	} else /*l->data.oper == E_GET_REGION E_GET_COL_REGION E_GET_ROW_REGION*/ {
-		MatrixW *mat;
-		ETree *ll,*rr,*m;
-		ETree *ret = NULL;
-		int rowfrom,rowto,colfrom,colto; 
-		int w,h;
-		int new_matrix = FALSE;
-		int do_col,do_row;
-		
-		if(l->op.oper == E_GET_REGION) {
-			do_col = TRUE;
-			do_row = TRUE;
-		} else if(l->op.oper == E_GET_ROW_REGION) {
-			do_col = FALSE;
-			do_row = TRUE;
-		} else /*E_GET_COL_REGION*/ {
-			do_col = TRUE;
-			do_row = FALSE;
-		}
-
-		set = evalnode(r);
-		/*exception*/
-		if(!set)
-			return NULL;
-		
-		if(!get_matrix_index(n,l,set,&m,&ll,&rr,do_row,do_col,
-				     &rowfrom,&rowto,&colfrom,&colto,&ret))
-			return ret;
-		
-		if(!(mat = get_matrix_p(n,l,set,m,ll,rr,&new_matrix,&ret)))
-			return ret;
-		
-		if(!do_row) {
-			rowfrom = 1;
-			if(new_matrix) {
-				if(set->type == MATRIX_NODE)
-					rowto = matrixw_height(set->mat.matrix);
-				else
-					rowto = 1;
-			} else
-				rowto = matrixw_height(mat);
-		}
-		if(!do_col) {
-			colfrom = 1;
-			if(new_matrix) {
-				if(set->type == MATRIX_NODE)
-					colto = matrixw_width(set->mat.matrix);
-				else
-					colto = 1;
-			} else
-				colto = matrixw_width(mat);
-		}
-		
-		w = colto-colfrom+1;
-		h = rowto-rowfrom+1;
-
-		/*weirdly written boolean expression, it's if these
-		  conditions AREN'T met then get out, it was just
-		  easier to write it this way*/
-		if(!(set->type != MATRIX_NODE ||
-		     (matrixw_width(set->mat.matrix) == w &&
-		      matrixw_height(set->mat.matrix) == h))) {
-			(*errorout)(_("Can't set a region to a region of a different size"));
-			return matrix_el_bailout_set(n, set, l, m, ll, rr);
-		}
-
-		freetree(ll);
-		freetree(rr);
-		
-		if(set->type == MATRIX_NODE) {
-			matrixw_set_region(mat,set->mat.matrix,0,0,
-					   colfrom-1,rowfrom-1,w,h);
-		} else {
-			matrixw_set_region_etree(mat,set,
-						 colfrom-1,rowfrom-1,w,h);
-		}
-	}
-	return set;
-}
-
-/*copy node but use the args from r*/
-ETree *
-copynode_args(ETree *o, ETree *r[])
-{
-	ETree *n;
-	int i;
-
-	if(!o || !r)
-		return NULL;
-	
-	g_assert(o->type == OPERATOR_NODE ||
-		 o->type == COMPARISON_NODE);
-
-	GET_NEW_NODE(n);
-
-	memcpy(n,o,sizeof(ETree));
-
-	/*add the arguments*/
-	if(n->op.type == OPERATOR_NODE) {
-		n->op.args = NULL;
-		for(i=0;i<n->op.nargs;i++)
-			n->op.args = g_list_append(n->op.args,r[i]);
-	} else /*COMPARISON_NODE*/ {
-		n->comp.args = NULL;
-		for(i=0;i<n->comp.nargs;i++)
-			n->comp.args = g_list_append(n->comp.args,r[i]);
-		n->comp.comp = g_list_copy(n->comp.comp);
-	}
-
-	return n;
-}
-
-static void
-freeargarr(ETree *r[],int n)
-{
-	int i;
-	for(i=0;i<n;i++)
-		freetree(r[i]);
-}
-
-static ETree *
-funccallop(ETree *n,int direct_call,int do_ret)
-{
-	ETree **r;
-	ETree *ret = NULL;
-	EFunc *f;
-	ETree *l;
-	
-	GET_L(n,l);
-	
-	r = g_new(ETree *,n->op.nargs);
-	if(evalargs(n->op.args,r,
-		    (direct_call ||
-		     (l->type == OPERATOR_NODE &&
-		      l->op.oper == E_DEREFERENCE))?FALSE:TRUE,
-		    TRUE
-		   )==2) {
-		g_free(r);
-		return NULL;
-	}
-	
-	if(l->type == IDENTIFIER_NODE) {
-		f = d_lookup_global(l->id.id);
-		if(!f) {
-			char buf[256];
-			g_snprintf(buf,256,_("Function '%s' used unintialized"),
-				   l->id.id->token);
-			(*errorout)(buf);
-			ret = copynode_args(n,r);
-			g_free(r);
-			return ret;
-		}
-	} else if(l->type == FUNCTION_NODE) {
-		f = l->func.func;
-	} else if(l->type == OPERATOR_NODE &&
-		l->op.oper == E_DEREFERENCE) {
-		ETree *ll;
-		GET_L(l,ll);
-		f = d_lookup_global(ll->id.id);
-		if(!f) {
-			char buf[256];
-			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-				   ll->id.id->token);
-			(*errorout)(buf);
-			ret = copynode_args(n,r);
-			g_free(r);
-			return ret;
-		} else if(f->type != REFERENCE_FUNC) {
-			char buf[256];
-			g_snprintf(buf,256,_("Can't dereference '%s'!"),
-				   ll->id.id->token);
-			(*errorout)(buf);
-			ret = copynode_args(n,r);
-			g_free(r);
-			return ret;
-		}
-		f = f->data.ref;
-	} else {
-		(*errorout)(_("Can't call a non-function!"));
-		ret = copynode_args(n,r);
-		g_free(r);
-		return ret;
-	}
-	
-	g_assert(f);
-	
-	if(f->nargs + 1 != n->op.nargs) {
-		char buf[256];
-		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
-		(*errorout)(buf);
-		ret = copynode_args(n,r);
-		g_free(r);
-		return ret;
-	} else if(f->type == USER_FUNC ||
-		  f->type == VARIABLE_FUNC) {
-		int i;
-		GList *li;
-		GSList *sli;
-
-		d_addcontext();
-		/*push arguments on context stack*/
-		for(i=1,li=f->named_args;i<n->op.nargs;i++,li=g_list_next(li)) {
-			if(r[i]->type == FUNCTION_NODE) {
-				d_addfunc(d_makerealfunc(r[i]->func.func,li->data,FALSE));
-			} else if(r[i]->type == OPERATOR_NODE &&
-			   r[i]->op.oper == E_REFERENCE) {
-				ETree *t = r[i]->op.args->data;
-				EFunc *rf = d_lookup_global_up1(t->id.id);
-				if(!rf) {
-					freedict(d_popcontext());
-					(*errorout)(_("Referencing an undefined variable!"));
-					ret = copynode_args(n,r);
-					g_free(r);
-					return ret;
-				}
-				d_addfunc(d_makereffunc(li->data,rf));
-			} else
-				d_addfunc(d_makevfunc(li->data,copynode(r[i])));
-		}
-
-		if(!f->data.user) {
-			g_assert(uncompiled);
-			f->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-			g_hash_table_remove(uncompiled,f->id);
-			g_assert(f->data.user);
-		}
-
-		if(returnval) {
-			(*errorout)(_("Extraneous return value!"));
-			freetree(returnval);
-		}
-		returnval = NULL;
-		inexception = FALSE;
-		inbailout = FALSE;
-
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(0));
-		if(mods) PUSH_MOD(NULL);
-		ret = evalnode_full(f->data.user,do_ret);
-		POP_MOD;
-		sli=inloop;
-		inloop=g_slist_remove_link(inloop,sli);
-		g_slist_free_1(sli);
-		
-		if(!inexception && inbailout) {
-			if(returnval) freetree(returnval);
-			returnval = NULL;
-			inbailout = FALSE;
-			if(ret && ret!=EMPTY_RET) freetree(ret);
-			ret = copynode_args(n,r);
-		} else {
-			for(i=0;i<n->op.nargs;i++)
-				freetree(r[i]);
-		}
-		g_free(r);
-		freedict(d_popcontext());
-		if(!ret && returnval)
-			ret = returnval;
-		else if(returnval)
-			freetree(returnval);
-		returnval = NULL;
-		if(inexception) {
-			inbailout = FALSE;
-			inexception = FALSE;
-			if(ret && ret!=EMPTY_RET) freetree(ret);
-			ret = NULL;
-		}
-		return ret;
-	} else if(f->type == BUILTIN_FUNC) {
-		int exception = FALSE;
-		ret = (*f->data.func)(&r[1],&exception);
-		if(!ret && !exception)
-			ret = copynode_args(n,r);
-		else
-			freeargarr(r,n->op.nargs);
-		g_free(r);
-		if(exception) {
-			if(ret)
-				freetree(ret);
-			return NULL;
-		}
-		return ret;
-	} else if(f->type == REFERENCE_FUNC) {
-		ETree *a;
-		ETree *id;
-		if(f->nargs>0) {
-			(*errorout)(_("Reference function with arguments encountered!"));
-			ret = copynode_args(n,r);
-			g_free(r);
-			return ret;
-		}
-		f = f->data.ref;
-		if(!f->id) {
-			(*errorout)(_("Unnamed reference function encountered!"));
-			ret = copynode_args(n,r);
-			g_free(r);
-			return ret;
-		}
-		
-		if(!do_ret) {
-			freeargarr(r,n->op.nargs);
-			g_free(r);
-			return EMPTY_RET;
-		}
-
-		GET_NEW_NODE(id);
-		id->type = IDENTIFIER_NODE;
-		id->id.id = f->id; /*this WILL have an id*/
-
-		GET_NEW_NODE(a);
-		a->type = OPERATOR_NODE;
-		a->op.oper = E_REFERENCE;
-
-		a->op.args = g_list_append(NULL,id);
-		a->op.nargs = 1;
-		freeargarr(r,n->op.nargs);
-		g_free(r);
-		return a;
-	} else {
-		(*errorout)(_("Unevaluatable function type encountered!"));
-		ret = copynode_args(n,r);
-		g_free(r);
-		return ret;
-	}
-}
-
-static ETree*
-return_func_node(EFunc *func,ETree **args, int nargs)
-{
-	int i;
-	ETree *id;
-	ETree *ret;
-
-	GET_NEW_NODE(id);
-	id->type = IDENTIFIER_NODE;
-	id->id.id = func->id;
+	GET_NEW_NODE(l);
+	l->type = FUNCTION_NODE;
+	l->func.func = d_copyfunc(func);
+	l->any.next = NULL;
 
 	GET_NEW_NODE(ret);
 	ret->type = OPERATOR_NODE;
 	ret->op.oper = E_DIRECTCALL;
-	ret->op.args = g_list_append(NULL,id);
-	for(i=0;i<nargs;i++)
-		ret->op.args =
-			g_list_append(ret->op.args,copynode(args[i]));
+	ret->op.args = l;
+	
+	li = l;
+
+	for(i=0;i<nargs;i++) {
+		li = li->any.next = copynode(args[i]);
+	}
+	li->any.next = NULL;
 	ret->op.nargs = nargs+1;
 	return ret;
 }
 
-ETree *
-funccall(EFunc *func, ETree **args, int nargs)
+GelETree *
+funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs)
 {
-	ETree *ret = NULL;
+	GelETree *ret = NULL;
 	
 	g_return_val_if_fail(func!=NULL,NULL);
-	
-	if(func->nargs != nargs) {
-		char buf[256];
-		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),func->id?func->id->token:"anonymous",func->nargs);
-		(*errorout)(buf);
-		
-		return return_func_node(func,args,nargs);
-	} else if(func->type == USER_FUNC ||
-		  func->type == VARIABLE_FUNC) {
-		int i;
-		GList *li;
-		GSList *sli;
 
-		d_addcontext();
-		/*push arguments on context stack*/
-		for(i=0,li=func->named_args;i<nargs;i++,li=g_list_next(li)) {
-			args[i] = copynode(args[i]);
-			if(args[i]->type == FUNCTION_NODE) {
-				d_addfunc(d_makerealfunc(args[i]->func.func,li->data,FALSE));
-			} else if(args[i]->type == OPERATOR_NODE &&
-				  args[i]->op.oper == E_REFERENCE) {
-				ETree *t = args[i]->op.args->data;
-				EFunc *rf = d_lookup_global_up1(t->id.id);
-				if(!rf) {
-					freedict(d_popcontext());
-					(*errorout)(_("Referencing an undefined variable!"));
-					return return_func_node(func,args,nargs);
-				}
-				d_addfunc(d_makereffunc(li->data,rf));
-			} else
-				d_addfunc(d_makevfunc(li->data,copynode(args[i])));
-		}
-
-		if(!func->data.user) {
-			g_assert(uncompiled);
-			func->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,func->id));
-			g_hash_table_remove(uncompiled,func->id);
-			g_assert(func->data.user);
-		}
-
-		if(returnval) {
-			(*errorout)(_("Extraneous return value!"));
-			freetree(returnval);
-		}
-		returnval = NULL;
-		inexception = FALSE;
-		inbailout = FALSE;
-
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(0));
-		if(mods) PUSH_MOD(NULL);
-		ret = evalnode(func->data.user);
-		POP_MOD;
-		sli=inloop;
-		inloop=g_slist_remove_link(inloop,sli);
-		g_slist_free_1(sli);
-		
-		if(!inexception && inbailout) {
-			if(returnval) freetree(returnval);
-			returnval = NULL;
-			inbailout = FALSE;
-			if(ret && ret!=EMPTY_RET) freetree(ret);
-			ret = return_func_node(func,args,nargs);
-		}
-		freedict(d_popcontext());
-		if(!ret && returnval)
-			ret = returnval;
-		else if(returnval)
-			freetree(returnval);
-		returnval = NULL;
-		if(inexception) {
-			inbailout = FALSE;
-			inexception = FALSE;
-			if(ret && ret!=EMPTY_RET) freetree(ret);
-			ret = NULL;
-		}
-		return ret;
-	} else if(func->type == BUILTIN_FUNC) {
-		int exception = FALSE;
-		ret = (*func->data.func)(args,&exception);
-		if(!ret && !exception)
-			ret = return_func_node(func,args,nargs);
-		if(exception) {
-			if(ret)
-				freetree(ret);
-			return NULL;
-		}
-		return ret;
-	} else if(func->type == REFERENCE_FUNC) {
-		ETree *a;
-		ETree *id;
-		if(func->nargs>0) {
-			(*errorout)(_("Reference function with arguments encountered!"));
-			return return_func_node(func,args,nargs);
-		}
-		func = func->data.ref;
-		if(!func->id) {
-			(*errorout)(_("Unnamed reference function encountered!"));
-			return return_func_node(func,args,nargs);
-		}
-		
-		GET_NEW_NODE(id);
-		id->type = IDENTIFIER_NODE;
-		id->id.id = func->id; /*this WILL have an id*/
-
-		GET_NEW_NODE(a);
-		a->type = OPERATOR_NODE;
-		a->op.oper = E_REFERENCE;
-
-		a->op.args = g_list_append(NULL,id);
-		a->op.nargs = 1;
-		return a;
-	} else {
-		(*errorout)(_("Unevaluatable function type encountered!"));
-		return return_func_node(func,args,nargs);
-	}
-}
-
-static ETree *
-derefvarop(ETree *n)
-{
-	EFunc *f;
-	ETree *l;
-	
-	GET_L(n,l);
-	
-	f = d_lookup_global(l->id.id);
-	if(!f) {
-		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-			   l->id.id->token);
-		(*errorout)(buf);
-	} else if(f->nargs != 0) {
-		char buf[256];
-		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
-		(*errorout)(buf);
-	} else if(f->type != REFERENCE_FUNC) {
-		char buf[256];
-		g_snprintf(buf,256,_("Trying to dereference '%s' which is not a reference!\n"),
-			   f->id?f->id->token:"anonymous");
-		(*errorout)(buf);
-	} else /*if(f->type == REFERENCE_FUNC)*/ {
-		f = f->data.ref;
-		if(!f) {
-			(*errorout)(_("NULL reference encountered!"));
-		} else if(f->type == USER_FUNC ||
-			  f->type == VARIABLE_FUNC) {
-			if(!f->data.user) {
-				g_assert(uncompiled);
-				f->data.user =
-					decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-				g_hash_table_remove(uncompiled,f->id);
-				g_assert(f->data.user);
-			}
-			return copynode(f->data.user);
-		} else if(f->type == BUILTIN_FUNC) {
-			ETree *ret;
-			int exception = FALSE;
-			ret = (*f->data.func)(NULL,&exception);
-			if(!ret && !exception) ret = copynode(n);
-			if(exception) {
-				if(ret)
-					freetree(ret);
-				return NULL;
-			}
-			return ret;
-		} else if(f->type == REFERENCE_FUNC) {
-			ETree *a;
-			ETree *i;
-			if(!f->id) {
-				(*errorout)(_("Unnamed reference function encountered"));
-				return copynode(n);
-			}
-			GET_NEW_NODE(i);
-			i->type = IDENTIFIER_NODE;
-			i->id.id = f->id; /*this WILL have an id*/
-
-			GET_NEW_NODE(a);
-			a->type = OPERATOR_NODE;
-			a->op.oper = E_REFERENCE;
-			
-			a->op.args = g_list_append(NULL,i);
-			a->op.nargs = 1;
-			return a;
-		} else
-			(*errorout)(_("Unevaluatable function type encountered!"));
-	}
-	return copynode(n);
-}
-
-static ETree *
-variableop(ETree *n)
-{
-	EFunc *f;
-	
-	f = d_lookup_global(n->id.id);
-	if(!f) {
-		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->id.id->token);
-		(*errorout)(buf);
-		return copynode(n);
-	}
-	
-	if(f->type == VARIABLE_FUNC) {
-		if(!f->data.user) {
-			g_assert(uncompiled);
-			f->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-			g_hash_table_remove(uncompiled,f->id);
-			g_assert(f->data.user);
-		}
-		return copynode(f->data.user);
-	} else if(f->type == USER_FUNC) {
-		ETree *nn;
-		if(!f->data.user) {
-			g_assert(uncompiled);
-			f->data.user =
-				decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-			g_hash_table_remove(uncompiled,f->id);
-			g_assert(f->data.user);
-		}
-		GET_NEW_NODE(nn);
-		nn->type = FUNCTION_NODE;
-		nn->func.func = d_makeufunc(NULL,copynode(f->data.user),
-					    g_list_copy(f->named_args),f->nargs);
-		nn->func.func->context = -1;
-
-		return nn;
-	} else if(f->type == BUILTIN_FUNC) {
-		ETree *ret;
-		int exception = FALSE;
-
-		if(f->nargs != 0) {
-			ETree *nn;
-			GET_NEW_NODE(nn);
-			nn->type = FUNCTION_NODE;
-			nn->func.func = d_makerealfunc(f,NULL,FALSE);
-			nn->func.func->context = -1;
-
-			return nn;
-		}
-		ret = (*f->data.func)(NULL,&exception);
-		if(!ret && !exception) ret = copynode(n);
-		if(exception) {
-			if(ret)
-				freetree(ret);
-			return NULL;
-		}
-		return ret;
-	} else if(f->type == REFERENCE_FUNC) {
-		ETree *a;
-		ETree *i;
-		f = f->data.ref;
-		
-		GET_NEW_NODE(i);
-		i->type = IDENTIFIER_NODE;
-		if(f->id) {
-			i->id.id = f->id;
-		} else {
-			/*make up a new fake id*/
-			Token *tok = g_new(Token,1);
-			tok->token = NULL;
-			tok->refs = g_list_append(NULL,f);
-			i->id.id = tok;
-		}
-
-		GET_NEW_NODE(a);
-		a->type = OPERATOR_NODE;
-		a->op.oper = E_REFERENCE;
-
-		a->op.args = g_list_append(NULL,i);
-		a->op.nargs = 1;
-		return a;
-	} else
-		(*errorout)(_("Unevaluatable function type encountered!"));
-	return copynode(n);
-}
-
-static ETree *
-ifop(ETree *n, int do_ret)
-{
-	ETree *l,*r,*rr=NULL;
-	ETree *errorret;
-	int exception=FALSE;
-	if(n->op.oper == E_IF_CONS) {
-		GET_LR(n,l,r);
-	} else { /*IF_ELSE*/
-		GET_LRR(n,l,r,rr);
-	}
-
-	if(eval_isnodetrue(l,&exception,&errorret)) {
-		return evalnode_full(r,do_ret);
-	} else {
-		/*if we got a non-critical error and just can't evaluate*/
-		if(errorret) {
-			/*copy the current node and replace the predicate
-			  with the evaluated value*/
-			ETree *a = copynode(n);
-			freetree(a->op.args->data);
-			a->op.args->data = errorret;
-			return a;
-		}
-		if(exception) return NULL;
-		if(n->op.oper == E_IF_CONS) {
-			if(do_ret)
-				return makenum_null();
-			else
-				return EMPTY_RET;
-		} else /*IF_ELSE*/
-			return evalnode_full(rr,do_ret);
-	}
-}
-
-static ETree *
-loopop(ETree *n,int do_ret)
-{
-	ETree *l,*r,*ret;
-	ETree *t;
-	ETree *errorret;
-	int exception=FALSE;
-	int until=FALSE;
-	int first=FALSE;
-
-	if(do_ret)
-		ret = makenum_null();
-	else
-		ret = EMPTY_RET;
-
-	GET_LR(n,l,r);
-	
-	switch (n->op.oper) {
-	case E_WHILE_CONS:
-		until = FALSE;
-		first = FALSE;
-		break;
-	case E_UNTIL_CONS:
-		until = TRUE;
-		first = FALSE;
-		break;
-	case E_DOWHILE_CONS:
-		/*swap left/right*/
-		t = l; l = r; r = t;
-		until = FALSE;
-		first = TRUE;
-		break;
-	case E_DOUNTIL_CONS:
-		/*swap left/right*/
-		t = l; l = r; r = t;
-		until = TRUE;
-		first = TRUE;
-		break;
-	}
-	if(first) {
-		GSList *li;
-		if(ret && ret!=EMPTY_RET) freetree(ret);
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode_full(r,do_ret);
-		li=inloop;
-		inloop=g_slist_remove_link(inloop,li);
-		g_slist_free_1(li);
-		if(!ret) {
-			if(loopout == LOOPOUT_BREAK) {
-				loopout = LOOPOUT_NOTHING;
-				if(do_ret)
-					return makenum_null();
-				else
-					return EMPTY_RET;
-			} else if(loopout == LOOPOUT_CONTINUE) {
-				loopout = LOOPOUT_NOTHING;
-				ret = NULL;
-			} else
-				return NULL;
-		}
-	}
-	while(until?
-	      !eval_isnodetrue(l,&exception,&errorret):
-	      eval_isnodetrue(l,&exception,&errorret)) {
-		GSList *li;
-		if(ret && ret!=EMPTY_RET) freetree(ret);
-		if(exception)
-			return NULL;
-		/*if we got a non-critical error and just can't evaluate*/
-		else if(errorret) {
-			/*copy the current node and replace the predicate with the
-			  evaluated value*/
-			ETree *a = copynode(n);
-			freetree(a->op.args->data);
-			a->op.args->data = errorret;
-			return a;
-		}
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode_full(r,do_ret);
-		li=inloop;
-		inloop=g_slist_remove_link(inloop,li);
-		g_slist_free_1(li);
-		if(!ret) {
-			if(loopout == LOOPOUT_BREAK) {
-				loopout = LOOPOUT_NOTHING;
-				if(do_ret)
-					return makenum_null();
-				else
-					return EMPTY_RET;
-			} else if(loopout == LOOPOUT_CONTINUE) {
-				loopout = LOOPOUT_NOTHING;
-				ret = NULL;
-			} else
-				return NULL;
-		}
-	}
-	if(exception) {
-		if(ret && ret!=EMPTY_RET) freetree(ret);
-		return NULL;
-	/*if we got a non-critical error and just can't evaluate*/
-	} else if(errorret) {
-		/*copy the current node and replace the predicate with the
-		  evaluated value*/
-		ETree *a = copynode(n);
-		freetree(ret);
-		freetree(a->op.args->data);
-		a->op.args->data = errorret;
-		return a;
-	}
-	if(!ret) {
-		if(do_ret)
-			return makenum_null();
-		else
-			return EMPTY_RET;
-	} else
-		return ret;
-}
-
-static ETree *
-forloop(ETree *n, int do_ret)
-{
-	ETree *from,*to,*by=NULL,*body,*ident;
-	ETree *ret = NULL;
-	int init_cmp;
-
-	if (n->op.oper==E_FOR_CONS) {
-		GET_ABCD(n,ident,from,to,body);
-	} else /*if (n->op.oper==E_FORBY_CONS)*/ {
-		GET_ABCDE(n,ident,from,to,by,body);
-	}
-	
-	from = evalnode(from);
-	if(!from) return NULL;
-	
-	to = evalnode(to);
-	if(!to) {
-		freetree(from);
-		return NULL;
-	}
-
-	if(by) {
-		by = evalnode(by);
-		if(!by) {
-			freetree(to);
-			freetree(from);
-			return NULL;
-		}
-	}
-	
-	if((by && (by->type != VALUE_NODE ||
-		   mpw_is_complex(by->val.value))) ||
-	   from->type != VALUE_NODE || mpw_is_complex(from->val.value) ||
-	   to->type != VALUE_NODE || mpw_is_complex(to->val.value)) {
-		(*errorout)(_("Bad type for 'for' loop!"));
-		if(!by) {
-			ETree *args[4];
-			args[0] = copynode(ident);
-			args[1] = from;
-			args[2] = to;
-			args[3] = copynode(body);
-			return copynode_args(n,args);
-		} else {
-			ETree *args[5];
-			args[0] = copynode(ident);
-			args[1] = from;
-			args[2] = to;
-			args[3] = by;
-			args[4] = copynode(body);
-			return copynode_args(n,args);
-		}
-	}
-	if(by && mpw_sgn(by->val.value)==0) {
-		(*errorout)(_("'for' loop increment can't be 0"));
-		if(!by) {
-			ETree *args[4];
-			args[0] = copynode(ident);
-			args[1] = from;
-			args[2] = to;
-			args[3] = body;
-			return copynode_args(n,args);
-		} else {
-			ETree *args[5];
-			args[0] = copynode(ident);
-			args[1] = from;
-			args[2] = to;
-			args[3] = by;
-			args[4] = body;
-			return copynode_args(n,args);
-		}
-	}
-	
-	init_cmp = mpw_cmp(from->val.value,to->val.value);
-	
-	/*if no iterations*/
-	if(!by) {
-		if(init_cmp>0) {
-			freetree(to);
-			freetree(by);
-			d_addfunc(d_makevfunc(ident->id.id,from));
-			if(do_ret)
-				return makenum_null();
-			else
-				return EMPTY_RET;
-		} else if(init_cmp==0) {
-			init_cmp = -1;
-		}
-	} else {
-		int sgn = mpw_sgn(by->val.value);
-		if((sgn>0 && init_cmp>0) || (sgn<0 && init_cmp<0)) {
-			freetree(to);
-			freetree(by);
-			d_addfunc(d_makevfunc(ident->id.id,from));
-			if(do_ret)
-				return makenum_null();
-			else
-				return EMPTY_RET;
-		}
-		if(init_cmp == 0)
-			init_cmp = -sgn;
-	}
-
-
-	do {
-		GSList *li;
-		if(ret && ret!=EMPTY_RET) freetree(ret);
-
-		d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
-
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode_full(body,do_ret);
-		li=inloop;
-		inloop=g_slist_remove_link(inloop,li);
-		g_slist_free_1(li);
-		if(!ret) {
-			if(loopout == LOOPOUT_BREAK) {
-				loopout = LOOPOUT_NOTHING;
-				freetree(from);
-				freetree(to);
-				freetree(by);
-				if(do_ret)
-					return makenum_null();
-				else
-					return EMPTY_RET;
-			} else if(loopout == LOOPOUT_CONTINUE) {
-				loopout = LOOPOUT_NOTHING;
-				ret = NULL;
-			} else {
-				freetree(from);
-				freetree(to);
-				freetree(by);
-				return NULL;
-			}
-		}
-		if(by)
-			mpw_add(from->val.value,from->val.value,by->val.value);
-		else
-			mpw_add_ui(from->val.value,from->val.value,1);
-
-	} while(mpw_cmp(from->val.value,to->val.value)!=-init_cmp);
-	freetree(from);
-	freetree(to);
-	freetree(by);
-	if(!ret) {
-		if(do_ret)
-			return makenum_null();
-		else
-			return EMPTY_RET;
-	} else
-		return ret;
-}
-
-static ETree *
-forinloop(ETree *n, int do_ret)
-{
-	ETree *in,*body,*ident;
-	ETree *ret = NULL;
-	int i,j;
-
-	GET_LRR(n,ident,in,body);
-	
-	in = evalnode(in);
-	if(!in) return NULL;
-	
-	if(in->type != VALUE_NODE &&
-	   in->type != MATRIX_NODE) {
-		ETree *args[3];
-		(*errorout)(_("Bad type for 'for' loop!"));
-		args[0] = copynode(ident);
-		args[1] = in;
-		args[2] = copynode(body);
-		return copynode_args(n,args);
-	}
-
-	j=0;
-	i=0;
-	for(;;) {
-		GSList *li;
-		if(ret && ret!=EMPTY_RET) freetree(ret);
-
-		if(in->type == VALUE_NODE)
-			d_addfunc(d_makevfunc(ident->id.id,copynode(in)));
-		else
-			d_addfunc(d_makevfunc(ident->id.id,
-					      copynode(matrixw_index(in->mat.matrix,i,j))));
-		loopout = LOOPOUT_NOTHING;
-		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode_full(body,do_ret);
-		li=inloop;
-		inloop=g_slist_remove_link(inloop,li);
-		g_slist_free_1(li);
-		if(!ret) {
-			if(loopout == LOOPOUT_BREAK) {
-				loopout = LOOPOUT_NOTHING;
-				freetree(in);
-				if(do_ret)
-					return makenum_null();
-				else
-					return EMPTY_RET;
-			} else if(loopout == LOOPOUT_CONTINUE) {
-				loopout = LOOPOUT_NOTHING;
-				ret = NULL;
-			} else {
-				freetree(in);
-				return NULL;
-			}
-		}
-
-		if(in->type == VALUE_NODE)
-			break;
-		else {
-			if((++i)>=matrixw_width(in->mat.matrix)) {
-				i=0;
-				if((++j)>=matrixw_height(in->mat.matrix))
-					break;
-			}
-		}
-	}
-	freetree(in);
-	if(!ret) {
-		if(do_ret)
-			return makenum_null();
-		else
-			return EMPTY_RET;
-	} else
-		return ret;
+	ret = get_func_call_node(func,args,nargs);
+	return eval_etree(ctx,ret);
 }
 
 /*compare nodes, return TRUE if equal
   makes them the same type as a side effect*/
 static int
-eqlnodes(ETree *l, ETree *r)
+eqlnodes(GelETree *l, GelETree *r)
 {
 	int n = mpw_eql(l->val.value,r->val.value);
 	if(error_num) return 0;
@@ -2188,7 +929,7 @@ eqlnodes(ETree *l, ETree *r)
   equal, 1 if the first one is greater
   makes them the same type as a side effect*/
 static int
-cmpnodes(ETree *l, ETree *r)
+cmpnodes(GelETree *l, GelETree *r)
 {
 	int n=0;
 
@@ -2202,212 +943,64 @@ cmpnodes(ETree *l, ETree *r)
 }
 
 
-static ETree *
-cmpcmpop(ETree *n, ETree *arg[], gpointer f)
+static int
+cmpcmpop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
-	int ret = cmpnodes(arg[0],arg[1]);
+	int ret = cmpnodes(l,r);
 	if(error_num) {
 		error_num = 0;
-		return copynode_args(n,arg);
+		return TRUE;
 	}
-	freeargarr(arg,2);
-	return makenum_si(ret);
-}
-
-static ETree *
-logicalandop(ETree *n, int argeval)
-{
-	ETree *r[2]; 
-	int bad_node = FALSE;
-	
-	g_assert(n->op.args);
-	g_assert(n->op.args->data);
-	g_assert(n->op.args->next->data);
-
-	r[0] = n->op.args->data;
-	r[1] = n->op.args->next->data;
-
-	if(argeval) {
-		r[0] = evalnode(r[0]);
-		if(!r[0])
-			return NULL;
-	}
-	
-	if(isnodetrue(r[0],&bad_node)) {
-		if(argeval) {
-			r[1] = evalnode(r[1]);
-			if(!r[1]) {
-				freetree(r[1]);
-				return NULL;
-			}
-		}
-		if(isnodetrue(r[1],&bad_node)) {
-			if(argeval) {
-				freetree(r[0]);
-				freetree(r[1]);
-			}
-			return makenum_ui(1);
-		} else if(bad_node) {
-			if(!argeval) {
-				r[0]=copynode(r[0]);
-				r[1]=copynode(r[1]);
-			}
-			(*errorout)(_("Logical and can only operate on numeric/string data"));
-			return copynode_args(n,r);
-		}
-		if(argeval) {
-			freetree(r[0]);
-			freetree(r[1]);
-		}
-		return makenum_ui(0);
-	} else if(bad_node) {
-		if(!argeval)
-			r[0]=copynode(r[0]);
-		r[1]=copynode(r[1]);
-		(*errorout)(_("Logical and can only operate on numeric/string data"));
-		return copynode_args(n,r);
-	}
-	if(argeval)
-		freetree(r[0]);
-	return makenum_ui(0);
-}
-
-static ETree *
-logicalorop(ETree *n, int argeval)
-{
-	ETree *r[2]; 
-	int bad_node = FALSE;
-	
-	g_assert(n->op.args);
-	g_assert(n->op.args->data);
-	g_assert(n->op.args->next->data);
-
-	r[0] = n->op.args->data;
-	r[1] = n->op.args->next->data;
-
-	if(argeval) {
-		r[0] = evalnode(r[0]);
-		if(!r[0])
-			return NULL;
-	}
-	
-	if(!isnodetrue(r[0],&bad_node)) {
-		if(bad_node) {
-			if(!argeval)
-				r[0]=copynode(r[0]);
-			r[1]=copynode(r[1]);
-			(*errorout)(_("Logical and can only operate on numeric/string data"));
-			return copynode_args(n,r);
-		}
-		if(argeval) {
-			r[1] = evalnode(r[1]);
-			if(!r[1]) {
-				freetree(r[1]);
-				return NULL;
-			}
-		}
-		if(!isnodetrue(r[1],&bad_node)) {
-			if(bad_node) {
-				if(!argeval) {
-					r[0]=copynode(r[0]);
-					r[1]=copynode(r[1]);
-				}
-				(*errorout)(_("Logical and can only operate on numeric/string data"));
-				return copynode_args(n,r);
-			}
-			if(argeval) {
-				freetree(r[0]);
-				freetree(r[1]);
-			}
-			return makenum_ui(0);
-		}
-		if(argeval) {
-			freetree(r[0]);
-			freetree(r[1]);
-		}
-		return makenum_ui(1);
-	}
-	if(argeval)
-		freetree(r[0]);
-	return makenum_ui(1);
-}
-
-static ETree *
-logicalxorop(ETree *n, ETree *arg[], gpointer f)
-{
-	int bad_node = FALSE;
-	int ret = isnodetrue(arg[0],&bad_node) != isnodetrue(arg[1],&bad_node);
-	if(bad_node || error_num) {
-		error_num = 0;
-		return copynode_args(n,arg);
-	}
-	freeargarr(arg,2);
-	if(ret) return makenum_ui(1);
-	else return makenum_ui(0);
-}
-
-static ETree *
-logicalnotop(ETree *n, ETree *arg[], gpointer f)
-{
-	int bad_node = FALSE;
-	int ret = !isnodetrue(arg[0],&bad_node);
-	if(bad_node || error_num) {
-		error_num = 0;
-		return copynode_args(n,arg);
-	}
-	freeargarr(arg,1);
-	if(ret) return makenum_ui(1);
-	else return makenum_ui(0);
-}
-
-static ETree *
-string_concat(ETree *n, ETree *arg[], gpointer f)
-{
-	ETree *ret;
-	char *s=NULL;
-	
-	if(arg[0]->type == STRING_NODE &&
-	   arg[1]->type == STRING_NODE) {
-		s = g_strconcat(arg[0]->str.str,arg[1]->str.str,NULL);
-	} else if(arg[0]->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,arg[1],1);
-		s = g_strconcat(arg[0]->str.str,gs->str,NULL);
-		g_string_free(gs,TRUE);
-	} else if(arg[1]->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,arg[0],1);
-		s = g_strconcat(gs->str,arg[1]->str.str,NULL);
-		g_string_free(gs,TRUE);
-	} else
-		g_assert_not_reached();
-	
-	freeargarr(arg,2);
-
-	GET_NEW_NODE(ret);
-	ret->type = STRING_NODE;
-	ret->str.str = s;
-	
-	return ret;
+	freetree_full(n,TRUE,FALSE);
+	gel_makenum_si_from(n,ret);
+	return TRUE;
 }
 
 static int
-eqstring(ETree *a, ETree *b)
+logicalxorop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	int bad_node = FALSE;
+	int ret = isnodetrue(l,&bad_node) != isnodetrue(r,&bad_node);
+	if(bad_node || error_num) {
+		error_num = 0;
+		return TRUE;
+	}
+	freetree_full(n,TRUE,FALSE);
+	if(ret) gel_makenum_ui_from(n,1);
+	else gel_makenum_ui_from(n,0);
+	return TRUE;
+}
+
+static int
+logicalnotop(GelCtx *ctx, GelETree *n, GelETree *l)
+{
+	int bad_node = FALSE;
+	int ret = !isnodetrue(l,&bad_node);
+	if(bad_node || error_num) {
+		error_num = 0;
+		return TRUE;
+	}
+	freetree_full(n,TRUE,FALSE);
+	if(ret) gel_makenum_ui_from(n,1);
+	else gel_makenum_ui_from(n,0);
+	return TRUE;
+}
+
+static int
+eqstring(GelETree *a, GelETree *b)
 {
 	int r=0;
 	if(a->type == STRING_NODE &&
 	   b->type == STRING_NODE) {
-		r=strcmp(a->str.str,b->str.str)==0;
+		r=strcmp(a->str.str, b->str.str)==0;
 	} else if(a->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,b,1);
-		r = strcmp(a->str.str,gs->str)==0;
-		g_string_free(gs,TRUE);
+		char *s = string_print_etree(b);
+		r = strcmp(a->str.str, s)==0;
+		g_free(s);
 	} else if(b->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,a,1);
-		r = strcmp(b->str.str,gs->str)==0;
-		g_string_free(gs,TRUE);
+		char *s = string_print_etree(a);
+		r = strcmp(b->str.str, s)==0;
+		g_free(s);
 	} else
 		g_assert_not_reached();
 
@@ -2415,36 +1008,36 @@ eqstring(ETree *a, ETree *b)
 }
 
 static int
-eqmatrix(ETree *a, ETree *b, int *error)
+eqmatrix(GelETree *a, GelETree *b, int *error)
 {
 	int r=FALSE;
 	int i,j;
 	if(a->type == MATRIX_NODE &&
 	   b->type == MATRIX_NODE) {
-		if(!is_matrix_value_only(a->mat.matrix) ||
-		   !is_matrix_value_only(b->mat.matrix)) {
+		if(!gel_is_matrix_value_only(a->mat.matrix) ||
+		   !gel_is_matrix_value_only(b->mat.matrix)) {
 			(*errorout)(_("Cannot compare non value-only matrixes"));
 			*error = TRUE;
 			return 0;
 		}
-		if(matrixw_width(a->mat.matrix)!=
-		   matrixw_width(b->mat.matrix) ||
-		   matrixw_height(a->mat.matrix)!=
-		   matrixw_height(b->mat.matrix))
+		if(gel_matrixw_width(a->mat.matrix)!=
+		   gel_matrixw_width(b->mat.matrix) ||
+		   gel_matrixw_height(a->mat.matrix)!=
+		   gel_matrixw_height(b->mat.matrix))
 			r = FALSE;
 		else {
-			MatrixW *m1 = a->mat.matrix;
-			MatrixW *m2 = b->mat.matrix;
+			GelMatrixW *m1 = a->mat.matrix;
+			GelMatrixW *m2 = b->mat.matrix;
 			
 			r = TRUE;
 
-			for(i=0;i<matrixw_width(m1);i++) {
-				for(j=0;j<matrixw_height(m1);j++) {
-					ETree *t1,*t2;
-					t1 = matrixw_index(m1,i,j);
-					t2 = matrixw_index(m2,i,j);
-					if(mpw_cmp(t1->val.value,
-						   t2->val.value)!=0) {
+			for(i=0;i<gel_matrixw_width(m1);i++) {
+				for(j=0;j<gel_matrixw_height(m1);j++) {
+					GelETree *t1,*t2;
+					t1 = gel_matrixw_index(m1,i,j);
+					t2 = gel_matrixw_index(m2,i,j);
+					if ( ! mpw_eql (t1->val.value,
+							t2->val.value)) {
 						r = FALSE;
 						break;
 					}
@@ -2453,32 +1046,32 @@ eqmatrix(ETree *a, ETree *b, int *error)
 			}
 		}
 	} else if(a->type == MATRIX_NODE) {
-		MatrixW *m = a->mat.matrix;
-		if(matrixw_width(m)>1 ||
-		   matrixw_height(m)>1) {
+		GelMatrixW *m = a->mat.matrix;
+		if(gel_matrixw_width(m)>1 ||
+		   gel_matrixw_height(m)>1) {
 			r = FALSE;
 		} else {
-			ETree *t = matrixw_index(m,0,0);
+			GelETree *t = gel_matrixw_index(m,0,0);
 			if(t->type != VALUE_NODE) {
 				(*errorout)(_("Cannot compare non value-only matrixes"));
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_cmp(t->val.value,b->val.value)==0;
+			r = mpw_eql(t->val.value,b->val.value);
 		}
 	} else if(b->type == MATRIX_NODE) {
-		MatrixW *m = b->mat.matrix;
-		if(matrixw_width(m)>1 ||
-		   matrixw_height(m)>1) {
+		GelMatrixW *m = b->mat.matrix;
+		if(gel_matrixw_width(m)>1 ||
+		   gel_matrixw_height(m)>1) {
 			r = FALSE;
 		} else {
-			ETree *t = matrixw_index(m,0,0);
+			GelETree *t = gel_matrixw_index(m,0,0);
 			if(t->type != VALUE_NODE) {
 				(*errorout)(_("Cannot compare non value-only matrixes"));
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_cmp(t->val.value,a->val.value)==0;
+			r = mpw_eql(t->val.value,a->val.value);
 		}
 	} else
 		g_assert_not_reached();
@@ -2487,397 +1080,431 @@ eqmatrix(ETree *a, ETree *b, int *error)
 }
 
 static int
-cmpstring(ETree *a, ETree *b)
+cmpstring(GelETree *a, GelETree *b)
 {
 	int r=0;
 	if(a->type == STRING_NODE &&
 	   b->type == STRING_NODE) {
-		r=strcmp(a->str.str,b->str.str);
+		r=strcmp(a->str.str, b->str.str);
 	} else if(a->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,b,1);
-		r = strcmp(a->str.str,gs->str);
-		g_string_free(gs,TRUE);
+		char *s = string_print_etree(b);
+		r = strcmp(a->str.str, s);
+		g_free(s);
 	} else if(b->type == STRING_NODE) {
-		GString *gs = g_string_new("");
-		print_etree(gs,NULL,a,1);
-		r = strcmp(b->str.str,gs->str);
-		g_string_free(gs,TRUE);
+		char *s = string_print_etree(b);
+		r = strcmp(b->str.str, s);
+		g_free(s);
 	} else
 		g_assert_not_reached();
 
 	return r;
 }
 
-static ETree *
-cmpstringop(ETree *n, ETree *arg[], gpointer f)
-{
-	int r;
-	r = cmpstring(arg[0],arg[1]);
-	freeargarr(arg,2);
-	if(r>0) return makenum_ui(1);
-	else if(r<0) return makenum_si(-1);
-	return makenum_ui(0);
-}
-
-/*returns 0 if all numeric, 1 if numeric/matrix, 2 otherwise*/
 static int
-arglevel(ETree *r[], int cnt)
+cmpstringop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
-	int i;
-	int level = 0;
-	for(i=0;i<cnt;i++) {
-		if(r[i]->type!=VALUE_NODE) {
-			if(r[i]->type==MATRIX_NODE)
-				level = level<1?1:level;
-			else if(r[i]->type==STRING_NODE)
-				level = 2;
-			else
-				return 3;
-		}
-	}
-	return level;
+	int ret;
+	ret = cmpstring(l,r);
+	freetree_full(n,TRUE,FALSE);
+	if(ret>0) gel_makenum_ui_from(n,1);
+	else if(ret<0) gel_makenum_si_from(n,-1);
+	else gel_makenum_ui_from(n,0);
+	return TRUE;
 }
 
-static ETree * evaloper(ETree *n, int argeval, int do_ret);
-
-static ETree *
-op_two_nodes(ETree *rr, ETree *ll, int oper)
+static GelETree *
+op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
+	      gboolean no_push)
 {
-	ETree *r=NULL;
-	ETree *n;
+	GelETree *n;
 	mpw_t res;
-	ETree *arg[2];
 	
-	arg[0] = rr;
-	arg[1] = ll;
-
-	switch(arglevel(arg,2)) {
-	case 0: 
+	if(rr->type == VALUE_NODE &&
+	   ll->type == VALUE_NODE) {
 		mpw_init(res);
 		switch(oper) {
 		case E_PLUS:
-			mpw_add(res,arg[0]->val.value,arg[1]->val.value);
+			mpw_add(res,ll->val.value,rr->val.value);
 			break;
 		case E_MINUS:
-			mpw_sub(res,arg[0]->val.value,arg[1]->val.value);
+			mpw_sub(res,ll->val.value,rr->val.value);
 			break;
 		case E_MUL:
-			mpw_mul(res,arg[0]->val.value,arg[1]->val.value);
+		case E_ELTMUL:
+			mpw_mul(res,ll->val.value,rr->val.value);
 			break;
 		case E_DIV:
-			mpw_div(res,arg[0]->val.value,arg[1]->val.value);
+		case E_ELTDIV:
+			mpw_div(res,ll->val.value,rr->val.value);
 			break;
 		case E_BACK_DIV:
-			mpw_div(res,arg[1]->val.value,arg[0]->val.value);
+		case E_ELT_BACK_DIV:
+			mpw_div(res,rr->val.value,ll->val.value);
 			break;
 		case E_MOD:
-			mpw_mod(res,arg[0]->val.value,arg[1]->val.value);
+		case E_ELTMOD:
+			mpw_mod(res,ll->val.value,rr->val.value);
+			break;
+		case E_EXP:
+		case E_ELTEXP:
+			mpw_pow (res, ll->val.value, rr->val.value);
 			break;
 		default: g_assert_not_reached();
+		}
+		if (ctx->modulo != NULL) {
+			if (mpw_is_complex (res) ||
+			    ! mpw_is_integer (res)) {
+				(*errorout)(_("Modulo arithmetic only works on integers"));
+				error_num = NUMERICAL_MPW_ERROR;
+			} else {
+				mpw_mod (res, res, ctx->modulo);
+				if (mpw_sgn (res) < 0)
+					mpw_add (res, ctx->modulo, res);
+			}
 		}
 		if(error_num==NUMERICAL_MPW_ERROR) {
 			GET_NEW_NODE(n);
 			n->type = OPERATOR_NODE;
 			n->op.oper = oper;
-			n->op.args = g_list_append(NULL,copynode(arg[0]));
-			n->op.args = g_list_append(n->op.args,copynode(arg[1]));
+			n->op.args = copynode(ll);
+			n->op.args->any.next = copynode(rr);
+			n->op.args->any.next->any.next = NULL;
 			n->op.nargs = 2;
 			mpw_clear(res);
 			error_num=NO_ERROR;
 			return n;
 		}
-		return makenum_use(res);
-	/*this is the less common case so we can get around with a wierd
-	  thing, we'll just make a new fake node and pretend we want to 
-	  evaluate that*/
-	case 1:
-	case 2:
+		return gel_makenum_use(res);
+	} else {
+		/*this is the less common case so we can get around with a
+		  wierd thing, we'll just make a new fake node and pretend
+		  we want to evaluate that*/
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
 		n->op.oper = oper;
 
-		n->op.args = g_list_append(NULL,arg[0]);
-		n->op.args = g_list_append(n->op.args,arg[1]);
+		n->op.args = copynode(ll);
+		n->op.args->any.next = copynode(rr);
+		n->op.args->any.next->any.next = NULL;
 		n->op.nargs = 2;
+		
+		if ( ! no_push) {
+			GE_PUSH_STACK (ctx, n, GE_PRE);
+		}
 
-		/*eval operator without re-evaluating arguments*/
-		r = evaloper(n,FALSE,TRUE);
-
-		/*make sure this doesn't free the arguments, so
-		  this has to be freenode not freetree*/
-		g_list_free(n->op.args);
-		n->op.args = NULL;
-		freenode(n);
-
-		return r;
-	default:
-		(*errorout)(_("Primitives must get numeric/matrix/string arguments"));
-		GET_NEW_NODE(n);
-		n->type = OPERATOR_NODE;
-		n->op.oper = oper;
-		n->op.args = g_list_append(NULL,copynode(arg[0]));
-		n->op.args = g_list_append(n->op.args,copynode(arg[1]));
-		n->op.nargs = 2;
 		return n;
 	}
 }
 
 
-static ETree *
-matrix_scalar_matrix_op(ETree *n, ETree *arg[])
+/*add, sub, mul, div*/
+static int
+matrix_scalar_matrix_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	int i,j;
-	ETree *nn;
-	MatrixW *m;
-	ETree *node;
+	GelMatrixW *m;
+	GelETree *node;
 	int order = 0;
 	int quote = 0;
-	if(arg[0]->type == MATRIX_NODE) {
-		m = arg[0]->mat.matrix;
-		quote = arg[0]->mat.quoted;
-		node = arg[1];
+	if(l->type == MATRIX_NODE) {
+		m = l->mat.matrix;
+		quote = l->mat.quoted;
+		node = r;
 	} else {
 		order = 1;
-		m = arg[1]->mat.matrix;
-		quote = arg[1]->mat.quoted;
-		node = arg[0];
+		m = r->mat.matrix;
+		quote = r->mat.quoted;
+		node = l;
 	}
 
-	GET_NEW_NODE(nn);
-	nn->type = MATRIX_NODE;
-	nn->mat.matrix = matrixw_new();
-	nn->mat.quoted = quote;
-	matrixw_set_size(nn->mat.matrix,matrixw_width(m),matrixw_height(m));
-	for(i=0;i<matrixw_width(m);i++) {
-		for(j=0;j<matrixw_height(m);j++) {
-			ETree *t;
+	gel_matrixw_make_private(m);
+
+	for(i=0;i<gel_matrixw_width(m);i++) {
+		for(j=0;j<gel_matrixw_height(m);j++) {
 			if(order == 0) {
-				t = op_two_nodes(matrixw_index(m,i,j),
-						 node, n->op.oper);
+				gel_matrixw_set_index(m,i,j) =
+					op_two_nodes(ctx,
+						     gel_matrixw_index(m,i,j),
+						     node, n->op.oper,
+						     FALSE /* no_push */);
 			} else {
-				t = op_two_nodes(node,
-						 matrixw_index(m,i,j),
-						 n->op.oper);
+				gel_matrixw_set_index(m,i,j) =
+					op_two_nodes(ctx,node,
+						     gel_matrixw_index(m,i,j),
+						     n->op.oper,
+						     FALSE /* no_push */);
 			}
-			/*exception*/
-			if(!t) {
-				freeargarr(arg,2);
-				freetree(nn);
-				return NULL;
-			}
-			matrixw_set_index(nn->mat.matrix,i,j) = t;
 		}
 	}
-	freeargarr(arg,2);
-	return nn;
-}
+	n->op.args = NULL;
 
-static ETree *
-matrix_addsub_op(ETree *n, ETree *arg[], gpointer f)
-{
-	if(arg[0]->type == MATRIX_NODE &&
-	   arg[1]->type == MATRIX_NODE) {
-		int i,j;
-		ETree *nn;
-		MatrixW *m1,*m2;
-		m1 = arg[0]->mat.matrix;
-		m2 = arg[1]->mat.matrix;
-		if((matrixw_width(m1) != matrixw_width(m2)) ||
-		   (matrixw_height(m1) != matrixw_height(m2))) {
-			(*errorout)(_("Can't add/subtract two matricies of different sizes"));
-			return copynode_args(n,arg);
-		}
-		GET_NEW_NODE(nn);
-		nn->type = MATRIX_NODE;
-		nn->mat.matrix = matrixw_new();
-		nn->mat.quoted = arg[0]->mat.quoted || arg[1]->mat.quoted;
-		matrixw_set_size(nn->mat.matrix,matrixw_width(m1),matrixw_height(m1));
-		for(i=0;i<matrixw_width(m1);i++) {
-			for(j=0;j<matrixw_height(m1);j++) {
-				ETree *t = op_two_nodes(matrixw_index(m1,i,j),
-							matrixw_index(m2,i,j),
-							n->op.oper);
-				/*exception*/
-				if(!t) {
-					freeargarr(arg,2);
-					freetree(nn);
-					return NULL;
-				}
-				matrixw_set_index(nn->mat.matrix,i,j) = t;
-			}
-		}
-		freeargarr(arg,2);
-		return nn;
+	if(l->type == MATRIX_NODE) {
+		replacenode(n,l);
+		gel_freetree(r);
 	} else {
-		return matrix_scalar_matrix_op(n,arg);
-	}
-}
-
-static int
-expensive_matrix_multiply(MatrixW *res, MatrixW *m1, MatrixW *m2)
-{
-	int i,j,k;
-	for(i=0;i<matrixw_width(res);i++) {
-		for(j=0;j<matrixw_height(res);j++) {
-			ETree *a = NULL;
-			for(k=0;k<matrixw_width(m1);k++) {
-				ETree *t;
-				ETree *t2;
-				t = op_two_nodes(matrixw_index(m1,j,k),
-						 matrixw_index(m2,k,i),
-						 E_MUL);
-				/*exception*/
-				if(!t) {
-					if(a) freetree(a);
-					return FALSE;
-				}
-				if(!a) {
-					a=t;
-				} else {
-					t2 = op_two_nodes(a,t,E_PLUS);
-					freetree(t);
-					freetree(a);
-					if(!t2)
-						return FALSE;
-					a = t2;
-				}
-			}
-			matrixw_set_index(res,i,j) = a;
-		}
+		replacenode(n,r);
+		gel_freetree(l);
 	}
 	return TRUE;
 }
 
-static ETree *
-matrix_mul_op(ETree *n, ETree *arg[],gpointer f)
+static int
+matrix_absnegfac_op(GelCtx *ctx, GelETree *n, GelETree *l)
 {
-	if(arg[0]->type == MATRIX_NODE &&
-	   arg[1]->type == MATRIX_NODE) {
-		ETree *nn;
-		MatrixW *m1,*m2;
-		m1 = arg[0]->mat.matrix;
-		m2 = arg[1]->mat.matrix;
-		if((matrixw_width(m1) != matrixw_height(m2))) {
-			(*errorout)(_("Can't multiply matricies of wrong sizes"));
-			return copynode_args(n,arg);
-		}
-		GET_NEW_NODE(nn);
-		nn->type = MATRIX_NODE;
-		nn->mat.matrix = matrixw_new();
-		nn->mat.quoted = arg[0]->mat.quoted || arg[1]->mat.quoted;
-		matrixw_set_size(nn->mat.matrix,matrixw_width(m2),matrixw_height(m1));
-		
-		if(is_matrix_value_only(m1) &&
-		   is_matrix_value_only(m2)) {
-			value_matrix_multiply(nn->mat.matrix,m1,m2);
-		} else {
-			if(!expensive_matrix_multiply(nn->mat.matrix,m1,m2)) {
-				freeargarr(arg,2);
-				freetree(nn);
-				return NULL;
+	int i,j;
+	GelMatrixW *m = l->mat.matrix;
+
+	gel_matrixw_make_private(m);
+
+	for(i=0;i<gel_matrixw_width(m);i++) {
+		for(j=0;j<gel_matrixw_height(m);j++) {
+			GelETree *t = gel_matrixw_set_index(m,i,j);
+			if(t == NULL) {
+				if(n->op.oper == E_FACT ||
+				   n->op.oper == E_DBLFACT)
+					gel_matrixw_set_index(m,i,j) = gel_makenum_ui(1);
+			} else if(t->type == VALUE_NODE) {
+				switch(n->op.oper) {
+				case E_ABS:
+					mpw_abs(t->val.value,t->val.value);
+					break;
+				case E_NEG:
+					mpw_neg(t->val.value,t->val.value);
+					break;
+				case E_FACT:
+					mpw_fac(t->val.value,t->val.value);
+					break;
+				case E_DBLFACT:
+					mpw_dblfac(t->val.value,t->val.value);
+					break;
+				default:
+					g_assert_not_reached();
+				}
+			} else {
+				GelETree *nn;
+				GET_NEW_NODE(nn);
+				nn->type = OPERATOR_NODE;
+				nn->op.oper = n->op.oper;
+				nn->op.args = t;
+				t->any.next = NULL;
+				nn->op.nargs = 1;
+				gel_matrixw_set_index(m,i,j) = nn;
+				GE_PUSH_STACK(ctx,nn,GE_PRE);
 			}
 		}
-		freeargarr(arg,2);
-		return nn;
-	} else {
-		return matrix_scalar_matrix_op(n,arg);
+	}
+	/*remove l from argument list*/
+	n->op.args = NULL;
+	replacenode(n,l);
+	return TRUE;
+}
+
+static int
+pure_matrix_eltbyelt_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	int i,j;
+	GelMatrixW *m1,*m2;
+	m1 = l->mat.matrix;
+	m2 = r->mat.matrix;
+	if((gel_matrixw_width(m1) != gel_matrixw_width(m2)) ||
+	   (gel_matrixw_height(m1) != gel_matrixw_height(m2))) {
+		if (n->op.oper == E_PLUS ||
+		    n->op.oper == E_MINUS)
+			(*errorout)(_("Can't add/subtract two matricies of different sizes"));
+		else
+			(*errorout)(_("Can't do element by element operations on two matricies of different sizes"));
+		return TRUE;
+	}
+	l->mat.quoted = l->mat.quoted || r->mat.quoted;
+	gel_matrixw_make_private(m1);
+	for(i=0;i<gel_matrixw_width(m1);i++) {
+		for(j=0;j<gel_matrixw_height(m1);j++) {
+			gel_matrixw_set_index(m1,i,j) =
+				op_two_nodes(ctx,gel_matrixw_index(m1,i,j),
+					     gel_matrixw_index(m2,i,j),
+					     n->op.oper,
+					     FALSE /* no_push */);
+		}
+	}
+	/*remove l from arglist*/
+	n->op.args = n->op.args->any.next;
+	/*replace n with l*/
+	replacenode(n,l);
+	return TRUE;
+}
+
+static void
+expensive_matrix_multiply(GelCtx *ctx, GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2)
+{
+	int i,j,k;
+	for(i=0;i<gel_matrixw_width(res);i++) {
+		for(j=0;j<gel_matrixw_height(res);j++) {
+			GelETree *a = NULL;
+			for(k=0;k<gel_matrixw_width(m1);k++) {
+				GelETree *t;
+				GelETree *t2;
+				t = op_two_nodes(ctx,gel_matrixw_index(m1,j,k),
+						 gel_matrixw_index(m2,k,i),
+						 E_MUL,
+						 FALSE /* no_push */);
+				if(!a) {
+					a=t;
+				} else {
+					t2 = op_two_nodes(ctx,a,t,E_PLUS,
+							  FALSE /* no_push */);
+					gel_freetree(t);
+					gel_freetree(a);
+					a = t2;
+				}
+			}
+			gel_matrixw_set_index(res,i,j) = a;
+		}
 	}
 }
 
-static ETree *
-matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
+static int
+pure_matrix_mul_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	GelMatrixW *m, *m1,*m2;
+	int quote;
+	m1 = l->mat.matrix;
+	m2 = r->mat.matrix;
+	if((gel_matrixw_width(m1) != gel_matrixw_height(m2))) {
+		(*errorout)(_("Can't multiply matricies of wrong sizes"));
+		return TRUE;
+	}
+	m = gel_matrixw_new();
+	quote = l->mat.quoted || r->mat.quoted;
+	gel_matrixw_set_size(m,gel_matrixw_width(m2),gel_matrixw_height(m1));
+
+	if (ctx->modulo != NULL) {
+		    if (gel_is_matrix_value_only_integer (m1) &&
+			gel_is_matrix_value_only_integer (m2)) {
+			    gel_value_matrix_multiply (m, m1, m2, ctx->modulo);
+		    } else {
+			    expensive_matrix_multiply (ctx, m, m1, m2);
+		    }
+	} else {
+		if(gel_is_matrix_value_only(m1) &&
+		   gel_is_matrix_value_only(m2)) {
+			gel_value_matrix_multiply (m, m1, m2, NULL);
+		} else {
+			expensive_matrix_multiply(ctx,m,m1,m2);
+		}
+	}
+	freetree_full(n,TRUE,FALSE);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = m;
+	n->mat.quoted = quote;
+	return TRUE;
+}
+
+static int
+matrix_pow_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	int i,j;
 	long power;
-	ETree *nn;
-	MatrixW *res = NULL;
-	MatrixW *m;
+	int quote;
+	GelMatrixW *res = NULL;
+	GelMatrixW *m;
 	int free_m = FALSE;
 
-	if(arg[1]->type != VALUE_NODE ||
-	   mpw_is_complex(arg[1]->val.value) ||
-	   !mpw_is_integer(arg[1]->val.value) ||
-	   (matrixw_width(arg[0]->mat.matrix) !=
-	    matrixw_height(arg[0]->mat.matrix)) ||
-	   !is_matrix_value_only(arg[0]->mat.matrix)) {
+	m = l->mat.matrix;
+	quote = l->mat.quoted;
+
+	if(r->type != VALUE_NODE ||
+	   mpw_is_complex(r->val.value) ||
+	   !mpw_is_integer(r->val.value) ||
+	   (gel_matrixw_width(m) !=
+	    gel_matrixw_height(m)) ||
+	   !gel_is_matrix_value_only(m)) {
 		(*errorout)(_("Powers are defined on (square matrix)^(integer) only"));
-		return copynode_args(n,arg);
+		return TRUE;
+	}
+
+	if (ctx->modulo != NULL &&
+	    ! gel_is_matrix_value_only_integer (m)) {
+		(*errorout)(_("Powers on matrices in modulo mode are defined on integer matrices only"));
+		return TRUE;
 	}
 	
-	m = arg[0]->mat.matrix;
-	power = mpw_get_long(arg[1]->val.value);
+	error_num = 0;
+	power = mpw_get_long(r->val.value);
 	if(error_num) {
 		error_num = 0;
-		return copynode_args(n,arg);
+		(*errorout)(_("Exponent too large"));
+		return TRUE;
 	}
 	
 	if(power<=0) {
-		MatrixW *mi;
-		mi = matrixw_new();
-		matrixw_set_size(mi,matrixw_width(m),
-				 matrixw_height(m));
-		for(i=0;i<matrixw_width(m);i++)
-			for(j=0;j<matrixw_width(m);j++)
+		GelMatrixW *mi;
+		mi = gel_matrixw_new();
+		gel_matrixw_set_size(mi,gel_matrixw_width(m),
+				     gel_matrixw_height(m));
+		for(i=0;i<gel_matrixw_width(m);i++)
+			for(j=0;j<gel_matrixw_width(m);j++)
 				if(i==j)
-					matrixw_set_index(mi,i,j) =
-						makenum_ui(1);
+					gel_matrixw_set_index(mi,i,j) =
+						gel_makenum_ui(1);
 		if(power==0) {
-			/*make us a new empty node*/
-			GET_NEW_NODE(nn);
-			nn->type = MATRIX_NODE;
-			nn->mat.matrix = mi;
-			nn->mat.quoted = arg[0]->mat.quoted;
-			freeargarr(arg,2);
-			return nn;
+			freetree_full(n,TRUE,FALSE);
+			n->type = MATRIX_NODE;
+			n->mat.matrix = mi;
+			n->mat.quoted = quote;
+			return TRUE;
+		}
+
+		/* FIXME: eeeek, must handle modulo case here */
+		if (ctx->modulo != NULL) {
+			(*errorout)(_("Negative matrix powers in modulo mode not yet implemented"));
+			gel_matrixw_free (mi);
+			return TRUE;
 		}
 		
-		m = value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi);
-		if(!m) {
+		m = gel_matrixw_copy(m);
+		if(!gel_value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi)) {
 			(*errorout)(_("Matrix appears singular and can't be inverted"));
-			matrixw_free(mi);
-			return copynode_args(n,arg);
+			gel_matrixw_free(m);
+			gel_matrixw_free(mi);
+			return TRUE;
 		}
-		matrixw_free(m);
+		gel_matrixw_free(m);
 		m = mi;
 		free_m = TRUE;
+
+		power = -power;
 	}
 	
-	power = power<0?-power:power;
-	
 	if(power==1) {
-		/*make us a new empty node*/
-		GET_NEW_NODE(nn);
-		nn->type = MATRIX_NODE;
-		if(free_m)
-			nn->mat.matrix = m;
-		else
-			nn->mat.matrix = matrixw_copy(m);
-		nn->mat.quoted = arg[0]->mat.quoted;
-		freeargarr(arg,2);
-		return nn;
+		if(!free_m)
+			l->mat.matrix = NULL;
+		freetree_full(n,TRUE,FALSE);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = m;
+		n->mat.quoted = quote;
+		return TRUE;
 	}
 
 	while(power>0) {
 		/*if odd*/
 		if(power & 0x1) {
 			if(res) {
-				MatrixW *ml = matrixw_new();
-				matrixw_set_size(ml,matrixw_width(m),
-						 matrixw_height(m));
-				value_matrix_multiply(ml,res,m);
-				matrixw_free(res);
+				GelMatrixW *ml = gel_matrixw_new();
+				gel_matrixw_set_size(ml,gel_matrixw_width(m),
+						     gel_matrixw_height(m));
+				gel_value_matrix_multiply(ml,res,m,ctx->modulo);
+				gel_matrixw_free(res);
 				res = ml;
 			} else
-				res = matrixw_copy(m);
+				res = gel_matrixw_copy(m);
 			power--;
 		} else { /*even*/
-			MatrixW *ml = matrixw_new();
-			matrixw_set_size(ml,matrixw_width(m),
-					 matrixw_height(m));
-			value_matrix_multiply(ml,m,m);
+			GelMatrixW *ml = gel_matrixw_new();
+			gel_matrixw_set_size(ml,gel_matrixw_width(m),
+					 gel_matrixw_height(m));
+			gel_value_matrix_multiply(ml,m,m,ctx->modulo);
 			if(free_m)
-				matrixw_free(m);
+				gel_matrixw_free(m);
 			m = ml;
 			free_m = TRUE;
 
@@ -2885,815 +1512,180 @@ matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
 		}
 	}
 	
-
-	/*make us a new empty node*/
-	GET_NEW_NODE(nn);
-	nn->type = MATRIX_NODE;
+	freetree_full(n,TRUE,FALSE);
+	n->type = MATRIX_NODE;
 	if(!res) {
 		if(free_m)
-			nn->mat.matrix = m;
+			n->mat.matrix = m;
 		else
-			nn->mat.matrix = matrixw_copy(m);
+			n->mat.matrix = gel_matrixw_copy(m);
 	} else {
-		nn->mat.matrix = res;
+		n->mat.matrix = res;
 		if(free_m)
-			matrixw_free(m);
+			gel_matrixw_free(m);
 	}
-	nn->mat.quoted = arg[0]->mat.quoted;
-	freeargarr(arg,2);
-	return nn;
+	n->mat.quoted = quote;
+	return TRUE;
 }
 
-static ETree *
-matrix_div_op(ETree *n, ETree *arg[],gpointer f)
-{
-	if(arg[0]->type == MATRIX_NODE &&
-	   arg[1]->type == MATRIX_NODE) {
-		int i,j;
-		ETree *nn;
-		MatrixW *m1,*m2;
-		MatrixW *mi,*toinvert;
-		MatrixW *res;
-
-		m1 = arg[0]->mat.matrix;
-		m2 = arg[1]->mat.matrix;
-
-		if((matrixw_width(m1) !=
-		    matrixw_height(m1)) ||
-		   (matrixw_width(m2) !=
-		    matrixw_height(m2)) ||
-		   (matrixw_width(m1) !=
-		    matrixw_width(m2)) ||
-		   !is_matrix_value_only(m1) ||
-		   !is_matrix_value_only(m2)) {
-			(*errorout)(_("Can't divide matrices of different sizes or non-square matrices"));
-			return copynode_args(n,arg);
-		}
-
-		mi = matrixw_new();
-		matrixw_set_size(mi,matrixw_width(m1),
-				 matrixw_height(m1));
-		for(i=0;i<matrixw_width(m1);i++)
-			for(j=0;j<matrixw_width(m1);j++)
-				if(i==j)
-					matrixw_set_index(mi,i,j) =
-						makenum_ui(1);
-		
-		if(n->op.oper == E_BACK_DIV)
-			toinvert = m1;
-		else
-			toinvert = m2;
-		
-		toinvert = value_matrix_gauss(toinvert,TRUE,FALSE,TRUE,NULL,mi);
-		if(!toinvert) {
-			(*errorout)(_("Matrix appears singular and can't be inverted"));
-			matrixw_free(mi);
-			return copynode_args(n,arg);
-		}
-		matrixw_free(toinvert);
-
-		if(n->op.oper == E_BACK_DIV)
-			m1 = mi;
-		else
-			m2 = mi;
-		
-		res = matrixw_new();
-		matrixw_set_size(res,matrixw_width(m1),
-				 matrixw_height(m1));
-		value_matrix_multiply(res,m1,m2);
-		if(n->op.oper == E_BACK_DIV)
-			matrixw_free(m1);
-		else
-			matrixw_free(m2);
-
-		GET_NEW_NODE(nn);
-		nn->type = MATRIX_NODE;
-		nn->mat.matrix = res;
-		nn->mat.quoted = 0;
-		freeargarr(arg,2);
-		return nn;
-	} else if(arg[0]->type == MATRIX_NODE) {
-		if(n->op.oper == E_BACK_DIV) {
-			(*errorout)(_("In backdivision matrix dimensions must agree"));
-			return copynode_args(n,arg);
-		}
-
-		return matrix_scalar_matrix_op(n,arg);
-	} else /*2nd argument is matrix first must be value*/ {
-		int i,j;
-		ETree *nn;
-		MatrixW *m;
-		MatrixW *mi;
-
-		if(n->op.oper == E_BACK_DIV) {
-			(*errorout)(_("In backdivision matrix dimensions must agree"));
-			return copynode_args(n,arg);
-		}
-
-		m = arg[1]->mat.matrix;
-
-		if((matrixw_width(m) !=
-		    matrixw_height(m)) ||
-		   !is_matrix_value_only(m)) {
-			(*errorout)(_("Can't divide by a non-square matrix"));
-			return copynode_args(n,arg);
-		}
-
-		mi = matrixw_new();
-		matrixw_set_size(mi,matrixw_width(m),
-				 matrixw_height(m));
-		for(i=0;i<matrixw_width(m);i++)
-			for(j=0;j<matrixw_width(m);j++)
-				if(i==j)
-					matrixw_set_index(mi,i,j) =
-						makenum_ui(1);
-		
-		m = value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi);
-		if(!m) {
-			(*errorout)(_("Matrix appears singular and can't be inverted"));
-			matrixw_free(mi);
-			return copynode_args(n,arg);
-		}
-		matrixw_free(m);
-		m = mi;
-		
-		for(i=0;i<matrixw_width(m);i++)
-			for(j=0;j<matrixw_width(m);j++) {
-				ETree *t = matrixw_set_index(m,i,j);
-				if(t)
-					mpw_mul(t->val.value,t->val.value,
-						arg[0]->val.value);
-			}
-
-		GET_NEW_NODE(nn);
-		nn->type = MATRIX_NODE;
-		nn->mat.matrix = m;
-		nn->mat.quoted = 0;
-		freeargarr(arg,2);
-		return nn;
-	}
-}
-
-typedef void (*doubleopfunc)(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
-typedef void (*singleopfunc)(mpw_ptr rop,mpw_ptr op);
-
-static ETree *
-matrix_1num_op(ETree *n, ETree *arg[], singleopfunc f)
+static int
+pure_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	int i,j;
-	ETree *nn;
-	MatrixW *m;
-	mpw_t tmp;
-	m = arg[0]->mat.matrix;
+	int quote;
+	GelMatrixW *m1,*m2;
+	GelMatrixW *mi,*toinvert;
+	GelMatrixW *res;
 
-	if(!is_matrix_value_only(m)) {
-		(*errorout)(_("Can't operate on a non value-only matrix"));
-		return copynode_args(n,arg);
+	m1 = l->mat.matrix;
+	m2 = r->mat.matrix;
+	quote = l->mat.quoted || r->mat.quoted;
+
+	if((gel_matrixw_width(m1) !=
+	    gel_matrixw_height(m1)) ||
+	   (gel_matrixw_width(m2) !=
+	    gel_matrixw_height(m2)) ||
+	   (gel_matrixw_width(m1) !=
+	    gel_matrixw_width(m2)) ||
+	   !gel_is_matrix_value_only(m1) ||
+	   !gel_is_matrix_value_only(m2)) {
+		(*errorout)(_("Can't divide matrices of different sizes or non-square matrices"));
+		return TRUE;
 	}
-	GET_NEW_NODE(nn);
-	nn->type = MATRIX_NODE;
-	nn->mat.matrix = matrixw_new();
-	nn->mat.quoted = 0;
-	matrixw_set_size(nn->mat.matrix,matrixw_width(m),matrixw_height(m));
-	mpw_init(tmp);
-	for(i=0;i<matrixw_width(m);i++) {
-		for(j=0;j<matrixw_height(m);j++) {
-			(*f)(tmp,matrixw_index(m,i,j)->val.value);
-			if(error_num==NUMERICAL_MPW_ERROR) {
-				ETree *arg[1];
-				error_num=NO_ERROR;
-				arg[0] = copynode(matrixw_index(m,i,j));
-				matrixw_set_index(nn->mat.matrix,i,j) =
-					copynode_args(n,arg);
-			} else if(mpw_sgn(tmp)!=0) {
-				matrixw_set_index(nn->mat.matrix,i,j) =
-					makenum_use(tmp);
-				mpw_init(tmp);
-			}
+
+	/* FIXME: this because of gauss */
+	if (ctx->modulo != NULL) {
+		(*errorout)(_("Matrix division not implemented in modulo mode"));
+		return TRUE;
+	}
+
+	mi = gel_matrixw_new();
+	gel_matrixw_set_size(mi,gel_matrixw_width(m1),
+			 gel_matrixw_height(m1));
+	for(i=0;i<gel_matrixw_width(m1);i++)
+		for(j=0;j<gel_matrixw_width(m1);j++)
+			if(i==j)
+				gel_matrixw_set_index(mi,i,j) =
+					gel_makenum_ui(1);
+
+	if(n->op.oper == E_BACK_DIV)
+		toinvert = m1;
+	else
+		toinvert = m2;
+
+	toinvert = gel_matrixw_copy(toinvert);
+	if(!gel_value_matrix_gauss(toinvert,TRUE,FALSE,TRUE,NULL,mi)) {
+		(*errorout)(_("Matrix appears singular and can't be inverted"));
+		gel_matrixw_free(mi);
+		gel_matrixw_free(toinvert);
+		return TRUE;
+	}
+	gel_matrixw_free(toinvert);
+
+	if(n->op.oper == E_BACK_DIV)
+		m1 = mi;
+	else
+		m2 = mi;
+
+	res = gel_matrixw_new();
+	gel_matrixw_set_size(res,gel_matrixw_width(m1),
+			 gel_matrixw_height(m1));
+	gel_value_matrix_multiply(res,m1,m2,ctx->modulo);
+	if(n->op.oper == E_BACK_DIV)
+		gel_matrixw_free(m1);
+	else
+		gel_matrixw_free(m2);
+
+	freetree_full(n,TRUE,FALSE);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = res;
+	n->mat.quoted = quote;
+	return TRUE;
+}
+
+static int
+value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	int i,j;
+	int quote;
+	GelMatrixW *m;
+	GelMatrixW *mi;
+
+	m = r->mat.matrix;
+	quote = r->mat.quoted;
+
+	if((gel_matrixw_width(m) !=
+	    gel_matrixw_height(m)) ||
+	   !gel_is_matrix_value_only(m)) {
+		(*errorout)(_("Can't divide by a non-square matrix"));
+		return TRUE;
+	}
+
+	/* FIXME: this because of gauss */
+	if (ctx->modulo != NULL) {
+		(*errorout)(_("Matrix division not implemented in modulo mode"));
+		return TRUE;
+	}
+
+	mi = gel_matrixw_new();
+	gel_matrixw_set_size(mi,gel_matrixw_width(m),
+			 gel_matrixw_height(m));
+	for(i=0;i<gel_matrixw_width(m);i++)
+		for(j=0;j<gel_matrixw_width(m);j++)
+			if(i==j)
+				gel_matrixw_set_index(mi,i,j) =
+					gel_makenum_ui(1);
+
+	m = gel_matrixw_copy(m);
+	if(!gel_value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi)) {
+		(*errorout)(_("Matrix appears singular and can't be inverted"));
+		gel_matrixw_free(mi);
+		gel_matrixw_free(m);
+		return TRUE;
+	}
+	gel_matrixw_free(m);
+	m = mi;
+
+	for(i=0;i<gel_matrixw_width(m);i++)
+		for(j=0;j<gel_matrixw_width(m);j++) {
+			GelETree *t = gel_matrixw_set_index(m,i,j);
+			if(t)
+				mpw_mul(t->val.value,t->val.value,
+					l->val.value);
 		}
-	}
-	mpw_clear(tmp);
-	freeargarr(arg,1);
-	return nn;
+
+	freetree_full(n,TRUE,FALSE);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = m;
+	n->mat.quoted = quote;
+	return TRUE;
 }
-
-static ETree *
-doubleop(ETree *n, ETree *arg[], doubleopfunc f)
-{
-	mpw_t res;
-
-	mpw_init(res);
-	(*f)(res,arg[0]->val.value,arg[1]->val.value);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return copynode_args(n,arg);
-	}
-
-	mpw_clear(arg[0]->val.value);
-	memcpy(arg[0]->val.value,res,sizeof(struct _mpw_t));
-
-	freetree(arg[1]);
-
-	return arg[0];
-}
-
-static ETree *
-singleop(ETree *n, ETree *arg[], singleopfunc f)
-{
-	mpw_t res;
-
-	mpw_init(res);
-	(*f)(res,arg[0]->val.value);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return copynode_args(n,arg);
-	}
-	mpw_clear(arg[0]->val.value);
-	memcpy(arg[0]->val.value,res,sizeof(struct _mpw_t));
-
-	return arg[0];
-}
-
-
-typedef ETree * (*primfunc_t)(ETree *,ETree **,gpointer);
-
-#define EVAL_PRIMITIVE(n,numop,numfunc,matrixfunc,stringfunc,argeval,modright) {\
-	ETree *r[2]; 					\
-	ETree *ret;					\
-	if(argeval) {					\
-		switch(evalargs(n->op.args,r,TRUE,modright)) {	\
-		case 1:					\
-			return copynode_args(n,r);	\
-		case 2:					\
-			return NULL;			\
-		}					\
-	} else {					\
-		r[0]=copynode(n->op.args->data);	\
-		r[1]=n->op.args->next->data;		\
-		if(r[1]) r[1]=copynode(r[1]);		\
-	}						\
-	switch(arglevel(r,n->op.nargs)) {		\
-	case 0: ret = numop(n,r,numfunc);		\
-		return ret;				\
-	case 1: if(matrixfunc) {			\
-			primfunc_t m = matrixfunc;	\
-			ret = (*m)(n,r,numfunc);	\
-			return ret;			\
-		} else {				\
-			(*errorout)(_("Primitive on matrixes undefined")); \
-			return copynode_args(n,r);	\
-		}					\
-	case 2: if(stringfunc) {			\
-			primfunc_t m = stringfunc;	\
-			ret = (*m)(n,r,NULL);		\
-			return ret;			\
-		} else {				\
-			(*errorout)(_("Primitive on strings undefined")); \
-			return copynode_args(n,r);	\
-		}					\
-	default:					\
-		(*errorout)(_("Primitives must get numeric/matrix/string arguments")); \
-		return copynode_args(n,r);		\
-	}						\
-}
-
-static ETree *
-transpose_matrix(ETree *n)
-{
-	ETree *r[1];
-	switch(evalargs(n->op.args,r,TRUE,TRUE)) {
-	case 1:
-		return copynode_args(n,r);
-	case 2:
-		return NULL;
-	default: ;
-	}
-	
-	if(r[0]->type != MATRIX_NODE) {
-		(*errorout)(_("Can't transpose non-matrix"));
-		return copynode_args(n,r);
-	}
-	
-	r[0]->mat.matrix->tr = !(r[0]->mat.matrix->tr);
-	
-	return r[0];
-}
-
-static ETree *
-get_element(ETree *n)
-{
-	ETree *ll,*rr,*m;
-	ETree *ret = NULL;
-	int li,ri; 
-
-	if(n->op.oper==E_GET_ELEMENT) {
-		if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,TRUE,
-				     &li,&li,&ri,&ri,&ret))
-			return ret;
-	} else /*E_GET_VELEMENT*/ {
-		if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,FALSE,
-				     &li,&li,NULL,NULL,&ret))
-			return ret;
-	}
-
-	if(m->type != MATRIX_NODE) {
-		ETree *arg[3];
-		(*errorout)(_("Index works only on matricies"));
-		arg[0]=m;
-		arg[1]=ll;
-		arg[2]=rr;
-		return copynode_args(n,arg);
-	}
-
-	if(n->op.oper == E_GET_VELEMENT) {
-		ri = ((li-1)%matrixw_width(m->mat.matrix))+1;
-		li = ((li-1)/matrixw_width(m->mat.matrix))+1;
-	}
-	
-	if(matrixw_width(m->mat.matrix) < ri ||
-	   matrixw_height(m->mat.matrix) < li) {
-		ETree *arg[3];
-		(*errorout)(_("Matrix index out of range"));
-		arg[0]=m;
-		arg[1]=ll;
-		arg[2]=rr;
-		return copynode_args(n,arg);
-	}
-	
-	freetree(ll);
-	freetree(rr);
-	
-	ret = copynode(matrixw_index(m->mat.matrix,ri-1,li-1));
-
-	freetree(m);
-	
-	return ret;
-}
-
-static ETree *
-get_region(ETree *n)
-{
-	ETree *ll,*rr,*m;
-	ETree *ret = NULL;
-	int rowfrom,rowto,colfrom,colto; 
-	int w,h;
-	int do_col,do_row;
-
-	if(n->op.oper == E_GET_REGION) {
-		do_col = TRUE;
-		do_row = TRUE;
-	} else if(n->op.oper == E_GET_ROW_REGION) {
-		do_col = FALSE;
-		do_row = TRUE;
-	} else /*E_GET_COL_REGION*/ {
-		do_col = TRUE;
-		do_row = FALSE;
-	}
-
-	if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,do_row,do_col,
-			     &rowfrom,&rowto,&colfrom,&colto,&ret))
-		return ret;
-
-	if(m->type != MATRIX_NODE) {
-		ETree *arg[3];
-		(*errorout)(_("Index works only on matricies"));
-		arg[0]=m;
-		if(ll) {
-			arg[1]=ll;
-			arg[2]=rr;
-		} else {
-			arg[1]=rr;
-			arg[2]=ll;
-		}
-		return copynode_args(n,arg);
-	}
-	
-	if(!do_row) {
-		rowfrom = 1;
-		rowto = matrixw_height(m->mat.matrix);
-	}
-	if(!do_col) {
-		colfrom = 1;
-		colto = matrixw_width(m->mat.matrix);
-	}
-
-	w = colto-colfrom+1;
-	h = rowto-rowfrom+1;
-
-	if(colto > matrixw_width(m->mat.matrix) ||
-	   rowto > matrixw_height(m->mat.matrix)) {
-		ETree *arg[3];
-		(*errorout)(_("Index out of range"));
-		arg[0]=m;
-		if(ll) {
-			arg[1]=ll;
-			arg[2]=rr;
-		} else {
-			arg[1]=rr;
-			arg[2]=ll;
-		}
-		return copynode_args(n,arg);
-	}
-
-	freetree(ll);
-	freetree(rr);
-	
-	GET_NEW_NODE(ret);
-	ret->type = MATRIX_NODE;
-
-	ret->mat.matrix = matrixw_get_region(m->mat.matrix,
-					     colfrom-1,rowfrom-1,w,h);
-	ret->mat.quoted = m->mat.quoted;
-
-	freetree(m);
-	
-	return ret;
-}
-
-/*for numbers*/
-static void
-my_mpw_back_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
-{
-	mpw_div(rop,op2,op1);
-}
-
-/*note: eval args only applies to primitives*/
-static ETree *
-evaloper(ETree *n, int argeval, int do_ret)
-{
-	ETree *nn;
-	switch(n->op.oper) {
-		case E_SEPAR:
-			if(!(nn=evalnode_full(n->op.args->data,FALSE)))
-				return NULL; /*exception*/
-			if(nn && nn!=EMPTY_RET) freetree(nn);
-			return evalnode_full(n->op.args->next->data,do_ret);
-
-		case E_EQUALS:
-			return equalsop(n,do_ret);
-
-		case E_ABS: EVAL_PRIMITIVE(n,singleop,mpw_abs,(primfunc_t)matrix_1num_op,NULL,argeval,TRUE);
-		case E_PLUS: EVAL_PRIMITIVE(n,doubleop,mpw_add,matrix_addsub_op,string_concat,argeval,TRUE);
-		case E_MINUS: EVAL_PRIMITIVE(n,doubleop,mpw_sub,matrix_addsub_op,NULL,argeval,TRUE);
-		case E_MUL: EVAL_PRIMITIVE(n,doubleop,mpw_mul,matrix_mul_op,NULL,argeval,TRUE);
-		case E_DIV: EVAL_PRIMITIVE(n,doubleop,mpw_div,matrix_div_op,NULL,argeval,TRUE);
-		case E_BACK_DIV: EVAL_PRIMITIVE(n,doubleop,my_mpw_back_div,matrix_div_op,NULL,argeval,TRUE);
-		case E_MOD: EVAL_PRIMITIVE(n,doubleop,mpw_mod,(primfunc_t)matrix_scalar_matrix_op,NULL,argeval,TRUE);
-		case E_NEG: EVAL_PRIMITIVE(n,singleop,mpw_neg,(primfunc_t)matrix_1num_op,NULL,argeval,TRUE);
-		case E_EXP: EVAL_PRIMITIVE(n,doubleop,mpw_pow,matrix_pow_op,NULL,argeval,FALSE);
-		case E_FACT: EVAL_PRIMITIVE(n,singleop,mpw_fac,(primfunc_t)matrix_1num_op,NULL,argeval,TRUE);
-		case E_TRANSPOSE: return transpose_matrix(n);
-
-		/*these should have been translated to COMPARE_NODEs*/
-		case E_EQ_CMP:
-		case E_NE_CMP: g_assert_not_reached();
-
-		case E_CMP_CMP: EVAL_PRIMITIVE(n,cmpcmpop,NULL,NULL,cmpstringop,argeval,TRUE);
-		/*these should have been translated to COMPARE_NODEs*/
-		case E_LT_CMP:
-		case E_GT_CMP:
-		case E_LE_CMP: 
-		case E_GE_CMP: g_assert_not_reached();
-
-		case E_LOGICAL_AND: return logicalandop(n,argeval);
-		case E_LOGICAL_OR: return logicalorop(n,argeval);
-		case E_LOGICAL_XOR: EVAL_PRIMITIVE(n,logicalxorop,NULL,NULL,(primfunc_t)logicalxorop,argeval,TRUE);
-		case E_LOGICAL_NOT: EVAL_PRIMITIVE(n,logicalnotop,NULL,NULL,(primfunc_t)logicalnotop,argeval,TRUE);
-
-		case E_REGION_SEP:
-			{
-				ETree *arg[2];
-				g_assert(n->op.args);
-				g_assert(n->op.args->data);
-				g_assert(n->op.args->next->data);
-				arg[0] = evalnode(n->op.args->data);
-				if(!arg[0]) return NULL;
-				arg[1] = evalnode(n->op.args->next->data);
-				if(!arg[1]) {
-					freetree(arg[0]);
-					return NULL;
-				}
-				return copynode_args(n,arg);
-			}
-
-		case E_GET_VELEMENT:
-		case E_GET_ELEMENT:
-			return get_element(n);
-
-		case E_GET_REGION:
-		case E_GET_ROW_REGION:
-		case E_GET_COL_REGION:
-			return get_region(n);
-
-		case E_REFERENCE:
-			if(do_ret)
-				return copynode(n);
-			else
-				return EMPTY_RET;
-		case E_DEREFERENCE:
-			return derefvarop(n);
-
-		case E_IF_CONS:
-		case E_IFELSE_CONS:
-			return ifop(n,do_ret);
-		case E_WHILE_CONS:
-		case E_UNTIL_CONS:
-		case E_DOWHILE_CONS:
-		case E_DOUNTIL_CONS:
-			return loopop(n,do_ret);
-
-		case E_FOR_CONS:
-		case E_FORBY_CONS:
-			return forloop(n,do_ret);
-
-		case E_FORIN_CONS:
-			return forinloop(n,do_ret);
-
-		case E_DIRECTCALL:
-			return funccallop(n,TRUE,do_ret);
-		case E_CALL:
-			return funccallop(n,FALSE,do_ret);
-		case E_RETURN:
-			{
-				ETree *l;
-				ETree *r;
-				GET_L(n,l);
-				if(returnval) {
-					(*errorout)(_("Extraneous return value!"));
-					freetree(returnval);
-				}
-				r = evalnode(l);
-				if(returnval) {
-					if(r) freetree(returnval);
-				} else if(r) {
-					returnval = r;
-				} else {
-					(*errorout)(_("Can't evaluate return value!"));
-					returnval = copynode(l);
-				}
-
-				/*use exception to jump out of the current
-				  context (that is until a caller realizes
-				  that returnval is set)*/
-				return NULL;
-			}
-		case E_BAILOUT:
-			{
-				inbailout = TRUE;
-
-				/*use exception to jump out of the current
-				  context (that is until a caller realizes
-				  that inbailout is set)*/
-				return NULL;
-			}
-		case E_EXCEPTION:
-			{
-				inexception = TRUE;
-
-				/*use exception to jump out of the current
-				  context (that is until a caller realizes
-				  that inexception is set)*/
-				return NULL;
-			}
-		case E_CONTINUE:
-			{
-				g_assert(inloop);
-				if(!inloop->data) {
-					(*errorout)(_("Called 'continue' outside of a loop"));
-					return copynode(n);
-				}
-				loopout = LOOPOUT_CONTINUE;
-
-				/*use exception to jump out of the current
-				  context (that is until a caller realizes
-				  that loopout is set)*/
-				return NULL;
-			}
-		case E_BREAK:
-			{
-				g_assert(inloop);
-				if(!inloop->data) {
-					(*errorout)(_("Called 'break' outside of a loop"));
-					return copynode(n);
-				}
-				loopout = LOOPOUT_BREAK;
-
-				/*use exception to jump out of the current
-				  context (that is until a caller realizes
-				  that loopout is set)*/
-				return NULL;
-			}
-		case E_MOD_CALC:
-			{
-				ETree *l;
-				ETree *r;
-				ETree *ret;
-				GET_LR(n,l,r);
-				r = evalnode(r);
-				if(!r) return NULL;
-				if(r->type != VALUE_NODE) {
-					ETree *args[2];
-					(*errorout)(_("Can't do mod by non-numbers!"));
-					args[0]=copynode(l);
-					args[1]=r;
-					return copynode_args(n,args);
-				}
-				if(mpw_is_complex(r->val.value) ||
-				   !mpw_is_integer(r->val.value)) {
-					ETree *args[2];
-					(*errorout)(_("Can't do mod calculations of non-integers!"));
-					args[0]=copynode(l);
-					args[1]=r;
-					return copynode_args(n,args);
-				}
-				PUSH_MOD(r->val.value);
-				
-				ret = evalnode(l);
-				
-				POP_MOD;
-				
-				return ret;
-			}
-
-		default:
-			(*errorout)(_("Unexpected operator!"));
-			return copynode(n);
-	}
-}
-
-#define RET_ERR	\
-	ETree *ret = copynode_args(n,r);	\
-	error_num = 0;				\
-	g_free(r);				\
-	return ret;
-
-#define RET_RES(x) \
-	freeargarr(r,n->comp.nargs);	\
-	g_free(r);			\
-	return makenum_ui((x));
-
-static ETree *
-evalcomp(ETree *n)
-{
-	GList *li;
-	ETree **r;
-	ETree **ri;
-	int oper;
-	r = g_new(ETree *,n->comp.nargs);
-
-	if(evalargs(n->comp.args,r,TRUE,TRUE)==2) {
-		g_free(r);
-		return NULL;
-	}
-	
-	for(ri=r,li=n->comp.comp;li;li=g_list_next(li),ri++) {
-		int lev;
-		oper = GPOINTER_TO_INT(li->data);
-		lev = arglevel(ri,2);
-		if(lev==0) {
-			switch(oper) {
-			case E_EQ_CMP:
-				if(!eqlnodes(ri[0],ri[1])) {
-					if(error_num) {
-						RET_ERR
-					}
-					RET_RES(0)
-				}
-				break;
-			case E_NE_CMP:
-				if(eqlnodes(ri[0],ri[1])) {
-					RET_RES(0)
-				} else if(error_num) {
-					RET_ERR
-				}
-				break;
-			case E_LT_CMP:
-				if(cmpnodes(ri[0],ri[1])>=0) {
-					if(error_num) {
-						RET_ERR
-					}
-					RET_RES(0)
-				}
-				break;
-			case E_GT_CMP:
-				if(cmpnodes(ri[0],ri[1])<=0) {
-					if(error_num) {
-						RET_ERR
-					}
-					RET_RES(0)
-				}
-				break;
-			case E_LE_CMP:
-				if(cmpnodes(ri[0],ri[1])>0) {
-					RET_RES(0)
-				} else if(error_num) {
-					RET_ERR
-				}
-				break;
-			case E_GE_CMP:
-				if(cmpnodes(ri[0],ri[1])<0) {
-					RET_RES(0)
-				} else if(error_num) {
-					RET_ERR
-				}
-				break;
-			default:
-				g_assert_not_reached();
-			}
-		} else if (lev==1) {
-			int err = FALSE;
-			switch(oper) {
-			case E_EQ_CMP:
-				if(!eqmatrix(ri[0],ri[1],&err)) {
-					if(err) {
-						RET_ERR
-					}
-					RET_RES(0)
-				}
-				break;
-			case E_NE_CMP:
-				if(eqmatrix(ri[0],ri[1],&err)) {
-					RET_RES(0)
-				} else if(err) {
-					RET_ERR
-				}
-				break;
-			default:
-				(*errorout)(_("Cannot compare matrixes"));
-				{
-					RET_ERR
-				}
-			}
-		} else if (lev==2) {
-			switch(oper) {
-			case E_EQ_CMP:
-				if(!eqstring(ri[0],ri[1])) {
-					RET_RES(0)
-				}
-				break;
-			case E_NE_CMP:
-				if(eqstring(ri[0],ri[1])) {
-					RET_RES(0)
-				}
-				break;
-			case E_LT_CMP:
-				if(cmpstring(ri[0],ri[1])>=0) {
-					RET_RES(0)
-				}
-				break;
-			case E_GT_CMP:
-				if(cmpstring(ri[0],ri[1])<=0) {
-					RET_RES(0)
-				}
-				break;
-			case E_LE_CMP:
-				if(cmpstring(ri[0],ri[1])>0) {
-					RET_RES(0)
-				}
-				break;
-			case E_GE_CMP:
-				if(cmpstring(ri[0],ri[1])<0) {
-					RET_RES(0)
-				}
-				break;
-			default:
-				g_assert_not_reached();
-			}
-		} else {
-			(*errorout)(_("Primitives must get numeric/matrix/string arguments"));
-			{
-				RET_ERR
-			}
-		}
-	}
-	RET_RES(1)
-}
-
-#undef RET_ERR
-#undef RET_RES
 
 static void
-mod_node(ETree *n, mpw_ptr mod)
+mod_node(GelETree *n, mpw_ptr mod)
 {
 	if(n->type == VALUE_NODE) {
+		if (mpw_is_complex (n->val.value) ||
+		    ! mpw_is_integer (n->val.value)) {
+			(*errorout)(_("Modulo arithmetic only works on integers"));
+			return;
+		}
 		mpw_mod(n->val.value,n->val.value,mod);
-		if(error_num) { /*XXX: for now ignore errors in moding*/
+		if(error_num) { /*FIXME: for now ignore errors in moding*/
 			error_num = 0;
 		}
 		if(mpw_sgn(n->val.value)<0)
-			mpw_sub(n->val.value,mod,n->val.value);
+			mpw_add(n->val.value,mod,n->val.value);
 	} else if(n->type == MATRIX_NODE) {
 		int i,j;
 		int w,h;
 		if(!n->mat.matrix) return;
-		w = matrixw_width(n->mat.matrix);
-		h = matrixw_height(n->mat.matrix);
+		w = gel_matrixw_width(n->mat.matrix);
+		h = gel_matrixw_height(n->mat.matrix);
 		for(i=0;i<w;i++) {
 			for(j=0;j<h;j++) {
-				ETree *t = matrixw_set_index(n->mat.matrix,i,j);
-				if(t) {
+				GelETree *t = gel_matrixw_set_index(n->mat.matrix,i,j);
+				if (t != NULL) {
 					mod_node(t,mod);
 				}
 			}
@@ -3701,70 +1693,9 @@ mod_node(ETree *n, mpw_ptr mod)
 	}
 }
 
-ETree *
-evalnode_full(ETree *n, int do_ret)
-{
-	ETree *ret;
-	if(evalnode_hook) {
-		static int i = 0;
-		if(i++>run_hook_every) {
-			(*evalnode_hook)();
-			i=0;
-		}
-	}
-	if(interrupted)
-		return NULL;
-	if(!n)
-		return NULL;
-	
-	switch(n->type) {
-	case NULL_NODE:
-	case VALUE_NODE:
-		if(do_ret)
-			ret = copynode(n);
-		else
-			return EMPTY_RET;
-		break;
-	case MATRIX_NODE:
-		if(n->mat.quoted)
-			ret = qevalmatrix(n);
-		else
-			ret = evalmatrix(n);
-		break;
-	case OPERATOR_NODE:
-		ret = evaloper(n,TRUE,do_ret);
-		break;
-	case IDENTIFIER_NODE:
-		ret = variableop(n);
-		break;
-	case STRING_NODE:
-	case FUNCTION_NODE:
-		if(do_ret)
-			ret = copynode(n);
-		else
-			return EMPTY_RET;
-		break;
-	case COMPARISON_NODE:
-		/*this should never be modded actually since it can
-		  only be 0 or 1*/
-		return evalcomp(n);
-	default:
-		(*errorout)(_("Unexpected node!"));
-		if(do_ret)
-			ret = copynode(n);
-		else
-			return EMPTY_RET;
-		break;
-	}
-	if(IS_MOD) {
-		mod_node(ret,GET_MOD);
-	}
-	return ret;
-}
-
 /*return TRUE if node is true (a number node !=0), false otherwise*/
 int
-isnodetrue(ETree *n, int *bad_node)
+isnodetrue(GelETree *n, int *bad_node)
 {
 	if(n->type==STRING_NODE) {
 		if(n->str.str && *n->str.str)
@@ -3782,69 +1713,3397 @@ isnodetrue(ETree *n, int *bad_node)
 		return FALSE;
 }
 
-int
-eval_isnodetrue(ETree *n, int *exception, ETree **errorret)
+static int
+transpose_matrix (GelCtx *ctx, GelETree *n, GelETree *l)
 {
-	/*sane return values*/
-	if(exception) *exception = FALSE;
-	if(errorret) *errorret = NULL;
-	if(n->type==STRING_NODE) {
-		if(n->str.str && *n->str.str)
-			return TRUE;
-		else 
-			return FALSE;
-	}
-	/*we don't have to make a copy and evaluate if the tree is a number
-	  already*/
-	if(n->type!=VALUE_NODE) {
-		int r=FALSE;
-		ETree *m;
-
-		m=evalnode(n);
-		if(!m) {
-			/*raise exception*/
-			if(exception) *exception = TRUE;
-			return FALSE;
-		}
-		if(n->type==STRING_NODE) {
-			if(n->str.str && *n->str.str)
-				return TRUE;
-			else 
-				return FALSE;
-		}
-		if(m->type!=VALUE_NODE) {
-			(*errorout)(_("Could not evaluate predicate into a numeric boolean value!"));
-			if(errorret)
-				*errorret = m;
-			else
-				freetree(m);
-			return FALSE;
-		}
-		if(mpw_sgn(m->val.value)!=0)
-			r = TRUE;
-		else
-			r = FALSE;
-		freetree(m);
-		return r;
-	}
-	if(mpw_sgn(n->val.value)!=0)
-		return TRUE;
-	else
-		return FALSE;
+	l->mat.matrix->tr = !(l->mat.matrix->tr);
+	/*remove from arglist*/
+	n->op.args = NULL;
+	replacenode(n,l);
+	return TRUE;
 }
 
-ETree *
-gather_comparisons(ETree *n)
+static int
+conjugate_transpose_matrix (GelCtx *ctx, GelETree *n, GelETree *l)
 {
+	if (gel_is_matrix_value_only_real (l->mat.matrix)) {
+		l->mat.matrix->tr = !(l->mat.matrix->tr);
+	} else {
+		gel_matrix_conjugate_transpose (l->mat.matrix);
+	}
+	/*remove from arglist*/
+	n->op.args = NULL;
+	replacenode(n,l);
+	return TRUE;
+}
+
+static int
+string_concat(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	char *s = NULL;
+	
+	if(l->type == STRING_NODE &&
+	   r->type == STRING_NODE) {
+		s = g_strconcat(l->str.str, r->str.str, NULL);
+	} else if(l->type == STRING_NODE) {
+		char *t = string_print_etree(r);
+		s = g_strconcat(l->str.str, t, NULL);
+		g_free(t);
+	} else if(r->type == STRING_NODE) {
+		char *t = string_print_etree(l);
+		s = g_strconcat(t,r->str.str,NULL);
+		g_free(t);
+	} else
+		g_assert_not_reached();
+	
+	freetree_full(n, TRUE, FALSE);
+	n->type = STRING_NODE;
+	n->str.str = s;
+
+	return TRUE;
+}
+
+
+/*for numbers*/
+static void
+my_mpw_back_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+{
+	mpw_div(rop,op2,op1);
+}
+
+
+#define PRIM_NUM_FUNC_1(funcname,mpwfunc) \
+static int							\
+funcname(GelCtx *ctx, GelETree *n, GelETree *l)			\
+{								\
+	mpw_t res;						\
+								\
+	mpw_init(res);						\
+	mpwfunc(res,l->val.value);				\
+	if(error_num==NUMERICAL_MPW_ERROR) {			\
+		mpw_clear(res);					\
+		error_num=NO_ERROR;				\
+		return TRUE;					\
+	}							\
+								\
+	freetree_full(n,TRUE,FALSE);				\
+	gel_makenum_use_from(n,res);				\
+	return TRUE;						\
+}
+#define PRIM_NUM_FUNC_2(funcname,mpwfunc) \
+static int							\
+funcname(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)		\
+{								\
+	mpw_t res;						\
+								\
+	mpw_init(res);						\
+	mpwfunc(res,l->val.value,r->val.value);			\
+	if(error_num==NUMERICAL_MPW_ERROR) {			\
+		mpw_clear(res);					\
+		error_num=NO_ERROR;				\
+		return TRUE;					\
+	}							\
+								\
+	freetree_full(n,TRUE,FALSE);				\
+	gel_makenum_use_from(n,res);				\
+	return TRUE;						\
+}
+
+PRIM_NUM_FUNC_1(numerical_abs,mpw_abs)
+PRIM_NUM_FUNC_1(numerical_neg,mpw_neg)
+PRIM_NUM_FUNC_1(numerical_fac,mpw_fac)
+PRIM_NUM_FUNC_1(numerical_dblfac,mpw_dblfac)
+PRIM_NUM_FUNC_2(numerical_add,mpw_add)
+PRIM_NUM_FUNC_2(numerical_sub,mpw_sub)
+PRIM_NUM_FUNC_2(numerical_mul,mpw_mul)
+PRIM_NUM_FUNC_2(numerical_div,mpw_div)
+PRIM_NUM_FUNC_2(numerical_mod,mpw_mod)
+PRIM_NUM_FUNC_2(numerical_back_div,my_mpw_back_div)
+PRIM_NUM_FUNC_2(numerical_pow,mpw_pow)
+	
+#define EMPTY_PRIM {{{{0}}}}
+
+static const GelOper prim_table[E_OPER_LAST] = {
+	/*E_SEPAR*/ EMPTY_PRIM,
+	/*E_EQUALS*/ EMPTY_PRIM,
+	/*E_PARAMETER*/ EMPTY_PRIM,
+	/*E_ABS*/ 
+	{{
+		 {{GO_VALUE,0,0},(GelEvalFunc)numerical_abs},
+		 {{GO_MATRIX,0,0},(GelEvalFunc)matrix_absnegfac_op},
+	 }},
+	/*E_PLUS*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_add},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+		 {{GO_VALUE|GO_MATRIX|GO_FUNCTION|GO_STRING,GO_STRING,0},
+			 (GelEvalFunc)string_concat},
+		 {{GO_STRING,GO_VALUE|GO_MATRIX|GO_FUNCTION|GO_STRING,0},
+			 (GelEvalFunc)string_concat},
+	 }},
+	/*E_MINUS*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_sub},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_MUL*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_mul},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_mul_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_ELTMUL*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_mul},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_DIV*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_div},
+		 {{GO_MATRIX,GO_VALUE,0}, (GelEvalFunc)matrix_scalar_matrix_op},
+		 {{GO_VALUE,GO_MATRIX,0}, (GelEvalFunc)value_matrix_div_op},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_div_op},
+	 }},
+	/*E_ELTDIV*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_div},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_BACK_DIV*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_back_div},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_div_op},
+	 }},
+	/*E_ELT_BACK_DIV*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_back_div},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_MOD*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_mod},
+	 }},
+	/*E_ELTMOD*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_mod},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_NEG*/
+	{{
+		 {{GO_VALUE,0,0},(GelEvalFunc)numerical_neg},
+		 {{GO_MATRIX,0,0},(GelEvalFunc)matrix_absnegfac_op},
+	 }},
+	/*E_EXP*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_pow},
+		 {{GO_MATRIX,GO_VALUE,0},(GelEvalFunc)matrix_pow_op},
+	 }},
+	/*E_ELTEXP*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)numerical_pow},
+		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
+		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
+			 (GelEvalFunc)matrix_scalar_matrix_op},
+	 }},
+	/*E_FACT*/
+	{{
+		 {{GO_VALUE,0,0},(GelEvalFunc)numerical_fac},
+		 {{GO_MATRIX,0,0},(GelEvalFunc)matrix_absnegfac_op},
+	 }},
+	/*E_DBLFACT*/
+	{{
+		 {{GO_VALUE,0,0},(GelEvalFunc)numerical_dblfac},
+		 {{GO_MATRIX,0,0},(GelEvalFunc)matrix_absnegfac_op},
+	 }},
+	/*E_TRANSPOSE*/
+	{{
+		 {{GO_MATRIX,0,0},(GelEvalFunc)transpose_matrix},
+	 }},
+	/*E_CONJUGATE_TRANSPOSE*/
+	{{
+		 {{GO_MATRIX,0,0},(GelEvalFunc)conjugate_transpose_matrix},
+	 }},
+	/*E_IF_CONS*/ EMPTY_PRIM,
+	/*E_IFELSE_CONS*/ EMPTY_PRIM,
+	/*E_WHILE_CONS*/ EMPTY_PRIM,
+	/*E_UNTIL_CONS*/ EMPTY_PRIM,
+	/*E_DOWHILE_CONS*/ EMPTY_PRIM,
+	/*E_DOUNTIL_CONS*/ EMPTY_PRIM,
+	/*E_FOR_CONS*/ EMPTY_PRIM,
+	/*E_FORBY_CONS*/ EMPTY_PRIM,
+	/*E_FORIN_CONS*/ EMPTY_PRIM,
+	/*E_SUM_CONS*/ EMPTY_PRIM,
+	/*E_SUMBY_CONS*/ EMPTY_PRIM,
+	/*E_SUMIN_CONS*/ EMPTY_PRIM,
+	/*E_PROD_CONS*/ EMPTY_PRIM,
+	/*E_PRODBY_CONS*/ EMPTY_PRIM,
+	/*E_PRODIN_CONS*/ EMPTY_PRIM,
+	/*E_EQ_CMP*/ EMPTY_PRIM,
+	/*E_NE_CMP*/ EMPTY_PRIM,
+	/*E_CMP_CMP*/
+	{{
+		 {{GO_VALUE,GO_VALUE,0},(GelEvalFunc)cmpcmpop},
+		 {{GO_VALUE|GO_MATRIX|GO_FUNCTION|GO_STRING,GO_STRING,0},
+			 (GelEvalFunc)cmpstringop},
+		 {{GO_STRING,GO_VALUE|GO_MATRIX|GO_FUNCTION|GO_STRING,0},
+			 (GelEvalFunc)cmpstringop},
+	 }},
+	/*E_LT_CMP*/ EMPTY_PRIM,
+	/*E_GT_CMP*/ EMPTY_PRIM,
+	/*E_LE_CMP*/ EMPTY_PRIM,
+	/*E_GE_CMP*/ EMPTY_PRIM,
+	/*E_LOGICAL_AND*/ EMPTY_PRIM,
+	/*E_LOGICAL_OR*/ EMPTY_PRIM,
+	/*E_LOGICAL_XOR*/
+	{{
+		 {{GO_VALUE|GO_STRING,GO_VALUE|GO_STRING,0},
+			 (GelEvalFunc)logicalxorop},
+	 }},
+	/*E_LOGICAL_NOT*/
+	{{
+		 {{GO_VALUE|GO_STRING,0,0},(GelEvalFunc)logicalnotop},
+	 }},
+	/*E_REGION_SEP*/ EMPTY_PRIM,
+	/*E_REGION_SEP_BY*/ EMPTY_PRIM,
+	/*E_GET_VELEMENT*/ EMPTY_PRIM,
+	/*E_GET_ELEMENT*/ EMPTY_PRIM,
+	/*E_GET_ROW_REGION*/ EMPTY_PRIM,
+	/*E_GET_COL_REGION*/ EMPTY_PRIM,
+	/*E_QUOTE*/ EMPTY_PRIM,
+	/*E_REFERENCE*/ EMPTY_PRIM,
+	/*E_DEREFERENCE*/ EMPTY_PRIM,
+	/*E_DIRECTCALL*/ EMPTY_PRIM,
+	/*E_CALL*/ EMPTY_PRIM,
+	/*E_RETURN*/ EMPTY_PRIM,
+	/*E_BAILOUT*/ EMPTY_PRIM,
+	/*E_EXCEPTION*/ EMPTY_PRIM,
+	/*E_CONTINUE*/ EMPTY_PRIM,
+	/*E_BREAK*/ EMPTY_PRIM,
+	/*E_MOD_CALC*/ EMPTY_PRIM,
+	/*E_OPER_LAST*/
+};
+
+#undef EMPTY_PRIM
+
+
+/*pure free lists*/
+static void
+purge_free_lists(void)
+{
+	while(free_stack) {
+		GelEvalStack *evs = free_stack;
+		free_stack = free_stack->next;
+		g_free(evs);
+	}
+	while(free_evl) {
+		GelEvalLoop *evl = free_evl;
+		free_evl = (GelEvalLoop *)free_evl->condition;
+		g_free(evl);
+	}
+	while(free_evf) {
+		GelEvalFor *evf = free_evf;
+		free_evf = (GelEvalFor *)free_evf->body;
+		g_free(evf);
+	}
+	while(free_evfi) {
+		GelEvalForIn *evfi = free_evfi;
+		free_evfi = (GelEvalForIn *)free_evfi->body;
+		g_free(evfi);
+	}
+	while(free_trees) {
+		GelETree *et = free_trees;
+		free_trees = free_trees->any.next;
+		g_free(et);
+	}
+}
+
+static inline GelEvalLoop *
+evl_new (GelETree *cond, GelETree *body, gboolean is_while, gboolean body_first)
+{
+	GelEvalLoop *evl;
+	if(!free_evl) {
+		evl = g_new(GelEvalLoop,1);
+	} else {
+		evl = free_evl;
+		free_evl = (GelEvalLoop *)free_evl->condition;
+	}
+	evl->condition = cond;
+	evl->body = body;
+	evl->is_while = is_while ? 1 : 0;
+	evl->body_first = body_first ? 1 : 0;
+	return evl;
+}
+
+static inline void
+evl_free(GelEvalLoop *evl)
+{
+	(GelEvalLoop *)evl->condition = free_evl;
+	free_evl = evl;
+}
+
+static inline GelEvalFor *
+evf_new (GelEvalForType type,
+	 mpw_ptr x, mpw_ptr to, mpw_ptr by, int init_cmp,
+	 GelETree *body, GelETree *orig_body, GelToken *id)
+{
+	GelEvalFor *evf;
+	if(!free_evf) {
+		evf = g_new(GelEvalFor,1);
+	} else {
+		evf = free_evf;
+		free_evf = (GelEvalFor *)free_evf->body;
+	}
+	evf->type = type;
+	evf->x = x;
+	evf->to = to;
+	evf->by = by;
+	evf->init_cmp = init_cmp;
+	evf->result = NULL;
+	evf->body = body;
+	evf->orig_body = orig_body;
+	evf->id = id;
+	return evf;
+}
+
+static inline void
+evf_free(GelEvalFor *evf)
+{
+	(GelEvalFor *)evf->body = free_evf;
+	free_evf = evf;
+}
+
+static inline GelEvalForIn *
+evfi_new (GelEvalForType type, GelMatrixW *mat, GelETree *body, GelETree *orig_body, GelToken *id)
+{
+	GelEvalForIn *evfi;
+	if(!free_evfi) {
+		evfi = g_new(GelEvalForIn,1);
+	} else {
+		evfi = free_evfi;
+		free_evfi = (GelEvalForIn *)free_evfi->body;
+	}
+	evfi->type = type;
+	evfi->i = evfi->j = 0;
+	evfi->mat = mat;
+	evfi->result = NULL;
+	evfi->body = body;
+	evfi->orig_body = orig_body;
+	evfi->id = id;
+	return evfi;
+}
+
+static inline void
+evfi_free(GelEvalForIn *evfi)
+{
+	(GelEvalForIn *)evfi->body = free_evfi;
+	free_evfi = evfi;
+}
+
+static gboolean
+iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
+{
+	if(f->type == GEL_VARIABLE_FUNC) {
+		D_ENSURE_USER_BODY (f);
+		copyreplacenode(n,f->data.user);
+	} else if(f->type == GEL_USER_FUNC) {
+		D_ENSURE_USER_BODY (f);
+		freetree_full(n,TRUE,FALSE);
+
+		n->type = FUNCTION_NODE;
+		n->func.func = d_makeufunc (NULL,
+					    copynode (f->data.user),
+					    g_slist_copy (f->named_args),
+					    f->nargs,
+					    f->extra_dict);
+		n->func.func->context = -1;
+		n->func.func->vararg = f->vararg;
+		if (f->on_subst_list &&
+		    d_curcontext () != 0)
+			d_put_on_subst_list (n->func.func);
+	} else if(f->type == GEL_BUILTIN_FUNC) {
+		GelETree *ret;
+		int exception = FALSE;
+
+		if(f->nargs != 0) {
+			freetree_full(n,TRUE,FALSE);
+			n->type = FUNCTION_NODE;
+			n->func.func = d_makerealfunc(f,NULL,FALSE);
+			n->func.func->context = -1;
+			n->func.func->vararg = f->vararg;
+			/* FIXME: no need for extra_dict right? */
+			return TRUE;
+		}
+		ret = (*f->data.func)(ctx,NULL,&exception);
+		if(exception) {
+			if(ret)
+				gel_freetree(ret);
+			return FALSE;
+		} else if(ret) {
+			replacenode(n,ret);
+		}
+	} else if(f->type == GEL_REFERENCE_FUNC) {
+		GelETree *i;
+		f = f->data.ref;
+		
+		GET_NEW_NODE(i);
+		i->type = IDENTIFIER_NODE;
+		if(f->id) {
+			i->id.id = f->id;
+		} else {
+			/*make up a new fake id*/
+			GelToken *tok = g_new0(GelToken,1);
+			tok->refs = g_slist_append(NULL,f);
+			tok->curref = f;
+			i->id.id = tok;
+		}
+		i->any.next = NULL;
+
+		freetree_full(n,TRUE,FALSE);
+		n->type = OPERATOR_NODE;
+		n->op.oper = E_REFERENCE;
+
+		n->op.args = i;
+		n->op.nargs = 1;
+	} else
+		(*errorout)(_("Unevaluatable function type encountered!"));
+	return TRUE;
+}
+
+static inline gboolean
+iter_variableop(GelCtx *ctx, GelETree *n)
+{
+	GelEFunc *f;
+
+	if (n->id.id->built_in_parameter) {
+		GelETree *r = NULL;
+		ParameterGetFunc getfunc = n->id.id->data2;
+		if (getfunc != NULL)
+			r = getfunc ();
+		else
+			r = gel_makenum_null ();
+		replacenode (n, r);
+		return TRUE;
+	}
+	
+	f = d_lookup_global(n->id.id);
+	if(!f) {
+		char buf[256];
+		g_snprintf(buf,256,_("Variable '%s' used uninitialized"),n->id.id->token);
+		(*errorout)(buf);
+		return TRUE;
+	} else
+		return iter_do_var(ctx,n,f);
+}
+
+static inline gboolean
+iter_derefvarop(GelCtx *ctx, GelETree *n)
+{
+	GelEFunc *f;
+	GelETree *l;
+	
+	GET_L(n,l);
+	
+	f = d_lookup_global(l->id.id);
+	if(!f) {
+		char buf[256];
+		g_snprintf(buf,256,_("Variable '%s' used uninitialized"),
+			   l->id.id->token);
+		(*errorout)(buf);
+	} else if(f->nargs != 0) {
+		char buf[256];
+		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
+				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
+		(*errorout)(buf);
+	} else if(f->type != GEL_REFERENCE_FUNC) {
+		char buf[256];
+		g_snprintf(buf,256,_("Trying to dereference '%s' which is not a reference!\n"),
+			   f->id?f->id->token:"anonymous");
+		(*errorout)(buf);
+	} else /*if(f->type == GEL_REFERENCE_FUNC)*/ {
+		f = f->data.ref;
+		if(!f)
+			(*errorout)(_("NULL reference encountered!"));
+		else
+			return iter_do_var(ctx,n,f);
+	}
+	return TRUE;
+}
+
+#define RET_RES(x) \
+	freetree_full(n,TRUE,FALSE);	\
+	gel_makenum_ui_from(n,x);		\
+	return;
+
+/*returns 0 if all numeric, 1 if numeric/matrix, 2 if contains string, 3 otherwise*/
+static int
+arglevel(GelETree *r,int cnt)
+{
+	int i;
+	int level = 0;
+	for(i=0;i<cnt;i++,r = r->any.next) {
+		if(r->type!=VALUE_NODE) {
+			if(r->type==MATRIX_NODE)
+				level = level<1?1:level;
+			else if(r->type==STRING_NODE)
+				level = 2;
+			else
+				return 3;
+		}
+	}
+	return level;
+}
+
+static void
+evalcomp(GelETree *n)
+{
+	GSList *oli;
+	GelETree *ali;
+
+	for(ali=n->comp.args,oli=n->comp.comp;oli;ali=ali->any.next,oli=oli->next) {
+		int oper = GPOINTER_TO_INT(oli->data);
+		int err = FALSE;
+		GelETree *l = ali,*r = ali->any.next;
+
+		switch(arglevel(ali,2)) {
+		case 0:
+			switch(oper) {
+			case E_EQ_CMP:
+				if(!eqlnodes(l,r)) {
+					if(error_num) {
+						error_num=0;
+						return;
+					}
+					RET_RES(0)
+				}
+				break;
+			case E_NE_CMP:
+				if(eqlnodes(l,r)) {
+					RET_RES(0)
+				} else if(error_num) {
+					error_num=0;
+					return;
+				}
+				break;
+			case E_LT_CMP:
+				if(cmpnodes(l,r)>=0) {
+					if(error_num) {
+						error_num=0;
+						return;
+					}
+					RET_RES(0)
+				}
+				break;
+			case E_GT_CMP:
+				if(cmpnodes(l,r)<=0) {
+					if(error_num) {
+						error_num=0;
+						return;
+					}
+					RET_RES(0)
+				}
+				break;
+			case E_LE_CMP:
+				if(cmpnodes(l,r)>0) {
+					RET_RES(0)
+				} else if(error_num) {
+					error_num=0;
+					return;
+				}
+				break;
+			case E_GE_CMP:
+				if(cmpnodes(l,r)<0) {
+					RET_RES(0)
+				} else if(error_num) {
+					error_num=0;
+					return;
+				}
+				break;
+			default:
+				g_assert_not_reached();
+			}
+			break;
+		case 1:
+			switch(oper) {
+			case E_EQ_CMP:
+				if(!eqmatrix(l,r,&err)) {
+					if(err) {
+						error_num=0;
+						return;
+					}
+					RET_RES(0)
+				}
+				break;
+			case E_NE_CMP:
+				if(eqmatrix(l,r,&err)) {
+					RET_RES(0)
+				} else if(err) {
+					error_num=0;
+					return;
+				}
+				break;
+			default:
+				(*errorout)(_("Cannot compare matrixes"));
+				{
+					error_num=0;
+					return;
+				}
+			}
+			break;
+		case 2:
+			switch(oper) {
+			case E_EQ_CMP:
+				if(!eqstring(l,r)) {
+					RET_RES(0)
+				}
+				break;
+			case E_NE_CMP:
+				if(eqstring(l,r)) {
+					RET_RES(0)
+				}
+				break;
+			case E_LT_CMP:
+				if(cmpstring(l,r)>=0) {
+					RET_RES(0)
+				}
+				break;
+			case E_GT_CMP:
+				if(cmpstring(l,r)<=0) {
+					RET_RES(0)
+				}
+				break;
+			case E_LE_CMP:
+				if(cmpstring(l,r)>0) {
+					RET_RES(0)
+				}
+				break;
+			case E_GE_CMP:
+				if(cmpstring(l,r)<0) {
+					RET_RES(0)
+				}
+				break;
+			default:
+				g_assert_not_reached();
+			}
+			break;
+		default:
+			(*errorout)(_("Primitives must get numeric/matrix/string arguments"));
+			{
+				error_num=0;
+				return;
+			}
+			break;
+		}
+	}
+	RET_RES(1)
+}
+
+#undef RET_RES
+
+
+/* free a special stack entry */
+static inline void
+ev_free_special_data(GelCtx *ctx, gpointer data, int flag)
+{
+	switch(flag) {
+	case GE_FUNCCALL:
+		/*we are crossing a boundary, we need to free a context*/
+		d_popcontext ();
+		gel_freetree(data);
+		GE_BLIND_POP_STACK(ctx);
+		break;
+	case GE_LOOP_COND:
+	case GE_LOOP_LOOP:
+		{
+			GelEvalLoop *evl = data;
+			gel_freetree (evl->condition);
+			gel_freetree (evl->body);
+			evl_free (evl);
+			GE_BLIND_POP_STACK (ctx);
+		}
+		break;
+	case GE_FOR:
+		{
+			GelEvalFor *evf = data;
+			gel_freetree(evf->body);
+			gel_freetree(evf->result);
+			evf_free(evf);
+			GE_BLIND_POP_STACK(ctx);
+		}
+		break;
+	case GE_FORIN:
+		{
+			GelEvalForIn *evfi = data;
+			gel_freetree(evfi->body);
+			gel_freetree(evfi->result);
+			evfi_free(evfi);
+			GE_BLIND_POP_STACK(ctx);
+		}
+		break;
+	case GE_SETMODULO:
+		if (ctx->modulo != NULL) {
+			mpw_clear (ctx->modulo);
+			g_free (ctx->modulo);
+		}
+		ctx->modulo = data;
+		break;
+	default:
+		break;
+	}
+}
+
+static gboolean
+push_setmod (GelCtx *ctx, GelETree *n)
+{
+	GelETree *l, *r;
+
+	GET_LR (n, l, r);
+
+	if (r->type != VALUE_NODE ||
+	    mpw_is_complex (r->val.value) ||
+	    ! mpw_is_integer (r->val.value) ||
+	    mpw_sgn (r->val.value) <= 0) {
+		(*errorout)(_("Bad argument to modular operation"));
+		return FALSE;
+	}
+
+	GE_PUSH_STACK (ctx, n, GE_POST);
+	GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+
+	ctx->modulo = g_new (struct _mpw_t, 1);
+	mpw_init_set (ctx->modulo, r->val.value);
+
+	ctx->post = FALSE;
+	ctx->current = l;
+
+	return TRUE;
+}
+
+static void
+iter_pop_stack(GelCtx *ctx)
+{
+	gpointer data;
+	int flag;
+	
+	for(;;) {
+		GE_POP_STACK(ctx,data,flag);
+		switch(flag) {
+		case GE_EMPTY_STACK:
+			EDEBUG("   POPPED AN EMPTY STACK");
+			ctx->current = NULL;
+			return;
+		case GE_PRE:
+			ctx->post = FALSE;
+			ctx->current = data;
+#ifdef EVAL_DEBUG
+			printf("   POPPED A PRE NODE(%d)\n",ctx->current->type);
+#endif
+			return;
+		case GE_POST:
+			ctx->post = TRUE;
+			ctx->current = data;
+#ifdef EVAL_DEBUG
+			printf("   POPPED A POST NODE(%d)\n",ctx->current->type);
+#endif
+			return;
+		case GE_AND:
+		case GE_OR:
+			{
+				GelETree *li = data;
+				int ret;
+				int bad_node = FALSE;
+				EDEBUG("    POPPED AN OR or AND");
+				ret = isnodetrue(li,&bad_node);
+				if(bad_node || error_num) {
+					EDEBUG("    AND/OR BAD BAD NODE");
+					error_num = 0;
+					GE_BLIND_POP_STACK(ctx);
+					break;
+				}
+				if((flag==GE_AND && !ret) ||
+				   (flag==GE_OR && ret)) {
+					int n_flag;
+					GE_PEEK_STACK(ctx,data,n_flag);
+					g_assert(n_flag==GE_POST);
+					if(flag==GE_AND)
+						gel_makenum_ui_from(data,0);
+					else
+						gel_makenum_ui_from(data,1);
+					EDEBUG("    AND/OR EARLY DONE");
+					break;
+				}
+				li = li->any.next;
+				if(!li) {
+					int n_flag;
+					GE_PEEK_STACK(ctx,data,n_flag);
+					g_assert(n_flag==GE_POST);
+					if(flag==GE_AND)
+						gel_makenum_ui_from(data,1);
+					else
+						gel_makenum_ui_from(data,0);
+					EDEBUG("    AND/OR ALL THE WAY DONE");
+					break;
+				}
+				GE_PUSH_STACK(ctx,li,flag);
+				ctx->post = FALSE;
+				ctx->current = li;
+				EDEBUG("    JUST PUT THE NEXT ONE");
+				return;
+			}
+		case GE_FUNCCALL:
+			{
+				gpointer call;
+
+				/*pop the context*/
+				d_popcontext ();
+				
+				GE_POP_STACK(ctx,call,flag);
+
+				/*replace the call with the result of
+				  the function*/
+				g_assert(call);
+				if (ctx->modulo != NULL)
+					mod_node (data, ctx->modulo);
+				replacenode(call,data);
+			}
+			break;
+		case GE_LOOP_COND:
+			/*this was the condition of a while or until loop*/
+			{
+				GelEvalLoop *evl = data;
+				GelETree *n;
+				int ret,bad_node = FALSE;
+				int n_flag;
+				g_assert(evl->condition);
+
+				/*next MUST be the original node*/
+				GE_PEEK_STACK(ctx,n,n_flag);
+				g_assert(n_flag==GE_POST);
+
+				EDEBUG("    LOOP CONDITION CHECK");
+				ret = isnodetrue(evl->condition,&bad_node);
+				if(bad_node || error_num) {
+					EDEBUG("    LOOP CONDITION BAD BAD NODE");
+					error_num = 0;
+					replacenode (n->op.args, evl->condition);
+					gel_freetree (evl->body);
+					evl_free (evl);
+					GE_BLIND_POP_STACK(ctx);
+					break;
+				}
+				/*check if we should continue the loop*/
+				if((evl->is_while && ret) ||
+				   (!evl->is_while && !ret)) {
+					GelETree *l,*r;
+					EDEBUG("    LOOP CONDITION MET");
+					GET_LR(n,l,r);
+					gel_freetree (evl->condition);
+					evl->condition = NULL;
+					gel_freetree (evl->body);
+					if (evl->body_first)
+						evl->body = copynode (l);
+					else
+						evl->body = copynode (r);
+					ctx->current = evl->body;
+					ctx->post = FALSE;
+					GE_PUSH_STACK(ctx,evl,GE_LOOP_LOOP);
+					return;
+				} else {
+					EDEBUG("    LOOP CONDITION NOT MET");
+					/*condition not met, so return the body*/
+					if (evl->body == NULL) {
+						EDEBUG("     NULL BODY");
+						freetree_full (n, TRUE, FALSE);
+						n->type = NULL_NODE;
+					} else {
+						replacenode (n, evl->body);
+					}
+					evl_free (evl);
+					GE_BLIND_POP_STACK (ctx);
+					break;
+				}
+			}
+		case GE_LOOP_LOOP:
+			{
+				GelEvalLoop *evl = data;
+				GelETree *n,*l,*r;
+				int n_flag;
+				g_assert(evl->body);
+
+				/*next MUST be the original node*/
+				GE_PEEK_STACK(ctx,n,n_flag);
+				g_assert(n_flag==GE_POST);
+
+				EDEBUG("    LOOP LOOP BODY FINISHED");
+
+				GET_LR(n,l,r);
+				if (evl->body_first)
+					evl->condition = copynode (r);
+				else
+					evl->condition = copynode (l);
+				ctx->current = evl->condition;
+				ctx->post = FALSE;
+				GE_PUSH_STACK(ctx,evl,GE_LOOP_COND);
+				return;
+			}
+		case GE_FOR:
+			{
+				GelEvalFor *evf = data;
+				if(evf->by)
+					mpw_add(evf->x,evf->x,evf->by);
+				else
+					mpw_add_ui(evf->x,evf->x,1);
+				/*if done*/
+				if(mpw_cmp(evf->x,evf->to) == -evf->init_cmp) {
+					GelETree *res;
+					GE_POP_STACK(ctx,data,flag);
+					g_assert(flag==GE_POST);
+					if (evf->type == GEL_EVAL_FOR) {
+						res = evf->body;
+						evf->body = NULL;
+					} else if (evf->type == GEL_EVAL_SUM) {
+						if (evf->result != NULL) {
+							res = op_two_nodes (ctx,
+									    evf->result,
+									    evf->body,
+									    E_PLUS,
+									    TRUE /* no_push */);
+							gel_freetree (evf->result);
+							evf->result = NULL;
+						} else {
+							res = evf->body;
+							evf->body = NULL;
+						}
+						gel_freetree (evf->body);
+						evf->body = NULL;
+					} else /* if (evf->type == GEL_EVAL_PROD) */ {
+						if (evf->result != NULL) {
+							res = op_two_nodes (ctx,
+									    evf->result,
+									    evf->body,
+									    E_MUL,
+									    TRUE /* no_push */);
+							gel_freetree (evf->result);
+							evf->result = NULL;
+						} else {
+							res = evf->body;
+							evf->body = NULL;
+						}
+						gel_freetree (evf->body);
+						evf->body = NULL;
+					}
+					if (res->type == VALUE_NODE) {
+						replacenode (data, res);
+						evf_free (evf);
+						break;
+					} else {
+						replacenode (data, res);
+						ctx->current = data;
+						ctx->post = FALSE;
+						evf_free (evf);
+						return;
+					}
+				/*if we should continue*/
+				} else {
+					if (evf->type == GEL_EVAL_SUM) {
+						if (evf->result != NULL) {
+							GelETree *old = evf->result;
+							evf->result =
+								op_two_nodes (ctx,
+									      old,
+									      evf->body,
+									      E_PLUS,
+									      TRUE /* no_push */);
+							gel_freetree (old);
+						} else {
+							evf->result = evf->body;
+							evf->body = NULL;
+						}
+					} else if (evf->type == GEL_EVAL_PROD) {
+						if (evf->result != NULL) {
+							GelETree *old = evf->result;
+							evf->result =
+								op_two_nodes (ctx,
+									      old,
+									      evf->body,
+									      E_MUL,
+									      TRUE /* no_push */);
+							gel_freetree (old);
+						} else {
+							evf->result = evf->body;
+							evf->body = NULL;
+						}
+					}
+					GE_PUSH_STACK (ctx, evf, GE_FOR);
+					d_addfunc (d_makevfunc (evf->id,
+								gel_makenum (evf->x)));
+					if (evf->body != NULL)
+						gel_freetree (evf->body);
+					evf->body = copynode (evf->orig_body);
+					ctx->current = evf->body;
+					ctx->post = FALSE;
+					return;
+				}
+			}
+		case GE_FORIN:
+			{
+				GelEvalForIn *evfi = data;
+				if(evfi->mat &&
+				   (++evfi->i)>=gel_matrixw_width(evfi->mat)) {
+					evfi->i=0;
+					if((++evfi->j)>=gel_matrixw_height(evfi->mat))
+						evfi->mat = NULL;
+				}
+				/*if we should continue*/
+				if(evfi->mat) {
+					if (evfi->type == GEL_EVAL_SUM) {
+						if (evfi->result != NULL) {
+							GelETree *old = evfi->result;
+							evfi->result =
+								op_two_nodes (ctx,
+									      old,
+									      evfi->body,
+									      E_PLUS,
+									      TRUE /* no_push */);
+							gel_freetree (old);
+						} else {
+							evfi->result = evfi->body;
+							evfi->body = NULL;
+						}
+					} else if (evfi->type == GEL_EVAL_PROD) {
+						if (evfi->result != NULL) {
+							GelETree *old = evfi->result;
+							evfi->result =
+								op_two_nodes (ctx,
+									      old,
+									      evfi->body,
+									      E_MUL,
+									      TRUE /* no_push */);
+							gel_freetree (old);
+						} else {
+							evfi->result = evfi->body;
+							evfi->body = NULL;
+						}
+					}
+					GE_PUSH_STACK(ctx,evfi,GE_FORIN);
+					d_addfunc(d_makevfunc(evfi->id,
+					      copynode(gel_matrixw_index(evfi->mat,
+							     evfi->i,evfi->j))));
+					gel_freetree(evfi->body);
+					evfi->body = copynode(evfi->orig_body);
+					ctx->current = evfi->body;
+					ctx->post = FALSE;
+					return;
+				/*if we are done*/
+				} else {
+					GelETree *res;
+					GE_POP_STACK(ctx,data,flag);
+					g_assert(flag==GE_POST);
+					if (evfi->type == GEL_EVAL_FOR) {
+						res = evfi->body;
+						evfi->body = NULL;
+					} else if (evfi->type == GEL_EVAL_SUM) {
+						if (evfi->result != NULL) {
+							res = op_two_nodes (ctx,
+									    evfi->result,
+									    evfi->body,
+									    E_PLUS,
+									    TRUE /* no_push */);
+							gel_freetree (evfi->result);
+							evfi->result = NULL;
+						} else {
+							res = evfi->body;
+							evfi->body = NULL;
+						}
+						gel_freetree (evfi->body);
+						evfi->body = NULL;
+					} else /* if (evfi->type == GEL_EVAL_PROD) */ {
+						if (evfi->result != NULL) {
+							res = op_two_nodes (ctx,
+									    evfi->result,
+									    evfi->body,
+									    E_MUL,
+									    TRUE /* no_push */);
+							gel_freetree (evfi->result);
+							evfi->result = NULL;
+						} else {
+							res = evfi->body;
+							evfi->body = NULL;
+						}
+						gel_freetree (evfi->body);
+						evfi->body = NULL;
+					}
+					if (res->type == VALUE_NODE) {
+						replacenode (data, res);
+						evfi_free(evfi);
+						break;
+					} else {
+						replacenode (data, res);
+						ctx->current = data;
+						ctx->post = FALSE;
+						evfi_free(evfi);
+						return;
+					}
+				}
+			}
+		case GE_MODULOOP:
+			if (push_setmod (ctx, data))
+				return;
+			break;
+		case GE_SETMODULO:
+			if (ctx->modulo != NULL) {
+				mpw_clear (ctx->modulo);
+				g_free (ctx->modulo);
+			}
+			ctx->modulo = data;
+			break;
+		default:
+			g_assert_not_reached();
+			break;
+		}
+	}
+}
+
+/*make first argument the "current",
+  go into "pre" mode and push all other ones, except
+  that it doesn't push the last one, it assumes that
+  there are at least two to push*/
+static inline void
+iter_push_args_no_last(GelCtx *ctx, GelETree *args)
+{
+	GelETree *li;
+	ctx->post = FALSE;
+	ctx->current = args;
+
+	/* FIXME: this may (will!) be the wrong order I think */
+	for(li=args->any.next;li->any.next;li=li->any.next) {
+		GE_PUSH_STACK(ctx,li,GE_PRE);
+	}
+}
+
+/*make first argument the "current",
+  go into "pre" mode and push all other ones*/
+static inline void
+iter_push_args(GelCtx *ctx, GelETree *args)
+{
+	GelETree *li;
+	ctx->post = FALSE;
+	ctx->current = args;
+
+	/* FIXME: this may (will!) be the wrong order I think */
+	for(li=args->any.next;li;li=li->any.next) {
+		GE_PUSH_STACK(ctx,li,GE_PRE);
+	}
+}
+
+/*make first argument the "current",
+  push no modulo on the rest of arguments
+  go into "pre" mode and push all other ones*/
+static inline void
+iter_push_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
+{
+	GelETree *li;
+	ctx->post = FALSE;
+	ctx->current = args;
+	if (ctx->modulo != NULL) {
+		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+	}
+	GE_PUSH_STACK(ctx, args->any.next, GE_PRE);
+	g_assert (args->any.next->any.next == NULL);
+	if (ctx->modulo != NULL) {
+		GE_PUSH_STACK (ctx, NULL, GE_SETMODULO);
+	}
+}
+
+static int
+matrix_to_be_evaluated(GelMatrixW *m)
+{
+	int x,y;
+	int w,h;
+	GelETree *n;
+	w = gel_matrixw_width(m);
+	h = gel_matrixw_height(m);
+	for(y=0;y<h;y++) {
+		for(x=0;x<w;x++) {
+			n = gel_matrixw_set_index(m,x,y);
+			if(n &&
+			   n->type != NULL_NODE &&
+			   n->type != VALUE_NODE &&
+			   n->type != STRING_NODE &&
+			   n->type != USERTYPE_NODE)
+				return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+/*when a matrix contains other things then NULLs, VALUEs, and STRINGs,
+  make a copy of it and evaluate it's nodes*/
+static inline void
+iter_push_matrix(GelCtx *ctx, GelETree *n, GelMatrixW *m)
+{
+	int x,y;
+	int w,h;
+	int pushed = FALSE;
+	GelETree *t;
+	if(!matrix_to_be_evaluated(m)) {
+		/*just put us in post mode, we will not eval anything*/
+		ctx->post = TRUE;
+		return;
+	}
+
+	/*make us a private copy!*/
+	gel_matrixw_make_private(m);
+	w = gel_matrixw_width(m);
+	h = gel_matrixw_height(m);
+	for(y=0;y<h;y++) {
+		for(x=0;x<w;x++) {
+			t = gel_matrixw_set_index(m,x,y);
+			if(t) {
+				if(!pushed) {
+					GE_PUSH_STACK(ctx,n,GE_POST);
+					ctx->post = FALSE;
+					ctx->current = t;
+					pushed = TRUE;
+				} else {
+					GE_PUSH_STACK(ctx,t,GE_PRE);
+				}
+			}
+		}
+	}
+	/*if we haven't pushed ourselves, then just put us in post mode*/
+	if(!pushed) {
+		ctx->post = TRUE;
+	}
+}
+
+static gboolean
+iter_funccallop(GelCtx *ctx, GelETree *n)
+{
+	GelEFunc *f;
+	GelETree *l;
+	
+	GET_L(n,l);
+	
+	EDEBUG("    FUNCCALL");
+	
+	if(l->type == IDENTIFIER_NODE) {
+		f = d_lookup_global(l->id.id);
+		if(!f) {
+			char buf[256];
+			g_snprintf(buf,256,_("Function '%s' used uninitialized"),
+				   l->id.id->token);
+			(*errorout)(buf);
+			goto funccall_done_ok;
+		}
+	} else if(l->type == FUNCTION_NODE) {
+		f = l->func.func;
+	} else if(l->type == OPERATOR_NODE &&
+		l->op.oper == E_DEREFERENCE) {
+		GelETree *ll;
+		GET_L(l,ll);
+		f = d_lookup_global(ll->id.id);
+		if(!f) {
+			char buf[256];
+			g_snprintf(buf,256,_("Variable '%s' used uninitialized"),
+				   ll->id.id->token);
+			(*errorout)(buf);
+			goto funccall_done_ok;
+		} else if(f->type != GEL_REFERENCE_FUNC) {
+			char buf[256];
+			g_snprintf(buf,256,_("Can't dereference '%s'!"),
+				   ll->id.id->token);
+			(*errorout)(buf);
+			goto funccall_done_ok;
+		}
+		f = f->data.ref;
+	} else {
+		(*errorout)(_("Can't call a non-function!"));
+		goto funccall_done_ok;
+	}
+	
+	g_assert(f);
+	
+	if ((f->vararg && f->nargs > n->op.nargs) ||
+	    (! f->vararg && f->nargs != n->op.nargs - 1)) {
+		char buf[256];
+		if ( ! f->vararg)
+			g_snprintf (buf, 256,
+				    _("Call of '%s' with the wrong number of arguments!\n"
+				      "(should be %d)"),
+				    f->id != NULL ? f->id->token : "anonymous",
+				    f->nargs);
+		else
+			g_snprintf (buf, 256,
+				    _("Call of '%s' with the wrong number of arguments!\n"
+				      "(should be greater then %d)"),
+				    f->id != NULL ? f->id->token : "anonymous",
+				    f->nargs-2);
+		(*errorout)(buf);
+	} else if(f->type == GEL_USER_FUNC ||
+		  f->type == GEL_VARIABLE_FUNC) {
+		GSList *li;
+		GelETree *ali;
+		GelToken *last_arg = NULL;
+		
+		EDEBUG("     USER FUNC PUSHING CONTEXT");
+
+		d_addcontext();
+
+		/* add extra dictionary stuff */
+		for (li = f->extra_dict; li != NULL; li = li->next) {
+			GelEFunc *func = d_copyfunc (li->data);
+			func->context = d_curcontext ();
+			d_addfunc (func);
+		}
+
+		/*push arguments on context stack*/
+		li = f->named_args;
+		for(ali = n->op.args->any.next;
+		    ali != NULL;
+		    ali = ali->any.next) {
+			if (li->next == NULL) {
+				last_arg = li->data;
+				if (f->vararg)
+					break;
+			}
+			if (ali->type == FUNCTION_NODE) {
+				d_addfunc(d_makerealfunc(ali->func.func,li->data,FALSE));
+			} else if(ali->type == OPERATOR_NODE &&
+				  ali->op.oper == E_REFERENCE) {
+				GelETree *t = ali->op.args;
+				GelEFunc *rf = d_lookup_global_up1(t->id.id);
+				if(!rf) {
+					d_popcontext ();
+					(*errorout)(_("Referencing an undefined variable!"));
+					goto funccall_done_ok;
+				}
+				d_addfunc(d_makereffunc(li->data,rf));
+			} else {
+				d_addfunc(d_makevfunc(li->data,copynode(ali)));
+			}
+			li = li->next;
+			if (li == NULL)
+				break;
+		}
+
+		if (f->vararg) {
+			if (last_arg == NULL) {
+				li = g_slist_last (f->named_args);
+				g_assert (li != NULL);
+				last_arg = li->data;
+			}
+			/* no extra argument */
+			if (n->op.nargs == f->nargs) {
+				d_addfunc (d_makevfunc (last_arg, gel_makenum_null ()));
+			} else {
+				GelETree *nn;
+				GelMatrix *m;
+				int i;
+
+				m = gel_matrix_new ();
+				gel_matrix_set_size (m, n->op.nargs - f->nargs, 1, FALSE /* padding */);
+
+				/* continue with ali */
+				i = 0;
+				for (; ali != NULL; ali = ali->any.next) {
+					gel_matrix_index (m, i++, 0) = copynode (ali);
+				}
+
+				GET_NEW_NODE (nn);
+				nn->type = MATRIX_NODE;
+				nn->mat.quoted = FALSE;
+				nn->mat.matrix = gel_matrixw_new_with_matrix (m);
+
+				d_addfunc (d_makevfunc (last_arg, nn));
+			}
+		}
+
+		D_ENSURE_USER_BODY (f);
+		
+		/*push self as post AGAIN*/
+		GE_PUSH_STACK(ctx,ctx->current,GE_POST);
+
+		/*the next to be evaluated is the body*/
+		ctx->post = FALSE;
+		ctx->current = copynode(f->data.user);
+
+		GE_PUSH_STACK(ctx,ctx->current,GE_FUNCCALL);
+
+		/* push current modulo */
+		if (ctx->modulo != NULL) {
+			GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+			ctx->modulo = NULL;
+		}
+
+		/*exit without popping the stack as we don't want to do that*/
+		return TRUE;
+	} else if(f->type == GEL_BUILTIN_FUNC) {
+		int exception = FALSE;
+		GelETree *ret;
+
+		if (n->op.nargs > 1) {
+			GelETree **r;
+			GelETree *li;
+			int i;
+			r = g_new (GelETree *, n->op.nargs);
+			for(i=0,li=n->op.args->any.next;li;i++,li=li->any.next)
+				r[i] = li;
+			r[i] = NULL;
+			ret = (*f->data.func)(ctx,r,&exception);
+			g_free (r);
+		} else {
+			ret = (*f->data.func)(ctx,NULL,&exception);
+		}
+		if(exception) {
+			if(ret)
+				gel_freetree(ret);
+			return FALSE;
+		} else if(ret) {
+			if (ctx->modulo != NULL)
+				mod_node (ret, ctx->modulo);
+			replacenode (n, ret);
+		}
+	} else if(f->type == GEL_REFERENCE_FUNC) {
+		GelETree *id;
+		if(f->nargs>0) {
+			(*errorout)(_("Reference function with arguments encountered!"));
+			goto funccall_done_ok;
+		}
+		f = f->data.ref;
+		if(!f->id) {
+			(*errorout)(_("Unnamed reference function encountered!"));
+			goto funccall_done_ok;
+		}
+		
+		GET_NEW_NODE(id);
+		id->type = IDENTIFIER_NODE;
+		id->id.id = f->id; /*this WILL have an id*/
+		id->any.next = NULL;
+
+		freetree_full(n,TRUE,FALSE);
+		n->type = OPERATOR_NODE;
+		n->op.oper = E_REFERENCE;
+
+		n->op.args = id;
+		n->op.nargs = 1;
+	} else {
+		(*errorout)(_("Unevaluatable function type encountered!"));
+	}
+funccall_done_ok:
+	iter_pop_stack(ctx);
+	return TRUE;
+}
+
+static inline void
+iter_returnop(GelCtx *ctx, GelETree *n)
+{
+	GelETree *r;
+	/*r was already evaluated*/
+	/*now take it out of the argument list*/
+	r = n->op.args;
+	n->op.args = NULL;
+	EDEBUG("  RETURN");
+	for(;;) {
+		int flag;
+		gpointer data;
+		GE_POP_STACK(ctx,data,flag);
+		EDEBUG("   POPPED STACK");
+		if(flag == GE_EMPTY_STACK) {
+			EDEBUG("    EMPTY");
+			break;
+		} else if(flag == GE_FUNCCALL) {
+			GelETree *fn;
+			GE_POP_STACK(ctx,fn,flag);
+			g_assert(fn);
+			EDEBUG("    FOUND FUNCCCALL");
+			gel_freetree(data);
+			if (ctx->modulo != NULL)
+				mod_node (r, ctx->modulo);
+			replacenode(fn,r);
+
+			d_popcontext ();
+
+			iter_pop_stack(ctx);
+			return;
+		} else
+			ev_free_special_data(ctx,data,flag);
+	}
+	EDEBUG("   GOT TO TOP OF THE STACK, SO JUST JUMP OUT OF GLOBAL CONTEXT");
+	/*we were at the top so substitute result for
+	  the return value*/
+	ctx->current = NULL;
+	ctx->post = FALSE;
+	replacenode(ctx->res,r);
+}
+
+static inline void
+iter_forloop (GelCtx *ctx, GelETree *n)
+{
+	GelEvalFor *evf;
+	GelEvalForType type = GEL_EVAL_FOR;
+	GelETree *from=NULL,*to=NULL,*by=NULL,*body=NULL,*ident=NULL;
+	int init_cmp;
+
+	switch (n->op.oper) {
+	case E_FOR_CONS:
+		type = GEL_EVAL_FOR;
+		GET_ABCD(n,ident,from,to,body);
+		break;
+	case E_SUM_CONS:
+		type = GEL_EVAL_SUM;
+		GET_ABCD(n,ident,from,to,body);
+		break;
+	case E_PROD_CONS:
+		type = GEL_EVAL_PROD;
+		GET_ABCD(n,ident,from,to,body);
+		break;
+	case E_FORBY_CONS:
+		type = GEL_EVAL_FOR;
+		GET_ABCDE(n,ident,from,to,by,body);
+		break;
+	case E_SUMBY_CONS:
+		type = GEL_EVAL_SUM;
+		GET_ABCDE(n,ident,from,to,by,body);
+		break;
+	case E_PRODBY_CONS:
+		type = GEL_EVAL_PROD;
+		GET_ABCDE(n,ident,from,to,by,body);
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+	
+	EDEBUG("   ITER FOR LOOP");
+
+	if((by && (by->type != VALUE_NODE ||
+		   mpw_is_complex(by->val.value))) ||
+	   from->type != VALUE_NODE || mpw_is_complex(from->val.value) ||
+	   to->type != VALUE_NODE || mpw_is_complex(to->val.value)) {
+		(*errorout)(_("Bad type for 'for/sum/prod' loop!"));
+		iter_pop_stack(ctx);
+		return;
+	}
+	if(by && mpw_sgn(by->val.value)==0) {
+		(*errorout)(_("'for/sum/prod' loop increment can't be 0"));
+		iter_pop_stack(ctx);
+		return;
+	}
+	
+	init_cmp = mpw_cmp(from->val.value,to->val.value);
+	
+	/*if no iterations*/
+	if(!by) {
+		if(init_cmp>0) {
+			d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
+			freetree_full(n,TRUE,FALSE);
+			if (type == GEL_EVAL_FOR) {
+				n->type = NULL_NODE;
+			} else if (type == GEL_EVAL_SUM) {
+				gel_makenum_ui_from (n, 0);
+			} else /* if (type == GEL_EVAL_PROD) */ {
+				gel_makenum_ui_from (n, 1);
+			}
+			iter_pop_stack(ctx);
+			return;
+		} else if(init_cmp==0) {
+			init_cmp = -1;
+		}
+		evf = evf_new(type, from->val.value,to->val.value,NULL,init_cmp,
+			      copynode(body),body,ident->id.id);
+	} else {
+		int sgn = mpw_sgn(by->val.value);
+		if((sgn>0 && init_cmp>0) || (sgn<0 && init_cmp<0)) {
+			d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
+			freetree_full(n,TRUE,FALSE);
+			if (type == GEL_EVAL_FOR) {
+				n->type = NULL_NODE;
+			} else if (type == GEL_EVAL_SUM) {
+				gel_makenum_ui_from (n, 0);
+			} else /* if (type == GEL_EVAL_PROD) */ {
+				gel_makenum_ui_from (n, 1);
+			}
+			iter_pop_stack(ctx);
+			return;
+		}
+		if(init_cmp == 0)
+			init_cmp = -sgn;
+		evf = evf_new(type, from->val.value,to->val.value,by->val.value,
+			      init_cmp,copynode(body),body,ident->id.id);
+	}
+
+	d_addfunc(d_makevfunc(ident->id.id,gel_makenum(evf->x)));
+	
+	GE_PUSH_STACK(ctx,n,GE_POST);
+	GE_PUSH_STACK(ctx,evf,GE_FOR);
+	
+	ctx->current = evf->body;
+	ctx->post = FALSE;
+}
+
+static inline void
+iter_forinloop(GelCtx *ctx, GelETree *n)
+{
+	GelEvalForIn *evfi;
+	GelEvalForType type = GEL_EVAL_FOR;
+	GelETree *from,*body,*ident;
+
+	switch (n->op.oper) {
+	case E_FORIN_CONS:
+		type = GEL_EVAL_FOR;
+		break;
+	case E_SUMIN_CONS:
+		type = GEL_EVAL_SUM;
+		break;
+	case E_PRODIN_CONS:
+		type = GEL_EVAL_PROD;
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
+	}
+
+	GET_LRR(n,ident,from,body);
+	
+	EDEBUG("   ITER FORIN LOOP");
+
+	if(from->type != VALUE_NODE &&
+	   from->type != MATRIX_NODE) {
+		(*errorout)(_("Bad type for 'for in' loop!"));
+		iter_pop_stack(ctx);
+		return;
+	}
+	
+	if(from->type == MATRIX_NODE) {
+		evfi = evfi_new (type, from->mat.matrix,
+				 copynode (body), body, ident->id.id);
+		d_addfunc(d_makevfunc(ident->id.id,
+				      copynode(gel_matrixw_index(from->mat.matrix,
+							     evfi->i,
+							     evfi->j))));
+	} else {
+		evfi = evfi_new (type, NULL, copynode(body), body, ident->id.id);
+		d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
+	}
+	
+	GE_PUSH_STACK(ctx,n,GE_POST);
+	GE_PUSH_STACK(ctx,evfi,GE_FORIN);
+	
+	ctx->current = evfi->body;
+	ctx->post = FALSE;
+}
+
+static inline void
+iter_loop (GelCtx *ctx, GelETree *n, gboolean body_first, gboolean is_while)
+{
+	GelEvalLoop *evl;
+	GelETree *l, *r;
+	
+	GET_LR(n,l,r);
+	
+	EDEBUG("   ITER LOOP");
+	
+	GE_PUSH_STACK (ctx, ctx->current, GE_POST);
+	if (body_first) {
+		EDEBUG ("    BODY FIRST");
+		evl = evl_new (NULL, copynode (l), is_while, body_first);
+		GE_PUSH_STACK (ctx, evl, GE_LOOP_LOOP);
+		ctx->current = evl->body;
+		ctx->post = FALSE;
+	} else {
+		EDEBUG("    CHECK FIRST");
+		evl = evl_new (copynode(l), NULL, is_while, body_first);
+		GE_PUSH_STACK (ctx, evl, GE_LOOP_COND);
+		ctx->current = evl->condition;
+		ctx->post = FALSE;
+	}
+}
+
+static inline void
+iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else)
+{
+	GelETree *l,*r,*rr = NULL;
+	int ret;
+	int bad_node = FALSE;
+	
+	EDEBUG("    IF/IFELSE ITER OP");
+	
+	if(has_else) {
+		GET_LRR(n,l,r,rr);
+	} else {
+		GET_LR(n,l,r);
+	}
+	
+	ret = isnodetrue(l,&bad_node);
+	if(bad_node || error_num) {
+		EDEBUG("    IF/IFELSE BAD BAD NODE");
+		error_num = 0;
+		iter_pop_stack(ctx);
+		return;
+	}
+	
+	if(ret) {
+		EDEBUG("    IF TRUE EVAL BODY");
+		/*remove from arglist so that it doesn't get freed on
+		  replace node*/
+		n->op.args->any.next = n->op.args->any.next->any.next;
+		replacenode(n,r);
+		ctx->post = FALSE;
+		ctx->current = n;
+	} else if(has_else) {
+		EDEBUG("    IF FALSE EVAL ELSE BODY");
+		/*remove from arglist so that it doesn't get freed on
+		  replace node*/
+		n->op.args->any.next->any.next = NULL;
+		replacenode(n,rr);
+		ctx->post = FALSE;
+		ctx->current = n;
+	} else {
+		EDEBUG("    IF FALSE RETURN NULL");
+		/*just return NULL*/
+		freetree_full(n,TRUE,FALSE);
+		n->type = NULL_NODE;
+		iter_pop_stack(ctx);
+	}
+}
+
+/*the breakout logic is almost identical for the different loops,
+  but the code differs slightly so we just make a macro that subsitutes
+  the right types, values and free functions*/
+#define LOOP_BREAK_CONT(structtype,freefunc,pushflag) { \
+	structtype *e = data;					\
+	if(cont) {					\
+		freetree_full(e->body,TRUE,FALSE);	\
+		e->body->type = NULL_NODE;		\
+		GE_PUSH_STACK(ctx,e,pushflag);		\
+		/*we have already killed the body, so	\
+		  this will continue as if the body	\
+		  was evaluated to null*/		\
+		iter_pop_stack(ctx);			\
+	} else {					\
+		GelETree *n;				\
+		gel_freetree(e->body);			\
+		freefunc(e);				\
+							\
+		/*pop loop call tree*/			\
+		GE_POP_STACK(ctx,n,flag);		\
+							\
+		/*null the tree*/			\
+		freetree_full(n,TRUE,FALSE);		\
+		n->type = NULL_NODE;			\
+							\
+		/*go on with the computation*/		\
+		iter_pop_stack(ctx);			\
+	}						\
+	return;						\
+}
+
+static inline void
+iter_continue_break_op(GelCtx *ctx, gboolean cont)
+{
+	EDEBUG("  CONTINUE/BREAK");
+	for(;;) {
+		int flag;
+		gpointer data;
+		GE_POP_STACK(ctx,data,flag);
+		EDEBUG("   POPPED STACK");
+		switch(flag) {
+		case GE_EMPTY_STACK:
+			EDEBUG("    EMPTY");
+			goto iter_continue_break_done;
+		case GE_FUNCCALL:
+			EDEBUG("    FOUND FUNCCCALL MAKE IT NULL THEN");
+			(*errorout)(_("Continue or break outside a loop, "
+				      "assuming \"return null\""));
+			gel_freetree(data);
+
+			d_popcontext ();
+
+			/*pop the function call*/
+			GE_POP_STACK(ctx,data,flag);
+
+			g_assert(flag == GE_POST);
+			freetree_full(data,TRUE,FALSE);
+			((GelETree *)data)->type = NULL_NODE;
+
+			iter_pop_stack(ctx);
+			return;
+		case GE_LOOP_LOOP:
+			LOOP_BREAK_CONT (GelEvalLoop, evl_free, GE_LOOP_LOOP);
+		case GE_FOR:
+			LOOP_BREAK_CONT (GelEvalFor, evf_free, GE_FOR);
+		case GE_FORIN:
+			LOOP_BREAK_CONT (GelEvalForIn, evfi_free, GE_FORIN);
+		default:
+			ev_free_special_data(ctx,data,flag);
+			break;
+		}
+	}
+iter_continue_break_done:
+	EDEBUG("   GOT TO TOP OF THE STACK, SO JUST JUMP OUT OF GLOBAL CONTEXT");
+	(*errorout)(_("Continue or break outside a loop, "
+		      "assuming \"return null\""));
+	/*we were at the top so substitute result for a NULL*/
+	ctx->current = NULL;
+	ctx->post = FALSE;
+	freetree_full(ctx->res,TRUE,FALSE);
+	ctx->res->type = NULL_NODE;
+}
+
+#undef LOOP_BREAK_CONT
+
+static inline void
+iter_bailout_op(GelCtx *ctx)
+{
+	EDEBUG("  BAILOUT");
+	for(;;) {
+		int flag;
+		gpointer data;
+		GE_POP_STACK(ctx,data,flag);
+		EDEBUG("   POPPED STACK");
+		if(flag == GE_EMPTY_STACK) {
+			EDEBUG("    EMPTY");
+			break;
+		} else if(flag == GE_FUNCCALL) {
+			EDEBUG("    FOUND FUNCCCALL");
+			gel_freetree(data);
+
+			d_popcontext ();
+
+			/*pop the function call off the stack*/
+			GE_BLIND_POP_STACK(ctx);
+
+			iter_pop_stack(ctx);
+			return;
+		} else
+			ev_free_special_data(ctx,data,flag);
+	}
+	EDEBUG("   GOT TO TOP OF THE STACK, SO JUST JUMP OUT OF GLOBAL CONTEXT");
+	/*we were at the top so substitute result for
+	  the return value*/
+	ctx->current = NULL;
+	ctx->post = FALSE;
+}
+
+static int
+iter_get_ui_index (GelETree *num)
+{
+	long i;
+	if(num->type != VALUE_NODE ||
+	   !mpw_is_integer(num->val.value)) {
+		(*errorout)(_("Wrong argument type as matrix index"));
+		return -1;
+	}
+
+	i = mpw_get_long(num->val.value);
+	if(error_num) {
+		error_num = 0;
+		return -1;
+	}
+	if(i>INT_MAX) {
+		(*errorout)(_("Matrix index too large"));
+		return -1;
+	} else if(i<=0) {
+		(*errorout)(_("Matrix index less than 1"));
+		return -1;
+	}
+	return i;
+}
+
+static int *
+iter_get_matrix_index_vector (GelETree *index, int maxsize, int *vlen)
+{
+	int i;
+	int reglen = gel_matrixw_elements (index->mat.matrix);
+	int *reg = g_new (int, reglen);
+
+	*vlen = reglen;
+
+	for (i = 0; i < reglen; i++) {
+		GelETree *it = gel_matrixw_vindex (index->mat.matrix, i);
+		reg[i] = iter_get_ui_index (it) - 1;
+		if (reg[i] < 0) {
+			g_free (reg);
+			return NULL;
+		} else if (reg[i] >= maxsize) {
+			g_free (reg);
+			(*errorout)(_("Matrix index out of range"));
+			return NULL;
+		}
+	}
+	return reg;
+}
+
+/* assumes index->type == VALUE_NODE */
+static inline int
+iter_get_matrix_index_num (GelETree *index, int maxsize)
+{
+	int i = iter_get_ui_index (index) - 1;
+	if (i < 0) {
+		return -1;
+	} else if (i >= maxsize) {
+		(*errorout)(_("Matrix index out of range"));
+		return -1;
+	}
+	return i;
+}
+
+static gboolean
+iter_get_index_region (GelETree *index, int maxsize, int **reg, int *l)
+{
+	if (index->type == VALUE_NODE) {
+		int i = iter_get_matrix_index_num (index, maxsize);
+		if (i < 0)
+			return FALSE;
+		*reg = g_new (int, 1);
+		(*reg)[0] = i;
+		*l = 1;
+	} else /* MATRIX_NODE */ {
+		*reg = iter_get_matrix_index_vector (index, maxsize, l);
+		if (*reg == NULL)
+			return FALSE;
+	}
+	return TRUE;
+}
+
+/* correct types already (value or matrix) */
+static gboolean
+iter_get_index_regions (GelETree *i1, GelETree *i2,
+			int max1, int max2,
+			int **reg1, int **reg2,
+			int *l1, int *l2)
+{
+	if ( ! iter_get_index_region (i1, max1, reg1, l1))
+		return FALSE;
+	if ( ! iter_get_index_region (i2, max2, reg2, l2))
+		return FALSE;
+	return TRUE;
+}
+
+static GelMatrixW *
+iter_get_matrix_p(GelETree *m, gboolean *new_matrix)
+{
+	GelMatrixW *mat = NULL;
+	
+	if(m->type == IDENTIFIER_NODE) {
+		GelEFunc *f;
+		if(d_curcontext()==0 &&
+		   m->id.id->protected) {
+			(*errorout)(_("Trying to set a protected id"));
+			return NULL;
+		}
+		f = d_lookup_local(m->id.id);
+		if(!f) {
+			GelETree *t;
+			GET_NEW_NODE(t);
+			t->type = MATRIX_NODE;
+			t->mat.matrix = gel_matrixw_new();
+			t->mat.quoted = 0;
+			gel_matrixw_set_size(t->mat.matrix,1,1);
+
+			f = d_makevfunc(m->id.id,t);
+			d_addfunc(f);
+			if(new_matrix) *new_matrix = TRUE;
+		} else if(f->type != GEL_USER_FUNC &&
+			  f->type != GEL_VARIABLE_FUNC) {
+			(*errorout)(_("Indexed Lvalue not user function"));
+			return NULL;
+		}
+		D_ENSURE_USER_BODY (f);
+		if(f->data.user->type != MATRIX_NODE) {
+			GelETree *t;
+			GET_NEW_NODE(t);
+			t->type = MATRIX_NODE;
+			t->mat.matrix = gel_matrixw_new();
+			t->mat.quoted = 0;
+			gel_matrixw_set_size(t->mat.matrix,1,1);
+
+			d_set_value(f,t);
+			if(new_matrix) *new_matrix = TRUE;
+		}
+		mat = f->data.user->mat.matrix;
+	} else if(m->type == OPERATOR_NODE ||
+		  m->op.oper == E_DEREFERENCE) {
+		GelETree *l;
+		GelEFunc *f;
+		GET_L(m,l);
+
+		if(l->type != IDENTIFIER_NODE) {
+			(*errorout)(_("Dereference of non-identifier!"));
+			return NULL;
+		}
+
+		f = d_lookup_local(l->id.id);
+		if(!f) {
+			(*errorout)(_("Dereference of undefined variable!"));
+			return NULL;
+		}
+		if(f->type != GEL_REFERENCE_FUNC) {
+			(*errorout)(_("Dereference of non-reference!"));
+			return NULL;
+		}
+
+		if(f->data.ref->type != GEL_USER_FUNC &&
+		   f->data.ref->type != GEL_VARIABLE_FUNC) {
+			(*errorout)(_("Indexed Lvalue not user function"));
+			return NULL;
+		}
+		if(f->data.ref->context==0 && f->data.ref->id->protected) {
+			(*errorout)(_("Trying to set a protected id"));
+			return NULL;
+		}
+		D_ENSURE_USER_BODY (f->data.ref);
+		if(f->data.ref->data.user->type != MATRIX_NODE) {
+			GelETree *t;
+			GET_NEW_NODE(t);
+			t->type = MATRIX_NODE;
+			t->mat.matrix = gel_matrixw_new();
+			t->mat.quoted = 0;
+			gel_matrixw_set_size(t->mat.matrix,1,1);
+
+			d_set_value(f->data.ref,t);
+			if(new_matrix) *new_matrix = TRUE;
+		}
+		mat = f->data.ref->data.user->mat.matrix;
+	} else {
+		(*errorout)(_("Indexed Lvalue not an identifier or a dereference"));
+		return NULL;
+	}
+	return mat;
+}
+
+static GelETree *
+set_parameter (GelToken *token, GelETree *val)
+{
+	GelEFunc *func;
+
+	if (token->built_in_parameter) {
+		ParameterSetFunc setfunc = token->data1;
+		if (setfunc != NULL)
+			return setfunc (val);
+		return gel_makenum_null ();
+	} else {
+		func = d_makevfunc (token, copynode (val));
+		/* make function global */
+		func->context = 0;
+		d_addfunc_global (func);
+		return copynode (val);
+	}
+}
+
+static void
+iter_equalsop(GelETree *n)
+{
+	GelETree *l,*r;
+
+	GET_LR(n,l,r);
+	
+	if(l->type != IDENTIFIER_NODE &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_VELEMENT) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ELEMENT) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_COL_REGION) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ROW_REGION) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE)) {
+		(*errorout)(_("Lvalue not an identifier/dereference/matrix location!"));
+		return;
+	}
+
+	if(l->type == IDENTIFIER_NODE) {
+		if(d_curcontext()==0 && l->id.id->protected) {
+			(*errorout)(_("Trying to set a protected id"));
+			return;
+		}
+		if (l->id.id->parameter) {
+			GelETree *ret = set_parameter (l->id.id, r);
+			replacenode (n, ret);
+			return;
+		} else if(r->type == FUNCTION_NODE) {
+			d_addfunc(d_makerealfunc(r->func.func,l->id.id,FALSE));
+		} else if(r->type == OPERATOR_NODE &&
+			  r->op.oper == E_REFERENCE) {
+			GelETree *t = r->op.args;
+			GelEFunc *rf = d_lookup_global(t->id.id);
+			if(!rf) {
+				(*errorout)(_("Referencing an undefined variable!"));
+				return;
+			}
+			d_addfunc(d_makereffunc(l->id.id,rf));
+		} else {
+			d_addfunc(d_makevfunc(l->id.id,copynode(r)));
+		}
+	} else if(l->op.oper == E_DEREFERENCE) {
+		GelEFunc *f;
+		GelETree *ll;
+		GET_L(l,ll);
+
+		if(ll->type != IDENTIFIER_NODE) {
+			(*errorout)(_("Dereference of non-identifier!"));
+			return;
+		}
+		
+		f = d_lookup_local(ll->id.id);
+		if(!f) {
+			(*errorout)(_("Dereference of undefined variable!"));
+			return;
+		}
+		if(f->type!=GEL_REFERENCE_FUNC) {
+			(*errorout)(_("Dereference of non-reference!"));
+			return;
+		}
+
+		if(f->data.ref->context==0 && f->data.ref->id->protected) {
+			(*errorout)(_("Trying to set a protected id"));
+			return;
+		}
+		
+		if(r->type == FUNCTION_NODE) {
+			d_setrealfunc(f->data.ref,r->func.func,FALSE);
+		} else if(r->type == OPERATOR_NODE &&
+			  r->op.oper == E_REFERENCE) {
+			GelETree *t = r->op.args;
+			GelEFunc *rf = d_lookup_global(t->id.id);
+			if(!rf) {
+				(*errorout)(_("Referencing an undefined variable!"));
+				return;
+			}
+			d_set_ref(f->data.ref,rf);
+		} else {
+			d_set_value(f->data.ref,copynode(r));
+		}
+	} else if(l->op.oper == E_GET_ELEMENT) {
+		GelMatrixW *mat;
+		GelETree *m, *index1, *index2;
+		GET_LRR (l, m, index1, index2);
+
+		if (index1->type == VALUE_NODE &&
+		    index2->type == VALUE_NODE) {
+			int x, y;
+
+			x = iter_get_matrix_index_num (index2, INT_MAX);
+			if (x < 0)
+				return;
+			y = iter_get_matrix_index_num (index1, INT_MAX);
+			if (y < 0)
+				return;
+
+			mat = iter_get_matrix_p (l->op.args, NULL);
+			if (mat == NULL)
+				return;
+
+			gel_matrixw_set_element (mat, x, y, copynode (r));
+		} else if ((index1->type == VALUE_NODE ||
+			    index1->type == MATRIX_NODE) &&
+			   (index2->type == VALUE_NODE ||
+			    index2->type == MATRIX_NODE)) {
+			int *regx, *regy;
+			int lx, ly;
+
+			if ( ! iter_get_index_regions (index1, index2,
+						       INT_MAX, INT_MAX,
+						       &regy, &regx,
+						       &ly, &lx))
+				return;
+
+			if (r->type == MATRIX_NODE &&
+			    (gel_matrixw_width (r->mat.matrix) != lx ||
+			     gel_matrixw_height (r->mat.matrix) != ly)) {
+				g_free (regx);
+				g_free (regy);
+				(*errorout)(_("Wrong matrix dimensions when setting"));
+				return;
+			}
+
+			mat = iter_get_matrix_p (l->op.args, NULL);
+			if (mat == NULL) {
+				g_free (regx);
+				g_free (regy);
+				return;
+			}
+
+			if (r->type == MATRIX_NODE)
+				gel_matrixw_set_region (mat, r->mat.matrix, regx, regy, lx, ly);
+			else
+				gel_matrixw_set_region_etree (mat, r, regx, regy, lx, ly);
+			g_free (regx);
+			g_free (regy);
+		} else {
+			(*errorout)(_("Matrix index not an integer or a vector"));
+			return;
+		}
+	} else if(l->op.oper == E_GET_VELEMENT) {
+		GelMatrixW *mat;
+		GelETree *m, *index;
+		GET_LR (l, m, index);
+
+		if (index->type == VALUE_NODE) {
+			int i;
+
+			i = iter_get_matrix_index_num (index, INT_MAX);
+			if (i < 0)
+				return;
+
+			mat = iter_get_matrix_p (l->op.args, NULL);
+			if (mat == NULL)
+				return;
+
+			gel_matrixw_set_velement (mat, i, copynode (r));
+		} else if (index->type == MATRIX_NODE) {
+			int *reg;
+			int len;
+
+			if ( ! iter_get_index_region (index, INT_MAX,
+						      &reg, &len))
+				return;
+
+			mat = iter_get_matrix_p (l->op.args, NULL);
+			if (mat == NULL) {
+				g_free (reg);
+				return;
+			}
+
+			if (r->type == MATRIX_NODE)
+				gel_matrixw_set_vregion (mat, r->mat.matrix, reg, len);
+			else
+				gel_matrixw_set_vregion_etree (mat, r, reg, len);
+			g_free (reg);
+		} else {
+			(*errorout)(_("Matrix index not an integer or a vector"));
+			return;
+		}
+	} else /*l->data.oper == E_GET_COL_REGION E_GET_ROW_REGION*/ {
+		GelMatrixW *mat;
+		GelETree *m, *index;
+		GET_LR (l, m, index);
+
+		if (index->type == VALUE_NODE ||
+		    index->type == MATRIX_NODE) {
+			int *regx, *regy;
+			int lx, ly;
+			int i;
+
+			if (l->op.oper == E_GET_COL_REGION) {
+				if ( ! iter_get_index_region (index, INT_MAX, &regx, &lx))
+					return;
+				if (r->type == MATRIX_NODE &&
+				    gel_matrixw_width (r->mat.matrix) != lx) {
+					g_free (regx);
+					(*errorout)(_("Wrong matrix dimensions when setting"));
+					return;
+				}
+			} else {
+				if ( ! iter_get_index_region (index, INT_MAX, &regy, &ly))
+					return;
+				if (r->type == MATRIX_NODE &&
+				    gel_matrixw_height (r->mat.matrix) != ly) {
+					g_free (regy);
+					(*errorout)(_("Wrong matrix dimensions when setting"));
+					return;
+				}
+			}
+
+			mat = iter_get_matrix_p (l->op.args, NULL);
+			if (mat == NULL) {
+				g_free (regx);
+				g_free (regy);
+				return;
+			}
+
+			if (l->op.oper == E_GET_COL_REGION) {
+				ly = gel_matrixw_height (mat);
+				if (r->type == MATRIX_NODE &&
+				    ly < gel_matrixw_height (r->mat.matrix))
+					ly = gel_matrixw_height (r->mat.matrix);
+				regy = g_new (int, ly);
+				for (i = 0; i < ly; i++)
+					regy[i] = i;
+			} else {
+				lx = gel_matrixw_width (mat);
+				if (r->type == MATRIX_NODE &&
+				    lx < gel_matrixw_width (r->mat.matrix))
+					lx = gel_matrixw_width (r->mat.matrix);
+				regx = g_new (int, lx);
+				for (i = 0; i < lx; i++)
+					regx[i] = i;
+			}
+
+			if (r->type == MATRIX_NODE)
+				gel_matrixw_set_region (mat, r->mat.matrix, regx, regy, lx, ly);
+			else
+				gel_matrixw_set_region_etree (mat, r, regx, regy, lx, ly);
+			g_free (regx);
+			g_free (regy);
+		} else {
+			(*errorout)(_("Matrix index not an integer or a vector"));
+			return;
+		}
+	}
+	/*remove from arglist so that it doesn't get freed on replacenode*/
+	n->op.args->any.next = NULL;
+	replacenode(n,r);
+}
+
+static void
+iter_parameterop (GelETree *n)
+{
+	GelETree *l,*r,*rr;
+
+	GET_LRR (n, l, r, rr);
+
+	/* FIXME: l should be the set func */
+	
+	g_assert (r->type == IDENTIFIER_NODE);
+
+	if (d_curcontext() != 0) {
+		(*errorout)(_("Parameters can only be created in the global context"));
+		return;
+	}
+	
+	d_addfunc (d_makevfunc (r->id.id, copynode (rr)));
+	r->id.id->parameter = 1;
+
+	/*remove from arglist so that it doesn't get freed on replacenode*/
+	n->op.args->any.next->any.next = NULL;
+	replacenode (n, rr);
+}
+
+static inline void
+iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
+{
+	GelETree *l,*ident;
+
+	GET_L(n,l);
+	
+	if (l->op.oper == E_GET_ELEMENT) {
+		GelETree *ll,*rr;
+		
+		GET_LRR(l,ident,ll,rr);
+
+		GE_PUSH_STACK(ctx,n->op.args->any.next,GE_PRE);
+		GE_PUSH_STACK(ctx,rr,GE_PRE);
+		ctx->post = FALSE;
+		ctx->current = ll;
+	} else if(l->op.oper == E_GET_VELEMENT ||
+		  l->op.oper == E_GET_COL_REGION ||
+		  l->op.oper == E_GET_ROW_REGION) {
+		GelETree *ll;
+		
+		GET_LR(l,ident,ll);
+
+		GE_PUSH_STACK(ctx,n->op.args->any.next,GE_PRE);
+		ctx->post = FALSE;
+		ctx->current = ll;
+	} else {
+		ctx->post = FALSE;
+		ctx->current = n->op.args->any.next;
+	}
+}
+
+static void
+iter_get_velement (GelETree *n)
+{
+	GelETree *m;
+	GelETree *index;
+
+	GET_LR (n, m, index);
+
+	if (m->type != MATRIX_NODE) {
+		(*errorout)(_("Index works only on matricies"));
+		return;
+	}
+
+	if (index->type == VALUE_NODE) {
+		GelETree *t;
+		int i = iter_get_matrix_index_num (index, gel_matrixw_elements (m->mat.matrix));
+		if (i < 0)
+			return;
+		t = copynode (gel_matrixw_vindex (m->mat.matrix, i));
+		replacenode (n, t);
+	} else if (index->type == MATRIX_NODE) {
+		GelMatrixW *vec;
+		int matsize = gel_matrixw_elements (m->mat.matrix);
+		int quoted = m->mat.quoted;
+		int *reg;
+		int reglen;
+
+		reg = iter_get_matrix_index_vector (index, matsize, &reglen);
+		if (reg == NULL)
+			return;
+
+		vec = gel_matrixw_get_vregion (m->mat.matrix, reg, reglen);
+		g_free (reg);
+
+		freetree_full (n, TRUE /* freeargs */, FALSE /* kill */);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = vec;
+		n->mat.quoted = quoted;
+	} else {
+		(*errorout)(_("Vector index not an integer or a vector"));
+	}
+}
+
+static void
+iter_get_element (GelETree *n)
+{
+	GelETree *m, *index1, *index2;
+
+	GET_LRR (n, m, index1, index2);
+
+	if(m->type != MATRIX_NODE) {
+		(*errorout)(_("Index works only on matricies"));
+		return;
+	}
+
+	if (index1->type == VALUE_NODE &&
+	    index2->type == VALUE_NODE) {
+		int x, y;
+		GelETree *t;
+
+		x = iter_get_matrix_index_num (index2, gel_matrixw_width (m->mat.matrix));
+		if (x < 0)
+			return;
+		y = iter_get_matrix_index_num (index1, gel_matrixw_height (m->mat.matrix));
+		if (y < 0)
+			return;
+
+		/* make sure we don't free the args just yet */
+		n->op.args = NULL;
+
+		/* we will free this matrix in just a little bit */
+		t = gel_matrixw_set_index (m->mat.matrix, x, y);
+		if (m->mat.matrix->m->use == 1 && t != NULL) {
+			replacenode (n, t);
+			gel_matrixw_set_index (m->mat.matrix, x, y) = NULL;
+		} else if (t == NULL) {
+			freetree_full (n, FALSE /* freeargs */, FALSE /* kill */);
+			gel_makenum_ui_from (n, 0);
+		} else {
+			replacenode (n, copynode (t));
+		}
+
+		/* free the args now */
+		gel_freetree (m);
+		gel_freetree (index1);
+		gel_freetree (index2);
+	} else if ((index1->type == VALUE_NODE ||
+		    index1->type == MATRIX_NODE) &&
+		   (index2->type == VALUE_NODE ||
+		    index2->type == MATRIX_NODE)) {
+		GelMatrixW *mat;
+		int *regx, *regy;
+		int lx, ly;
+		int maxx, maxy;
+		int quoted = m->mat.quoted;
+
+		maxx = gel_matrixw_width (m->mat.matrix);
+		maxy = gel_matrixw_height (m->mat.matrix);
+
+		if ( ! iter_get_index_regions (index1, index2,
+					       maxy, maxx,
+					       &regy, &regx,
+					       &ly, &lx))
+			return;
+
+		mat = gel_matrixw_get_region (m->mat.matrix, regx, regy, lx, ly);
+		g_free (regx);
+		g_free (regy);
+
+		freetree_full (n, TRUE /* freeargs */, FALSE /* kill */);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = mat;
+		n->mat.quoted = quoted;
+	} else {
+		(*errorout)(_("Matrix index not an integer or a vector"));
+	}
+}
+
+static void
+iter_get_region (GelETree *n, gboolean col)
+{
+	GelETree *m, *index;
+
+	GET_LR (n, m, index);
+
+	if(m->type != MATRIX_NODE) {
+		(*errorout)(_("Index works only on matricies"));
+		return;
+	}
+
+	if (index->type == VALUE_NODE ||
+	    index->type == MATRIX_NODE) {
+		GelMatrixW *mat;
+		int *regx, *regy;
+		int lx, ly;
+		int i;
+		int maxx, maxy;
+		int quoted = m->mat.quoted;
+
+		maxx = gel_matrixw_width (m->mat.matrix);
+		maxy = gel_matrixw_height (m->mat.matrix);
+
+		if (col) {
+			if ( ! iter_get_index_region (index, maxx, &regx, &lx))
+				return;
+			regy = g_new (int, maxy);
+			for (i = 0; i < maxy; i++)
+				regy[i] = i;
+			ly = maxy;
+		} else {
+			if ( ! iter_get_index_region (index, maxy, &regy, &ly))
+				return;
+			regx = g_new (int, maxx);
+			for (i = 0; i < maxx; i++)
+				regx[i] = i;
+			lx = maxx;
+		}
+
+		mat = gel_matrixw_get_region (m->mat.matrix, regx, regy, lx, ly);
+		g_free (regx);
+		g_free (regy);
+
+		freetree_full (n, TRUE /* freeargs */, FALSE /* kill */);
+		n->type = MATRIX_NODE;
+		n->mat.matrix = mat;
+		n->mat.quoted = quoted;
+	} else {
+		(*errorout)(_("Matrix index not an integer or a vector"));
+	}
+}
+
+static inline guint32
+iter_get_arg(GelETree *n)
+{
+	switch(n->type) {
+	case VALUE_NODE: return GO_VALUE;
+	case MATRIX_NODE: return GO_MATRIX;
+	case STRING_NODE: return GO_STRING;
+	case FUNCTION_NODE: return GO_FUNCTION;
+	default: return 0;
+	}
+}
+
+static char *
+iter_get_arg_name(guint32 arg)
+{
+	static char *value = N_("number");
+	static char *matrix = N_("matrix");
+	static char *string = N_("string");
+	static char *function = N_("function");
+	switch(arg) {
+	case GO_VALUE: return gettext(value);
+	case GO_MATRIX: return gettext(matrix);
+	case GO_STRING: return gettext(string);
+	case GO_FUNCTION: return gettext(function);
+	default:
+	}
+	g_assert_not_reached();
+	return NULL;
+}
+
+static char *
+iter_get_op_name(int oper)
+{
+	static char *name = NULL;
+	g_free(name);
+	name = NULL;
+
+	switch(oper) {
+	case E_SEPAR:
+	case E_EQUALS:
+	case E_PARAMETER: break;
+	case E_ABS: name = g_strdup(_("Absolute value")); break;
+	case E_PLUS: name = g_strdup(_("Addition")); break;
+	case E_MINUS: name = g_strdup(_("Subtraction")); break;
+	case E_MUL: name = g_strdup(_("Multiplication")); break;
+	case E_ELTMUL: name = g_strdup(_("Element by element multiplication")); break;
+	case E_DIV: name = g_strdup(_("Division")); break;
+	case E_ELTDIV: name = g_strdup(_("Element by element division")); break;
+	case E_BACK_DIV: name = g_strdup(_("Back division")); break;
+	case E_ELT_BACK_DIV: name = g_strdup(_("Element by element back division")); break;
+	case E_MOD: name = g_strdup(_("Modulo")); break;
+	case E_ELTMOD: name = g_strdup(_("Element by element modulo")); break;
+	case E_NEG: name = g_strdup(_("Negation")); break;
+	case E_EXP: name = g_strdup(_("Power")); break;
+	case E_ELTEXP: name = g_strdup(_("Element by element power")); break;
+	case E_FACT: name = g_strdup(_("Factorial")); break;
+	case E_DBLFACT: name = g_strdup(_("Double factorial")); break;
+	case E_TRANSPOSE: name = g_strdup(_("Transpose")); break;
+	case E_CONJUGATE_TRANSPOSE: name = g_strdup(_("ConjugateTranspose")); break;
+	case E_CMP_CMP: name = g_strdup(_("Comparison (<=>)")); break;
+	case E_LOGICAL_XOR: name = g_strdup(_("XOR")); break;
+	case E_LOGICAL_NOT: name = g_strdup(_("NOT")); break;
+	default: break;
+	}
+	
+	return name;
+}
+
+static inline gboolean
+iter_call2(GelCtx *ctx, const GelOper *op, GelETree *n)
+{
+	GelETree *l,*r;
+	guint32 arg1,arg2;
+	char *s;
+	int i;
+
+	GET_LR(n,l,r);
+	
+	arg1 = iter_get_arg(l);
+	arg2 = iter_get_arg(r);
+	
+	if(arg1 == 0 || arg2 == 0) {
+		s = g_strdup_printf(_("Bad types for '%s'"),
+				    iter_get_op_name(n->op.oper));
+		(*errorout)(s);
+		return TRUE;
+	}
+
+	for(i=0;i<OP_TABLE_LEN;i++) {
+		if(op->prim[i].arg[0]&arg1 &&
+		   op->prim[i].arg[1]&arg2) {
+			return op->prim[i].evalfunc(ctx,n,l,r);
+		}
+	}
+	s = g_strdup_printf(_("%s not defined on <%s> and <%s>"),
+			    iter_get_op_name(n->op.oper),
+			    iter_get_arg_name(arg1),
+			    iter_get_arg_name(arg2));
+	(*errorout)(s);
+	g_free(s);
+	return TRUE;
+}
+
+static inline gboolean
+iter_call1(GelCtx *ctx, const GelOper *op, GelETree *n)
+{
+	GelETree *l;
+	guint32 arg1;
+	char *s;
+	int i;
+
+	GET_L(n,l);
+	
+	arg1 = iter_get_arg(l);
+	
+	if(arg1 == 0) {
+		s = g_strdup_printf(_("Bad type for '%s'"),
+				    iter_get_op_name(n->op.oper));
+		(*errorout)(s);
+		return TRUE;
+	}
+
+	for(i=0;i<OP_TABLE_LEN;i++) {
+		if(op->prim[i].arg[0]&arg1) {
+			return op->prim[i].evalfunc(ctx,n,l);
+		}
+	}
+	s = g_strdup_printf(_("%s not defined on <%s>"),
+			    iter_get_op_name(n->op.oper),
+			    iter_get_arg_name(arg1));
+	(*errorout)(s);
+	g_free(s);
+	return TRUE;
+}
+
+static void
+iter_region_sep_op (GelCtx *ctx, GelETree *n)
+{
+	GelETree *from, *to, *by = NULL;
+	GelETree *vect = NULL;
+	GelMatrix *mat;
+	int bysgn = 1, cmp, initcmp, count, i;
+	mpw_t tmp;
+	if (n->op.oper == E_REGION_SEP_BY) {
+		GET_LRR (n, from, by, to);
+		if (from->type != VALUE_NODE ||
+		    to->type != VALUE_NODE ||
+		    by->type != VALUE_NODE) {
+			(*errorout) (_("Vector building only works on numbers"));
+			return;
+		}
+		initcmp = cmp = mpw_cmp (from->val.value, to->val.value);
+		bysgn = mpw_sgn (by->val.value);
+
+		if ((cmp > 0 && bysgn > 0) ||
+		    (cmp != 0 && bysgn == 0) ||
+		    (cmp < 0 && bysgn < 0)) {
+			/* FIXME: perhaps we should just return null like octave? */
+			(*errorout) (_("Impossible arguments to vector building operator"));
+			return;
+		}	
+	} else {
+		GET_LR (n, from, to);
+		if (from->type != VALUE_NODE ||
+		    to->type != VALUE_NODE) {
+			(*errorout) (_("Vector building only works on numbers"));
+			return;
+		}
+		initcmp = cmp = mpw_cmp (from->val.value, to->val.value);
+		if (cmp > 0)
+			bysgn = -1;
+	}
+
+	count = 0;
+	mpw_init (tmp);
+	mpw_set (tmp, from->val.value);
+	for (;;) {
+		GelETree *t = gel_makenum (tmp);
+
+		t->any.next = vect;
+		vect = t;
+		count ++;
+
+		if (cmp == 0 || cmp != initcmp)
+			break;
+
+		if (by != NULL)
+			mpw_add (tmp, tmp, by->val.value);
+		else if (bysgn == 1) 
+			mpw_add_ui (tmp, tmp, 1);
+		else
+			mpw_sub_ui (tmp, tmp, 1);
+
+		cmp = mpw_cmp (tmp, to->val.value);
+
+		if (cmp != 0 && cmp != initcmp)
+			break;
+	}
+	mpw_clear (tmp);
+
+	mat = gel_matrix_new ();
+	gel_matrix_set_size (mat, count, 1, FALSE /* padding */);
+
+	for (i = count-1; i >= 0; i--) {
+		GelETree *t = vect;
+		gel_matrix_index (mat, i, 0) = t;
+		vect = vect->any.next;
+		t->any.next = NULL;
+	}
+
+	freetree_full (n, TRUE /* freeargs */, FALSE /* kill */);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (mat);
+	n->mat.quoted = 1;
+}
+
+/*The first pass over an operator (sometimes it's enough and we don't go
+  for a second pass*/
+static gboolean
+iter_operator_pre(GelCtx *ctx)
+{
+	GelETree *n = ctx->current;
+	
+	EDEBUG(" OPERATOR PRE");
+	
+	switch(n->op.oper) {
+	case E_EQUALS:
+		EDEBUG("  EQUALS PRE");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		iter_push_indexes_and_arg(ctx,n);
+		break;
+
+	case E_PARAMETER:
+		EDEBUG("  PARAMETER PRE");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		/* Push third parameter (the value) */
+		ctx->post = FALSE;
+		ctx->current = n->op.args->any.next->any.next;
+		break;
+
+	case E_EXP:
+	case E_ELTEXP:
+		EDEBUG("  PUSH US AS POST AND ALL ARGUMENTS AS PRE (no modulo on second)");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		iter_push_args_no_modulo_on_2 (ctx, n->op.args);
+		break;
+
+	case E_SEPAR:
+	case E_ABS:
+	case E_PLUS:
+	case E_MINUS:
+	case E_MUL:
+	case E_ELTMUL:
+	case E_DIV:
+	case E_ELTDIV:
+	case E_BACK_DIV:
+	case E_ELT_BACK_DIV:
+	case E_MOD:
+	case E_ELTMOD:
+	case E_NEG:
+	case E_FACT:
+	case E_DBLFACT:
+	case E_TRANSPOSE:
+	case E_CONJUGATE_TRANSPOSE:
+	case E_CMP_CMP:
+	case E_LOGICAL_XOR:
+	case E_LOGICAL_NOT:
+	case E_CALL:
+	case E_RETURN:
+	case E_GET_VELEMENT:
+	case E_GET_ELEMENT:
+	case E_GET_ROW_REGION:
+	case E_GET_COL_REGION:
+	case E_REGION_SEP:
+	case E_REGION_SEP_BY:
+		EDEBUG("  PUSH US AS POST AND ALL ARGUMENTS AS PRE");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		iter_push_args (ctx, n->op.args);
+		break;
+
+	/*in case of DIRECTCALL we don't evaluate the first argument*/
+	case E_DIRECTCALL:
+		/*if there are arguments to evaluate*/
+		if(n->op.args->any.next) {
+			EDEBUG("  DIRECT:PUSH US AS POST AND 2nd AND HIGHER ARGS AS PRE");
+			GE_PUSH_STACK(ctx,n,GE_POST);
+			iter_push_args (ctx, n->op.args->any.next);
+		} else {
+			EDEBUG("  DIRECT:JUST GO TO POST");
+			/*just go to post immediately*/
+			ctx->post = TRUE;
+		}
+		break;
+
+	/*these should have been translated to COMPARE_NODEs*/
+	case E_EQ_CMP:
+	case E_NE_CMP:
+	case E_LT_CMP:
+	case E_GT_CMP:
+	case E_LE_CMP: 
+	case E_GE_CMP:
+		g_assert_not_reached();
+
+	case E_LOGICAL_AND:
+		EDEBUG("  LOGICAL AND");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK(ctx,n->op.args,GE_AND);
+		ctx->post = FALSE;
+		ctx->current = n->op.args;
+		break;
+	case E_LOGICAL_OR:
+		EDEBUG("  LOGICAL OR");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK(ctx,n->op.args,GE_OR);
+		ctx->post = FALSE;
+		ctx->current = n->op.args;
+		break;
+
+	case E_WHILE_CONS:
+		iter_loop(ctx,n,FALSE,TRUE);
+		break;
+	case E_UNTIL_CONS:
+		iter_loop(ctx,n,FALSE,FALSE);
+		break;
+	case E_DOWHILE_CONS:
+		iter_loop(ctx,n,TRUE,TRUE);
+		break;
+	case E_DOUNTIL_CONS:
+		iter_loop(ctx,n,TRUE,FALSE);
+		break;
+
+	case E_IF_CONS:
+	case E_IFELSE_CONS:
+		EDEBUG("  IF/IFELSE PRE");
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		ctx->post = FALSE;
+		ctx->current = n->op.args;
+		break;
+
+	case E_DEREFERENCE:
+		if(!iter_derefvarop(ctx,n))
+			return FALSE;
+		iter_pop_stack(ctx);
+		break;
+
+	case E_FOR_CONS:
+	case E_FORBY_CONS:
+	case E_SUM_CONS:
+	case E_SUMBY_CONS:
+	case E_PROD_CONS:
+	case E_PRODBY_CONS:
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		iter_push_args_no_last(ctx,n->op.args->any.next);
+		break;
+
+	case E_FORIN_CONS:
+	case E_SUMIN_CONS:
+	case E_PRODIN_CONS:
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		ctx->current = n->op.args->any.next;
+		ctx->post = FALSE;
+		break;
+
+	case E_EXCEPTION:
+		return FALSE;
+
+	case E_BAILOUT:
+		iter_bailout_op(ctx);
+		break;
+
+	case E_CONTINUE:
+		iter_continue_break_op(ctx,TRUE);
+		break;
+
+	case E_BREAK:
+		iter_continue_break_op(ctx,FALSE);
+		break;
+
+	case E_QUOTE:
+		{
+			/* Just replace us with the quoted thing */
+			GelETree *arg = n->op.args;
+			n->op.args = NULL;
+			replacenode (n, arg);
+			iter_pop_stack(ctx);
+			break;
+		}
+
+	case E_REFERENCE:
+		iter_pop_stack(ctx);
+		break;
+
+	case E_MOD_CALC:
+		/* Push modulo op, so that we may push the
+		 * first argument once we have gotten a modulo */
+		GE_PUSH_STACK (ctx, n, GE_MODULOOP);
+		ctx->post = FALSE;
+		ctx->current = n->op.args->any.next;
+		break;
+
+	default:
+		(*errorout)(_("Unexpected operator!"));
+		GE_PUSH_STACK(ctx,n,GE_POST);
+		break;
+	}
+	return TRUE;
+}
+
+static gboolean
+iter_operator_post(GelCtx *ctx)
+{
+	GelETree *n = ctx->current;
+	GelETree *r;
+	EDEBUG(" OPERATOR POST");
+	switch(n->op.oper) {
+	case E_SEPAR:
+		r = n->op.args->any.next;
+		/*remove from arg list*/
+		n->op.args->any.next = NULL;
+		replacenode(n,r);
+		iter_pop_stack(ctx);
+		break;
+
+	case E_EQUALS:
+		EDEBUG("  EQUALS POST");
+		iter_equalsop(n);
+		iter_pop_stack(ctx);
+		break;
+
+	case E_PARAMETER:
+		EDEBUG("  PARAMETER POST");
+		iter_parameterop (n);
+		iter_pop_stack (ctx);
+		break;
+
+	case E_PLUS:
+	case E_MINUS:
+	case E_MUL:
+	case E_ELTMUL:
+	case E_DIV:
+	case E_ELTDIV:
+	case E_BACK_DIV:
+	case E_ELT_BACK_DIV:
+	case E_MOD:
+	case E_ELTMOD:
+	case E_EXP:
+	case E_ELTEXP:
+	case E_CMP_CMP:
+	case E_LOGICAL_XOR:
+		if(!iter_call2(ctx,&prim_table[n->op.oper],n))
+			return FALSE;
+		if (ctx->modulo != NULL &&
+		    n->type == VALUE_NODE)
+			mod_node (n, ctx->modulo);
+		iter_pop_stack(ctx);
+		break;
+
+	case E_ABS:
+	case E_NEG:
+	case E_FACT:
+	case E_DBLFACT:
+	case E_TRANSPOSE:
+	case E_CONJUGATE_TRANSPOSE:
+	case E_LOGICAL_NOT:
+		if(!iter_call1(ctx,&prim_table[n->op.oper],n))
+			return FALSE;
+		if (ctx->modulo != NULL &&
+		    n->type == VALUE_NODE)
+			mod_node (n, ctx->modulo);
+		iter_pop_stack(ctx);
+		break;
+
+	case E_MOD_CALC:
+		if (n->op.args->type == VALUE_NODE) {
+			GelETree *t = n->op.args;
+			gel_freetree (n->op.args->any.next);
+			n->op.args = NULL;
+			replacenode (n, t);
+		}
+		iter_pop_stack(ctx);
+		break;
+
+	case E_FOR_CONS:
+	case E_FORBY_CONS:
+	case E_SUM_CONS:
+	case E_SUMBY_CONS:
+	case E_PROD_CONS:
+	case E_PRODBY_CONS:
+		iter_forloop (ctx, n);
+		break;
+
+	case E_FORIN_CONS:
+	case E_SUMIN_CONS:
+	case E_PRODIN_CONS:
+		iter_forinloop (ctx, n);
+		break;
+
+	case E_GET_VELEMENT:
+		iter_get_velement (n);
+		iter_pop_stack (ctx);
+		break;
+
+	case E_GET_ELEMENT:
+		iter_get_element (n);
+		iter_pop_stack (ctx);
+		break;
+
+	case E_GET_ROW_REGION:
+		iter_get_region (n, FALSE /* col */);
+		iter_pop_stack (ctx);
+		break;
+
+	case E_GET_COL_REGION:
+		iter_get_region (n, TRUE /* col */);
+		iter_pop_stack (ctx);
+		break;
+
+	case E_IF_CONS:
+		iter_ifop(ctx,n,FALSE);
+		break;
+	case E_IFELSE_CONS:
+		iter_ifop(ctx,n,TRUE);
+		break;
+
+	case E_DIRECTCALL:
+	case E_CALL:
+		if(!iter_funccallop(ctx,n))
+			return FALSE;
+		break;
+
+	case E_RETURN:
+		iter_returnop(ctx,n);
+		break;
+
+	case E_REGION_SEP:
+	case E_REGION_SEP_BY:
+		iter_region_sep_op (ctx, n);
+		iter_pop_stack (ctx);
+		break;
+
+	/*these should have been translated to COMPARE_NODEs*/
+	case E_EQ_CMP:
+	case E_NE_CMP:
+	case E_LT_CMP:
+	case E_GT_CMP:
+	case E_LE_CMP: 
+	case E_GE_CMP:
+
+	/*This operators should never reach post, they are evaluated in pre,
+	  or dealt with through the pop_stack_special*/
+	case E_QUOTE:
+	case E_REFERENCE:
+	case E_LOGICAL_AND:
+	case E_LOGICAL_OR:
+	case E_WHILE_CONS:
+	case E_UNTIL_CONS:
+	case E_DOWHILE_CONS:
+	case E_DOUNTIL_CONS:
+	case E_CONTINUE:
+	case E_BREAK:
+	case E_EXCEPTION:
+	case E_BAILOUT:
+	case E_DEREFERENCE:
+		g_assert_not_reached();
+
+	default:
+		(*errorout)(_("Unexpected operator!"));
+		iter_pop_stack(ctx);
+		break;
+	}
+	return TRUE;
+}
+
+static gboolean
+function_id_on_list (GSList *funclist, GelToken *id)
+{
+	GSList *li;
+       
+	for (li = funclist; li != NULL; li = li->next) {
+		GelEFunc *func = li->data;
+		if (func->id == id)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+GSList *
+gel_subst_local_vars (GSList *funclist, GelETree *n)
+{
+	if (n == NULL)
+		return funclist;
+
+	if (n->type == IDENTIFIER_NODE) {
+		GelEFunc *func = d_lookup_local (n->id.id);
+		if (func != NULL &&
+		    ! function_id_on_list (funclist, n->id.id)) {
+			GelEFunc *f = d_copyfunc (func);
+			f->context = -1;
+			funclist = g_slist_prepend (funclist, f);
+		}
+	} else if (n->type == SPACER_NODE) {
+		funclist = gel_subst_local_vars (funclist, n->sp.arg);
+	} else if(n->type == OPERATOR_NODE) {
+		/* special case to avoid more work
+		 * then needed */
+		if (n->op.oper == E_EQUALS &&
+		    n->op.args->type == IDENTIFIER_NODE) {
+			funclist = gel_subst_local_vars (funclist, n->op.args->any.next);
+		} else {
+			GelETree *args = n->op.args;
+			while (args != NULL) {
+				funclist = gel_subst_local_vars (funclist, args);
+				args = args->any.next;
+			}
+		}
+	} else if (n->type == MATRIX_NODE &&
+		   n->mat.matrix != NULL) {
+		int i,j;
+		int w,h;
+		w = gel_matrixw_width (n->mat.matrix);
+		h = gel_matrixw_height (n->mat.matrix);
+		gel_matrixw_make_private (n->mat.matrix);
+		for (i = 0; i < w; i++) {
+			for(j = 0; j < h; j++) {
+				GelETree *t = gel_matrixw_set_index
+					(n->mat.matrix, i, j);
+				if (t != NULL)
+					funclist = gel_subst_local_vars (funclist, t);
+			}
+		}
+	} else if (n->type == SET_NODE) {
+		GelETree *ali;
+		for(ali = n->set.items; ali != NULL; ali = ali->any.next)
+			funclist = gel_subst_local_vars (funclist, ali);
+	} else if (n->type == FUNCTION_NODE &&
+		   (n->func.func->type == GEL_USER_FUNC ||
+		    n->func.func->type == GEL_VARIABLE_FUNC)) {
+		D_ENSURE_USER_BODY (n->func.func);
+		funclist = gel_subst_local_vars (funclist, n->func.func->data.user);
+	}
+	return funclist;
+}
+
+static gboolean
+iter_eval_etree(GelCtx *ctx)
+{
+	GelETree *n;
+	while((n = ctx->current)) {
+		EDEBUG("ITER");
+		if(evalnode_hook) {
+			static int i = 0;
+			if(i++>run_hook_every) {
+				(*evalnode_hook)();
+				i=0;
+			}
+		}
+		if(interrupted)
+			return FALSE;
+
+		switch(n->type) {
+		case NULL_NODE:
+		case VALUE_NODE:
+			EDEBUG(" NULL/VALUE NODE");
+			iter_pop_stack(ctx);
+			break;
+		case MATRIX_NODE:
+			EDEBUG(" MATRIX NODE");
+			if(!ctx->post) {
+				/*if in pre mode, push elements onto stack*/
+				iter_push_matrix(ctx,n,n->mat.matrix);
+			} else {
+				/*if in post mode expand the matrix */
+				if(!n->mat.quoted)
+					gel_expandmatrix (n);
+				iter_pop_stack(ctx);
+			}
+			break;
+		case OPERATOR_NODE:
+			EDEBUG(" OPERATOR NODE");
+			if(!ctx->post) {
+				if(!iter_operator_pre(ctx))
+					return FALSE;
+			} else {
+				if(!iter_operator_post(ctx))
+					return FALSE;
+			}
+			break;
+		case IDENTIFIER_NODE:
+			EDEBUG(" IDENTIFIER NODE");
+			if(!iter_variableop(ctx, n))
+				return FALSE;
+			iter_pop_stack(ctx);
+			break;
+		case STRING_NODE:
+			EDEBUG(" STRING NODE");
+			iter_pop_stack(ctx);
+			break;
+
+		case FUNCTION_NODE:
+			EDEBUG(" FUNCTION NODE");
+			if (n->func.func != NULL &&
+			    (n->func.func->type == GEL_USER_FUNC ||
+			     n->func.func->type == GEL_VARIABLE_FUNC) &&
+			    d_curcontext () != 0) {
+				d_put_on_subst_list (n->func.func);
+			}
+			iter_pop_stack(ctx);
+			break;
+
+		case COMPARISON_NODE:
+			EDEBUG(" COMPARISON NODE");
+			if(!ctx->post) {
+				/*if in pre mode, push arguments onto stack*/
+				GE_PUSH_STACK(ctx,n,GE_POST);
+				iter_push_args(ctx,n->comp.args);
+			} else {
+				/*if in post mode evaluate */
+				evalcomp(n);
+				iter_pop_stack(ctx);
+			}
+			break;
+		case USERTYPE_NODE:
+			EDEBUG(" USERTYPE NODE");
+			iter_pop_stack(ctx);
+			break;
+		default:
+			(*errorout)(_("Unexpected node!"));
+			iter_pop_stack(ctx);
+			break;
+		}
+	}
+	return TRUE;
+}
+
+GelCtx *
+eval_get_context(void)
+{
+	GelCtx *ctx = g_new0(GelCtx,1);
+	ge_add_stack_array(ctx);
+	return ctx;
+}
+
+void
+eval_free_context(GelCtx *ctx)
+{
+	g_free(ctx->stack);
+	g_free(ctx);
+}
+
+GelETree *
+eval_etree(GelCtx *ctx, GelETree *etree)
+{
+	/*level measures any recursion into here such as from
+	  external functions etc, so that we can purge free lists,
+	  but not during calculation*/
+	static int level = 0;
+	int flag;
+	gpointer data;
+
+	if (ctx->modulo != NULL)
+		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+	
+	GE_PUSH_STACK(ctx,ctx->res,GE_RESULT);
+	if(ctx->post) {
+		GE_PUSH_STACK(ctx,ctx->current,GE_POST);
+	} else {
+		GE_PUSH_STACK(ctx,ctx->current,GE_PRE);
+	}
+	GE_PUSH_STACK(ctx,NULL,GE_EMPTY_STACK);
+	ctx->res = etree;
+	ctx->current = etree;
+	ctx->post = FALSE;
+	
+	level++;
+	
+	if(!iter_eval_etree(ctx)) {
+		gpointer data;
+		/*an exception happened*/
+		gel_freetree(ctx->res);
+		etree = ctx->res = NULL;
+		do {
+			GE_POP_STACK(ctx,data,flag);
+			ev_free_special_data(ctx,data,flag);
+		} while(flag != GE_EMPTY_STACK);
+	}
+	if(--level == 0)
+		purge_free_lists();
+	
+	GE_POP_STACK(ctx,ctx->current,flag);
+	g_assert(flag == GE_POST || flag == GE_PRE);
+	ctx->post = (flag == GE_POST);
+	GE_POP_STACK(ctx,ctx->res,flag);
+	g_assert(flag == GE_RESULT);
+
+	GE_PEEK_STACK (ctx, data, flag);
+	if (flag == GE_SETMODULO) {
+		if (ctx->modulo != NULL) {
+			mpw_clear (ctx->modulo);
+			g_free (ctx->modulo);
+		}
+		ctx->modulo = data;
+	}
+
+	return etree;
+}
+
+GelETree *
+gather_comparisons(GelETree *n)
+{
+	GelETree *next,*ret;
 	if(!n) return NULL;
+
+	ret = n;
+	next = n->any.next;
+
 	if(n->type == SPACER_NODE) {
-		ETree *t = n->sp.arg;
-		n->sp.arg = NULL;
+		GelETree *t = n->sp.arg;
 		freenode(n);
-		return gather_comparisons(t);
+		ret = gather_comparisons(t);
 	} else if(n->type==OPERATOR_NODE) {
-		ETree *nn;
-		GList *li;
+		GelETree *nn;
+		GelETree *ali = NULL;
 		switch(n->op.oper) {
 		case E_EQ_CMP:
 		case E_NE_CMP:
@@ -3859,15 +5118,21 @@ gather_comparisons(ETree *n)
 			nn->comp.comp = NULL;
 			
 			for(;;) {
-				ETree *t;
-				nn->comp.args = g_list_append(nn->comp.args,gather_comparisons(n->op.args->data));
+				GelETree *t;
+				t = n->op.args->any.next;
+				if(!ali) {
+					ali = nn->comp.args =
+						gather_comparisons(n->op.args);
+				} else {
+					ali = ali->any.next = 
+						gather_comparisons(n->op.args);
+				}
+				ali->any.next = NULL;
 				nn->comp.nargs++;
 				nn->comp.comp =
-					g_list_append(nn->comp.comp,
+					g_slist_append(nn->comp.comp,
 						      GINT_TO_POINTER(n->op.oper));
 
-				t = n->op.args->next->data;
-				g_list_free(n->op.args);
 				freenode(n);
 				n = t;
 				if(n->type != OPERATOR_NODE ||
@@ -3877,147 +5142,261 @@ gather_comparisons(ETree *n)
 				    n->op.oper != E_GT_CMP &&
 				    n->op.oper != E_LE_CMP &&
 				    n->op.oper != E_GE_CMP)) {
-					nn->comp.args = g_list_append(nn->comp.args,gather_comparisons(n));
+					ali = ali->any.next = 
+						gather_comparisons(n);
+					ali->any.next = NULL;
 					nn->comp.nargs++;
 					break;
 				}
 			}
-			return nn;
+			ret = nn;
+			break;
 		default:
-			for(li=n->op.args;li;li=g_list_next(li))
-				li->data = gather_comparisons(li->data);
-			return n;
+			if(n->op.args) {
+				n->op.args = gather_comparisons(n->op.args);
+				for(ali=n->op.args;ali->any.next;ali=ali->any.next)
+					ali->any.next =
+						gather_comparisons(ali->any.next);
+			}
 		}
 	} else if(n->type==MATRIX_NODE) {
 		int i,j;
 		int w,h;
-		if(!n->mat.matrix) return n;
-		w = matrixw_width(n->mat.matrix);
-		h = matrixw_height(n->mat.matrix);
+		if(!n->mat.matrix)
+			goto gather_comparisons_end;
+		w = gel_matrixw_width(n->mat.matrix);
+		h = gel_matrixw_height(n->mat.matrix);
+		gel_matrixw_make_private(n->mat.matrix);
 		for(i=0;i<w;i++) {
 			for(j=0;j<h;j++) {
-				ETree *t = matrixw_set_index(n->mat.matrix,i,j);
+				GelETree *t = gel_matrixw_set_index(n->mat.matrix,i,j);
 				if(t) {
-					matrixw_set_index(n->mat.matrix,i,j) =
+					gel_matrixw_set_index(n->mat.matrix,i,j) =
 						gather_comparisons(t);
 				}
 			}
 		}
-		return n;
 	} else if(n->type==SET_NODE) {
-		GList *li;
-
-		for(li=n->set.items;li;li=g_list_next(li))
-			li->data = gather_comparisons(li->data);
-		return n;
-	} else if(n->type==FUNCTION_NODE) {
-		if(n->func.func->type!=USER_FUNC ||
-		   !n->func.func->data.user)
-			return n;
-		n->func.func->data.user =
-			gather_comparisons(n->func.func->data.user);
-		return n;
-	} else
-		return n;
-}
-
-/*return TRUE if the id is one of the settable parameters*/
-static int
-is_a_parameter(char *id)
-{
-	int i;
-	for(i=0;params[i];i++) {
-		if(strcmp(params[i],id)==0)
-			return TRUE;
-	}
-	return FALSE;
-}
-
-ETree *
-replace_parameters(ETree *n)
-{
-	if(!n) return NULL;
-	if(n->type==OPERATOR_NODE) {
-		if(n->op.oper == E_EQUALS) {
-			ETree *lval,*rval;
-			GET_LR(n,lval,rval);
-			if(lval->type == IDENTIFIER_NODE &&
-			   is_a_parameter(lval->id.id->token)) {
-				char *id;
-				id = g_strconcat("set_",lval->id.id->token,
-						 NULL);
-				lval->id.id = d_intern(id);
-				g_free(id);
-				n->op.oper = E_DIRECTCALL;
-				n->op.args->next->data =
-					replace_parameters(rval);
-			} else {
-				n->op.args->data =
-					replace_parameters(lval);
-				n->op.args->next->data =
-					replace_parameters(rval);
-			}
-		} else if(n->op.oper == E_DIRECTCALL) {
-			ETree *lval;
-			GList *li;
-			GET_L(n,lval);
-			if(lval->type == IDENTIFIER_NODE &&
-			   is_a_parameter(lval->id.id->token)) {
-				char *id;
-				id = g_strconcat("set_",lval->id.id->token,
-						 NULL);
-				lval->id.id = d_intern(id);
-				g_free(id);
-				n->op.oper = E_DIRECTCALL;
-			} else {
-				n->op.args->data =
-					replace_parameters(lval);
-			}
-			for(li=n->op.args->next;li;li=g_list_next(li))
-				li->data = replace_parameters(li->data);
-		} else {
-			GList *li;
-			for(li=n->op.args;li;li=g_list_next(li))
-				li->data = gather_comparisons(li->data);
+		GelETree *ali;
+		if(n->set.items) {
+			n->set.items = gather_comparisons(n->set.items);
+			for(ali=n->set.items;ali->any.next;ali=ali->any.next)
+				ali->any.next =
+					gather_comparisons(ali->any.next);
 		}
-		return n;
+	} else if(n->type==FUNCTION_NODE) {
+		if ((n->func.func->type == GEL_USER_FUNC ||
+		     n->func.func->type == GEL_VARIABLE_FUNC) &&
+		    n->func.func->data.user) {
+			n->func.func->data.user =
+				gather_comparisons(n->func.func->data.user);
+		}
+	}
+gather_comparisons_end:
+	ret->any.next = next;
+	return ret;
+}
+
+void
+replace_equals (GelETree *n, gboolean in_expression)
+{
+	if (n == NULL)
+		return;
+
+	if (n->type == SPACER_NODE) {
+		replace_equals (n->sp.arg, in_expression);
+	} else if(n->type == OPERATOR_NODE) {
+		gboolean run_through_args = TRUE;
+		if (n->op.oper == E_EQUALS &&
+		    in_expression) {
+			n->op.oper = E_EQ_CMP;
+		} else if (n->op.oper == E_WHILE_CONS ||
+			   n->op.oper == E_UNTIL_CONS ||
+			   n->op.oper == E_IF_CONS) {
+			run_through_args = FALSE;
+			replace_equals (n->op.args, TRUE);
+			replace_equals (n->op.args->any.next, in_expression);
+		} else if (n->op.oper == E_DOWHILE_CONS ||
+			   n->op.oper == E_DOUNTIL_CONS) {
+			run_through_args = FALSE;
+			replace_equals (n->op.args, in_expression);
+			replace_equals (n->op.args->any.next, TRUE);
+		} else if (n->op.oper == E_IFELSE_CONS) {
+			run_through_args = FALSE;
+			replace_equals (n->op.args, TRUE);
+			replace_equals (n->op.args->any.next, in_expression);
+			replace_equals (n->op.args->any.next->any.next, in_expression);
+		}
+
+		if (run_through_args) {
+			GelETree *args = n->op.args;
+			while (args != NULL) {
+				replace_equals (args, in_expression);
+				args = args->any.next;
+			}
+		}
+	} else if (n->type == MATRIX_NODE &&
+		   n->mat.matrix != NULL) {
+		int i,j;
+		int w,h;
+		w = gel_matrixw_width (n->mat.matrix);
+		h = gel_matrixw_height (n->mat.matrix);
+		gel_matrixw_make_private (n->mat.matrix);
+		for (i = 0; i < w; i++) {
+			for(j = 0; j < h; j++) {
+				GelETree *t = gel_matrixw_set_index
+					(n->mat.matrix, i, j);
+				if (t != NULL)
+					replace_equals (t, in_expression);
+			}
+		}
+	} else if (n->type == SET_NODE ) {
+		GelETree *ali;
+		for(ali = n->set.items; ali != NULL; ali = ali->any.next)
+			replace_equals (ali, in_expression);
+	} else if (n->type == FUNCTION_NODE &&
+		   (n->func.func->type == GEL_USER_FUNC ||
+		    n->func.func->type == GEL_VARIABLE_FUNC) &&
+		   n->func.func->data.user != NULL) {
+		/* function bodies are a completely new thing */
+		replace_equals (n->func.func->data.user, FALSE);
+	}
+}
+
+/*this means that it will precalc even complex and float
+  numbers*/
+static void
+op_precalc_all_1(GelETree *n, void (*func)(mpw_ptr,mpw_ptr))
+{
+	GelETree *l;
+	mpw_t res;
+	GET_L(n,l);
+	if(l->type != VALUE_NODE)
+		return;
+	mpw_init(res);
+	(*func)(res,l->val.value);
+	if(error_num) {
+		mpw_clear(res);
+		error_num = 0;
+		return;
+	}
+	freetree_full(n,TRUE,FALSE);
+	gel_makenum_use_from(n,res);
+}
+
+static void
+op_precalc_1(GelETree *n, void (*func)(mpw_ptr,mpw_ptr))
+{
+	GelETree *l;
+	mpw_t res;
+	GET_L(n,l);
+	if(l->type != VALUE_NODE ||
+	   mpw_is_complex(l->val.value) ||
+	   mpw_is_float(l->val.value))
+		return;
+	mpw_init(res);
+	(*func)(res,l->val.value);
+	if(error_num) {
+		mpw_clear(res);
+		error_num = 0;
+		return;
+	}
+	freetree_full(n,TRUE,FALSE);
+	gel_makenum_use_from(n,res);
+}
+
+static void
+op_precalc_2(GelETree *n, void (*func)(mpw_ptr,mpw_ptr,mpw_ptr))
+{
+	GelETree *l,*r,*next;
+	mpw_t res;
+	GET_LR(n,l,r);
+	if(l->type != VALUE_NODE ||
+	   r->type != VALUE_NODE ||
+	   mpw_is_complex(l->val.value) ||
+	   mpw_is_complex(r->val.value) ||
+	   mpw_is_float(l->val.value) ||
+	   mpw_is_float(r->val.value))
+		return;
+	mpw_init(res);
+	(*func)(res,l->val.value,r->val.value);
+	if(error_num) {
+		mpw_clear(res);
+		error_num = 0;
+		return;
+	}
+	next = n->any.next;
+	freetree_full(n,TRUE,FALSE);
+	gel_makenum_use_from(n,res);
+	n->any.next = next;
+}
+
+static void
+try_to_precalc_op(GelETree *n)
+{
+	switch(n->op.oper) {
+	case E_NEG: op_precalc_all_1(n,mpw_neg); return;
+	case E_ABS: op_precalc_1(n,mpw_abs); return;
+	case E_FACT: op_precalc_1(n,mpw_fac); return;
+	case E_DBLFACT: op_precalc_1(n,mpw_dblfac); return;
+	case E_PLUS: op_precalc_2(n,mpw_add); return;
+	case E_MINUS: op_precalc_2(n,mpw_sub); return;
+	case E_MUL: op_precalc_2(n,mpw_mul); return;
+	case E_ELTMUL: op_precalc_2(n,mpw_mul); return;
+	case E_DIV: op_precalc_2(n,mpw_div); return;
+	case E_ELTDIV: op_precalc_2(n,mpw_div); return;
+	case E_MOD: op_precalc_2(n,mpw_mod); return;
+	case E_EXP: op_precalc_2(n,mpw_pow); return;
+	case E_ELTEXP: op_precalc_2(n,mpw_pow); return;
+	default: return;
+	}
+}
+
+void
+try_to_do_precalc(GelETree *n)
+{
+	if(!n) return;
+
+	if(n->type==OPERATOR_NODE) {
+		GelETree *ali;
+		if(n->op.oper == E_MOD_CALC) {
+			/* in case of modular calculation, only do
+			   precalc on the second argument (don't descend
+			   at all into the first one) */
+			/* FIXME: precalc might be broken in case of mod */
+			/* try_to_do_precalc(n->op.args->any.next); */;
+		} else {
+			if(n->op.args) {
+				for(ali=n->op.args;ali;ali=ali->any.next)
+					try_to_do_precalc(ali);
+			}
+			if(n->type==OPERATOR_NODE)
+				try_to_precalc_op(n);
+		}
 	} else if(n->type==MATRIX_NODE) {
 		int i,j;
 		int w,h;
-		if(!n->mat.matrix) return n;
-		w = matrixw_width(n->mat.matrix);
-		h = matrixw_height(n->mat.matrix);
+		if(!n->mat.matrix) return;
+		w = gel_matrixw_width(n->mat.matrix);
+		h = gel_matrixw_height(n->mat.matrix);
+		gel_matrixw_make_private(n->mat.matrix);
 		for(i=0;i<w;i++) {
 			for(j=0;j<h;j++) {
-				ETree *t = matrixw_set_index(n->mat.matrix,i,j);
-				if(t) {
-					matrixw_set_index(n->mat.matrix,i,j) =
-						replace_parameters(t);
-				}
+				GelETree *t = gel_matrixw_set_index(n->mat.matrix,i,j);
+				if(t)
+					try_to_do_precalc(t);
 			}
 		}
-		return n;
 	} else if(n->type==SET_NODE) {
-		GList *li;
-
-		for(li=n->set.items;li;li=g_list_next(li))
-			li->data = replace_parameters(li->data);
-		return n;
+		GelETree *ali;
+		if(n->set.items) {
+			for(ali=n->set.items;ali;ali=ali->any.next)
+				try_to_do_precalc(ali);
+		}
 	} else if(n->type==FUNCTION_NODE) {
-		if(n->func.func->type!=USER_FUNC ||
-		   !n->func.func->data.user)
-			return n;
-		n->func.func->data.user =
-			replace_parameters(n->func.func->data.user);
-		return n;
-	} else if(n->type==IDENTIFIER_NODE &&
-		  is_a_parameter(n->id.id->token)) {
-		char *id;
-		id = g_strconcat("get_",n->id.id->token,
-				 NULL);
-		n->id.id = d_intern(id);
-		g_free(id);
-		return n;
-	} else
-		return n;
+		if ((n->func.func->type == GEL_USER_FUNC ||
+		     n->func.func->type == GEL_VARIABLE_FUNC) &&
+		    n->func.func->data.user)
+			try_to_do_precalc(n->func.func->data.user);
+	}
 }

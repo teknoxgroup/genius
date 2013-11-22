@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -38,9 +38,10 @@ int first_tok = STARTTOK;
 int return_ret = FALSE;
 int parenth_depth = 0;
 int lex_init = TRUE;
-extern GList *evalstack;
+extern GSList *evalstack;
 extern int got_eof;
-static int matrix_entry=0;
+static int matrix_entry = 0;
+static GSList *matrix_entry_stack = NULL;
 
 
 #define NO_RET {return_ret = FALSE;}
@@ -49,6 +50,58 @@ static int matrix_entry=0;
 		return_ret = TRUE; \
 	else \
 		return_ret = FALSE; \
+}
+
+static GHashTable *fp_hash = NULL;
+
+void my_yy_open(FILE *fp);
+void my_yy_parse(FILE *fp);
+void my_yy_close(FILE *fp);
+
+void
+my_yy_open(FILE *fp)
+{
+	YY_BUFFER_STATE buf;
+	if(!fp_hash)
+		fp_hash = g_hash_table_new(NULL, NULL);
+
+	buf = g_hash_table_lookup(fp_hash, fp);
+	if(buf)
+		return;
+
+	buf = yy_create_buffer(fp, YY_BUF_SIZE);
+	g_hash_table_insert(fp_hash, fp, buf);
+}
+
+void
+my_yy_parse(FILE *fp)
+{
+	YY_BUFFER_STATE buf;
+
+	g_assert(fp_hash);
+
+	buf = g_hash_table_lookup(fp_hash, fp);
+
+	yy_switch_to_buffer(buf);
+	yyparse();
+}
+
+void
+my_yy_close(FILE *fp)
+{
+	YY_BUFFER_STATE buf;
+
+	/* don't close the stdin */
+	if(fp == stdin)
+		return;
+
+	g_assert(fp_hash);
+
+	buf = g_hash_table_lookup(fp_hash, fp);
+
+	yy_delete_buffer(buf);
+
+	 g_hash_table_remove(fp_hash, fp);
 }
 
 %}
@@ -60,6 +113,7 @@ static int matrix_entry=0;
 		return_ret = FALSE;
 		parenth_depth = 0;
 		matrix_entry = 0;
+		matrix_entry_stack = NULL;
 		lex_init = FALSE;
 	}
 	
@@ -69,6 +123,7 @@ static int matrix_entry=0;
 		return i;
 	}
 %}
+
 
 #.*$		; /*comment, ignore*/
 
@@ -97,10 +152,22 @@ static int matrix_entry=0;
 			return LOADFILE_GLOB;
 		}
 
+^[ 	]*cd[ 	]+[^ 	].*$ {
+			char *s;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'d')+1; /*move after the cd*/
+			/*btw from the above RE we know this will work*/
+			while(*s==' ' || *s=='\t')
+				s++;
+			yylval.id = g_strdup(s);
+			DO_RET;
+			return CHANGEDIR;
+		}
+
 ^[ 	]*plugin[ 	]+[^ 	].*$ {
 			char *s;
 			if(evalstack || parenth_depth) {REJECT;}
-			s=strchr(yytext,'n')+1; /*move after the load*/
+			s=strchr(yytext,'n')+1; /*move after the plugin*/
 			/*btw from the above RE we know this will work*/
 			while(*s==' ' || *s=='\t')
 				s++;
@@ -109,7 +176,57 @@ static int matrix_entry=0;
 			return LOAD_PLUGIN;
 		}
 
-";"		{ DO_RET; return SEPAR; }
+^[ 	]*pwd[ 	]*$ {
+			if(evalstack || parenth_depth) {REJECT;}
+			DO_RET;
+			return PWD;
+		}
+
+^[ 	]*ls[ 	]+[^ 	].*$ {
+			char *s;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'s')+1; /*move after the ls*/
+			/*btw from the above RE we know this will work*/
+			while(*s==' ' || *s=='\t')
+				s++;
+			yylval.id = g_strdup(s);
+			DO_RET;
+			return LS_ARG;
+		}
+
+^[ 	]*ls[ 	]*$ {
+			if(evalstack || parenth_depth) {REJECT;}
+			DO_RET;
+			return LS;
+		}
+
+^[ 	]*help[ 	]+[^ 	].*$ {
+			char *s;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'p')+1; /*move after the help*/
+			/*btw from the above RE we know this will work*/
+			while(*s==' ' || *s=='\t')
+				s++;
+			yylval.id = g_strdup(s);
+			DO_RET;
+			return HELP_ARG;
+		}
+
+^[ 	]*help[ 	]*$ {
+			if(evalstack || parenth_depth) {REJECT;}
+			DO_RET;
+			return HELP;
+		}
+
+
+";"		{
+			if (matrix_entry &&
+			    GPOINTER_TO_INT(matrix_entry_stack->data) == 0) {
+				return NEXTROW;
+			}
+			DO_RET;
+			return SEPAR;
+		}
 
 \"([^"]|\\\")*\"	{ 
 			DO_RET;
@@ -140,6 +257,8 @@ or		{ NO_RET; return LOGICAL_OR; }
 while		{ NO_RET; return WHILE; }
 until		{ NO_RET; return UNTIL; }
 for		{ NO_RET; return FOR; }
+sum		{ NO_RET; return SUM; }
+prod		{ NO_RET; return PROD; }
 do		{ NO_RET; return DO; }
 to		{ NO_RET; return TO; }
 by		{ NO_RET; return BY; }
@@ -149,6 +268,7 @@ then		{ NO_RET; return THEN; }
 else		{ NO_RET; return ELSE; }
 
 function	{ NO_RET; return FUNCTION; }
+parameter	{ NO_RET; return PARAMETER; }
 call		{ NO_RET; return CALL; }
 
 return		{ NO_RET; return RETURNTOK; }
@@ -163,24 +283,35 @@ null		{ DO_RET; return '.'; }
 
 "@("		{
 			parenth_depth++;
+			if (matrix_entry_stack != NULL)
+				matrix_entry_stack->data =
+					GINT_TO_POINTER
+					  (GPOINTER_TO_INT(matrix_entry_stack->data) + 1);
 			NO_RET;
 			return AT;
 		}
-\.\.		{
+\.\.\.		{
 			NO_RET;
-			return REGION_SEP;
+			return THREEDOTS;
 		}
-		
+
 [[][\t ]*	{
 			matrix_entry++;
 			parenth_depth++;
+			matrix_entry_stack =
+				g_slist_prepend (matrix_entry_stack,
+						 GINT_TO_POINTER (0));
 			NO_RET;
 			return '[';
 		}
 
 [\t ]*[]]	{
+			GSList *li;
 			matrix_entry--;
 			parenth_depth--;
+			li = matrix_entry_stack;
+			matrix_entry_stack = g_slist_remove_link (matrix_entry_stack, li);
+			g_slist_free_1 (li);
 			DO_RET;
 			return ']';
 		}
@@ -188,12 +319,20 @@ null		{ DO_RET; return '.'; }
 
 [({]		{
 			parenth_depth++;
+			if (matrix_entry_stack != NULL)
+				matrix_entry_stack->data =
+					GINT_TO_POINTER
+					  (GPOINTER_TO_INT(matrix_entry_stack->data) + 1);
 			NO_RET;
 			return yytext[0];
 		}
 
 [)}]		{
 			parenth_depth--;
+			if (matrix_entry_stack != NULL)
+				matrix_entry_stack->data =
+					GINT_TO_POINTER
+					  (GPOINTER_TO_INT(matrix_entry_stack->data) - 1);
 			DO_RET;
 			return yytext[0];
 		}
@@ -204,6 +343,13 @@ null		{ DO_RET; return '.'; }
 				DO_RET;
 				return FUNCID;
 			}
+			
+[1-9][0-9]*[ ][1-9][0-9]*[/][1-9][0-9]*	{
+			mpw_init(yylval.val);
+			mpw_set_str(yylval.val,yytext,10);
+			DO_RET;
+			return NUMBER;
+		}
 
 [0-9]*\.[0-9]+[eE@][-+]?[0-9]+i	|
 [0-9]+[eE@][-+]?[0-9]+i		|
@@ -266,7 +412,7 @@ null		{ DO_RET; return '.'; }
 [\t ]*\n	{ 
 			incr_file_info();
 			if(matrix_entry) {
-				return ':';
+				return NEXTROW;
 			} else if(return_ret) {
 				first_tok = 0;
 				return '\n';
@@ -283,6 +429,15 @@ null		{ DO_RET; return '.'; }
 		}
 
 [ \t\r]+	; /*ignore whitespace*/
+
+\.\*		{ DO_RET; return ELTELTMUL; }
+\.\/		{ DO_RET; return ELTELTDIV; }
+\.\\		{ DO_RET; return ELTELTBACKDIV; }
+\.\%		{ DO_RET; return ELTELTMOD; }
+\.\^		{ DO_RET; return ELTELTEXP; }
+\.\'		{ DO_RET; return TRANSPOSE; }
+
+[!][!]		{ DO_RET; return DOUBLEFACT; }
 
 [!']		{
 			DO_RET;

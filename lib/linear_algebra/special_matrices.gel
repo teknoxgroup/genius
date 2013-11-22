@@ -1,0 +1,81 @@
+# Some Special Matrices
+
+#FIXME:
+#	higham test matrices (a whole slew of 'em)
+
+SetHelp ("CompanionMatrix", "linear_algebra", "Companion matrix of a polynomial (as vector)")
+function CompanionMatrix(p)= (
+	if not IsPoly (p) or elements(p) < 2 then
+		(error("CompanionMatrix: argument not a polynomial (vector) order 2 or greater");bailout);
+	#make monic
+	if p@(elements(p)) != 1 then
+		p = p ./ p@(elements(p));
+	#make vertical
+	if columns(p) > 1 then
+		p = p.';
+	[ [0;I(elements(p)-2)] , -p@(1 : elements(p)-1,1) ]
+)
+protect ("CompanionMatrix")
+
+SetHelp ("HankelMatrix", "linear_algebra", "Hankel matrix")
+function HankelMatrix(c,r)= (
+	H = [0];
+	for i=1 to elements(c) do
+		for j=1 to elements(r) do
+			H@(i,j) = if i+j-1 <= elements(c) then c@(i+j-1) else r@(i+j-elements(c));
+	H
+)
+protect ("HankelMatrix")
+
+SetHelp ("HilbertMatrix", "linear_algebra", "Hilbert matrix of order n")
+function HilbertMatrix(n)= (
+	H = [0];
+	for i=1 to n do
+		for j=1 to n do
+			H@(i,j) = 1/(i+j-1);
+	H
+)
+protect ("HilbertMatrix")
+
+SetHelp ("InverseHilbertMatrix", "linear_algebra", "Inverse Hilbert matrix of order n")
+function InverseHilbertMatrix(n) = HilbertMatrix(n)^(-1)
+protect ("InverseHilbertMatrix")
+#	magic square (exists for n != 2 -- I know how to make them for n odd)
+#	pascal matrix
+#	toeplitz matrix 
+#		constant along diagonals
+#		take first column, first row (or just first row, and then make hermitian, i.e., set first column = conjugate of first row)
+#	vandermonde matrix
+#	wilkinson (tridiagonal -- once off diagonals are all 1s, and the diagonal goes:
+# 3 2 1 0 1 2 3 (say, for n=7)
+# or
+#1.5 .5 .5 1.5 (for n=4, say)
+
+SetHelp ("VandermondeMatrix", "linear_algebra", "Return the Vandermonde matrix")
+function VandermondeMatrix(v) =
+  (
+    if rows(v) == 1 then v=v.';
+    n=rows(v);
+    vandermonde=ones(n,1);
+    for loop = 2 to n do
+     (
+      vandermonde=[v,vandermonde];  # adjoin new column
+      vandermonde@(,1) = vandermonde@(,2) .* vandermonde@(,1)
+    );
+   vandermonde
+  )
+protect ("VandermondeMatrix")
+SetHelpAlias ("VandermondeMatrix", "vander")
+vander = VandermondeMatrix
+protect ("vander")
+
+SetHelp ("RosserMatrix", "linear_algebra", "Rosser matrix, a classic symmetric eigenvalue test problem")
+RosserMatrix = [611,196,-192,407,-8,-52,-49,29
+196,899,113,-192,-71,-43,-8,-44
+-192,113,899,196,61,49,8,52
+407,-192,196,611,8,44,59,-23
+-8,-71,61,8,411,-599,208,208
+-52,-43,49,44,-599,411,208,208
+-49,-8,8,59,208,208,99,-911
+29,-44,52,-23,208,208,-911,99];
+protect("RosserMatrix");

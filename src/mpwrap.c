@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,15 +21,13 @@
 
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <string.h>
 #include <glib.h>
+#include <time.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <math.h>
 #include <limits.h>
 #include "calc.h"
@@ -37,7 +35,18 @@
 
 #include "mpwrap.h"
 
-extern void (*errorout)(char *);
+struct _MpwCtx {
+	int ref_count;
+
+	MpwErrorFunc errorout;
+	int error_num;
+
+	int default_mpf_prec;
+	gboolean double_math; /* instead of gmp, use doubles */
+	
+	gpointer data;
+};
+
 extern calc_error_t error_num;
 
 static MpwRealNum *free_reals = NULL;
@@ -88,6 +97,7 @@ static int default_mpf_prec = 0;
 		m->alloc.usage = 1;			\
 		mpwl_init_type(m,n->type);		\
 		mpwl_set(m,n);				\
+		n->alloc.usage --;			\
 		n = m;					\
 	}						\
 }
@@ -105,6 +115,21 @@ static int default_mpf_prec = 0;
 }
 
 /*************************************************************************/
+/*cache system                                                           */
+/*************************************************************************/
+typedef struct _MpwCache MpwCache;
+struct _MpwCache {
+	int prec;
+	int use_count;
+	mpf_ptr pi_mpf;
+	mpf_ptr atan_0_2_mpf;
+};
+
+static MpwCache *mpw_chache_get(int prec);
+static void mpw_chache_unget(MpwCache *mc);
+static GHashTable *mpw_cache_ht = NULL;
+
+/*************************************************************************/
 /*low level stuff prototypes                                             */
 /*************************************************************************/
 
@@ -118,17 +143,18 @@ static void mympf_arctan(mpf_ptr rop, mpf_ptr op);
 static void mympf_pi(mpf_ptr rop);
 
 /*my own power function for floats, very simple :) */
-static void mympf_pow_ui(mpf_t rop,mpf_t op,unsigned long int e);
 static void mympf_pow_z(mpf_t rop,mpf_t op,mpz_t e);
 
 /*my own power function for ints, very simple :) */
 static void mympz_pow_z(mpz_t rop,mpz_t op,mpz_t e);
 
+static gboolean mympq_perfect_square_p (mpq_t op);
+
 /*simple exponential function*/
 static void mympf_exp(mpf_t rop,mpf_t op);
 
 /*ln function*/
-static int mympf_ln(mpf_t rop,mpf_t op);
+static gboolean mympf_ln(mpf_t rop,mpf_t op);
 
 /*clear extra variables of type type, if type=op->type nothing is done*/
 static void mpwl_clear_extra_type(MpwRealNum *op,int type);
@@ -184,37 +210,43 @@ static void mpwl_mod(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 static void mpwl_gcd(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 static void mpwl_jacobi(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 static void mpwl_legendre(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
-static int mpwl_perfect_square(MpwRealNum *op);
+static void mpwl_kronecker(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static gboolean mpwl_perfect_square(MpwRealNum *op);
+static gboolean mpwl_perfect_power(MpwRealNum *op);
 
 static void mpwl_neg(MpwRealNum *rop,MpwRealNum *op);
 
-static void mpwl_fac_ui(MpwRealNum *rop,unsigned int op);
+static void mpwl_fac_ui (MpwRealNum *rop, unsigned int op);
+static void mpwl_fac (MpwRealNum *rop, MpwRealNum *op);
 
-static void mpwl_fac(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_dblfac_ui (MpwRealNum *rop, unsigned int op);
+static void mpwl_dblfac (MpwRealNum *rop, MpwRealNum *op);
 
 static int mpwl_pow_q(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
 /*power to an unsigned long and optionaly invert the answer*/
 static void mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e,
-			int reverse);
+			gboolean reverse);
 
 static void mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
-static int mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static gboolean mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
-static int mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static gboolean mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
-static int mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op);
+static gboolean mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op);
 
 static void mpwl_exp(MpwRealNum *rop,MpwRealNum *op);
-static int mpwl_ln(MpwRealNum *rop,MpwRealNum *op);
+static gboolean mpwl_ln(MpwRealNum *rop,MpwRealNum *op);
 
 static void mpwl_sin(MpwRealNum *rop,MpwRealNum *op);
 static void mpwl_cos(MpwRealNum *rop,MpwRealNum *op);
 static void mpwl_sinh(MpwRealNum *rop,MpwRealNum *op);
 static void mpwl_cosh(MpwRealNum *rop,MpwRealNum *op);
 static void mpwl_arctan(MpwRealNum *rop,MpwRealNum *op);
-static void mpwl_pi(MpwRealNum *rop);
+static void mpwl_pi (MpwRealNum *rop);
+static void mpwl_rand (MpwRealNum *rop);
+static void mpwl_randint (MpwRealNum *rop, MpwRealNum *op);
 
 static int mpwl_cmp(MpwRealNum *op1, MpwRealNum *op2);
 
@@ -231,8 +263,11 @@ static void mpwl_round(MpwRealNum *rop);
 static void mpwl_ceil(MpwRealNum *rop);
 static void mpwl_floor(MpwRealNum *rop);
 
-static void mpwl_set_str_float(MpwRealNum *rop,char *s,int base);
-static void mpwl_set_str_int(MpwRealNum *rop,char *s,int base);
+static void mpwl_set_str_float(MpwRealNum *rop,const char *s,int base);
+static void mpwl_set_str_int(MpwRealNum *rop,const char *s,int base);
+
+static void mpwl_numerator(MpwRealNum *rop, MpwRealNum *op);
+static void mpwl_denominator(MpwRealNum *rop, MpwRealNum *op);
 
 /**************/
 /*output stuff*/
@@ -242,20 +277,27 @@ static long mpwl_get_long(MpwRealNum *op, int *ex);
 
 /*round off the number at some digits*/
 static void str_make_max_digits(char *s,int digits);
+/*trim trailing zeros*/
+static void str_trim_trailing_zeros(char *s);
 
 /*formats a floating point with mantissa in p and exponent in e*/
 static char * str_format_float(char *p,long int e,int scientific_notation);
 
+static char * str_getstring_n(long num, int max_digits,
+			      int scientific_notation,
+			      int integer_output_base);
 static char * str_getstring_z(mpz_t num, int max_digits,
-			      int scientific_notation);
+			      int scientific_notation,
+			      int integer_output_base);
 static char * str_getstring_q(mpq_t num, int max_digits,
-			      int scientific_notation);
+			      int scientific_notation,
+			      int mixed_fractions);
 static char * str_getstring_f(mpf_t num, int max_digits,
 			      int scientific_notation);
 
 static char * mpwl_getstring(MpwRealNum * num, int max_digits,
-			     int scientific_notation, int results_as_floats);
-
+			     int scientific_notation, int results_as_floats,
+			     int mixed_fractions, int integer_output_base);
 /*************************************************************************/
 /*low level stuff                                                        */
 /*************************************************************************/
@@ -351,8 +393,10 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 	unsigned long int i;
 	int negate=TRUE;
 	int prec;
+	int old_prec;
 	
-	prec = 6*4 + mpf_get_prec(op);
+	old_prec = mpf_get_prec(op);
+	prec = 6*4 + old_prec;
 
 	mpf_set_default_prec(prec);
 
@@ -407,7 +451,7 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 			mpf_add(fres,foldres,fres);
 		negate= !negate;
 
-		if(mpf_cmp(foldres,fres)==0)
+		if(mpf_eq(foldres,fres,old_prec))
 			break;
 		mpf_set(foldres,fres);
 	}
@@ -500,6 +544,7 @@ mympf_exp(mpf_t rop,mpf_t op)
 	unsigned long int i;
 	unsigned long int f=0;
 	unsigned long int prec;
+	unsigned long int old_prec;
 
 	int sgn;
 	
@@ -510,7 +555,8 @@ mympf_exp(mpf_t rop,mpf_t op)
 	}
 
 	/* 4bits is about 1 digit I guess */
-	prec = 6*4 + mpf_get_prec(op);
+	old_prec = mpf_get_prec(op);
+	prec = 6*4 + old_prec;
 
 	mpf_init2(x,prec);
 	mpf_set(x,op);
@@ -550,7 +596,7 @@ mympf_exp(mpf_t rop,mpf_t op)
 		
 		mpf_add(fres,foldres,fres);
 
-		if(mpf_cmp(foldres,fres)==0)
+		if(mpf_eq(foldres,fres,old_prec+1))
 			break;
 		mpf_set(foldres,fres);
 	}
@@ -572,7 +618,7 @@ mympf_exp(mpf_t rop,mpf_t op)
 }
 
 /*ln function using 2*ln(x) == ln(x^2)*/
-static int
+static gboolean
 mympf_ln(mpf_t rop,mpf_t op)
 {
 	int neg = TRUE;
@@ -584,13 +630,15 @@ mympf_ln(mpf_t rop,mpf_t op)
 	unsigned long int i;
 	unsigned long int f = 0;
 	unsigned long int prec;
+	unsigned long int old_prec;
 	int inverse = FALSE;
 
 	if(mpf_cmp_ui(op,0)<=0)
 		inverse = TRUE;
 
 	/* 4bits is about 1 digit I guess */
-	prec = 6*4 + mpf_get_prec(op);
+	old_prec = mpf_get_prec(op);
+	prec = 6*4 + old_prec;
 	
 	mpf_init2(x,prec);
 	if(inverse)
@@ -634,7 +682,7 @@ mympf_ln(mpf_t rop,mpf_t op)
 			mpf_add(fres,foldres,fres);
 		neg = !neg;
 
-		if(mpf_cmp(foldres,fres)==0)
+		if(mpf_eq(foldres,fres,old_prec))
 			break;
 		mpf_set(foldres,fres);
 	}
@@ -718,12 +766,14 @@ mympf_arctan_bottom(mpf_t rop,mpf_t op)
 	mpf_t foldres;
 	unsigned long int i;
 	unsigned long int prec;
+	unsigned long int old_prec;
 
 	if(mpf_cmp_ui(op,0)<=0)
 		return FALSE;
 
 	/* 4bits is about 1 digit I guess */
-	prec = 6*4 + mpf_get_prec(op);
+	old_prec = mpf_get_prec(op);
+	prec = 6*4 + old_prec;
 	
 	mpf_init2(x,prec);
 	mpf_mul(x,op,op);
@@ -745,7 +795,7 @@ mympf_arctan_bottom(mpf_t rop,mpf_t op)
 			mpf_add(fres,foldres,fres);
 		neg = !neg;
 
-		if(mpf_cmp(foldres,fres)==0)
+		if(mpf_eq(foldres,fres,old_prec)==0)
 			break;
 		mpf_set(foldres,fres);
 	}
@@ -772,12 +822,14 @@ mympf_arctan_top(mpf_t rop,mpf_t op)
 	mpf_t foldres;
 	unsigned long int i;
 	unsigned long int prec;
+	unsigned long int old_prec;
 
 	if(mpf_cmp_ui(op,0)<=0)
 		return FALSE;
 
 	/* 4bits is about 1 digit I guess */
-	prec = 6*4 + mpf_get_prec(op);
+	old_prec = mpf_get_prec(op);
+	prec = 6*4 + old_prec;
 	
 	mpf_init2(x,prec);
 	mpf_mul(x,op,op);
@@ -812,7 +864,7 @@ mympf_arctan_top(mpf_t rop,mpf_t op)
 			mpf_add(fres,foldres,fres);
 		neg = !neg;
 
-		if(mpf_cmp(foldres,fres)==0)
+		if(mpf_eq(foldres,fres,old_prec)==0)
 			break;
 		mpf_set(foldres,fres);
 	}
@@ -880,34 +932,6 @@ mympf_arctan(mpf_ptr rop,mpf_ptr op)
 
 /*my own power function for floats, very simple :) */
 static void
-mympf_pow_ui(mpf_t rop,mpf_t op,unsigned long int e)
-{
-	mpf_t base;
-
-	if(e==0) {
-		mpf_set_ui(rop,1);
-		return;
-	} else if(e==1) {
-		mpf_set(rop,op);
-		return;
-	}
-
-	mpf_init_set(base,op);
-	mpf_set_ui(rop,1);
-	while(e>0) {
-		if(e & 0x1) { /*if odd*/
-			mpf_mul(rop,rop,base);
-			e--;
-		} else { /* even */
-			mpf_mul(base,base,base);
-			e >>= 1; /*e /= 2*/
-		}
-	}
-	mpf_clear(base);
-}
-
-/*my own power function for floats, very simple :) */
-static void
 mympf_pow_z(mpf_t rop,mpf_t op,mpz_t e)
 {
 	unsigned long limb;
@@ -926,7 +950,7 @@ mympf_pow_z(mpf_t rop,mpf_t op,mpz_t e)
 		if(limb==0)
 			continue;
 
-		mympf_pow_ui(tmp,op,limb);
+		mpf_pow_ui (tmp, op, limb);
 
 		mpf_mul(answer,answer,tmp);
 	} while(mpz_sgn(locale)!=0);
@@ -1023,6 +1047,13 @@ mympq_set_f(mpq_t rop,mpf_t op)
 
 }
 
+static gboolean
+mympq_perfect_square_p (mpq_t op)
+{
+	return mpz_perfect_square_p (mpq_numref(op)) &&
+		mpz_perfect_square_p (mpq_denref(op));
+}
+
 /*only set the type, don't free it, and don't set the type variable
   create an extra type of the variable for temporary use*/
 static void
@@ -1069,7 +1100,8 @@ mpwl_make_extra_type(MpwRealNum *op,int type)
 			mpf_set_z(op->data.fval,op->data.ival);
 		else if(op->type==MPW_RATIONAL) {
 			mpf_set_q(op->data.fval,op->data.rval);
-			/*go around a mpf_set_q bug*/
+			/* XXX: a hack!!
+			 * get around a mpf_set_q bug*/
 			if(mpq_sgn(op->data.rval)<0 &&
 			   mpf_sgn(op->data.fval)>0) {
 				mpf_neg(op->data.fval,op->data.fval);
@@ -2159,7 +2191,7 @@ mpwl_legendre(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		case MPW_NATIVEINT:
 			mpz_init_set_si(i1,op1->data.nval);
 			mpz_init_set_si(i2,op2->data.nval);
-			ret = mpz_jacobi(i1,i2);
+			ret = mpz_legendre(i1,i2);
 			mpz_clear(i1);
 			mpz_clear(i2);
 			break;
@@ -2175,20 +2207,72 @@ mpwl_legendre(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	}
 }
 
-static int
+static void
+mpwl_kronecker (MpwRealNum *rop, MpwRealNum *op1, MpwRealNum *op2)
+{
+	if(op1->type<=MPW_INTEGER && op2->type<=MPW_INTEGER) {
+		int t=mpwl_make_same_extra_type(op1,op2);
+		int ret = 0;
+		mpz_t i1,i2;
+
+		switch(t) {
+		case MPW_INTEGER:
+			ret = mpz_kronecker(op1->data.ival,op2->data.ival);
+			break;
+		case MPW_NATIVEINT:
+			mpz_init_set_si(i1,op1->data.nval);
+			mpz_init_set_si(i2,op2->data.nval);
+			ret = mpz_kronecker(i1,i2);
+			mpz_clear(i1);
+			mpz_clear(i2);
+			break;
+		}
+		mpwl_clear_extra_type(op1,t);
+		mpwl_clear_extra_type(op2,t);
+		mpwl_clear(rop);
+		mpwl_init_type(rop,MPW_NATIVEINT);
+		rop->data.nval = ret;
+	} else {
+		(*errorout)(_("Can't get jacobi symbol with Kronecker extension of floats or rationals!"));
+		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
+static gboolean
 mpwl_perfect_square(MpwRealNum *op)
 {
-	if(op->type==MPW_NATIVEINT) {
+	if (op->type == MPW_NATIVEINT) {
 		int ret;
 		mpz_t i;
 		mpz_init_set_si(i,op->data.nval);
 		ret = mpz_perfect_square_p(i);
 		mpz_clear(i);
 		return ret;
-	} else if(op->type==MPW_INTEGER) {
-		return mpz_perfect_square_p(op->data.ival);
+	} else if (op->type == MPW_INTEGER) {
+		return mpz_perfect_square_p (op->data.ival);
+	} else if (op->type == MPW_RATIONAL) {
+		return mympq_perfect_square_p (op->data.rval);
 	} else {
 		(*errorout)(_("perfect_square: can't work on non-integers!"));
+		error_num=NUMERICAL_MPW_ERROR;
+		return FALSE;
+	}
+}
+
+static gboolean
+mpwl_perfect_power (MpwRealNum *op)
+{
+	if(op->type==MPW_NATIVEINT) {
+		int ret;
+		mpz_t i;
+		mpz_init_set_si(i,op->data.nval);
+		ret = mpz_perfect_power_p(i);
+		mpz_clear(i);
+		return ret;
+	} else if(op->type==MPW_INTEGER) {
+		return mpz_perfect_power_p(op->data.ival);
+	} else {
+		(*errorout)(_("perfect_power: can't work on non-integers!"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return FALSE;
 	}
@@ -2255,6 +2339,54 @@ mpwl_fac(MpwRealNum *rop,MpwRealNum *op)
 			return;
 		}
 		mpwl_fac_ui(rop,op->data.nval);
+	}
+}
+
+static void
+mpwl_dblfac_ui(MpwRealNum *rop,unsigned int op)
+{
+	if(rop->type!=MPW_INTEGER) {
+		mpwl_clear(rop);
+		mpwl_init_type(rop,MPW_INTEGER);
+	}
+	mpz_set_ui (rop->data.ival, 1);
+	if (op == 0)
+		return;
+	for (;;) {
+		mpz_mul_ui (rop->data.ival, rop->data.ival, op);
+		if (op <= 2)
+			break;
+		op -= 2;
+	}
+}
+
+static void
+mpwl_dblfac (MpwRealNum *rop,MpwRealNum *op)
+{
+	if(op->type!=MPW_INTEGER && op->type!=MPW_NATIVEINT) {
+		(*errorout)(_("Can't do factorials of rationals or floats!"));
+		error_num=NUMERICAL_MPW_ERROR;
+		return;
+	}
+	if(op->type==MPW_INTEGER) {
+		if(mpz_cmp_ui(op->data.ival,ULONG_MAX)>0) {
+			(*errorout)(_("Number too large to compute factorial!"));
+			error_num=NUMERICAL_MPW_ERROR;
+			return;
+		}
+		if(mpz_sgn(op->data.ival)<0) {
+			(*errorout)(_("Can't do factorials of negative numbers!"));
+			error_num=NUMERICAL_MPW_ERROR;
+			return;
+		}
+		mpwl_dblfac_ui(rop,mpz_get_ui(op->data.ival));
+	} else {
+		if(op->data.nval<0) {
+			(*errorout)(_("Can't do factorials of negative numbers!"));
+			error_num=NUMERICAL_MPW_ERROR;
+			return;
+		}
+		mpwl_dblfac_ui(rop,op->data.nval);
 	}
 }
 
@@ -2346,7 +2478,7 @@ mpwl_pow_q(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 
 /*power to an unsigned long and optionaly invert the answer*/
 static void
-mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
+mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, gboolean reverse)
 {
 	MpwRealNum r={0};
 
@@ -2362,6 +2494,7 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 			mpz_pow_ui(mpq_denref(r.data.rval),
 				   mpq_denref(r.data.rval),e);
 			mpz_set_ui(mpq_numref(r.data.rval),1);
+			mpwl_make_int(&r);
 		}
 		break;
 	case MPW_INTEGER:
@@ -2374,6 +2507,7 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 			mpz_pow_ui(mpq_denref(r.data.rval),
 				   op1->data.ival,e);
 			mpz_set_ui(mpq_numref(r.data.rval),1);
+			mpwl_make_int(&r);
 		}
 		break;
 	case MPW_RATIONAL:
@@ -2385,10 +2519,11 @@ mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e, int reverse)
 		/*the exponent was negative! reverse the result!*/
 		if(reverse)
 			mpq_inv(r.data.rval,r.data.rval);
+		mpwl_make_int(&r);
 		break;
 	case MPW_FLOAT:
 		mpwl_init_type(&r,MPW_FLOAT);
-		mympf_pow_ui(r.data.fval,op1->data.fval,e);
+		mpf_pow_ui (r.data.fval, op1->data.fval, e);
 
 		if(reverse)
 			mpf_ui_div(r.data.fval,1,r.data.fval);
@@ -2429,6 +2564,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 					    mpq_denref(r.data.rval),
 					    op2->data.ival);
 				mpz_set_ui(mpq_numref(r.data.rval),1);
+				mpwl_make_int(&r);
 			}
 			break;
 		case MPW_INTEGER:
@@ -2443,6 +2579,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 					    op1->data.ival,
 					    op2->data.ival);
 				mpz_set_ui(mpq_numref(r.data.rval),1);
+				mpwl_make_int(&r);
 			}
 			break;
 		case MPW_RATIONAL:
@@ -2456,6 +2593,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			/*the exponent was negative! reverse the result!*/
 			if(reverse)
 				mpq_inv(r.data.rval,r.data.rval);
+			mpwl_make_int(&r);
 			break;
 		case MPW_FLOAT:
 			mpwl_init_type(&r,MPW_FLOAT);
@@ -2478,7 +2616,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		mpz_neg(op2->data.ival,op2->data.ival);
 }
 
-static int
+static gboolean
 mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 {
 	MpwRealNum r={0};
@@ -2504,20 +2642,16 @@ mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	return FALSE;
 }
 
-static int
-mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
+static gboolean
+mpwl_pow (MpwRealNum *rop, MpwRealNum *op1, MpwRealNum *op2)
 {
 	int sgn1 = mpwl_sgn(op1);
 	int sgn2 = mpwl_sgn(op2);
-	if(sgn1 == 0 && sgn2 == 0) {
-		(*errorout)(_("0^0 is undefined"));
-		error_num=NUMERICAL_MPW_ERROR;
-		return FALSE;
-	} else if(sgn1 == 0) {
-		mpwl_set_ui(rop,0);
-		return FALSE;
-	} else if(sgn2 == 0) {
+	if (sgn2 == 0) {
 		mpwl_set_ui(rop,1);
+		return FALSE;
+	} else if (sgn1 == 0) {
+		mpwl_set_ui(rop,0);
 		return FALSE;
 	}
 
@@ -2537,24 +2671,41 @@ mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	return FALSE;
 }
 
-static int
-mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op)
+static gboolean
+mpwl_sqrt (MpwRealNum *rop, MpwRealNum *op)
 {
 	MpwRealNum r={0};
 	int complex=FALSE;
 
-	mpwl_init_type(&r,MPW_FLOAT);
-	if(mpwl_sgn(op)<0) {
+	if (mpwl_sgn (op) < 0) {
 		complex = TRUE;
-		mpwl_neg(op,op);
+		mpwl_neg (op, op);
 	}
-	mpwl_make_extra_type(op,MPW_FLOAT);
-	mpf_sqrt(r.data.fval,op->data.fval);
-	mpwl_clear_extra_type(op,MPW_FLOAT);
-	if(complex)
-		mpwl_neg(op,op);
+	if ((op->type == MPW_NATIVEINT ||
+	     op->type == MPW_INTEGER) &&
+	    mpwl_perfect_square (op)) {
+		mpwl_init_type (&r, MPW_INTEGER);
+		mpwl_make_extra_type (op, MPW_INTEGER);
+		mpz_sqrt (r.data.ival, op->data.ival);
+		mpwl_clear_extra_type (op, MPW_INTEGER);
+	} else if (op->type == MPW_RATIONAL &&
+		   mpwl_perfect_square (op)) {
+		mpwl_init_type (&r, MPW_RATIONAL);
+		mpz_sqrt (mpq_numref (r.data.rval), mpq_numref (op->data.rval));
+		mpz_sqrt (mpq_denref (r.data.rval), mpq_denref (op->data.rval));
+	} else if (op->type == MPW_NATIVEINT) {
+		mpwl_init_type (&r, MPW_FLOAT);
+		mpf_sqrt_ui (r.data.fval, op->data.nval);
+	} else {
+		mpwl_init_type (&r, MPW_FLOAT);
+		mpwl_make_extra_type (op, MPW_FLOAT);
+		mpf_sqrt (r.data.fval, op->data.fval);
+		mpwl_clear_extra_type (op,MPW_FLOAT);
+	}
+	if (complex)
+		mpwl_neg (op, op);
 
-	mpwl_move(rop,&r);
+	mpwl_move (rop, &r);
 	return complex;
 }
 
@@ -2571,7 +2722,7 @@ mpwl_exp(MpwRealNum *rop,MpwRealNum *op)
 	mpwl_move(rop,&r);
 }
 
-static int
+static gboolean
 mpwl_ln(MpwRealNum *rop,MpwRealNum *op)
 {
 	int ret;
@@ -2649,11 +2800,62 @@ mpwl_arctan(MpwRealNum *rop,MpwRealNum *op)
 }
 
 static void
-mpwl_pi(MpwRealNum *rop)
+mpwl_pi (MpwRealNum *rop)
 {
 	mpwl_clear(rop);
 	mpwl_init_type(rop,MPW_FLOAT);
 	mympf_pi(rop->data.fval);
+}
+
+/* Random state stuff: FIXME: this is evil */
+static unsigned long randstate_seed = 0;
+
+static void
+mpwl_rand (MpwRealNum *rop)
+{
+	gmp_randstate_t rand_state;
+	gmp_randinit_default (rand_state);
+	randstate_seed += (unsigned long)time (NULL) * (unsigned long) rand ();
+	gmp_randseed_ui (rand_state, randstate_seed);
+	mpwl_clear (rop);
+	mpwl_init_type (rop, MPW_FLOAT);
+	mpf_urandomb (rop->data.fval, rand_state, default_mpf_prec);
+	gmp_randclear (rand_state);
+}
+
+static void
+mpwl_randint (MpwRealNum *rop, MpwRealNum *op)
+{
+	gmp_randstate_t rand_state;
+
+	if (op->type != MPW_NATIVEINT &&
+	    op->type != MPW_INTEGER) {
+		(*errorout)(_("Can't make random integer from a non-integer"));
+		error_num = NUMERICAL_MPW_ERROR;
+		return;
+	}
+	if (mpwl_sgn (op) <= 0) {
+		(*errorout)(_("Range for random integer must be positive"));
+		error_num = NUMERICAL_MPW_ERROR;
+		return;
+	}
+
+	gmp_randinit_default (rand_state);
+	randstate_seed += (unsigned long)time (NULL) * (unsigned long) rand ();
+	gmp_randseed_ui (rand_state, randstate_seed);
+
+	mpwl_clear (rop);
+	mpwl_init_type (rop, MPW_INTEGER);
+	if (op->type == MPW_INTEGER) {
+		mpz_urandomm (rop->data.ival, rand_state, op->data.ival);
+	} else {
+		mpz_t z;
+		mpz_init (z);
+		mpz_set_si (z, op->data.nval);
+		mpz_urandomm (rop->data.ival, rand_state, z);
+		mpz_clear (z);
+	}
+	gmp_randclear (rand_state);
 }
 
 static void
@@ -2811,17 +3013,86 @@ mpwl_trunc(MpwRealNum *rop)
 }
 
 static void
-mpwl_set_str_float(MpwRealNum *rop,char *s,int base)
+mpwl_numerator(MpwRealNum *rop, MpwRealNum *op)
 {
+	if(op->type == MPW_INTEGER ||
+	   op->type == MPW_NATIVEINT) {
+		if(rop != op)
+			mpwl_set(rop, op);
+	} else if(op->type == MPW_FLOAT) {
+		(*errorout)(_("Can't get numerator of floating types"));
+		error_num=NUMERICAL_MPW_ERROR;
+	} else { /* must be rational */
+		if(rop != op) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop, MPW_INTEGER);
+			mpz_set(rop->data.ival, mpq_numref(op->data.rval));
+		} else {
+			if(!rop->data.ival)
+				rop->data.ival = g_new(__mpz_struct,1);
+			mpz_init_set(rop->data.ival,
+				     mpq_numref(rop->data.rval));
+			mpq_clear(rop->data.rval);
+			g_free(rop->data.rval);
+			rop->data.rval = NULL;
+			rop->type = MPW_INTEGER;
+		}
+	}
+}
+
+static void
+mpwl_denominator(MpwRealNum *rop, MpwRealNum *op)
+{
+	if(op->type == MPW_INTEGER ||
+	   op->type == MPW_NATIVEINT) {
+		mpwl_set_si(rop, 1);
+	} else if(op->type == MPW_FLOAT) {
+		(*errorout)(_("Can't get numerator of floating types"));
+		error_num=NUMERICAL_MPW_ERROR;
+	} else { /* must be rational */
+		if(rop != op) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop, MPW_INTEGER);
+			mpz_set(rop->data.ival, mpq_denref(op->data.rval));
+		} else {
+			if(!rop->data.ival)
+				rop->data.ival = g_new(__mpz_struct,1);
+			mpz_init_set(rop->data.ival,
+				     mpq_denref(rop->data.rval));
+			mpq_clear(rop->data.rval);
+			g_free(rop->data.rval);
+			rop->data.rval = NULL;
+			rop->type = MPW_INTEGER;
+		}
+	}
+}
+
+static void
+mpwl_set_str_float(MpwRealNum *rop,const char *s,int base)
+{
+	char *old_locale = setlocale (LC_NUMERIC, NULL);
+	if (old_locale != NULL &&
+	    strcmp (old_locale, "C") != 0) {
+		old_locale = g_strdup (old_locale);
+		setlocale (LC_NUMERIC, "C");
+	} else {
+		old_locale = NULL;
+	}
+
 	if(rop->type!=MPW_FLOAT) {
 		mpwl_clear(rop);
 		mpwl_init_type(rop,MPW_FLOAT);
 	}
 	mpf_set_str(rop->data.fval,s,base);
+
+	if (old_locale != NULL) {
+		setlocale (LC_NUMERIC, old_locale);
+		g_free (old_locale);
+	}
 }
 
 static void
-mpwl_set_str_int(MpwRealNum *rop,char *s,int base)
+mpwl_set_str_int(MpwRealNum *rop,const char *s,int base)
 {
 	if(rop->type!=MPW_INTEGER) {
 		mpwl_clear(rop);
@@ -2892,6 +3163,21 @@ str_make_max_digits(char *s,int digits)
 	s[sd]='1';
 }
 
+/*trim trailing zeros*/
+static void
+str_trim_trailing_zeros(char *s)
+{
+	char *p,*pp;
+
+	p = strrchr(s,'.');
+	if(!p) return;
+	for(pp=p+1;*pp;pp++) {
+		if(*pp!='0')
+			p = pp+1;
+	}
+	*p = '\0';
+}
+
 /*formats a floating point with mantissa in p and exponent in e*/
 static char *
 str_format_float(char *p,long int e,int scientific_notation)
@@ -2916,6 +3202,9 @@ str_format_float(char *p,long int e,int scientific_notation)
 				p[1]='.';
 			}
 		}
+		str_trim_trailing_zeros(p);
+		/* look above to see why this is one sprintf which is in
+		   fact safe */
 		sprintf(p,"%se%ld",p,e-1);
 	} else if(e>0) {
 		len=strlen(p);
@@ -2935,6 +3224,7 @@ str_format_float(char *p,long int e,int scientific_notation)
 				p[e]='.';
 			}
 		}
+		str_trim_trailing_zeros(p);
 	} else { /*e<=0*/
 		if(strlen(p)==0) {
 			p=g_strdup("0");
@@ -2955,17 +3245,47 @@ str_format_float(char *p,long int e,int scientific_notation)
 					p[i+2]='0';
 			}
 		}
+		str_trim_trailing_zeros(p);
 	}
 	return p;
 }
 
 static char *
-str_getstring_n(long num, int max_digits,int scientific_notation)
+str_getstring_n(long num, int max_digits,int scientific_notation,
+	       	int integer_output_base)
 {
 	char *p,*p2;
 	mpf_t fr;
 
-	p = g_strdup_printf("%ld",num);
+	g_return_val_if_fail(integer_output_base>=2,NULL);
+
+	if(integer_output_base == 10) {
+		p = g_strdup_printf("%ld",num);
+	} else if(integer_output_base == 8) {
+		p = g_strdup_printf("%s0%lo",num<0?"-":"",num<0?-num:num);
+	} else if(integer_output_base == 16) {
+		p = g_strdup_printf("%s0x%lx",num<0?"-":"",num<0?-num:num);
+	} else {
+		GString *gs = g_string_new("");
+		long x;
+		x = num;
+		if(num<0) x=-x;
+		while(x>0) {
+			int digit = x % integer_output_base;
+			x = x / integer_output_base;
+			if(digit<=9)
+				g_string_prepend_c(gs,'0'+digit);
+			else
+				g_string_prepend_c(gs,'a'+(digit-10));
+		}
+		if(num<0)
+			g_string_prepend_c(gs,'-');
+		else if(num == 0)
+			/* if num is 0 then we haven't added any digits yet */
+			g_string_prepend_c(gs,'0');
+		p = g_strdup_printf("%d\\%s",integer_output_base,gs->str);
+		g_string_free(gs,TRUE);
+	}
 	if(max_digits>0 && max_digits<strlen(p)) {
 		mpf_init(fr);
 		mpf_set_si(fr,num);
@@ -2983,12 +3303,26 @@ str_getstring_n(long num, int max_digits,int scientific_notation)
 }
 
 static char *
-str_getstring_z(mpz_t num, int max_digits,int scientific_notation)
+str_getstring_z(mpz_t num, int max_digits,int scientific_notation,
+		int integer_output_base)
 {
 	char *p,*p2;
 	mpf_t fr;
 
-	p=mpz_get_str(NULL,10,num);
+	p=mpz_get_str(NULL,integer_output_base,num);
+	if(integer_output_base==16) {
+		p2 = g_strconcat("0x",p,NULL);
+		g_free(p);
+		p = p2;
+	} else if(integer_output_base==8) {
+		p2 = g_strconcat("0",p,NULL);
+		g_free(p);
+		p = p2;
+	} else if(integer_output_base!=10) {
+		p2 = g_strdup_printf("%d\\%s",integer_output_base,p);
+		g_free(p);
+		p = p2;
+	}
 	if(max_digits>0 && max_digits<strlen(p)) {
 		mpf_init(fr);
 		mpf_set_z(fr,num);
@@ -3006,16 +3340,46 @@ str_getstring_z(mpz_t num, int max_digits,int scientific_notation)
 }
 
 static char *
-str_getstring_q(mpq_t num, int max_digits,int scientific_notation)
+str_getstring_q(mpq_t num, int max_digits,int scientific_notation,
+		int mixed_fractions)
 {
 	char *p,*p2;
 	mpf_t fr;
+	
+	if(mixed_fractions) {
+		if(mpq_sgn(num)>0) {
+			if(mpz_cmp(mpq_numref(num),mpq_denref(num))<0)
+				mixed_fractions = FALSE;
+		} else {
+			mpz_neg(mpq_numref(num),mpq_numref(num));
+			if(mpz_cmp(mpq_numref(num),mpq_denref(num))<0)
+				mixed_fractions = FALSE;
+			mpz_neg(mpq_numref(num),mpq_numref(num));
+		}
+	}
 
-	p=mpz_get_str(NULL,10,mpq_numref(num));
-	p=appendstr(p,"/");
-	p2=mpz_get_str(NULL,10,mpq_denref(num));
-	p=appendstr(p,p2);
-	g_free(p2);
+	if(!mixed_fractions) {
+		p=mpz_get_str(NULL,10,mpq_numref(num));
+		p=appendstr(p,"/");
+		p2=mpz_get_str(NULL,10,mpq_denref(num));
+		p=appendstr(p,p2);
+		g_free(p2);
+	} else {
+		mpz_t tmp1,tmp2;
+		mpz_init(tmp1);
+		mpz_init(tmp2);
+		mpz_tdiv_qr(tmp1,tmp2,mpq_numref(num),mpq_denref(num));
+		if(mpz_sgn(tmp2)<0)
+			mpz_neg(tmp2,tmp2);
+		p=mpz_get_str(NULL,10,tmp1);
+		p=appendstr(p," ");
+		p2=mpz_get_str(NULL,10,tmp2);
+		p=appendstr(p,p2);
+		p=appendstr(p,"/");
+		p2=mpz_get_str(NULL,10,mpq_denref(num));
+		p=appendstr(p,p2);
+		g_free(p2);
+	}
 	if(max_digits>0 && max_digits<strlen(p)) {
 		mpf_init(fr);
 		mpf_set_q(fr,num);
@@ -3047,7 +3411,8 @@ str_getstring_f(mpf_t num, int max_digits,int scientific_notation)
 
 static char *
 mpwl_getstring(MpwRealNum * num, int max_digits,int scientific_notation,
-	int results_as_floats)
+	       int results_as_floats, int mixed_fractions,
+	       int integer_output_base)
 {
 	mpf_t fr;
 	char *p;
@@ -3062,7 +3427,7 @@ mpwl_getstring(MpwRealNum * num, int max_digits,int scientific_notation,
 			return p;
 		}
 		return str_getstring_q(num->data.rval,max_digits,
-				       scientific_notation);
+				       scientific_notation,mixed_fractions);
 	case MPW_NATIVEINT:
 		if(results_as_floats) {
 			mpf_init(fr);
@@ -3073,7 +3438,8 @@ mpwl_getstring(MpwRealNum * num, int max_digits,int scientific_notation,
 			return p;
 		}
 		return str_getstring_n(num->data.nval,max_digits,
-				       scientific_notation);
+				       scientific_notation,
+				       integer_output_base);
 	case MPW_INTEGER:
 		if(results_as_floats) {
 			mpf_init(fr);
@@ -3084,7 +3450,8 @@ mpwl_getstring(MpwRealNum * num, int max_digits,int scientific_notation,
 			return p;
 		}
 		return str_getstring_z(num->data.ival,max_digits,
-				       scientific_notation);
+				       scientific_notation,
+				       integer_output_base);
 	case MPW_FLOAT:
 		return str_getstring_f(num->data.fval,max_digits,
 				       scientific_notation);
@@ -3128,7 +3495,7 @@ mpw_set_default_prec(unsigned long int i)
 
 /*initialize a number*/
 void
-mpw_init(mpw_ptr op)
+mpw_init (mpw_ptr op)
 {
 	op->type=MPW_REAL;
 	op->r = zero;
@@ -3634,6 +4001,30 @@ mpw_gcd(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 	}
 }
 void
+mpw_lcm (mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+{
+	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
+		MpwRealNum gcd = {0};
+		mpwl_init_type (&gcd, MPW_NATIVEINT);
+
+		mpwl_gcd (&gcd, op1->r, op2->r);
+		if (error_num == NUMERICAL_MPW_ERROR)
+			return;
+
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_mul (rop->r, op1->r, op2->r);
+		mpwl_div (rop->r, rop->r, &gcd);
+		mpwl_clear (&gcd);
+		if (mpwl_sgn (rop->r) < 0)
+			mpwl_neg (rop->r, rop->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("Can't LCM complex numbers"));
+	}
+}
+
+void
 mpw_jacobi(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
@@ -3657,7 +4048,19 @@ mpw_legendre(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		(*errorout)(_("Can't get legendre symbols complex numbers"));
 	}
 }
-int
+void
+mpw_kronecker(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+{
+	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_kronecker(rop->r,op1->r,op2->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("Can't get jacobi symbol with Kronecker extension for complex numbers"));
+	}
+}
+gboolean
 mpw_perfect_square(mpw_ptr op)
 {
 	if(op->type==MPW_REAL) {
@@ -3665,6 +4068,17 @@ mpw_perfect_square(mpw_ptr op)
 	} else {
 		error_num=NUMERICAL_MPW_ERROR;
 		(*errorout)(_("perfect_square: can't work on complex numbers"));
+		return FALSE;
+	}
+}
+gboolean
+mpw_perfect_power(mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		return mpwl_perfect_power(op->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("perfect_power: can't work on complex numbers"));
 		return FALSE;
 	}
 }
@@ -4038,11 +4452,74 @@ mpw_arctan(mpw_ptr rop,mpw_ptr op)
 }
 
 void
-mpw_pi(mpw_ptr rop)
+mpw_pi (mpw_ptr rop)
 {
-	MAKE_REAL(rop);
-	MAKE_COPY(rop->r);
-	mpwl_pi(rop->r);
+	MAKE_REAL (rop);
+	MAKE_COPY (rop->r);
+	mpwl_pi (rop->r);
+}
+
+void
+mpw_rand (mpw_ptr rop)
+{
+	MAKE_REAL (rop);
+	MAKE_COPY (rop->r);
+	mpwl_rand (rop->r);
+}
+
+void
+mpw_randint (mpw_ptr rop, mpw_ptr op)
+{
+	if (op->type == MPW_COMPLEX) {
+		(*errorout)(_("Can't make random integer out of a complex number"));
+		error_num = NUMERICAL_MPW_ERROR;
+		return;
+	}
+	MAKE_REAL (rop);
+	MAKE_COPY (rop->r);
+	mpwl_randint (rop->r, op->r);
+}
+
+void
+mpw_i (mpw_ptr rop)
+{
+	mpw_clear (rop);
+
+	rop->type = MPW_COMPLEX;
+	rop->r = zero;
+	zero->alloc.usage++;
+	rop->i = one;
+	one->alloc.usage++;
+}
+
+void
+mpw_conj (mpw_ptr rop, mpw_ptr op)
+{
+	if (op->type == MPW_REAL) {
+		if (rop != op) {
+			MAKE_REAL (rop);
+			rop->r->alloc.usage--;
+			if (rop->r->alloc.usage==0)
+				mpwl_free (rop->r, FALSE);
+			rop->r = op->r;
+			op->r->alloc.usage++;
+		}
+	} else {
+		if (rop != op) {
+			rop->type = MPW_COMPLEX;
+			rop->r->alloc.usage--;
+			if (rop->r->alloc.usage==0)
+				mpwl_free (rop->r, FALSE);
+			rop->r = op->r;
+			op->r->alloc.usage++;
+
+			MAKE_COPY(rop->i);
+			mpwl_neg (rop->i, op->i);
+		} else {
+			MAKE_COPY(rop->i);
+			mpwl_neg(rop->i,op->i);
+		}
+	}
 }
 
 void
@@ -4120,6 +4597,19 @@ mpw_fac(mpw_ptr rop,mpw_ptr op)
 	}
 }
 
+void
+mpw_dblfac (mpw_ptr rop, mpw_ptr op)
+{
+	if (op->type==MPW_REAL) {
+		MAKE_REAL (rop);
+		MAKE_COPY (rop->r);
+		mpwl_dblfac (rop->r, op->r);
+	} else {
+		(*errorout)(_("Can't make factorials of complex numbers"));
+		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
 /*make a number int if possible*/
 void
 mpw_make_int(mpw_ptr rop)
@@ -4168,18 +4658,19 @@ mpw_init_mp(void)
 
 char *
 mpw_getstring(mpw_ptr num, int max_digits,int scientific_notation,
-	      int results_as_floats)
+	      int results_as_floats,int mixed_fractions,
+	      int integer_output_base)
 {
 	mpw_uncomplex(num);
 	if(num->type==MPW_REAL) {
 		return mpwl_getstring(num->r,max_digits,scientific_notation,
-			results_as_floats);
+			results_as_floats,mixed_fractions,integer_output_base);
 	} else {
 		char *p1,*p2,*r;
 		p1 = mpwl_getstring(num->r,max_digits,scientific_notation,
-			results_as_floats);
+			results_as_floats,mixed_fractions,integer_output_base);
 		p2 = mpwl_getstring(num->i,max_digits,scientific_notation,
-			results_as_floats);
+			results_as_floats,mixed_fractions,integer_output_base);
 		if(mpwl_sgn(num->i)>=0)
 			r = g_strconcat("(",p1,"+",p2,"i)",NULL);
 		else
@@ -4191,7 +4682,7 @@ mpw_getstring(mpw_ptr num, int max_digits,int scientific_notation,
 }
 
 void
-mpw_set_str_float(mpw_ptr rop,char *s,int base)
+mpw_set_str_float (mpw_ptr rop, const char *s, int base)
 {
 	MAKE_REAL(rop);
 	MAKE_COPY(rop->r);
@@ -4199,7 +4690,7 @@ mpw_set_str_float(mpw_ptr rop,char *s,int base)
 }
 
 void
-mpw_set_str_int(mpw_ptr rop,char *s,int base)
+mpw_set_str_int (mpw_ptr rop, const char *s, int base)
 {
 	MAKE_REAL(rop);
 	MAKE_COPY(rop->r);
@@ -4207,7 +4698,7 @@ mpw_set_str_int(mpw_ptr rop,char *s,int base)
 }
 
 void
-mpw_set_str_complex(mpw_ptr rop,char *s,int base)
+mpw_set_str_complex(mpw_ptr rop,const char *s,int base)
 {
 	char *p;
 	int size;
@@ -4226,8 +4717,9 @@ mpw_set_str_complex(mpw_ptr rop,char *s,int base)
 	mpw_uncomplex(rop);
 }
 
-void
-mpw_set_str(mpw_ptr rop,char *s,int base)
+/*set one element (space separated)*/
+static void
+mpw_set_str_one(mpw_ptr rop,const char *s,int base)
 {
 	/*rationals*/
 	if(strchr(s,'/')) {
@@ -4274,11 +4766,37 @@ mpw_set_str(mpw_ptr rop,char *s,int base)
 		mpw_set_str_complex(tmp,pp,base);
 		mpw_add(rop,rop,tmp);
 		mpw_clear(tmp);
-	/*floats*/
-	} else if(strchr(s,'.') || strchr(s,'e'))
+	/*floats, FIXME: this is higly imperfect in fact it will
+	  guess numbers with high base to be floats, how shall
+	  we fix this???*/
+	} else if(strchr(s,'.') || strchr(s,'e') || strchr(s,'E'))
 		mpw_set_str_float(rop,s,base);
 	else
 		mpw_set_str_int(rop,s,base);
+}
+
+void
+mpw_set_str(mpw_ptr rop,const char *s,int base)
+{
+	char *p;
+	char *d;
+	mpw_t tmp;
+	p = strchr(s,' ');
+	if(!p) {
+		mpw_set_str_one(rop,s,base);
+		return;
+	}
+	mpw_init(tmp);
+	mpw_set_ui(rop,0);
+	d = g_strdup(s);
+	p = strtok(d," ");
+	while(p) {
+		mpw_set_str_one(tmp,p,base);
+		mpw_add(rop,rop,tmp);
+		p = strtok(NULL," ");
+	}
+	mpw_clear(tmp);
+	g_free(d);
 }
 
 int
@@ -4410,4 +4928,149 @@ mpw_get_long(mpw_ptr op)
 		return 0;
 	}
 	return r;
+}
+
+void
+mpw_denominator(mpw_ptr rop, mpw_ptr op)
+{
+	if(op->type==MPW_COMPLEX) {
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		mpwl_denominator(rop->r, op->r);
+		mpwl_denominator(rop->i, op->i);
+		rop->type = MPW_COMPLEX;
+		mpw_uncomplex(rop);
+	} else {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_denominator(rop->r, op->r);
+	}
+}
+
+void
+mpw_numerator(mpw_ptr rop, mpw_ptr op)
+{
+	if(op->type==MPW_COMPLEX) {
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		mpwl_numerator(rop->r, op->r);
+		mpwl_numerator(rop->i, op->i);
+		rop->type = MPW_COMPLEX;
+		mpw_uncomplex(rop);
+	} else {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_numerator(rop->r, op->r);
+	}
+}
+
+/*************************************************************************/
+/*conext level stuff                                                     */
+/*************************************************************************/
+
+/* make new context with a refcount of 1 */
+MpwCtx *
+mpw_ctx_new(MpwErrorFunc errorout,
+	    int default_mpf_prec,
+	    gboolean double_math,
+	    gpointer data)
+{
+	MpwCtx *mctx = g_new0(MpwCtx,1);
+	mctx->errorout = errorout;
+	mctx->default_mpf_prec = default_mpf_prec;
+	mctx->double_math = double_math;
+	mctx->data = data;
+
+	return mctx;
+}
+
+void
+mpw_ctx_set_errorout(MpwCtx *mctx, MpwErrorFunc errorout)
+{
+	mctx->errorout = errorout;
+}
+
+void
+mpw_ctx_set_default_mpf_prec(MpwCtx *mctx, int default_mpf_prec)
+{
+	mctx->default_mpf_prec = default_mpf_prec;
+}
+
+void
+mpw_ctx_set_double_math(MpwCtx *mctx, gboolean double_math)
+{
+	mctx->double_math = double_math;
+}
+
+void
+mpw_ctx_set_data(MpwCtx *mctx, gpointer data)
+{
+	mctx->data = data;
+}
+
+MpwErrorFunc
+mpw_ctx_get_errorout(MpwCtx *mctx)
+{
+	return mctx->errorout;
+}
+
+int
+mpw_ctx_get_default_mpf_prec(MpwCtx *mctx)
+{
+	return mctx->default_mpf_prec;
+}
+
+gboolean
+mpw_ctx_get_double_math(MpwCtx *mctx)
+{
+	return mctx->double_math;
+}
+
+gpointer
+mpw_ctx_get_data(MpwCtx *mctx)
+{
+	return mctx->data;
+}
+
+void
+mpw_ctx_ref(MpwCtx *mctx)
+{
+	mctx->ref_count++;
+}
+
+void
+mpw_ctx_unref(MpwCtx *mctx)
+{
+	mctx->ref_count--;
+	if(mctx->ref_count <= 0) {
+		g_free(mctx);
+	}
+}
+
+/*************************************************************************/
+/*cache system                                                           */
+/*************************************************************************/
+static MpwCache *
+mpw_chache_get(int prec)
+{
+	MpwCache *mc;
+	if(!mpw_cache_ht)
+		mpw_cache_ht = g_hash_table_new(NULL, NULL);
+	mc = g_hash_table_lookup(mpw_cache_ht, GINT_TO_POINTER(prec));
+	if(mc) {
+		mc->use_count++;
+	} else {
+		mc = g_new0(MpwCache,1);
+		mc->use_count = 1;
+		g_hash_table_insert(mpw_cache_ht,
+				    GINT_TO_POINTER(prec), mc);
+	}
+	return mc;
+}
+
+static void
+mpw_chache_unget(MpwCache *mc)
+{
+	mc->use_count--;
+	/* FIXME: clear on 0 */
 }

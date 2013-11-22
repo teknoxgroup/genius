@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -22,11 +22,9 @@
 #ifndef _FUNCLIB_H_
 #define _FUNCLIB_H_
 
-#include "eval.h"
-
 /*add the routines to the dictionary*/
-void funclib_addall(void);
+void gel_funclib_addall(void);
 /*remove all cached floating point values*/
-void break_fp_caches(void);
+void gel_break_fp_caches(void);
 
 #endif

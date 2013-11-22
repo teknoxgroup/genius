@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -27,7 +27,10 @@
 /*declarations of structures*/
 #include "structs.h"
 
-char *compile_tree(ETree *t);
-ETree *decompile_tree(char *s);
+char *gel_compile_tree(GelETree *t);
+GelETree *gel_decompile_tree(char *s);
+
+char * gel_encode_string (const char *s);
+char * gel_decode_string (const char *s);
 
 #endif

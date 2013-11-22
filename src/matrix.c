@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -29,22 +29,22 @@
    the free matrix list, we could just cast it to a
    pointer but this gives the impression of being
    cleaner*/
-typedef struct _MatrixFreeList MatrixFreeList;
-struct _MatrixFreeList {
-	MatrixFreeList *next;
+typedef struct _GelMatrixFreeList GelMatrixFreeList;
+struct _GelMatrixFreeList {
+	GelMatrixFreeList *next;
 };
 
-static MatrixFreeList *free_matrices = NULL;
+static GelMatrixFreeList *free_matrices = NULL;
 
 /*make new matrix*/
-Matrix *
-matrix_new(void)
+GelMatrix *
+gel_matrix_new(void)
 {
-	Matrix *m;
+	GelMatrix *m;
 	if(!free_matrices)
-		m = g_new(Matrix,1);
+		m = g_new(GelMatrix,1);
 	else {
-		m = (Matrix *)free_matrices;
+		m = (GelMatrix *)free_matrices;
 		free_matrices = free_matrices->next;
 	}
 
@@ -63,7 +63,7 @@ matrix_new(void)
 
 /*set size of a matrix*/
 void
-matrix_set_size(Matrix *matrix, int width, int height)
+gel_matrix_set_size (GelMatrix *matrix, int width, int height, gboolean padding)
 {
 	GPtrArray *na;
 	int i;
@@ -73,12 +73,18 @@ matrix_set_size(Matrix *matrix, int width, int height)
 	g_return_if_fail(matrix != NULL);
 	g_return_if_fail(width>0);
 	g_return_if_fail(height>0);
+
+	if ( ! padding) {
+		wpadding = 0;
+		hpadding = 0;
+	} else {
+		wpadding = width >> 4;
+		hpadding = height >> 4;
+		if(wpadding > 10) wpadding = 10;
+		if(hpadding > 10) hpadding = 10;
+	}
 	
 	if(!matrix->data) {
-		wpadding = width/10;
-		hpadding = height/10;
-		if(wpadding>10) wpadding = 10;
-		if(hpadding>10) hpadding = 10;
 		matrix->width = width;
 		matrix->realwidth = width+wpadding;
 		matrix->height = height;
@@ -111,11 +117,6 @@ matrix_set_size(Matrix *matrix, int width, int height)
 		return;
 	}
 
-	wpadding = width/10;
-	hpadding = height/10;
-	if(wpadding>10) wpadding = 10;
-	if(hpadding>10) hpadding = 10;
-	
 	matrix->fullsize = (width+wpadding)*(height+hpadding);
 	na = g_ptr_array_new();
 	g_ptr_array_set_size(na,matrix->fullsize);
@@ -138,43 +139,47 @@ matrix_set_size(Matrix *matrix, int width, int height)
 
 /*set the size of the matrix to be at least this*/
 void
-matrix_set_at_least_size(Matrix *matrix, int width, int height)
+gel_matrix_set_at_least_size(GelMatrix *matrix, int width, int height)
 {
 	g_return_if_fail(matrix != NULL);
 	g_return_if_fail(width>=0);
 	g_return_if_fail(height>=0);
 	
 	if(width>matrix->width || height>matrix->height)
-		matrix_set_size(matrix,MAX(width,matrix->width),
-				MAX(height,matrix->height));
+		gel_matrix_set_size (matrix,
+				     MAX(width,matrix->width),
+				     MAX(height,matrix->height),
+				     TRUE /* padding */);
 }
 
 /*set element*/
 void
-matrix_set_element(Matrix *matrix, int x, int y, gpointer data)
+gel_matrix_set_element(GelMatrix *matrix, int x, int y, gpointer data)
 {
 	g_return_if_fail(matrix != NULL);
 	g_return_if_fail(x>=0);
 	g_return_if_fail(y>=0);
 	
 	if(x>=matrix->width || y>=matrix->height)
-		matrix_set_size(matrix,MAX(x+1,matrix->width),
-				MAX(y+1,matrix->height));
+		gel_matrix_set_size (matrix,
+				     MAX(x+1,matrix->width),
+				     MAX(y+1,matrix->height),
+				     TRUE /* padding */);
 	g_return_if_fail(matrix->data!=NULL);
 	
 	matrix->data->pdata[x+y*matrix->realwidth]=data;
 }
 
 /*copy a matrix*/
-Matrix *
-matrix_copy(Matrix *source, ElementCopyFunc el_copy, gpointer func_data)
+GelMatrix *
+gel_matrix_copy(GelMatrix *source, GelElementCopyFunc el_copy, gpointer func_data)
 {
-	Matrix *matrix;
+	GelMatrix *matrix;
 	int i,j;
 
 	g_return_val_if_fail(source != NULL,NULL);
 	
-	matrix = matrix_new();
+	matrix = gel_matrix_new();
 	
 	/*copy over the structure*/
 	*matrix = *source;
@@ -185,52 +190,52 @@ matrix_copy(Matrix *source, ElementCopyFunc el_copy, gpointer func_data)
 		return matrix;
 
 	/*make us a new matrix data array*/
-	matrix_set_size(matrix,source->width,source->height);
+	gel_matrix_set_size (matrix, source->width,source->height, TRUE /* padding */);
 	
 	/*copy the data*/
 	if(el_copy) {
 		for(i=0;i<source->width;i++)
 			for(j=0;j<source->height;j++) {
-				gpointer data = matrix_index(source,i,j);
+				gpointer data = gel_matrix_index(source,i,j);
 				if(data)
-					matrix_index(matrix,i,j) =
+					gel_matrix_index(matrix,i,j) =
 						(*el_copy)(data, func_data);
 			}
 	} else {
 		for(i=0;i<source->width;i++)
 			for(j=0;j<source->height;j++)
-				matrix_index(matrix,i,j) =
-					matrix_index(source,i,j);
+				gel_matrix_index(matrix,i,j) =
+					gel_matrix_index(source,i,j);
 	}
 	return matrix;
 }
 
 /*transpose a matrix*/
-Matrix *
-matrix_transpose(Matrix *matrix)
+GelMatrix *
+gel_matrix_transpose(GelMatrix *matrix)
 {
 	int i,j;
-	Matrix *new;
+	GelMatrix *new;
 
 	g_return_val_if_fail(matrix != NULL,NULL);
 	
-	new = matrix_new();
+	new = gel_matrix_new();
 
 	if(!matrix->data)
 		return new;
 
-	matrix_set_size(new,matrix->height,matrix->width);
+	gel_matrix_set_size (new, matrix->height, matrix->width, TRUE /* padding */);
 	
 	for(i=0;i<matrix->width;i++)
 		for(j=0;j<matrix->height;j++)
-			matrix_index(new,j,i) = matrix_index(matrix,i,j);
+			gel_matrix_index(new,j,i) = gel_matrix_index(matrix,i,j);
 
 	return new;
 }
 
 /*run a GFunc for each non-null element*/
 void
-matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data)
+gel_matrix_foreach(GelMatrix *matrix, GFunc func, gpointer func_data)
 {
 	int i,j;
 
@@ -242,7 +247,7 @@ matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data)
 
 	for(i=0;i<matrix->width;i++)
 		for(j=0;j<matrix->height;j++) {
-			gpointer data = matrix_index(matrix,i,j);
+			gpointer data = gel_matrix_index(matrix,i,j);
 			if(data)
 				(*func)(data,func_data);
 		}
@@ -250,13 +255,13 @@ matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data)
 
 /*free a matrix*/
 void
-matrix_free(Matrix *matrix)
+gel_matrix_free(GelMatrix *matrix)
 {
-	MatrixFreeList *mf;
+	GelMatrixFreeList *mf;
 	
 	g_return_if_fail(matrix != NULL);
 	
-	mf = (MatrixFreeList *)matrix;
+	mf = (GelMatrixFreeList *)matrix;
 	
 	if(matrix->data)
 		g_ptr_array_free(matrix->data,TRUE);

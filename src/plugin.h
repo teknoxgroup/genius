@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -34,10 +34,8 @@ typedef struct _plugin_t {
 
 /*read or reread the plugin list from the share/genius/plugins directory*/
 void read_plugin_list(void);
-extern GList *plugin_list;
+extern GSList *plugin_list;
 
 void open_plugin(plugin_t *plug);
-
-extern int is_gui;
 
 #endif

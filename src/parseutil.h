@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,41 +21,45 @@
 #ifndef _PARSEUTIL_H_
 #define _PARSEUTIL_H_
 
-int push_func(void);
+#include "extra.h"
+
+gboolean gp_push_func (gboolean vararg) GEL_WEAK_FUNC;
+gboolean gp_prepare_push_param (gboolean setfunc) GEL_WEAK_FUNC;
+gboolean gp_prepare_push_region_sep (void) GEL_WEAK_FUNC;
 
 /*pops the last expression, pushes a marker
   entry and puts the last expression back*/
-int push_marker(ETreeType markertype);
+int gp_push_marker(GelETreeType markertype) GEL_WEAK_FUNC;
 
 /*pushes a marker*/
-void push_marker_simple(ETreeType markertype);
+void gp_push_marker_simple(GelETreeType markertype) GEL_WEAK_FUNC;
 
 /*puts a spacer into the tree, spacers are just useless nodes to be removed
   before evaluation, they just signify where there were parenthesis*/
-int push_spacer(void);
+int gp_push_spacer(void) GEL_WEAK_FUNC;
 
 /*gather all expressions up until a row start marker and push the
   result as a MATRIX_ROW_NODE*/
-int push_matrix_row(void);
+int gp_push_matrix_row(void) GEL_WEAK_FUNC;
 
 /*gather all expressions up until a row start marker and push the
   result as a matrix*/
-int push_matrix(int quoted);
+int gp_push_matrix(int quoted) GEL_WEAK_FUNC;
 
 /*pushes a NULL onto the stack, null cannot be evaluated, it will be
   read as ""*/
-void push_null(void);
+void gp_push_null(void) GEL_WEAK_FUNC;
 
 #define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
 
 #define PUSH_ACT(ACT) { \
-	ETree *tree = makeoperator((ACT),&evalstack); \
+	GelETree *tree = makeoperator((ACT),&evalstack); \
 	if(!tree) {SYNTAX_ERROR;} \
 	stack_push(&evalstack,tree); \
 }
 
 #define PUSH_IDENTIFIER(ID) { \
-	ETree * tree; \
+	GelETree * tree; \
 	GET_NEW_NODE(tree); \
 	tree->type = IDENTIFIER_NODE; \
 	tree->id.id = d_intern(ID); \
@@ -63,7 +67,7 @@ void push_null(void);
 }
 
 #define PUSH_STRING(ID) { \
-	ETree * tree; \
+	GelETree * tree; \
 	GET_NEW_NODE(tree); \
 	tree->type = STRING_NODE; \
 	tree->str.str = (ID); \

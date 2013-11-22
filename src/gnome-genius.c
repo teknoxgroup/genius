@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,9 +21,11 @@
 
 #include "config.h"
 
+#define GTK_ENABLE_BROKEN
+
 #include <gnome.h>
 #include <gtk/gtk.h>
-#include <zvt/zvtterm.h>
+#include <libzvt/libzvt.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -36,6 +38,7 @@
 #include "calc.h"
 #include "util.h"
 #include "dict.h"
+#include "geloutput.h"
 
 #include "plugin.h"
 #include "inter.h"
@@ -51,11 +54,13 @@
 /*calculator state*/
 calcstate_t curstate={
 	256,
-	0,
+	12,
 	FALSE,
 	FALSE,
 	FALSE,
-	5
+	5,
+	TRUE,
+	10
 	};
 	
 extern calc_error_t error_num;
@@ -86,26 +91,17 @@ geniussetup_t cursetup = {
 };
 
 static int torl[2];
+static FILE *torlfp = NULL;
 static int fromrl[2];
+static int forzvt[2];
 
-static void feed_to_zvt(gpointer data, gint source,
-			GdkInputCondition condition);
-static void get_new_buffer(gpointer data, gint source,
-			   GdkInputCondition condition);
+static char *arg0 = NULL;
 
-/*used inside rl_getc*/
-static int need_quitting = FALSE;
-static int in_recursive = FALSE;
-
-static void
-print_to_term(char *s)
-{
-	feed_to_zvt(NULL,fromrl[0],0);
-	zvt_term_feed(ZVT_TERM(zvt),s,strlen(s));
-}
+static void feed_to_zvt (gpointer data, gint source,
+			 GdkInputCondition condition);
 
 static int
-count_char(char *s, char c)
+count_char (const char *s, char c)
 {
 	int i = 0;
 	while(*s) {
@@ -118,7 +114,7 @@ count_char(char *s, char c)
 
 /*display a message in a messagebox*/
 static void
-geniusbox(int error, char *s)
+geniusbox(int error, const char *s)
 {
 	GtkWidget *mb;
 	if(count_char(s,'\n')<=20) {
@@ -169,9 +165,10 @@ printout_error_num_and_reset(void)
 		}
 	} else {
 		if(errors_printed-curstate.max_errors > 0) {
-			fprintf(rl_outstream,
-				_("\e[01;31mToo many errors! (%d followed)\e[0m\n"),
-				errors_printed-curstate.max_errors);
+			gel_output_printf(main_out,
+					  _("\e[01;31mToo many errors! (%d followed)\e[0m\n"),
+					  errors_printed-curstate.max_errors);
+			gel_output_flush (main_out);
 		}
 	}
 	errors_printed = 0;
@@ -179,7 +176,7 @@ printout_error_num_and_reset(void)
 
 /*get error message*/
 static void
-geniuserror(char *s)
+geniuserror(const char *s)
 {
 	char *file;
 	int line;
@@ -204,10 +201,9 @@ geniuserror(char *s)
 			errors = g_string_new(str);
 		}
 	} else {
-		char *s;
-		s = g_strdup_printf("\e[01;31m%s\e[0m\r\n",str);
-		print_to_term(s);
-		g_free(s);
+		gel_output_printf_full (main_out, FALSE,
+					"\e[01;31m%s\e[0m\r\n", str);
+		gel_output_flush (main_out);
 	}
 
 	g_free(str);
@@ -225,7 +221,7 @@ printout_info(void)
 
 /*get info message*/
 static void
-geniusinfo(char *s)
+geniusinfo(const char *s)
 {
 	char *file;
 	int line;
@@ -246,10 +242,9 @@ geniusinfo(char *s)
 			infos = g_string_new(str);
 		}
 	} else {
-		char *s;
-		s = g_strdup_printf("\e[0;32m%s\e[0m\r\n",str);
-		print_to_term(s);
-		g_free(s);
+		gel_output_printf_full (main_out, FALSE,
+					"\e[32m%s\e[0m\r\n", str);
+		gel_output_flush (main_out);
 	}
 
 	g_free(str);
@@ -259,23 +254,47 @@ geniusinfo(char *s)
 static void
 aboutcb(GtkWidget * widget, gpointer data)
 {
-	GtkWidget *mb;
-	char *authors[] = {
+	static GtkWidget *about;
+	static const char *authors[] = {
 		"George Lebl (jirka@5z.com)",
 		NULL
 	};
+	static const char *documenters[] = {
+		"George Lebl (jirka@5z.com)",
+		NULL
+	};
+	const char *translators;
 
-	mb=gnome_about_new(_("GnomENIUS Calculator"), VERSION,
-			     /* copyright notice */
-			     "(C) 1997,1998,1999 the Free Software Foundation",
-			     (const char **)authors,
-			     /* another comments */
-			     _("The Gnome calculator style edition of genius"),
-			     NULL);
-	gtk_window_set_transient_for(GTK_WINDOW(mb),
-				     GTK_WINDOW(window));
-			   
-	gtk_widget_show(mb);
+	if (about == NULL) {
+		/* Translators should localize the following string
+		 * which will give them credit in the About box.
+		 * E.g. "Fulano de Tal <fulano@detal.com>"
+		 */
+		translators = _("translator_credits-PLEASE_ADD_YOURSELF_HERE");
+
+		about = gnome_about_new
+			(_("GENIUS Calculator"),
+			 VERSION,
+			 COPYRIGHT_STRING,
+			 _("The Gnome calculator style edition of "
+			   "the genius calculator.  For license/warranty "
+			   "details, type 'warranty' into the console."),
+			 authors,
+			 documenters,
+			(strcmp (translators, "translator_credits-PLEASE_ADD_YOURSELF_HERE")
+			 ? translators : NULL),
+			NULL);
+
+		gtk_window_set_transient_for (GTK_WINDOW (about),
+					      GTK_WINDOW (window));
+
+		g_signal_connect (about, "destroy",
+				  G_CALLBACK (gtk_widget_destroyed),
+				  &about);
+	}
+
+	gtk_widget_show_now (about);
+	gtk_window_present (GTK_WINDOW (about));
 }
 
 static void
@@ -286,7 +305,7 @@ set_properties (void)
 	gnome_config_set_int("/genius/properties/scrollback", cursetup.scrollback);
 	gnome_config_set_bool("/genius/properties/error_box", cursetup.error_box);
 	gnome_config_set_bool("/genius/properties/info_box", cursetup.info_box);
-	gnome_config_set_bool("/genius/properties/max_digits", 
+	gnome_config_set_int("/genius/properties/max_digits", 
 			      curstate.max_digits);
 	gnome_config_set_bool("/genius/properties/results_as_floats",
 			      curstate.results_as_floats);
@@ -302,11 +321,10 @@ set_properties (void)
 
 /* quit */
 static void
-quitapp(GtkWidget * widget, gpointer data)
+quitapp (GtkWidget * widget, gpointer data)
 {
-	set_properties();
-	need_quitting = TRUE;
-	gtk_main_quit();
+	set_properties ();
+	gtk_main_quit ();
 }
 
 /*exact answer callback*/
@@ -370,7 +388,7 @@ destroy_setup(GtkWidget *widget, gpointer data)
 static void
 setup_calc(GtkWidget *widget, gpointer data)
 {
-	GtkWidget *hbox,*frame;
+	GtkWidget *mainbox,*frame;
 	GtkWidget *box;
 	GtkWidget *b, *w;
 	GtkAdjustment *adj;
@@ -392,17 +410,17 @@ setup_calc(GtkWidget *widget, gpointer data)
 				     GTK_WINDOW(window));
 	
 	gtk_window_set_title(GTK_WINDOW(setupdialog),
-			     _("GnomENIUS Calculator setup"));
+			     _("GENIUS Calculator setup"));
 	
-	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
-	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
+	mainbox = gtk_vbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(mainbox),GNOME_PAD);
 	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
-				       hbox,
+				       mainbox,
 				       gtk_label_new(_("Output")));
 
 	
 	frame=gtk_frame_new(_("Number/Expression output options"));
-	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(mainbox),frame,FALSE,FALSE,0);
 	box=gtk_vbox_new(FALSE,GNOME_PAD);
 	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
 	gtk_container_add(GTK_CONTAINER(frame),box);
@@ -457,7 +475,7 @@ setup_calc(GtkWidget *widget, gpointer data)
 
 
 	frame=gtk_frame_new(_("Error/Info output options"));
-	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(mainbox),frame,FALSE,FALSE,0);
 	box=gtk_vbox_new(FALSE,GNOME_PAD);
 	gtk_container_add(GTK_CONTAINER(frame),box);
 
@@ -503,15 +521,15 @@ setup_calc(GtkWidget *widget, gpointer data)
 			   GTK_SIGNAL_FUNC(intspincb),&tmpstate.max_errors);
 
 
-	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
-	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
+	mainbox = gtk_vbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(mainbox),GNOME_PAD);
 	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
-				       hbox,
+				       mainbox,
 				       gtk_label_new(_("Precision")));
 
 	
 	frame=gtk_frame_new(_("Floating point precision"));
-	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(mainbox),frame,FALSE,FALSE,0);
 	box=gtk_vbox_new(FALSE,GNOME_PAD);
 	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
 	gtk_container_add(GTK_CONTAINER(frame),box);
@@ -546,15 +564,15 @@ setup_calc(GtkWidget *widget, gpointer data)
 			   GTK_SIGNAL_FUNC(intspincb),&tmpstate.float_prec);
 
 
-	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
-	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
+	mainbox = gtk_vbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(mainbox),GNOME_PAD);
 	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
-				       hbox,
+				       mainbox,
 				       gtk_label_new(_("Terminal")));
 
 	
 	frame=gtk_frame_new(_("Terminal options"));
-	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(mainbox),frame,FALSE,FALSE,0);
 	box=gtk_vbox_new(FALSE,GNOME_PAD);
 	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
 	gtk_container_add(GTK_CONTAINER(frame),box);
@@ -619,19 +637,21 @@ fs_destroy_cb(GtkWidget *w, GtkWidget **fs)
 }
 
 static void
-really_load_cb(GtkWidget *w,GtkFileSelection *fs)
+really_load_cb (GtkWidget *w, GtkFileSelection *fs)
 {
-	char *s;
-	s = gtk_file_selection_get_filename(fs);
-	if(!s || !g_file_exists(s)) {
-		gnome_app_error(GNOME_APP(window), _("Can not open file!"));
+	const char *s;
+	s = gtk_file_selection_get_filename (fs);
+	if (s == NULL ||
+	    ! g_file_exists (s)) {
+		gnome_app_error (GNOME_APP (window),
+				 _("Can not open file!"));
 		return;
 	}
-	load_guess_file(s,TRUE);
+	load_guess_file (NULL, s, TRUE);
 
-	printout_info();
+	printout_info ();
 
-	printout_error_num_and_reset();
+	printout_error_num_and_reset ();
 }
 
 static void
@@ -667,7 +687,7 @@ load_cb(GtkWidget *w)
 }
 
 static GnomeUIInfo file_menu[] = {
-	GNOMEUIINFO_ITEM_NONE(N_("_Load"),N_("Load and execute a file in genius"),load_cb),
+	GNOMEUIINFO_ITEM_STOCK(N_("_Load"),N_("Load and execute a file in genius"),load_cb, GNOME_STOCK_MENU_OPEN),
 	GNOMEUIINFO_MENU_EXIT_ITEM(quitapp,NULL),
 	GNOMEUIINFO_END,
 };
@@ -705,6 +725,8 @@ static GnomeUIInfo genius_menu[] = {
 /* toolbar */
 static GnomeUIInfo toolbar[] = {
 	GNOMEUIINFO_ITEM_STOCK(N_("Interrupt"),N_("Interrupt current calculation"),interrupt_calc,GNOME_STOCK_PIXMAP_STOP),
+	GNOMEUIINFO_ITEM_STOCK(N_("Load"),N_("Load and execute a file in genius"),load_cb, GNOME_STOCK_PIXMAP_OPEN),
+	GNOMEUIINFO_ITEM_STOCK(N_("Exit"),N_("Exit genius"), quitapp, GNOME_STOCK_PIXMAP_EXIT),
 	GNOMEUIINFO_END,
 };
 
@@ -716,7 +738,7 @@ static GtkWidget *
 create_main_window(void)
 {
 	GtkWidget *w;
-        w=gnome_app_new("gnome-genius", _("GnomENIUS Calculator"));
+        w=gnome_app_new("gnome-genius", _("GENIUS Calculator"));
 	gtk_window_set_wmclass (GTK_WINDOW (w), "gnome-genius", "gnome-genius");
 	gtk_window_set_policy (GTK_WINDOW (w), TRUE, FALSE, TRUE);
 
@@ -763,119 +785,190 @@ get_properties (void)
 	curstate.max_errors = gnome_config_get_int(buf);
 }
 
-/*stolen from xchat*/
-static void
-term_change_pos(GtkWidget *widget)
-{
-	if(widget && widget->window)
-		gtk_widget_queue_draw(widget);
-}
-
-static GArray *readbuf=NULL;
+static GArray *readbuf = NULL;
 static int readbufl = 0;
 
+static void
+feed_to_zvt_from_string (const char *str, int size)
+{
+	/*do our own crlf translation*/
+	char *s;
+	int i,sz;
+	for(i=0,sz=0;i<size;i++,sz++)
+		if(str[i]=='\n') sz++;
+	if (sz == size) {
+		zvt_term_feed(ZVT_TERM(zvt), (char *)str, size);
+		return;
+	}
+	s = g_new(char,sz);
+	for(i=0,sz=0;i<size;i++,sz++) {
+		if(str[i]=='\n') {
+			s[sz++] = str[i];
+			s[sz] = '\r';
+		} else s[sz] = str[i];
+	}
+	zvt_term_feed(ZVT_TERM(zvt),s,sz);
+	g_free(s);
+}
+
+static void
+feed_to_zvt (gpointer data, gint source, GdkInputCondition condition)
+{
+	int size;
+	char buf[256];
+	while ((size = read (source, buf, 256)) > 0) {
+		feed_to_zvt_from_string (buf, size);
+	}
+}
+
+static void
+output_notify_func (GelOutput *output)
+{
+	const char *s = gel_output_peek_string (output);
+	if (s != NULL) {
+		feed_to_zvt (NULL, forzvt[0], 0);
+		feed_to_zvt_from_string ((char *)s, strlen (s));
+		gel_output_clear_string (output);
+	}
+}
+
 static int
-the_getc(FILE *fp)
+get_term_width(GelOutput *gelo)
 {
-	for(;;) {
-		if(readbufl==0) {
-			in_recursive = TRUE;
-			gtk_main();
-			in_recursive = FALSE;
-			if(need_quitting) {
-				gtk_exit(0);
-			}
-			if(interrupted) {
-				readbuf = g_array_set_size(readbuf,0);
-				readbufl = 0;
-				return '\n';
-			}
-		}
-		if(readbufl>0) {
-			int r = g_array_index(readbuf,char,0);
-			readbuf = g_array_remove_index(readbuf,0);
-			readbufl--;
-			return r;
-		}
-	}
+	return ZVT_TERM(zvt)->vx->vt.width;
 }
 
 static void
-feed_to_zvt(gpointer data, gint source, GdkInputCondition condition)
-{
-	int size;
-	char buf[256];
-	while((size = read(source,buf,256))>0) {
-		/*do our own crlf translation*/
-		char *s;
-		int i,sz;
-		for(i=0,sz=0;i<size;i++,sz++)
-			if(buf[i]=='\n') sz++;
-		s = g_new(char,sz);
-		for(i=0,sz=0;i<size;i++,sz++) {
-			if(buf[i]=='\n') {
-				s[sz++] = buf[i];
-				s[sz] = '\r';
-			} else s[sz] = buf[i];
-		}
-		zvt_term_feed(ZVT_TERM(zvt),s,sz);
-		g_free(s);
-	}
-}
-
-static void
-get_new_buffer(gpointer data, gint source, GdkInputCondition condition)
-{
-	int size;
-	char buf[256];
-	while((size = read(source,buf,256))>0) {
-		if(!readbuf)
-			readbuf = g_array_new(FALSE,FALSE,sizeof(char));
-		readbuf = g_array_append_vals(readbuf,buf,size);
-		readbufl+=size;
-	}
-	if(readbufl>0 && in_recursive)
-		gtk_main_quit();
-}
-
-static void
-set_state(calcstate_t state)
+set_state (calcstate_t state)
 {
 	curstate = state;
+
+	if (state.full_expressions ||
+	    state.output_style == GEL_OUTPUT_LATEX ||
+	    state.output_style == GEL_OUTPUT_TROFF)
+		gel_output_set_line_length (main_out, 0, NULL);
+	else
+		gel_output_set_line_length (main_out, 80, get_term_width);
 }
 
 static void
-check_events(void)
+check_events (void)
 {
-	if(gtk_events_pending())
-		gtk_main_iteration();
+	if (gtk_events_pending ())
+		gtk_main_iteration ();
 }
 
 static int
-catch_interrupts(GtkWidget *w, GdkEvent *e)
+catch_interrupts (GtkWidget *w, GdkEvent *e)
 {
-	if(e->type == GDK_KEY_PRESS) {
-		if(e->key.keyval == GDK_c &&
-		   e->key.state&GDK_CONTROL_MASK) {
-			interrupted = TRUE;
+	if (e->type == GDK_KEY_PRESS &&
+	    e->key.keyval == GDK_c &&
+	    e->key.state & GDK_CONTROL_MASK) {
+		interrupted = TRUE;
+		if (readbuf != NULL)
 			readbuf = g_array_set_size(readbuf,0);
-			readbufl = 0;
-			if(in_recursive)
-				gtk_main_quit();
-			return TRUE;
-		}
+		readbufl = 0;
+		return TRUE;
 	}
 	return FALSE;
 }
 
 static void
-open_plugin_cb(GtkWidget *w, plugin_t * plug)
+open_plugin_cb (GtkWidget *w, plugin_t * plug)
 {
-	open_plugin(plug);
+	open_plugin (plug);
+}
+
+static void
+fork_a_helper (ZvtTerm *term)
+{
+	int pid;
+	
+	pid = zvt_term_forkpty (term, 0);
+	if (pid < 0) {
+		/*FIXME: handle an error*/
+		return;
+	} else if (pid == 0) {
+		char *p1, *p2;
+		char *foo;
+
+		/* the child */
+		close (fromrl[0]);
+		close (torl[1]);
+
+		p1 = g_strdup_printf ("%d", torl[0]);
+		p2 = g_strdup_printf ("%d", fromrl[1]);
+
+		execl ("./genius-readline-helper",
+		       "./genius-readline-helper",
+		       p1, p2, NULL);
+		/* FIXME: should be in library dir or
+		 * some such */
+		foo = g_strconcat
+			(g_path_get_dirname (arg0),
+			 "/genius-readline-helper", NULL);
+		execl (foo, foo, p1, p2, NULL);
+		execlp ("genius-readline-helper",
+			"genius-readline-helper",
+			p1, p2, NULL);
+
+		printf (_("Can't execute genius-readline-helper!\n"));
+		fflush (stdout);
+
+		_exit (1);
+	}
+}
+
+static void
+get_new_line(gpointer data, gint source, GdkInputCondition condition)
+{
+	char buf[5] = "EOF!";
+
+	if (read (source, buf, 4)==4) {
+		if (strcmp (buf, "EOF!") == 0) {
+			get_cb_p_expression (NULL, torlfp);
+		} else if (strcmp(buf,"LINE")==0) {
+			int len = 0;
+			if(read(source,(gpointer)&len,sizeof(int))!=sizeof(int))
+				g_warning("Weird size from helper");
+			if(len>0) {
+				char *b;
+				b = g_new0(char,len+1);
+				if(read(source,b,len)!=len)
+					g_warning ("Didn't get all the data from helper");
+				get_cb_p_expression (b, torlfp);
+				g_free(b);
+			} else
+				get_cb_p_expression ("", torlfp);
+		}
+	} else {
+		g_warning("GOT a strange response from the helper");
+	}
+}
+
+static void
+genius_got_etree (GelETree *e)
+{
+	if (e != NULL) {
+		evalexp_parsed (e, main_out, "= \e[01;34m", TRUE);
+		gel_output_full_string (main_out, "\e[0m");
+		gel_output_flush (main_out);
+	}
+
+	printout_info ();
+
+	printout_error_num_and_reset ();
+
+	if (got_eof) {
+		gel_output_full_string (main_out, "\n");
+		gel_output_flush (main_out);
+		got_eof = FALSE;
+		gtk_main_quit();
+	}
 }
 
 int
-main(int argc, char *argv[])
+main (int argc, char *argv[])
 {
 	GtkWidget *hbox;
 	GtkWidget *w;
@@ -883,20 +976,43 @@ main(int argc, char *argv[])
 	char *file;
 	GnomeUIInfo *plugins;
 
-	is_gui = TRUE;
-	
-	pipe(torl);
-	pipe(fromrl);
+	genius_is_gui = TRUE;
 
-	signal(SIGCHLD,SIG_IGN);
+	arg0 = g_strdup (argv[0]); 
+	
+	bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
+	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+	textdomain (GETTEXT_PACKAGE);
+
+	gnome_program_init ("genius", VERSION, 
+			    LIBGNOMEUI_MODULE /* module_info */,
+			    argc, argv,
+			    /* GNOME_PARAM_POPT_TABLE, options, */
+			    NULL);
+
+	if (pipe (forzvt) < 0)
+		g_error ("Can't pipe");
+	if (pipe (torl) < 0)
+		g_error ("Can't pipe");
+	if (pipe (fromrl) < 0)
+		g_error ("Can't pipe");
+
+	gdk_input_add (fromrl[0], GDK_INPUT_READ,
+		       get_new_line, NULL);
+
+	fcntl (forzvt[0], F_SETFL, O_NONBLOCK);
+	gdk_input_add (forzvt[0],
+		       GDK_INPUT_READ,
+		       feed_to_zvt, NULL);
+
+	torlfp = fdopen (torl[1], "w");
+
+	main_out = gel_output_new();
+	gel_output_setup_string (main_out, 80, get_term_width);
+	gel_output_set_notify (main_out, output_notify_func);
 	
 	evalnode_hook = check_events;
 	statechange_hook = set_state;
-
-	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
-	textdomain(PACKAGE);
-
-	gnome_init("genius", NULL, argc, argv);
 
 	read_plugin_list();
 
@@ -912,12 +1028,7 @@ main(int argc, char *argv[])
 	/*the main box to put everything in*/
 	hbox=gtk_hbox_new(FALSE,0);
 	
-	fcntl(torl[0],F_SETFL,O_NONBLOCK);
-	gtk_input_add_full(torl[0],GDK_INPUT_READ,get_new_buffer,NULL,NULL,NULL);
-	fcntl(fromrl[0],F_SETFL,O_NONBLOCK);
-	gtk_input_add_full(fromrl[0],GDK_INPUT_READ,feed_to_zvt,NULL,NULL,NULL);
-	
-	zvt = zvt_term_new_with_size(80,20);
+	zvt = zvt_term_new (); /*(80, 24);*/
 
 	zvt_term_set_scrollback(ZVT_TERM(zvt),cursetup.scrollback);
 	zvt_term_set_font_name(ZVT_TERM(zvt),cursetup.font?
@@ -930,28 +1041,25 @@ main(int argc, char *argv[])
 	zvt_term_set_scroll_on_output (ZVT_TERM (zvt), FALSE);
 	zvt_term_set_background (ZVT_TERM (zvt), NULL, 0, 0);
 	zvt_term_set_wordclass (ZVT_TERM (zvt), "-A-Za-z0-9/_:.,?+%=");
-	
-	ZVT_TERM(zvt)->vx->vt.keyfd = torl[1];
+	zvt_term_set_del_key_swap (ZVT_TERM (zvt), TRUE);
+	zvt_term_set_del_is_del (ZVT_TERM (zvt), FALSE);
+
 	gtk_signal_connect(GTK_OBJECT(zvt),"event",
 			   GTK_SIGNAL_FUNC(catch_interrupts),
 			   NULL);
 
-	gtk_signal_connect_object(GTK_OBJECT(window),"configure_event",
-				  GTK_SIGNAL_FUNC(term_change_pos),
-				  GTK_OBJECT(zvt));
-	
 	gtk_box_pack_start(GTK_BOX(hbox),zvt,TRUE,TRUE,0);
 	
 	w = gtk_vscrollbar_new (GTK_ADJUSTMENT (ZVT_TERM (zvt)->adjustment));
 	gtk_box_pack_start(GTK_BOX(hbox),w,FALSE,FALSE,0);
 	
 	if(plugin_list) {
-		GList *li;
+		GSList *li;
 		int i;
-		plugins = g_new0(GnomeUIInfo,g_list_length(plugin_list)+1);
+		plugins = g_new0(GnomeUIInfo,g_slist_length(plugin_list)+1);
 		genius_menu[PLUGIN_MENU].moreinfo = plugins;
 		
-		for(i=0,li=plugin_list;li;li=g_list_next(li),i++) {
+		for(i=0,li=plugin_list;li;li=g_slist_next(li),i++) {
 			plugin_t *plug = li->data;
 			plugins[i].type = GNOME_APP_UI_ITEM;
 			plugins[i].label = g_strdup(plug->name);
@@ -978,78 +1086,72 @@ main(int argc, char *argv[])
 
 
 	/*set up the main window*/
-	gnome_app_set_contents(GNOME_APP(window), hbox);
+	gnome_app_set_contents (GNOME_APP (window), hbox);
+	gtk_widget_queue_resize (zvt);
 	gtk_container_border_width(
-		GTK_CONTAINER(GNOME_APP(window)->contents),5);
+		GTK_CONTAINER (GNOME_APP (window)->contents), 5);
 
-	gtk_widget_show_all(window);
-	
-	
-	init_inter();
-	rl_instream = fdopen(torl[0],"r");
-	rl_outstream = fdopen(fromrl[1],"w");
-	rl_getc_function = the_getc;
-	
-	outputfp = rl_outstream;
+	{
+		int width = 800;
+		int height = 600;
 
-	fprintf(outputfp,
-		_("Genius %s\n"
-		  "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
-		  "This is free software with ABSOLUTELY NO WARRANTY.\n"
-		  "For details type `warranty'.\n\n"),VERSION);
+		if (width > gdk_screen_width () * 0.75)
+			width = gdk_screen_width () * 0.75;
+		if (height > gdk_screen_height () * 0.75)
+			height = gdk_screen_height () * 0.75;
 
-	set_new_calcstate(curstate);
-	set_new_errorout(geniuserror);
-	set_new_infoout(geniusinfo);
+		gtk_window_set_default_size (GTK_WINDOW (window), width, height);
+	}
+
+	gtk_widget_show_all (window);
+	gtk_widget_show_now (window);
+
+	gel_output_printf (main_out,
+			   _("Genius %s\n"
+			     "%s\n"
+			     "This is free software with ABSOLUTELY NO WARRANTY.\n"
+			     "For details type `warranty'.\n\n"),
+			   VERSION,
+			   COPYRIGHT_STRING);
+	gel_output_flush (main_out);
+	check_events ();
+
+	set_new_calcstate (curstate);
+	set_new_errorout (geniuserror);
+	set_new_infoout (geniusinfo);
+
+	fork_a_helper (ZVT_TERM (zvt));
 	
 	/*init the context stack and clear out any stale dictionaries
 	  except the global one, if this is the first time called it
 	  will also register the builtin routines with the global
 	  dictionary*/
-	d_singlecontext();
+	d_singlecontext ();
 
-	file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
-	load_compiled_file(file,FALSE);
-	g_free(file);
+	if (access ("../lib/lib.cgel", F_OK) == 0) {
+		/*try the library file in the current/../lib directory*/
+		load_compiled_file (NULL, "../lib/lib.cgel",FALSE);
+	} else {
+		load_compiled_file (NULL, LIBRARY_DIR "/gel/lib.cgel", FALSE);
+	}
 
-	/*try the library file in the current directory*/
-	load_compiled_file("lib.cgel",FALSE);
-	
-	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+	file = g_strconcat(g_getenv("HOME"),"/.geniusinit",NULL);
 	if(file)
-		load_file(file,FALSE);
+		load_file(NULL, file, FALSE);
 	g_free(file);
+
+	load_file (NULL, "geniusinit.gel", FALSE);
 
 	printout_info();
 
 	printout_error_num_and_reset();
 
-	for(;;) {
-		ETree *e;
-		rewind_file_info();
-		e = get_p_expression();
-		if(e) {
-			evalexp_parsed(e,rl_outstream,NULL,"= \e[01;34m",TRUE);
-			fprintf(rl_outstream,"\e[0m");
-		}
+	gtk_widget_grab_focus (zvt);
 
-		printout_info();
+	start_cb_p_expression (genius_got_etree, torlfp);
 
-		printout_error_num_and_reset();
-
-		if(got_eof) {
-			fprintf(rl_outstream,"\n");
-			got_eof = FALSE;
-			break;
-		}
-	}
-
+	gtk_main ();
 
 	return 0;
 }
 
-int
-get_term_width(void)
-{
-	return ZVT_TERM(zvt)->vx->vt.width;
-}

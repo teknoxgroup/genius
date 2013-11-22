@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -25,12 +25,7 @@
 
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <glib.h>
 
@@ -40,11 +35,25 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+
+#ifdef USE_NCURSES
+#ifdef INC_NCURSES
+#include <ncurses/curses.h>
+#include <ncurses/term.h>
+#else
+#include <curses.h>
+#include <term.h>
+#endif
+#else
 #include <termcap.h>
+#endif
+
 #include "calc.h"
 #include "util.h"
 #include "dict.h"
 #include "inter.h"
+#include "geloutput.h"
+#include "lexer.h"
 
 #include "plugin.h"
 
@@ -56,11 +65,13 @@
 /*calculator state*/
 calcstate_t curstate={
 	256,
-	0,
+	12,
 	FALSE,
 	FALSE,
 	FALSE,
-	5
+	5,
+	TRUE,
+	10
 	};
 	
 extern calc_error_t error_num;
@@ -72,9 +83,10 @@ extern int interrupted;
 static int use_readline = TRUE;
 
 static int errors_printed = 0;
+static long total_errors_printed = 0;
 
 static void
-puterror(char *s)
+puterror(const char *s)
 {
 	char *file;
 	int line;
@@ -88,11 +100,12 @@ puterror(char *s)
 }
 
 static void
-calc_puterror(char *s)
+calc_puterror(const char *s)
 {
 	if(curstate.max_errors == 0 ||
 	   errors_printed++<curstate.max_errors)
 		puterror(s);
+	total_errors_printed++;
 }
 
 static void
@@ -104,10 +117,43 @@ printout_error_num_and_reset(void)
 	errors_printed = 0;
 }
 
+static int
+long_get_term_width (void)
+{
+	char buf[2048];
+	const char *term = g_getenv("TERM");
+
+	if(!term) return 80;
+
+	if(tgetent(buf,term)<=0)
+		return 80;
+
+	return tgetnum("co");
+}
+
+/* hack! */
+static int line_len_cache = -1;
+
+static int
+get_term_width (GelOutput *gelo)
+{
+	if (line_len_cache < 0)
+		line_len_cache = long_get_term_width ();
+	return line_len_cache;
+}
+
+
 static void
 set_state(calcstate_t state)
 {
 	curstate = state;
+
+	if (state.full_expressions ||
+	    state.output_style == GEL_OUTPUT_LATEX ||
+	    state.output_style == GEL_OUTPUT_TROFF)
+		gel_output_set_line_length(main_out, 0, NULL);
+	else
+		gel_output_set_line_length(main_out, 80, get_term_width);
 }
 
 static void
@@ -120,7 +166,7 @@ interrupt(int sig)
 }
 
 static int
-nop(void)
+nop (void)
 {
 	usleep(10000);
 	return 0;
@@ -132,19 +178,15 @@ main(int argc, char *argv[])
 	int i;
 	int inter;
 	int lastarg = FALSE;
-	GList *files = NULL;
+	GSList *files = NULL;
 	char *file;
 	FILE *fp;
 	int do_compile = FALSE;
 	int be_quiet = FALSE;
 
-	is_gui = FALSE;
+	genius_is_gui = FALSE;
 
-#ifdef GNOME_SUPPORT
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
-#else
-	bindtextdomain(PACKAGE,LOCALEDIR);
-#endif
 	textdomain(PACKAGE);
 
 	signal(SIGINT,interrupt);
@@ -154,7 +196,7 @@ main(int argc, char *argv[])
 	for(i=1;i<argc;i++) {
 		int val;
 		if(lastarg || argv[i][0]!='-')
-			files = g_list_append(files,argv[i]);
+			files = g_slist_append(files,argv[i]);
 		else if(strcmp(argv[i],"--")==0)
 			lastarg = TRUE;
 		else if(sscanf(argv[i],"--precision=%d",&val)==1)
@@ -175,6 +217,12 @@ main(int argc, char *argv[])
 			curstate.full_expressions = FALSE;
 		else if(sscanf(argv[i],"--maxerrors=%d",&val)==1)
 			curstate.max_errors = val;
+		else if(strcmp(argv[i],"--mixed")==0)
+			curstate.mixed_fractions = TRUE;
+		else if(strcmp(argv[i],"--nomixed")==0)
+			curstate.mixed_fractions = FALSE;
+		else if(sscanf(argv[i],"--intoutbase=%d",&val)==1)
+			curstate.integer_output_base = val;
 		else if(strcmp(argv[i],"--readline")==0)
 			use_readline = TRUE;
 		else if(strcmp(argv[i],"--noreadline")==0)
@@ -200,6 +248,8 @@ main(int argc, char *argv[])
 			       "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
 			       "\t--[no]fullexp     \tAlways print full expressions [OFF]\n"
 			       "\t--maxerrors=num   \tMaximum errors to display (0=no limit) [5]\n"
+			       "\t--[no]mixed       \tPrint fractions in mixed format\n"
+			       "\t--intoutbase=num  \tBase to use to print out integers [10]\n"
 			       "\t--[no]readline    \tUse readline if it is available [ON]\n"
 			       "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
 			       "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
@@ -217,11 +267,21 @@ main(int argc, char *argv[])
 	/*interactive mode, print welcome message*/
 	if(inter) {
 		printf(_("Genius %s\n"
-		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
-		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
-		     "For details type `warranty'.\n\n"),VERSION);
+			 "%s\n"
+			 "This is free software with ABSOLUTELY NO WARRANTY.\n"
+			 "For details type `warranty'.\n\n"),
+		       VERSION,
+		       COPYRIGHT_STRING);
 		be_quiet = FALSE;
 	}
+
+	main_out = gel_output_new();
+	if(!be_quiet)
+		gel_output_setup_file(main_out, stdout, 80,
+				      get_term_width);
+	else
+		gel_output_setup_black_hole(main_out);
+
 
 	set_new_calcstate(curstate);
 	set_new_errorout(calc_puterror);
@@ -231,30 +291,32 @@ main(int argc, char *argv[])
 	  except the global one, if this is the first time called it
 	  will also register the builtin routines with the global
 	  dictionary*/
-	d_singlecontext();
+	d_singlecontext ();
 
 	if(!do_compile) {
-		file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
-		load_compiled_file(file,FALSE);
-		g_free(file);
+		if (access ("../lib/lib.cgel", F_OK) == 0) {
+			/*try the library file in the current/../lib directory*/
+			load_compiled_file (NULL, "../lib/lib.cgel",FALSE);
+		} else {
+			load_compiled_file (NULL, LIBRARY_DIR "/gel/lib.cgel", FALSE);
+		}
 
-		/*try the library file in the current directory*/
-		load_compiled_file("lib.cgel",FALSE);
-
-		file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+		file = g_strconcat(g_getenv("HOME"),"/.geniusinit",NULL);
 		if(file)
-			load_file(file,FALSE);
+			load_file(NULL, file, FALSE);
 		g_free(file);
+
+		load_file (NULL, "geniusinit.gel", FALSE);
 	}
 
 	if(files) {
-		GList *t;
+		GSList *t;
 		do {
 			fp = fopen(files->data,"r");
 			push_file_info(files->data,1);
 			t = files;
-			files = g_list_remove_link(files,t);
-			g_list_free_1(t);
+			files = g_slist_remove_link(files,t);
+			g_slist_free_1(t);
 			if(!fp) {
 				pop_file_info();
 				puterror(_("Can't open file"));
@@ -266,6 +328,7 @@ main(int argc, char *argv[])
 		fp = stdin;
 		push_file_info(NULL,1);
 	}
+	my_yy_open(fp);
 	if(inter && use_readline) {
 		init_inter();
 	}
@@ -277,15 +340,17 @@ main(int argc, char *argv[])
 	for(;;) {
 		for(;;) {
 			if(inter && use_readline) /*use readline mode*/ {
-				ETree *e;
+				GelETree *e;
 				rewind_file_info();
+				line_len_cache = -1;
 				e = get_p_expression();
-				if(e) evalexp_parsed(e,stdout,NULL,"= ",TRUE);
+				line_len_cache = -1;
+				if(e) evalexp_parsed(e,main_out,"= ",TRUE);
+				line_len_cache = -1;
 			} else {
-				if(be_quiet)
-					evalexp(NULL,fp,NULL,NULL,NULL,FALSE);
-				else
-					evalexp(NULL,fp,stdout,NULL,NULL,FALSE);
+				line_len_cache = -1;
+				evalexp(NULL, fp, main_out, NULL, FALSE, NULL);
+				line_len_cache = -1;
 				if(interrupted)
 					got_eof = TRUE;
 			}
@@ -300,14 +365,15 @@ main(int argc, char *argv[])
 			}
 		}
 		if(files) {
-			GList *t;
-			fclose(fp);
+			GSList *t;
+			my_yy_close(fp);
+			/*fclose(fp);*/
 			do {
 				fp = fopen(files->data,"r");
 				push_file_info(files->data,1);
 				t = files;
-				files = g_list_remove_link(files,t);
-				g_list_free_1(t);
+				files = g_slist_remove_link(files,t);
+				g_slist_free_1(t);
 				if(!fp) {
 					pop_file_info();
 					puterror(_("Can't open file"));
@@ -318,37 +384,34 @@ main(int argc, char *argv[])
 					push_file_info(NULL,0);
 					compile_all_user_funcs(stdout);
 					pop_file_info();
+					/* if we have gotten errors then
+					   signal by returning a 1 */
+					if(total_errors_printed)
+						return 1;
 				}
 				return 0;
 			}
+			my_yy_open(fp);
 		} else
 			break;
 	}
 
 	printout_error_num_and_reset();
 	
-	if(fp != stdin)
-		fclose(fp);
+	my_yy_close(fp);
+	/*if(fp != stdin)
+		fclose(fp);*/
 	
 	if(do_compile) {
 		push_file_info(NULL,0);
 		compile_all_user_funcs(stdout);
 		pop_file_info();
+		/* if we have gotten errors then
+		   signal by returning a 1 */
+		if(total_errors_printed)
+			return 1;
 	}
 
 	return 0;
 }
 
-int
-get_term_width(void)
-{
-	char buf[2048];
-	char *term = getenv("TERM");
-
-	if(!term) return 80;
-
-	if(tgetent(buf,term)<=0)
-		return 80;
-
-	return tgetnum("co");
-}

@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -34,12 +34,15 @@
 	
 #include "parseutil.h"
 
-extern GList *evalstack;
-extern ETree *free_trees;
+extern GSList *evalstack;
 
 extern int return_ret; /*should the lexer return on \n*/
 extern char *loadfile;
 extern char *loadfile_glob;
+extern char *changedir;
+extern char *changedir_glob;
+extern gboolean pwd_command;
+extern gboolean ls_command;
 extern char *load_plugin;
 
 %}
@@ -51,33 +54,41 @@ extern char *load_plugin;
 
 %token STARTTOK
 
-%token LOADFILE LOADFILE_GLOB LOAD_PLUGIN
+%token LOADFILE LOADFILE_GLOB LOAD_PLUGIN CHANGEDIR PWD LS LS_ARG HELP HELP_ARG
 
 %token <val> NUMBER
 %token <id> STRING
 %token <id> FUNCID
 
-%token FUNCTION CALL
+%token FUNCTION CALL THREEDOTS PARAMETER
 
 %token RETURNTOK BAILOUT EXCEPTION CONTINUE BREAK
 
-%token WHILE UNTIL FOR DO IF THEN ELSE TO BY IN
+%token WHILE UNTIL FOR SUM PROD DO IF THEN ELSE TO BY IN
 
-%token AT REGION_SEP
+%token AT
 
-%token SEPAR EQUALS
+%token SEPAR NEXTROW EQUALS
+
+%token TRANSPOSE
+
+%token ELTELTDIV ELTELTMUL ELTELTEXP ELTELTMOD DOUBLEFACT
 
 %token EQ_CMP NE_CMP CMP_CMP LT_CMP GT_CMP LE_CMP GE_CMP
 
 %token LOGICAL_XOR LOGICAL_OR LOGICAL_AND LOGICAL_NOT
 
 
+%left NEXTROW
+
 %left SEPAR
+
+%nonassoc FUNCTION PARAMETER
 
 %left MOD
 
 %nonassoc LOWER_THEN_ELSE
-%nonassoc WHILE UNTIL DO IF FOR TO BY IN THEN ELSE FUNCTION CALL RETURNTOK
+%nonassoc WHILE UNTIL DO IF FOR SUM PROD TO BY IN THEN ELSE CALL RETURNTOK
 
 %left LOGICAL_XOR LOGICAL_OR
 %left LOGICAL_AND
@@ -89,11 +100,14 @@ extern char *load_plugin;
 %right EQ_CMP NE_CMP LT_CMP GT_CMP LE_CMP GE_CMP
 
 %left '+' '-'
-%left '*' '/' '\\' '%'
+%left '*' ELTELTMUL '/' ELTELTDIV '\\' ELTELTBACKDIV '%' ELTELTMOD
 
-%right '\''
-%right '!'
-%right '^'
+%right '\'' TRANSPOSE
+
+%right ':'
+
+%right '!' DOUBLEFACT
+%right '^' ELTELTEXP
 %right UMINUS UPLUS
 
 %left AT
@@ -101,28 +115,38 @@ extern char *load_plugin;
 %%
 
 fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
-	|	STARTTOK LOADFILE '\n' { loadfile = $<id>2; YYACCEPT; }
-	|	STARTTOK LOADFILE_GLOB '\n' { loadfile_glob = $<id>2; YYACCEPT; }
-	|	STARTTOK LOAD_PLUGIN '\n' { load_plugin = $<id>2; YYACCEPT; }
+	|	STARTTOK LOADFILE '\n' { gel_command = GEL_LOADFILE; gel_command_arg = $<id>2; YYACCEPT; }
+	|	STARTTOK LOADFILE_GLOB '\n' { gel_command = GEL_LOADFILE_GLOB; gel_command_arg = $<id>2; YYACCEPT; }
+	|	STARTTOK CHANGEDIR '\n' { gel_command = GEL_CHANGEDIR; gel_command_arg = $<id>2; YYACCEPT; }
+	|	STARTTOK LS '\n' { gel_command = GEL_LS; YYACCEPT; }
+	|	STARTTOK LS_ARG '\n' { gel_command = GEL_LS_ARG; gel_command_arg = $<id>2; YYACCEPT; }
+	|	STARTTOK HELP '\n' { gel_command = GEL_HELP; YYACCEPT; }
+	|	STARTTOK HELP_ARG '\n' { gel_command = GEL_HELP_ARG; gel_command_arg = $<id>2; YYACCEPT; }
+	|	STARTTOK PWD '\n' { gel_command = GEL_PWD; YYACCEPT; }
+	|	STARTTOK LOAD_PLUGIN '\n' { gel_command = GEL_LOADPLUGIN; gel_command_arg = $<id>2; YYACCEPT; }
 	|	STARTTOK '\n' { YYACCEPT; }
-	|	STARTTOK expr SEPAR '\n' { push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; }
+	|	STARTTOK expr SEPAR '\n' { gp_push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; }
 	|	error '\n' { return_ret = TRUE; yyclearin; YYABORT; }
 	|	error { return_ret = TRUE; }
 	;
 
 expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr MOD expr		{ PUSH_ACT(E_MOD_CALC); }
-	|	'(' expr SEPAR ')'	{ push_null(); PUSH_ACT(E_SEPAR);
-					  push_spacer(); }
-	|	'(' expr ')'		{ push_spacer(); }
+	|	'(' expr SEPAR ')'	{ gp_push_null(); PUSH_ACT(E_SEPAR);
+					  gp_push_spacer(); }
+	|	'(' expr ')'		{ gp_push_spacer(); }
 	|	expr EQUALS expr	{ PUSH_ACT(E_EQUALS); }
 	|	'|' expr '|'		{ PUSH_ACT(E_ABS); }
 	|	expr '+' expr		{ PUSH_ACT(E_PLUS); }
 	|	expr '-' expr		{ PUSH_ACT(E_MINUS); }
 	|	expr '*' expr		{ PUSH_ACT(E_MUL); }
+	|	expr ELTELTMUL expr	{ PUSH_ACT(E_ELTMUL); }
 	|	expr '/' expr		{ PUSH_ACT(E_DIV); }
+	|	expr ELTELTDIV expr	{ PUSH_ACT(E_ELTDIV); }
 	|	expr '\\' expr		{ PUSH_ACT(E_BACK_DIV); }
+	|	expr ELTELTBACKDIV expr	{ PUSH_ACT(E_ELT_BACK_DIV); }
 	|	expr '%' expr		{ PUSH_ACT(E_MOD); }
+	|	expr ELTELTMOD expr	{ PUSH_ACT(E_ELTMOD); }
 	|	expr CMP_CMP expr	{ PUSH_ACT(E_CMP_CMP); }
 
 	|	expr EQ_CMP expr	{ PUSH_ACT(E_EQ_CMP); }
@@ -141,22 +165,28 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr LOGICAL_NOT IN expr	{ PUSH_ACT(E_NOT_EXISTS_IN); }*/
 
 	|	expr '!'		{ PUSH_ACT(E_FACT); }
-	|	expr '\''		{ PUSH_ACT(E_TRANSPOSE); }
+	|	expr DOUBLEFACT		{ PUSH_ACT(E_DBLFACT); }
+	|	expr '\''		{ PUSH_ACT(E_CONJUGATE_TRANSPOSE); }
+	|	expr TRANSPOSE		{ PUSH_ACT(E_TRANSPOSE); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
 	|	'+' expr %prec UPLUS
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
+	| 	expr ELTELTEXP expr	{ PUSH_ACT(E_ELTEXP); }
+
+	|	expr ':' expr	{
+				if (gp_prepare_push_region_sep ()) {
+					PUSH_ACT(E_REGION_SEP_BY);
+				} else {
+					PUSH_ACT(E_REGION_SEP);
+				}
+					}
 	
 	|	expr AT expr ')'	{ PUSH_ACT(E_GET_VELEMENT); }
 	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
-	|	expr AT reg ',' expr ')' { PUSH_ACT(E_GET_REGION); }
-	|	expr AT expr ',' reg ')' { PUSH_ACT(E_GET_REGION); }
-	|	expr AT reg ',' reg ')' { PUSH_ACT(E_GET_REGION); }
 	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
-	|	expr AT reg ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
 	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COL_REGION); }
-	|	expr AT ',' reg ')'	{ PUSH_ACT(E_GET_COL_REGION); }
-	|	'[' matrixrows ']'	{ if(!push_matrix(FALSE)) {SYNTAX_ERROR;} }
-	|	'`' '[' matrixrows ']'	{ if(!push_matrix(TRUE)) {SYNTAX_ERROR;} }
+	|	'[' matrixrows ']'	{ if(!gp_push_matrix(FALSE)) {SYNTAX_ERROR;} }
+	|	'`' '[' matrixrows ']'	{ if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;} }
 	/*This next rule DOESN'T work right, we need some sort of connection
 	  to the lexer, OR write our own lexer/parser and kill this bison
 	  crap
@@ -164,9 +194,9 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	*/
 	/*FIXME: vector */
 	|	'(' exprlist ',' expr ')'	{
-			if(!push_matrix_row()) {SYNTAX_ERROR;}
-			if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;}
-			if(!push_matrix(TRUE)) {SYNTAX_ERROR;}
+			if(!gp_push_matrix_row()) {SYNTAX_ERROR;}
+			if(!gp_push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;}
+			if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;}
 					}
 	|	'{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: set*/
 	|	'`' '{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: nonordered multiset*/
@@ -177,21 +207,29 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	FOR ident EQUALS expr TO expr DO expr { PUSH_ACT(E_FOR_CONS); }
 	|	FOR ident EQUALS expr TO expr BY expr DO expr { PUSH_ACT(E_FORBY_CONS); }
 	|	FOR ident IN expr DO expr { PUSH_ACT(E_FORIN_CONS); }
+	|	SUM ident EQUALS expr TO expr DO expr { PUSH_ACT(E_SUM_CONS); }
+	|	SUM ident EQUALS expr TO expr BY expr DO expr { PUSH_ACT(E_SUMBY_CONS); }
+	|	SUM ident IN expr DO expr { PUSH_ACT(E_SUMIN_CONS); }
+	|	PROD ident EQUALS expr TO expr DO expr { PUSH_ACT(E_PROD_CONS); }
+	|	PROD ident EQUALS expr TO expr BY expr DO expr { PUSH_ACT(E_PRODBY_CONS); }
+	|	PROD ident IN expr DO expr { PUSH_ACT(E_PRODIN_CONS); }
 	|	IF expr THEN expr %prec LOWER_THEN_ELSE	{ PUSH_ACT(E_IF_CONS); }
 	|	IF expr THEN expr ELSE expr { PUSH_ACT(E_IFELSE_CONS); }
 	|	ident
+	|	'`' ident		{ PUSH_ACT(E_QUOTE); }
 	|	'&' ident		{ PUSH_ACT(E_REFERENCE); }
 	|	deref
-	|	ident '(' ')'		{ push_marker_simple(EXPRLIST_START_NODE);
+	|	ident '(' ')'		{ gp_push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_DIRECTCALL); }
 	|	ident '(' exprlist ')'	{ PUSH_ACT(E_DIRECTCALL); }
-	|	deref '(' ')'		{ push_marker_simple(EXPRLIST_START_NODE);
-					  PUSH_ACT(E_CALL); }
-	|	deref '(' exprlist ')'	{ PUSH_ACT(E_CALL); }
+	|	deref '(' ')'		{ gp_push_marker_simple(EXPRLIST_START_NODE);
+					  PUSH_ACT(E_DIRECTCALL); }
+	|	deref '(' exprlist ')'	{ PUSH_ACT(E_DIRECTCALL); }
 	|	expr CALL '(' exprlist ')' { PUSH_ACT(E_CALL); }
-	|	expr CALL '(' ')'	{ push_marker_simple(EXPRLIST_START_NODE);
+	|	expr CALL '(' ')'	{ gp_push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_CALL); }
 	|	FUNCTION ident funcdef	{ PUSH_ACT(E_EQUALS); }
+	|	PARAMETER paramdef
 	|	FUNCTION funcdef
 	|	'`' funcdef
 	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
@@ -200,40 +238,60 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	CONTINUE		{ PUSH_ACT(E_CONTINUE); }
 	|	BREAK			{ PUSH_ACT(E_BREAK); }
 	|	NUMBER			{ stack_push(&evalstack,
-						     makenum_use($<val>1)); }
+						     gel_makenum_use($<val>1)); }
 	|	STRING			{ PUSH_STRING($<id>1); }
-	|	'.'			{ push_null(); }
+	|	'.'			{ gp_push_null(); }
 	;
 	
 deref:		'*' ident		{ PUSH_ACT(E_DEREFERENCE); }
 	;
-	
+
 ident:		FUNCID			{
 				PUSH_IDENTIFIER($<id>1);
 				g_free($<id>1);
 					}
 	;
+
+paramdef: 	ident EQUALS expr		{
+			gp_prepare_push_param (FALSE);
+			PUSH_ACT (E_PARAMETER);
+		}
+	/*|	'(' expr ')' ident EQUALS expr {
+			gp_prepare_push_param (TRUE);
+			PUSH_ACT (E_PARAMETER);
+		}*/
+	;
 	
-funcdef:	'(' identlist')' EQUALS expr { if(!push_func()) {SYNTAX_ERROR;} }
-	|	'(' ')' EQUALS expr	{ if(!push_marker(EXPRLIST_START_NODE))
-						{SYNTAX_ERROR;}
-					  if(!push_func())
-					  	{SYNTAX_ERROR;} }
+funcdef:	'(' identlist ')' EQUALS expr	{
+			if ( ! gp_push_func (FALSE /* vararg */)) {
+				SYNTAX_ERROR;
+			}
+						}
+	|	'(' identlist THREEDOTS ')' EQUALS expr {
+			if ( ! gp_push_func (TRUE /* vararg */)) {
+				SYNTAX_ERROR;
+			}
+							}
+	|	'(' ')' EQUALS expr	{
+			if ( ! gp_push_marker (EXPRLIST_START_NODE)) {
+				SYNTAX_ERROR;
+			}
+			if ( ! gp_push_func (FALSE /* vararg */)) {
+				SYNTAX_ERROR;
+			}
+					}
 	;
 	
 identlist:	identlist ',' ident
-	|	ident { if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
+	|	ident { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
 	;
 
 exprlist:	exprlist ',' expr
-	|	expr { if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
+	|	expr { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
 	;
 	
-matrixrows:	matrixrows ':' exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} }
-	|	exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
-	;
-	
-reg:		expr REGION_SEP expr	{ PUSH_ACT(E_REGION_SEP); }
+matrixrows:	matrixrows NEXTROW exprlist { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} }
+	|	exprlist { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} if(!gp_push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
 	;
 	
 %%

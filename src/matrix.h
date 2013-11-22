@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -24,8 +24,8 @@
 
 #include <glib.h>
 
-typedef struct _Matrix Matrix;
-struct _Matrix {
+typedef struct _GelMatrix GelMatrix;
+struct _GelMatrix {
 	int width;
 	int height;
 
@@ -39,32 +39,32 @@ struct _Matrix {
 	  a copy?*/
 	int use;
 };
-typedef gpointer (*ElementCopyFunc)(gpointer,gpointer);
+typedef gpointer (*GelElementCopyFunc)(gpointer,gpointer);
 
 /*make new matrix*/
-Matrix * matrix_new(void);
+GelMatrix * gel_matrix_new(void);
 
 /*set size of a matrix*/
-void matrix_set_size(Matrix *matrix, int width, int height);
+void gel_matrix_set_size(GelMatrix *matrix, int width, int height, gboolean padding);
 /*set the size of the matrix to be at least this*/
-void matrix_set_at_least_size(Matrix *matrix, int width, int height);
+void gel_matrix_set_at_least_size(GelMatrix *matrix, int width, int height);
 
 /*set element*/
-void matrix_set_element(Matrix *matrix, int x, int y, gpointer data);
+void gel_matrix_set_element(GelMatrix *matrix, int x, int y, gpointer data);
 
 /*copy a matrix*/
-Matrix * matrix_copy(Matrix *source, ElementCopyFunc el_copy, gpointer func_data);
+GelMatrix * gel_matrix_copy(GelMatrix *source, GelElementCopyFunc el_copy, gpointer func_data);
 
 /*transpose a matrix*/
-Matrix * matrix_transpose(Matrix *matrix);
+GelMatrix * gel_matrix_transpose(GelMatrix *matrix);
 
 /*run a GFunc for each non-null element*/
-void matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data);
+void gel_matrix_foreach(GelMatrix *matrix, GFunc func, gpointer func_data);
 
 /*free a matrix*/
-void matrix_free(Matrix *matrix);
+void gel_matrix_free(GelMatrix *matrix);
 
 /*get the value at*/
-#define matrix_index(m,x,y) (g_ptr_array_index((m)->data,(x)+(y)*(m)->realwidth))
+#define gel_matrix_index(m,x,y) (g_ptr_array_index((m)->data,(x)+(y)*(m)->realwidth))
 
 #endif

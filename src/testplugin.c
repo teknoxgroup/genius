@@ -3,14 +3,20 @@
 #include <gtk/gtk.h>
 #include "plug_api.h"
 #include "calc.h"
+#include "geloutput.h"
 
 static void
 open(void)
 {
+	GelOutput *gelo;
 	printf("testplugin open()\n");
 	puts("trying to evaluate 2+2");
+
+	gelo = gel_output_new();
 	
-	evalexp("2+2",NULL,stdout,NULL,NULL,TRUE);
+	evalexp("2+2", NULL, gelo, NULL, TRUE, NULL);
+
+	gel_output_unref(gelo);
 	
 	puts("ending...");
 }
@@ -28,13 +34,13 @@ restore_state(char *prefix)
 	printf("testplugin restore_state(%s)\n",prefix);
 }
 
-static PluginInfo info = {
+static GelPluginInfo info = {
 	open,
 	save_state,
 	restore_state
 };
 
-PluginInfo *
+GelPluginInfo *
 init_func(void)
 {
 	return &info;

@@ -8,18 +8,23 @@ plugin_includedir = $(includedir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
 
 INCLUDES = \
-	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" \
-	-DLOCALEDIR=\"$(datadir)/locale\" \
-	-I$(includedir) \
-	$(GMP_INCLUDEDIR) \
-	$(GNOME_INCLUDEDIR)
+        -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
+	-DG_LOG_DOMAIN=\"Genius\"				\
+	-DDATADIR=\""$(datadir)"\"				\
+	-DICONDIR=\""$(datadir)/pixmaps/genius"\"		\
+	-DLIBRARY_DIR=\""$(datadir)/genius/"\"			\
+	-I$(srcdir)						\
+	-I$(includedir)						\
+	-I$(top_srcdir)						\
+	-I$(top_builddir)					\
+	$(GMP_INCLUDEDIR)					\
+	$(GENIUS_CFLAGS)					\
+	$(EXTRA_WARNING_CFLAGS)
 
-bin_PROGRAMS = @GNOME_GENIUS@ genius
 
-EXTRA_PROGRAMS = gnome-genius
+bin_PROGRAMS = gnome-genius genius genius-readline-helper
 
 gnome_genius_SOURCES = 	\
 	calc.c		\
@@ -45,6 +50,7 @@ gnome_genius_SOURCES = 	\
 	compil.h	\
 	structs.h	\
 	lexer.l		\
+	lexer.h		\
 	parseutil.h	\
 	parseutil.c	\
 	inter.c		\
@@ -55,17 +61,33 @@ gnome_genius_SOURCES = 	\
 	plugread.h	\
 	plug_api.h	\
 	parse.h		\
-	parse.y
+	parse.y		\
+ 	genius_lists.c	\
+ 	utype.c		\
+	utype.h		\
+	extra.h		\
+	geloutput.c	\
+	geloutput.h
 
 gnome_genius_LDADD = \
-	$(GNOME_LIBDIR) \
-	$(GNOMEUI_LIBS) \
-	@GMP_LIB@ \
-	@LEXLIB@ \
-	$(INTLLIBS) \
-	@ZVT_LIBS@ \
-	@READLINE_LIB@ \
+	-lm					\
+	@GMP_LIB@				\
+	@LEXLIB@				\
+	$(GENIUS_LIBS)				\
+	@READLINE_LIB@				\
 	@TERMCAP_LIB@
+
+genius_readline_helper_SOURCES = \
+ 	genius_lists.c			\
+	genius-readline-helper.c
+
+# FIXME: no need for so many libs
+genius_readline_helper_LDADD = \
+	-lm					\
+	$(GENIUS_LIBS)				\
+	@READLINE_LIB@				\
+	@TERMCAP_LIB@
+
 
 genius_SOURCES = 	\
 	calc.c		\
@@ -95,21 +117,27 @@ genius_SOURCES = 	\
 	inter.c		\
 	inter.h		\
 	lexer.l		\
+	lexer.h		\
 	plugin.c	\
 	plugin.h	\
 	plugread_nongnome.c	\
 	plugread.h	\
 	plug_api.h	\
 	parse.h		\
-	parse.y
+	parse.y		\
+ 	genius_lists.c	\
+ 	utype.c		\
+	utype.h		\
+	extra.h		\
+	geloutput.c	\
+	geloutput.h
 
 genius_LDADD = \
-	-lm \
-	$(GLIB_LIBS) \
-	@GMP_LIB@ \
-	@LEXLIB@ \
-	$(INTLLIBS) \
-	@READLINE_LIB@ \
+	-lm					\
+	@GMP_LIB@				\
+	@LEXLIB@				\
+	$(GENIUS_LIBS)				\
+	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
 plugin_include_HEADERS = \
@@ -128,18 +156,18 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES += $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin.in
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop test.plugin.in # lib.gel 
 
 Utilities_DATA = gnome-genius.desktop
 
-Library_DATA = lib.gel lib.cgel
+# Library_DATA = lib.gel lib.cgel
 
 Plugindesc_DATA = test.plugin
 
-MOSTLYCLEANFILES = lib.cgel
+# MOSTLYCLEANFILES = lib.cgel
 
-lib.cgel: lib.gel genius
-	$(top_builddir)/src/genius --compile lib.gel > lib.cgel
+# lib.cgel: lib.gel genius
+#	$(top_builddir)/src/genius --compile lib.gel > temp.cgel && mv -f temp.cgel lib.cgel
 
 parse.h: parse.y
 	$(YACC) $(YFLAGS) $<

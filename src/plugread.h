@@ -1,3 +1,6 @@
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
+ */
 #ifndef _PLUGREAD_H_
 #define _PLUGREAD_H_
 

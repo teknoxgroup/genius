@@ -1,0 +1,330 @@
+#FIXME: This should be catalogued a bit better.
+
+function ApplyOverMatrix(a,func) = (
+	if(not IsMatrix(a)) then
+		(error("ApplyOverMatrix: argument 1 must be a matrix");bailout)
+	else if(not IsFunction(func)) then
+		(error("ApplyOverMatrix: argument 2 must be a function");bailout);
+	for i = 1 to rows(a) do (
+		for j = 1 to columns(a) do (
+			r@(i,j) = func(a@(i,j))
+		)
+	);
+	r
+);
+protect("ApplyOverMatrix")
+
+function ApplyOverMatrix2(a,b,func) = (
+	if(not IsMatrix(a) and not IsMatrix(b)) then
+		(error("ApplyOverMatrix2: argument 1 or 2 must be a matrix");bailout)
+	else if(not IsFunction(func)) then
+		(error("ApplyOverMatrix2: argument 3 must be a function");bailout)
+
+	else if(IsMatrix(a) and IsMatrix(b) and
+		(rows(a)!=rows(b) or columns(a)!=columns(b))) then
+		(error("ApplyOverMatrix2: cannot apply a function over two matrixes of different sizes");bailout);
+	
+	for i = 1 to rows(a) do (
+		for j = 1 to columns(a) do (
+			if(IsMatrix(a)) then
+				aa = a@(i,j)
+			else
+				aa = a;
+			if(IsMatrix(b)) then
+				bb = b@(i,j)
+			else
+				bb = b;
+			r@(i,j) = func(aa,bb)
+		)
+	);
+	r
+);
+protect("ApplyOverMatrix2")
+
+#calculate a trace function
+SetHelp("Trace", "linear_algebra","Calculate the trace of a matrix");
+function Trace(m) = (
+	if(not IsMatrix(m) or not IsValueOnly(m)) then
+		(error("Trace: argument not a value only matrix");bailout)
+	else if(rows(m)!=columns(m)) then
+		(error("Trace: matrix not a square");bailout);
+	a=0;
+	for i = 1 to rows(m) do (a=a+m@(i,i))
+);
+protect("Trace")
+SetHelpAlias("Trace", "trace")
+trace = Trace
+protect("trace")
+
+#calculate convolution of two horizontal vectors
+SetHelp("Convolution", "linear_algebra","Calculate convolution of two horizontal vectors");
+function Convolution(a,b) = (
+	if(not IsMatrix(a) or not IsValueOnly(a) or
+	   not IsMatrix(b) or not IsValueOnly(b) or
+	   rows(a)>1 or rows(b)>1) then
+		(error("Convolution: arguments not value only horizontal vectors");bailout)
+	else if(columns(a)!=columns(b)) then
+		(error("Convolution: arguments must be identical vectors");bailout);
+	s = 0;
+	for i = 1 to columns(a) do (
+		s = s + a@(1,i)*b@(1,columns(a)-i+1)
+	)
+);
+protect("Convolution")
+SetHelpAlias("Convolution", "convolution")
+convol = Convolution
+protect("convol")
+
+#calculate convolution of two horizontal vectors and return the result
+#not added together but in a vector
+SetHelp("ConvolutionVector", "linear_algebra","Calculate convolution of two horizontal vectors");
+function ConvolutionVector(a,b) = (
+	if(not IsMatrix(a) or not IsValueOnly(a) or
+	   not IsMatrix(b) or not IsValueOnly(b) or
+	   rows(a)>1 or rows(b)>1) then
+		(error("ConvolutionVector: arguments not value only horizontal vectors");bailout)
+	else if(columns(a)!=columns(b)) then
+		(error("ConvolutionVector: arguments must be identical vectors");bailout);
+	r = SetMatrixSize ([0],1,columns(a));
+	for i = 1 to columns(a) do (
+		r@(1,i) = a@(1,i)*b@(1,columns(a)-i+1)
+	);
+	r
+);
+protect("ConvolutionVector")
+
+#calculate the sum of all elements in a matrix
+SetHelp("MatrixSum", "matrix","Calculate the sum of all elements in a matrix");
+function MatrixSum(a) = (
+	if(not IsMatrix(a) or not IsValueOnly(a)) then
+		(error("MatrixSum: argument not a value only matrix");bailout);
+	sum n in a do n
+);
+protect("MatrixSum")
+
+SetHelp("MatrixSumSquares", "matrix","Calculate the sum of squares of all elements in a matrix");
+function MatrixSumSquares(a) = (
+	if(not IsMatrix(a) or not IsValueOnly(a)) then
+		(error("MatrixSumSquares: argument not a value only matrix");bailout);
+	sum n in a do n^2
+);
+protect("MatrixSumSquares")
+
+#calculate the product of all elements in a matrix
+SetHelp("MatrixProduct","matrix", "Calculate the product of all elements in a matrix")
+function MatrixProduct(a) = (
+	if(not IsMatrix(a) or not IsValueOnly(a)) then
+		(error("matprod: argument not a value only matrix");bailout);
+	prod n in a do n
+);
+protect("MatrixProduct")
+
+SetHelp("Submatrix", "matrix", "Return column(s) and row(s) from a matrix")
+function Submatrix(m,r,c) = [m@(r,c)]
+protect ("Submatrix")
+
+SetHelp("ComplementSubmatrix", "matrix", "Remove column(s) and row(s) from a matrix");
+function ComplementSubmatrix(m,r,c) = [m@(IndexComplement(r, rows(m)), IndexComplement (c, columns (m)))]
+protect ("ComplementSubmatrix")
+
+# Minor of a matrix (determinant of a submatrix given by deleting
+# one row and one column)
+SetHelp("Minor","linear_algebra", "Get the i-j minor of a matrix")
+function Minor(M,i,j) = det (ComplementSubmatrix (M, i, j))
+protect("Minor");
+
+#classical adjoint (adjugate) of a matrix
+SetHelp("adj","linear_algebra", "Get the classical adjoint (adjugate) of a matrix");
+function adj(m) = (
+	if(not IsMatrix(m) or not IsValueOnly(m)) then
+		(error("adj: argument not a value-only matrix");bailout)
+	else if(rows(m)!=columns(m)) then
+		(error("adj: argument not a square matrix");bailout)
+	else if(rows(m)<2) then
+		(error("adj: argument cannot be 1x1 matrix");bailout);
+
+	a = SetMatrixSize ([0],rows(m),rows(m));
+	for i = 1 to rows(m) do (
+		for j = 1 to rows(m) do (
+			a@(j,i) = ((-1)^(i+j))*Minor(m,i,j);
+		);
+	);
+	a
+);
+protect("adj")
+SetHelpAlias ("adj", "Adjugate")
+Adjugate = adj
+protect("Adjugate")
+
+SetHelp("MinimizeFunction","functions","Find the first value where f(x)=0");
+function MinimizeFunction(func,x,incr) = (
+	if(not IsValue(x) or not IsValue(incr)) then
+		(error("MinimizeFunction: x,incr arguments not values");bailout)
+	else if(not IsFunction(func)) then
+		(error("MinimizeFunction: func argument not a function");bailout);
+	while(func(x)>0) do x=x+incr;
+	x
+);
+protect("MinimizeFunction")
+
+SetHelp("MakeDiagonal","matrix","Make diagonal matrix from a vector");
+function MakeDiagonal(v,arg...) = (
+	if IsValue (v) and IsNull (arg) then
+		return [v]
+	else if IsMatrix (v) and IsNull (arg) then
+		m = v
+	else if IsValue (v) and IsMatrix (arg) then
+		m = [v,arg]
+	else
+		(error("MakeDiagonal: arguments not a vector or a list of values");bailout);
+	r = SetMatrixSize ([0],elements(m),elements(m));
+	for i = 1 to elements(m) do (
+		r@(i,i) = m@(i)
+	);
+	r
+);
+protect("MakeDiagonal")
+SetHelpAlias("MakeDiagonal","diag")
+diag = MakeDiagonal
+protect("diag")
+
+SetHelp("SwapRows","matrix","Swap two rows in a matrix");
+function SwapRows(m,row1,row2) = (
+	if(not IsMatrix(m) or not IsInteger(row1) or
+	   not IsInteger(row2)) then
+		(error("SwapRows: arguments are not the right type");bailout)
+	else if(row1>rows(m) or row2>rows(m)) then
+		(error("SwapRows: argument out of range");bailout)
+	else if(row1 != row2) then (
+		tmp = m@(row1,);
+		m@(row1,) = m@(row2,);
+		m@(row2,) = tmp
+	);
+	m
+);
+protect("SwapRows")
+
+SetHelp("RowSum","matrix","Calculate sum of each row in a matrix");
+function RowSum(m) = (
+	if not IsMatrix(m) then
+		(error("RowSum: argument not matrix");bailout);
+	r = SetMatrixSize ([0],rows(m),1);
+	for i = 1 to rows(m) do (
+		for j = 1 to columns(m) do
+			r@(i,1) = r@(i,1) + m@(i,j)
+	);
+	r
+);
+protect("RowSum")
+
+SetHelp("RowSumSquares","matrix","Calculate sum of squares of each row in a matrix");
+function RowSumSquares(m) = (
+	if not IsMatrix(m) then
+		(error("RowSumSquares: argument not matrix");bailout);
+	r = SetMatrixSize ([0],rows(m),1);
+	for i = 1 to rows(m) do (
+		for j = 1 to columns(m) do
+			r@(i,1) = r@(i,1) + m@(i,j)^2
+	);
+	r
+);
+protect("RowSumSquares")
+
+#sort a horizontal vector
+SetHelp("SortVector","matrix","Sort vector elements");
+function SortVector(v) = (
+	if not IsVector(v) then
+		(error("SortVector: argument not a vector");bailout);
+	j = 1;
+	do (
+		sorted = 1;
+		for i = 1 to elements(v)-j do (
+			if v@(i)>v@(i+1) then (
+				t = v@(i);
+				v@(i) = v@(i+1);
+				v@(i+1) = t;
+				sorted = 0
+			)
+		);
+		j=j+1
+	) while not sorted;
+	v
+);
+protect("SortVector")
+
+SetHelp("ReverseVector","matrix","Reverse elements in a vector");
+function ReverseVector(v) = (
+	if not IsVector(v) then
+		(error("ReverseVector: argument not a vector");bailout);
+	r = SetMatrixSize ([0],rows(v),columns(v));
+	for i = 1 to elements(v) do
+		r@(i) = v@(elements(v)-i+1);
+	r
+);
+protect("ReverseVector")
+
+SetHelp("IsVector", "matrix", "Is argument a horizontal or a vertical vector")
+function IsVector(v) = (IsMatrix(v) and (columns(v) == 1 or rows(v) == 1))
+protect("IsVector")
+
+SetHelp("UpperTriangular", "matrix", "Zero out entries below the diagonal")
+function UpperTriangular(M) = (
+	if not IsMatrix(M) or not IsMatrixSquare(M) then
+		(error("UpperTriangular: argument not a square matrix");bailout);
+	for i=2 to rows(M) do (
+		for j=1 to i-1 do (
+			M@(i,j) = 0
+		)
+	);
+	M
+)
+protect ("UpperTriangular")
+
+SetHelp("LowerTriangular", "matrix", "Zero out entries above the diagonal")
+function LowerTriangular(M) = (
+	if not IsMatrix(M) or not IsMatrixSquare(M) then
+		(error("LowerTriangular: argument not a square matrix");bailout);
+	UpperTriangular (M.').'
+)
+protect ("LowerTriangular")
+
+# FIXME: stupid
+SetHelp("IsUpperTriangular", "matrix", "Is a matrix upper triangular")
+function IsUpperTriangular(M) = (
+	if not IsMatrix(M) or not IsMatrixSquare(M) then
+		(error("IsUpperTriangular: argument not a square matrix");bailout);
+	M == UpperTriangular(M)
+)
+protect ("IsUpperTriangular")
+
+# FIXME: stupid
+SetHelp("IsLowerTriangular", "matrix", "Is a matrix lower triangular")
+function IsLowerTriangular(M) = (
+	if not IsMatrix(M) or not IsMatrixSquare(M) then
+		(error("IsLowerTriangular: argument not a square matrix");bailout);
+	M == LowerTriangular(M)
+)
+protect ("IsLowerTriangular")
+
+# FIXME: stupid
+SetHelp("IsDiagonal", "matrix", "Is a matrix diagonal")
+function IsDiagonal(M) = (
+	if not IsMatrix(M) or not IsMatrixSquare(M) then
+		(error("IsDiagonal: argument not a square matrix");bailout);
+	M == UpperTriangular(LowerTriangular(M))
+)
+protect ("IsDiagonal")
+
+SetHelp("CompoundMatrix", "matrix", "Calculate the kth compund matrix of A")
+function CompoundMatrix(k,A) = (
+	if not IsInteger(k) or k < 1 or k > min(columns(A),rows(A)) or not IsMatrix(A) then
+		(error("CompoundMatrix: arguments of right type/size");bailout);
+	C=[0];
+	gamma = Combinations(k,rows(A));
+	omega = Combinations(k,columns(A));
+	for i=1 to elements(gamma) do
+		for j=1 to elements(omega) do
+			C@(i,j) = det (A@(gamma@(i),omega@(j)));
+	C
+)
+protect ("CompoundMatrix")

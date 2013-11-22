@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -34,16 +34,15 @@
 
 #include "parseutil.h"
 
-extern GList *evalstack;
-extern ETree *free_trees;
+extern GSList *evalstack;
 
 
-int
-push_func(void)
+gboolean
+gp_push_func (gboolean vararg)
 {
-	ETree * tree;
-	ETree * val;
-	GList * list = NULL;
+	GelETree * tree;
+	GelETree * val;
+	GSList * list = NULL;
 	int i = 0;
 	
 	val = stack_pop(&evalstack);
@@ -54,40 +53,98 @@ push_func(void)
 	for(;;) {
 		tree = stack_pop(&evalstack);
 		if(tree && tree->type==EXPRLIST_START_NODE) {
-			freetree(tree);
+			gel_freetree(tree);
 			break;
 		}
 		/*we have gone all the way to the top and haven't found a
 		  marker or tree is not an ident node*/
 		if(!tree || tree->type != IDENTIFIER_NODE) {
-			if(tree) freetree(tree);
-			g_list_foreach(list,(GFunc)freetree,NULL);
-			g_list_free(list); 
+			if(tree) gel_freetree(tree);
+			g_slist_foreach(list,(GFunc)gel_freetree,NULL);
+			g_slist_free(list); 
 			return FALSE;
 		}
-		list = g_list_prepend(list,tree->id.id);
-		freetree(tree);
+		list = g_slist_prepend(list,tree->id.id);
+		gel_freetree(tree);
 		i++;
 	}
 	
 	GET_NEW_NODE(tree);
 
 	tree->type = FUNCTION_NODE;
-	tree->func.func = d_makeufunc(NULL,val,list,i);
+	tree->func.func = d_makeufunc(NULL,val,list,i, NULL);
 	tree->func.func->context = -1;
+	tree->func.func->vararg = vararg;
 
 	stack_push(&evalstack,tree);
 
 	return TRUE;
 }
 
+gboolean
+gp_prepare_push_param (gboolean setfunc)
+{
+	GelETree * ident;
+	GelETree * val;
+	GelETree * func;
+
+	/* FIXME: setfunc not yet implemented */
+	g_assert ( ! setfunc);
+
+	val = stack_pop (&evalstack);
+	if (val == NULL)
+		return FALSE;
+
+	ident = stack_pop (&evalstack);
+	if (ident == NULL)
+		return FALSE;
+
+	func = gel_makenum_null ();
+
+	stack_push (&evalstack, func);
+	stack_push (&evalstack, ident);
+	stack_push (&evalstack, val);
+
+	return TRUE;
+}
+
+/* returns true if this is a 'by' sep */
+gboolean
+gp_prepare_push_region_sep (void)
+{
+	GelETree *e1, *e2;
+
+	e2 = stack_pop (&evalstack);
+	e1 = stack_pop (&evalstack);
+
+	if (e2->type == OPERATOR_NODE &&
+	    e2->op.oper == E_REGION_SEP) {
+		GelETree *a1 = e2->op.args;
+		GelETree *a2 = e2->op.args->any.next;
+		a1->any.next = NULL;
+		a2->any.next = NULL;
+		e2->op.args = NULL;
+		gel_freetree (e2);
+		stack_push (&evalstack, e1);
+		stack_push (&evalstack, a1);
+		stack_push (&evalstack, a2);
+
+		return TRUE;
+	} else {
+		stack_push (&evalstack, e1);
+		stack_push (&evalstack, e2);
+
+		return FALSE;
+	}
+}
+
 /*pops the last expression, pushes a marker
   entry and puts the last expression back*/
 int
-push_marker(ETreeType markertype)
+gp_push_marker(GelETreeType markertype)
 {
-	ETree * last_expr = stack_pop(&evalstack);
-	ETree * tree;
+	GelETree * last_expr = stack_pop(&evalstack);
+	GelETree * tree;
 	
 	if(!last_expr)
 		return FALSE;
@@ -101,9 +158,9 @@ push_marker(ETreeType markertype)
 
 /*pushes a marker*/
 void
-push_marker_simple(ETreeType markertype)
+gp_push_marker_simple(GelETreeType markertype)
 {
-	ETree *tree;
+	GelETree *tree;
 	GET_NEW_NODE(tree);
 	tree->type = markertype;
 	stack_push(&evalstack,tree);
@@ -112,16 +169,16 @@ push_marker_simple(ETreeType markertype)
 /*puts a spacer into the tree, spacers are just useless nodes to be removed
   before evaluation, they just signify where there were parenthesis*/
 int
-push_spacer(void)
+gp_push_spacer(void)
 {
-	ETree * last_expr = stack_pop(&evalstack);
+	GelETree * last_expr = stack_pop(&evalstack);
 	
 	if(!last_expr)
 		return FALSE;
 	else if(last_expr->type == SPACER_NODE)
 		stack_push(&evalstack,last_expr);
 	else {
-		ETree * tree;
+		GelETree * tree;
 		GET_NEW_NODE(tree);
 		tree->type = SPACER_NODE;
 		tree->sp.arg = last_expr;
@@ -133,25 +190,29 @@ push_spacer(void)
 /*gather all expressions up until a row start marker and push the
   result as a MATRIX_ROW_NODE*/
 int
-push_matrix_row(void)
+gp_push_matrix_row(void)
 {
-	ETree *tree;
-	GList *row = NULL;
+	GelETree *tree;
+	GelETree *row = NULL;
 	int i=0;
 	for(;;) {
 		tree = stack_pop(&evalstack);
 		/*we have gone all the way to the top and haven't found a
 		  marker*/
 		if(!tree) {
-			g_list_foreach(row,(GFunc)freetree,NULL);
-			g_list_free(row); 
+			while(row) {
+				GelETree *li = row->any.next;
+				gel_freetree(row);
+				row = li;
+			}
 			return FALSE;
 		}
 		if(tree->type==EXPRLIST_START_NODE) {
-			freetree(tree);
+			gel_freetree(tree);
 			break;
 		}
-		row = g_list_prepend(row,tree);
+		tree->any.next = row;
+		row = tree;
 		i++;
 	}
 	GET_NEW_NODE(tree);
@@ -167,15 +228,16 @@ push_matrix_row(void)
 /*gather all expressions up until a row start marker and push the
   result as a matrix*/
 int
-push_matrix(int quoted)
+gp_push_matrix(int quoted)
 {
-	ETree *tree;
+	GelETree *tree;
 	int i,j;
 	int cols,rows;
-	GList *rowl = NULL;
-	GList *lix,*liy;
+	GSList *rowl = NULL;
+	GSList *liy;
+	GelETree *lix;
 	
-	Matrix *matrix;
+	GelMatrix *matrix;
 	
 	rows=0;
 	cols=0;
@@ -184,55 +246,60 @@ push_matrix(int quoted)
 		/*we have gone all the way to the top and haven't found a
 		  marker*/
 		if(!tree) {
-			GList *li;
-			for(li=rowl;li;li=g_list_next(li)) {
-				g_list_foreach(li->data,(GFunc)freetree,
-					       NULL);
-				g_list_free(li->data); 
+			GSList *li;
+			for(li=rowl;li;li=g_slist_next(li)) {
+				GelETree *row = li->data;
+				while(row) {
+					GelETree *a = row->any.next;
+					gel_freetree(row);
+					row = a;
+				}
 			}
-			g_list_free(rowl);
+			g_slist_free(rowl);
 			/**/g_warning("BAD MATRIX, NO START MARKER");
 			return FALSE;
 		} else if(tree->type==MATRIX_START_NODE) {
-			freetree(tree);
+			gel_freetree(tree);
 			break;
 		} else if(tree->type==MATRIX_ROW_NODE) {
 			if(tree->row.nargs>cols)
 				cols = tree->row.nargs;
-			rowl = g_list_prepend(rowl,tree->row.args);
+			rowl = g_slist_prepend(rowl,tree->row.args);
 			tree->row.args = NULL;
 			tree->row.nargs = 0;
-			freetree(tree);
+			gel_freetree(tree);
 			rows++;
 			continue;
 		} else {
-			GList *li;
-			freetree(tree);
-			for(li=rowl;li;li=g_list_next(li)) {
-				g_list_foreach(li->data,(GFunc)freetree,
-					       NULL);
-				g_list_free(li->data); 
+			GSList *li;
+			gel_freetree(tree);
+			for(li=rowl;li;li=g_slist_next(li)) {
+				GelETree *row = li->data;
+				while(row) {
+					GelETree *a = row->any.next;
+					gel_freetree(row);
+					row = a;
+				}
 			}
-			g_list_free(rowl);
+			g_slist_free(rowl);
 			/**/g_warning("BAD MATRIX, A NON ROW ELEMENT FOUND");
 			return FALSE;
 		}
 	}
 
-	matrix = matrix_new();
-	matrix_set_size(matrix, cols, rows);
+	matrix = gel_matrix_new();
+	gel_matrix_set_size(matrix, cols, rows, TRUE /* padding */);
 	
-	for(j=0,liy=rowl;liy;j++,liy=g_list_next(liy)) {
-		for(i=0,lix=liy->data;lix;i++,lix=g_list_next(lix)) {
-			matrix_index(matrix,i,j) = lix->data;
+	for(j=0,liy=rowl;liy;j++,liy=g_slist_next(liy)) {
+		for(i=0,lix=liy->data;lix;i++,lix=lix->any.next) {
+			gel_matrix_index(matrix,i,j) = lix;
 		}
-		g_list_free(liy->data);
 	}
-	g_list_free(rowl);
+	g_slist_free(rowl);
 	
 	GET_NEW_NODE(tree);
 	tree->type = MATRIX_NODE;
-	tree->mat.matrix = matrixw_new_with_matrix(matrix);
+	tree->mat.matrix = gel_matrixw_new_with_matrix(matrix);
 	tree->mat.quoted = quoted?1:0;
 	
 	stack_push(&evalstack,tree);
@@ -242,9 +309,9 @@ push_matrix(int quoted)
 /*pushes a NULL onto the stack, null cannot be evaluated, it will be
   read as ""*/
 void
-push_null(void)
+gp_push_null(void)
 {
-	ETree *tree;
+	GelETree *tree;
 	GET_NEW_NODE(tree);
 	tree->type = NULL_NODE;
 

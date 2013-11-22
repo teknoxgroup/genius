@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *

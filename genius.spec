@@ -1,5 +1,5 @@
-%define  ver     0.4.6
-%define  rel     1
+%define  ver     0.5.0
+%define  rel     SNAP
 %define  prefix  /usr
 
 Summary: Genius advanced calculator

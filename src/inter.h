@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -23,7 +23,11 @@
 #define _INTER_H_
 
 void init_inter(void);
-ETree * get_p_expression(void);
+GelETree * get_p_expression(void);
+void start_cb_p_expression(void (*get_func)(GelETree *), FILE *torlfp);
+void stop_cb_p_expression(void);
+void get_cb_p_expression(char *s, FILE *torlfp);
+
 
 
 #endif

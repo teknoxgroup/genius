@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -21,12 +21,7 @@
 
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -118,17 +113,17 @@ prependstr(char *s,char *p)
 
 
 void
-stack_push(GList **stack, gpointer data)
+stack_push(GSList **stack, gpointer data)
 {
 	g_return_if_fail(stack);
-	*stack = g_list_prepend(*stack,data);
+	*stack = g_slist_prepend(*stack,data);
 }
 
 gpointer
-stack_pop(GList **stack)
+stack_pop(GSList **stack)
 {
 	gpointer data;
-	GList *p;
+	GSList *p;
 
 	g_return_val_if_fail(stack,NULL);
 
@@ -139,8 +134,7 @@ stack_pop(GList **stack)
 
 	data = (*stack)->data;
 	p = (*stack)->next;
-	g_list_free_1(*stack);
-	if(p) p->prev = NULL;
+	g_slist_free_1(*stack);
 	*stack = p;
 	return data;
 }

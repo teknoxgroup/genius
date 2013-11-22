@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -26,67 +26,92 @@
 #include "structs.h"
 #include "matrix.h"
 
-/*the MatrixW typedef is in structs.h*/
-struct _MatrixW {
-	Matrix *m;
-	int tr; /*transposed*/
-	struct {
-		int x;
-		int y;
-		int w;
-		int h;
-	} region;
+/*the GelMatrixW typedef is in structs.h*/
+struct _GelMatrixW {
+	GelMatrix *m;
+	guint32 tr:1; /*transposed*/
+	guint32 cached_value_only:1;
+	guint32 value_only:1;
+	guint32 cached_value_only_real:1;
+	guint32 value_only_real:1;
+	guint32 cached_value_only_rational:1;
+	guint32 value_only_rational:1;
+	guint32 cached_value_only_integer:1;
+	guint32 value_only_integer:1;
+	int *regx;
+	int *regy;
+	int regw;
+	int regh;
 };
 
 /*new matrix*/
-MatrixW *matrixw_new(void);
-MatrixW *matrixw_new_with_matrix(Matrix *mat);
+GelMatrixW *gel_matrixw_new(void);
+GelMatrixW *gel_matrixw_new_with_matrix(GelMatrix *mat);
 
 /*set size of a matrix*/
-void matrixw_set_size(MatrixW *m, int width, int height);
+void gel_matrixw_set_size(GelMatrixW *m, int width, int height);
 /*set the size of the matrix to be at least this*/
-void matrixw_set_at_least_size(MatrixW *m, int width, int height);
+void gel_matrixw_set_at_least_size(GelMatrixW *m, int width, int height);
 
 /*set element*/
-void matrixw_set_element(MatrixW *m, int x, int y, gpointer data);
+void gel_matrixw_set_element(GelMatrixW *m, int x, int y, gpointer data);
+void gel_matrixw_set_velement(GelMatrixW *m, int i, gpointer data);
 
 /*copy a matrix*/
-MatrixW * matrixw_copy(MatrixW *source);
+GelMatrixW * gel_matrixw_copy(GelMatrixW *source);
 
-MatrixW * matrixw_get_region(MatrixW *m, int x, int y, int w, int h);
-void matrixw_set_region(MatrixW *m, MatrixW *src,
-			int srcx, int srcy, int destx, int desty,
-			int w, int h);
-void matrixw_set_region_etree(MatrixW *m, ETree *src,
-			      int destx, int desty,
-			      int w, int h);
+/* get rowsof and columsof matrices */
+GelMatrixW * gel_matrixw_rowsof (GelMatrixW *source);
+GelMatrixW * gel_matrixw_columnsof (GelMatrixW *source);
+GelMatrixW * gel_matrixw_diagonalof (GelMatrixW *source);
+
+GelMatrixW * gel_matrixw_get_region (GelMatrixW *m, int *regx, int *regy, int w, int h);
+GelMatrixW * gel_matrixw_get_vregion (GelMatrixW *m, int *reg, int len);
+void gel_matrixw_set_region(GelMatrixW *m, GelMatrixW *src,
+			    int *destx, int *desty,
+			    int w, int h);
+void gel_matrixw_set_region_etree(GelMatrixW *m, GelETree *src,
+				  int *destx, int *desty,
+				  int w, int h);
+
+void gel_matrixw_set_vregion (GelMatrixW *m, GelMatrixW *src,
+			      int *desti, int len);
+void gel_matrixw_set_vregion_etree(GelMatrixW *m, GelETree *src,
+				  int *desti, int len);
 
 /*transpose a matrix*/
-MatrixW * matrixw_transpose(MatrixW *m);
+GelMatrixW * gel_matrixw_transpose(GelMatrixW *m);
 
 /*free a matrix*/
-void matrixw_free(MatrixW *m);
+void gel_matrixw_free(GelMatrixW *m);
 
-/*make private copy of the Matrix*/
-void matrixw_make_private(MatrixW *m);
+/*make private copy of the GelMatrix*/
+void gel_matrixw_make_private(GelMatrixW *m);
 
-extern ETree *the_zero;
+extern GelETree *the_zero;
+
+/*sort of unsafe, and only for setting, since we can
+  get a NULL from this*/
+#define gel_matrixw_set_index(a,i,j) \
+	(gel_matrix_index((a)->m, \
+			  (a)->regx ? (a)->regx[(a)->tr?(j):(i)] : (a)->tr?(j):(i), \
+			  (a)->regy ? (a)->regy[(a)->tr?(i):(j)] : (a)->tr?(i):(j)))
 
 /*get the value at, make sure it's in the range*/
-G_INLINE_FUNC ETree *matrixw_index(MatrixW *m, int x, int y);
+G_INLINE_FUNC GelETree *gel_matrixw_index(GelMatrixW *m, int x, int y);
 #ifdef G_CAN_INLINE
-G_INLINE_FUNC ETree *
-matrixw_index(MatrixW *m, int x, int y) {
-	ETree *t = matrix_index(m->m,m->region.x+(m->tr?y:x),m->region.y+(m->tr?x:y));
+G_INLINE_FUNC GelETree *
+gel_matrixw_index(GelMatrixW *m, int x, int y) {
+	GelETree *t = gel_matrixw_set_index (m, x, y);
 	return t?t:the_zero;
 }
 #endif
 
-/*sort of unsafe, and only for setting, since we can
-  get a NULL from this*/
-#define matrixw_set_index(a,i,j) (matrix_index((a)->m,(a)->region.x+((a)->tr?(j):(i)),(a)->region.y+((a)->tr?(i):(j))))
+#define gel_matrixw_vindex(m,i) gel_matrixw_index((m),i%gel_matrixw_width(m),i/gel_matrixw_width(m))
+#define gel_matrixw_set_vindex(m,i) gel_matrixw_set_index((m),i%gel_matrixw_width(m),i/gel_matrixw_width(m))
 
-#define matrixw_width(a) ((a)->tr?(a)->region.h:(a)->region.w)
-#define matrixw_height(a) ((a)->tr?(a)->region.w:(a)->region.h)
+#define gel_matrixw_width(a) ((a)->tr?(a)->regh:(a)->regw)
+#define gel_matrixw_height(a) ((a)->tr?(a)->regw:(a)->regh)
+#define gel_matrixw_elements(a) ((a)->regw*(a)->regh)
 
 #endif

@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -20,16 +20,13 @@
  */
 #include "config.h"
 
-#ifdef GNOME_SUPPORT
 #include <gnome.h>
-#else
-#include <libintl.h>
-#define _(x) gettext(x)
-#endif
 
 #include <stdlib.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <signal.h>
 #ifdef HAVE_WORDEXP
 #include <wordexp.h>
@@ -51,7 +48,11 @@
 #include "compil.h"
 #include "plugin.h"
 
+#include "geloutput.h"
+
 #include "mpwrap.h"
+
+#include "lexer.h"
 
 #include "parse.h"
 
@@ -59,35 +60,36 @@ extern int lex_fd[2];
 extern int first_tok;
 extern int lex_init;
 
-extern FILE *yyin;
 extern char *yytext;
 extern int yydebug;
 
-extern ETree *returnval;
-extern int inbailout;
-extern int inexception;
+extern const char *genius_toplevels[];
 
-extern GSList *inloop;
+gboolean genius_is_gui = FALSE;
+
+GelOutput *main_out = NULL;
+
 void (*evalnode_hook)(void) = NULL;
 int run_hook_every = 1000;
 void (*statechange_hook)(calcstate_t) = NULL;
 
-static GHashTable *funcdesc = NULL;
+typedef struct {
+	char *category;
+	char *name;
+	GSList *funcs;
+} HelpCategory;
+static GSList *categories = NULL;
+static GHashTable *helphash = NULL;
 
 /*these two are used for test parses so that we know when we have a complete
   expression toevaluate*/
-static int ignore_end_parse_errors = FALSE;
-static int got_end_too_soon = FALSE;
-
-/*the maximum remaining spaces on a line or if it is 0 means no limit*/
-static int maxline = 0;
-
-FILE *outputfp = NULL;
+static gboolean ignore_end_parse_errors = FALSE;
+static gboolean got_end_too_soon = FALSE;
 
 GHashTable *uncompiled = NULL;
 
 /* stack ... has to be global:-( */
-GList *evalstack=NULL;
+GSList *evalstack=NULL;
 
 /*error .. global as well*/
 calc_error_t error_num = NO_ERROR;
@@ -97,83 +99,380 @@ int got_eof = FALSE;
 calcstate_t calcstate = {0};
 
 /*error reporting function*/
-void (*errorout)(char *)=NULL;
-void (*infoout)(char *)=NULL;
+void (*errorout)(const char *)=NULL;
+void (*infoout)(const char *)=NULL;
 
-char *loadfile = NULL;
-char *loadfile_glob = NULL;
-char *load_plugin = NULL;
+GelCommand gel_command = GEL_NO_COMMAND;
+char *gel_command_arg = NULL;
 
 int interrupted = FALSE;
 
-static GList *curfile = NULL;
-static GList *curline = NULL;
+static GSList *curfile = NULL;
+static GSList *curline = NULL;
 
 /*from lexer.l*/
 int my_yyinput(void);
 
-void
-add_description(char *func, char *desc)
+static int
+function_sort (gconstpointer data1, gconstpointer data2)
 {
-	char *origkey;
-	char *origdesc;
-	char *p;
-	
-	/*kill \n's \r's and ;'s (for compiled parsing purposes)
-	  and cap the entry at 80*/
-	desc = g_strdup(desc);
-	if((p=strchr(desc,'\n')))
-		*p = '\0';
-	if((p=strchr(desc,'\r')))
-		*p = '\0';
-	if(strlen(desc)>80) 
-		desc[81]='\0';
-
-	if(!funcdesc)
-		funcdesc = g_hash_table_new(g_str_hash,g_str_equal);
-	
-	if(g_hash_table_lookup_extended(funcdesc,func,
-					(gpointer *)&origkey,
-					(gpointer *)&origdesc)) {
-		g_free(origdesc);
-		g_hash_table_insert(funcdesc,origkey,g_strdup(desc));
-	} else
-		g_hash_table_insert(funcdesc,g_strdup(func),g_strdup(desc));
-	g_free(desc);
+	return strcmp (data1, data2);
 }
 
-char *
-get_description(char *func)
+static int
+help_sort (gconstpointer data1, gconstpointer data2)
 {
-	char *s;
-	if(!funcdesc)
-		return "";
+	const GelHelp *h1 = data1;
+	const GelHelp *h2 = data2;
+	return strcmp (h1->func, h2->func);
+}
+
+static HelpCategory *
+get_category (const char *category, gboolean insert)
+{
+	GSList *li;
+	for (li = categories; li != NULL; li = li->next) {
+		HelpCategory *cat = li->data;
+		if (strcmp (cat->category, category) == 0)
+			return cat;
+	}
+
+	if (insert) {
+		HelpCategory *cat = g_new0 (HelpCategory, 1);
+		cat->category = g_strdup (category);
+		categories = g_slist_append (categories, cat);
+		return cat;
+	} else {
+		return NULL;
+	}
+}
+
+GelHelp *
+get_help (const char *func, gboolean insert)
+{
+	GelHelp *help;
+
+	if (helphash == NULL)
+		helphash = g_hash_table_new (g_str_hash, g_str_equal);
+
+	help = g_hash_table_lookup (helphash, func);
+
+	if (help == NULL && insert) {
+		help = g_new0 (GelHelp, 1);
+		help->func = g_strdup (func);
+		g_hash_table_insert (helphash, help->func, help);
+	}
+
+	return help;
+}
+
+/* well sorted */
+GSList *
+get_categories (void)
+{
+	GSList *li, *list = NULL;
+	for (li = categories; li != NULL; li = li->next) {
+		HelpCategory *cat = li->data;
+		list = g_slist_prepend (list, g_strdup (cat->category));
+	}
+	return g_slist_reverse (list);
+}
+
+const char *
+get_category_name (const char *category)
+{
+	HelpCategory *cat;
+
+	if (category == NULL)
+		return _("Uncategorized");
+
+	cat = get_category (category, FALSE /* insert */);
+	if (cat == NULL || cat->name == NULL)
+		return category;
+	else
+		return cat->name;
+}
+
+/* gets undocumented functions */
+static GSList *
+get_uncategorized_documented (void)
+{
+	GSList *funcs;
+	GSList *li;
+	GSList *list;
 	
-	s = g_hash_table_lookup(funcdesc,func);
-	if(s) return s;
-	else return "";
+	funcs = d_getcontext();
+	if (funcs == NULL)
+		return NULL;
+
+	list = NULL;
+	
+	for (li = funcs; li != NULL; li = li->next) {
+		GelEFunc *f = li->data;
+		GelHelp *help;
+		if (f->id == NULL ||
+		    f->id->token == NULL)
+			continue;
+		help = get_help (f->id->token, FALSE /* insert */);
+		if (help != NULL &&
+		    help->category == NULL &&
+		    help->aliasfor == NULL)
+			list = g_slist_insert_sorted (list,
+						      help,
+						      help_sort);
+	}
+	return list;
+}
+
+/* null for uncategorized */
+GSList *
+get_helps (const char *category)
+{
+	HelpCategory *cat;
+
+	if (category == NULL) {
+		return get_uncategorized_documented ();
+	}
+
+	cat = get_category (category, FALSE /* insert */);
+	if (cat == NULL) {
+		return NULL;
+	} else {
+		GSList *li, *list = NULL;
+		for (li = cat->funcs; li != NULL; li = li->next) {
+			const char *func = li->data;
+			GelHelp *help = get_help (func, FALSE /* insert */);
+			if (help != NULL)
+				list = g_slist_prepend (list, help);
+		}
+		return g_slist_reverse (list);
+	}
+}
+
+/* gets undocumented functions */
+GSList *
+get_undocumented (void)
+{
+	GSList *funcs;
+	GSList *li;
+	GSList *list;
+	
+	funcs = d_getcontext();
+	if (funcs == NULL)
+		return NULL;
+
+	list = NULL;
+	
+	for (li = funcs; li != NULL; li = li->next) {
+		GelEFunc *f = li->data;
+		GelHelp *help;
+		if(f->id == NULL ||
+		   f->id->token == NULL ||
+		   strcmp (f->id->token, "ni") == 0 ||
+		   strcmp (f->id->token, "shrubbery") == 0)
+			continue;
+		help = get_help (f->id->token, FALSE /* insert */);
+		if (help == NULL)
+			list = g_slist_insert_sorted (list,
+						      g_strdup (f->id->token),
+						      function_sort);
+	}
+	return list;
+}
+
+void
+new_category (const char *category, const char *name)
+{
+	HelpCategory *cat = get_category (category, TRUE /* insert */);
+	g_free (cat->name);
+	cat->name = g_strdup (name);
+}
+
+static void
+remove_from_category (const char *func, const char *category)
+{
+	GSList *li;
+	HelpCategory *cat = get_category (category, TRUE /* insert */);
+
+	for (li = cat->funcs; li != NULL; li = li->next) {
+		char *f = li->data;
+		if (strcmp (f, func) == 0) {
+			g_free (f);
+			cat->funcs = g_slist_delete_link (cat->funcs, li);
+			return;
+		}
+	}
+}
+
+void
+add_category (const char *func, const char *category)
+{
+	GelHelp *help = get_help (func, TRUE /* insert */);
+	HelpCategory *cat = get_category (category, TRUE /* insert */);
+
+	if (help->category != NULL) {
+		if (strcmp (help->category, category) == 0)
+			return;
+		remove_from_category (func, help->category);
+		g_free (help->category);
+	}
+	help->category = g_strdup (category);
+
+	cat->funcs = g_slist_insert_sorted (cat->funcs,
+					    g_strdup (func),
+					    function_sort);
+}
+
+static void
+remove_alias (const char *func, const char *alias)
+{
+	GelHelp *help;
+	GSList *li;
+
+	help = get_help (func, TRUE /* insert */);
+	for (li = help->aliases; li != NULL; li = li->next) {
+		char *f = li->data;
+		if (strcmp (f, alias) == 0) {
+			g_free (f);
+			help->aliases = g_slist_delete_link
+				(help->aliases, li);
+			return;
+		}
+	}
+}
+
+void
+add_alias (const char *func, const char *alias)
+{
+	GelHelp *help, *ahelp;
+
+	help = get_help (func, TRUE /* insert */);
+	if (help->aliasfor != NULL) {
+		(* errorout)(_("Trying to set an alias for an alias"));
+		return;
+	}
+
+	ahelp = get_help (alias, TRUE /* insert */);
+	if (ahelp->aliasfor != NULL) {
+		remove_alias (ahelp->aliasfor, alias);
+		g_free (ahelp->aliasfor);
+	}
+	ahelp->aliasfor = g_strdup (func);
+
+	help->aliases = g_slist_append
+		(help->aliases, g_strdup (alias));
+}
+
+void
+add_help_link (const char *func, const char *link)
+{
+	GelHelp *help;
+
+	help = get_help (func, TRUE /* insert */);
+	g_free (help->help_html);
+	help->help_link = g_strdup (link);
+}
+
+void
+add_help_html (const char *func, const char *html)
+{
+	GelHelp *help;
+
+	help = get_help (func, TRUE /* insert */);
+	g_free (help->help_html);
+	help->help_html = g_strdup (html);
+}
+
+void
+add_description (const char *func, const char *desc)
+{
+	GelHelp *help;
+	char *p;
+	char *d;
+	
+	/*kill \n's \r's and ;'s (for compiled parsing purposes) */
+	d = g_strdup(desc);
+	if((p=strchr(d,'\n')))
+		*p = '\0';
+	if((p=strchr(d,'\r')))
+		*p = '\0';
+
+	help = get_help (func, TRUE /* insert */);
+	g_free (help->description);
+	help->description = g_strdup (d);
+	g_free (d);
+}
+
+const char *
+get_description(const char *func)
+{
+	GelHelp *help;
+
+	help = get_help (func, FALSE /* insert */);
+	if (help == NULL ||
+	    help->description == NULL)
+		return  "";
+	else
+		return help->description;
+}
+
+void
+whack_help (const char *func)
+{
+	GelHelp *help;
+
+	if (helphash == NULL)
+		return;
+
+	help = g_hash_table_lookup (helphash, func);
+	if (help != NULL) {
+		GSList *li, *list;
+
+		list = g_slist_copy (help->aliases);
+		for (li = list; li != NULL; li = li->next) {
+			whack_help (li->data);
+			g_free (li->data);
+		}
+		g_slist_free (list);
+
+		if (help->aliasfor != NULL)
+			remove_alias (help->aliasfor, func);
+		if (help->category != NULL)
+			remove_from_category (func, help->category);
+
+		g_hash_table_remove (helphash, func);
+
+		g_slist_free (help->aliases);
+		g_free (help->aliasfor);
+		g_free (help->category);
+		g_free (help->help_link);
+		g_free (help->help_html);
+		g_free (help->description);
+		g_free (help->func);
+		g_free (help);
+	}
 }
 
 void
 push_file_info(char *file,int line)
 {
-	curfile = g_list_prepend(curfile,file?g_strdup(file):NULL);
-	curline = g_list_prepend(curline,GINT_TO_POINTER(line));
+	curfile = g_slist_prepend(curfile,file?g_strdup(file):NULL);
+	curline = g_slist_prepend(curline,GINT_TO_POINTER(line));
 }
 
 void
 pop_file_info(void)
 {
-	GList *li;
+	GSList *li;
 	g_assert(curfile && curline);
 
 	li = curfile;
-	curfile = g_list_remove_link(curfile,curfile);
+	curfile = g_slist_remove_link(curfile,curfile);
 	g_free(li->data);
-	g_list_free_1(li);
+	g_slist_free_1(li);
 	li = curline;
-	curline = g_list_remove_link(curline,curline);
-	g_list_free_1(li);
+	curline = g_slist_remove_link(curline,curline);
+	g_slist_free_1(li);
 }
 
 void
@@ -211,541 +510,732 @@ get_file_info(char **file, int *line)
 }
 
 static void
-appendout_c(GString *gs, FILE *out, char c)
+append_binaryoper(GelOutput *gelo, char *p, GelETree *n)
 {
-	if(maxline==-1)
-		return;
-	if(maxline>0) {
-		if(maxline<=4) {
-			if(!out)
-				g_string_append(gs,"...");
-			else
-				fputs("...",out);
-			maxline = -1;
-			return;
-		}
-		maxline--;
-	}
-	if(!out)
-		g_string_append_c(gs,c);
-	else
-		fputc(c,out);
-}
-
-static void
-appendout(GString *gs, FILE *out, char *s)
-{
-	if(maxline==-1)
-		return;
-	if(maxline>0) {
-		int len = strlen(s);
-		if(maxline<=3 + len) {
-			char *ss = g_strdup(s);
-			ss[maxline-4] = '\0';
-			if(!out)
-				g_string_append(gs,ss);
-			else
-				fputs(ss,out);
-			g_free(ss);
-			if(!out)
-				g_string_append(gs,"...");
-			else
-				fputs("...",out);
-			maxline = -1;
-			return;
-		}
-		maxline-=len;
-	}
-	if(!out)
-		g_string_append(gs,s);
-	else
-		fputs(s,out);
-}
-
-static void
-append_binaryoper(GString *gs,FILE *out,char *p, ETree *n)
-{
-	ETree *l,*r;
+	GelETree *l,*r;
 	GET_LR(n,l,r);
-	appendout_c(gs,out,'(');
-	print_etree(gs,out,l,-1);
-	appendout(gs,out,p);
-	print_etree(gs,out,r,-1);
-	appendout_c(gs,out,')');
+	gel_output_string(gelo, "(");
+	print_etree(gelo, l, FALSE);
+	gel_output_string(gelo, p);
+	print_etree(gelo, r, FALSE);
+	gel_output_string(gelo, ")");
 }
 
 static void
-append_unaryoper(GString *gs,FILE *out,char *p, ETree *n)
+append_unaryoper(GelOutput *gelo, char *p, GelETree *n)
 {
-	ETree *l;
+	GelETree *l;
 	GET_L(n,l);
-	appendout_c(gs,out,'(');
-	appendout(gs,out,p);
-	print_etree(gs,out,l,-1);
-	appendout_c(gs,out,')');
+	gel_output_string(gelo, "(");
+	gel_output_string(gelo, p);
+	print_etree(gelo, l, FALSE);
+	gel_output_string(gelo, ")");
 }
 
 static void
-appendoper(GString *gs,FILE *out, ETree *n)
+appendoper(GelOutput *gelo, GelETree *n)
 {
-	ETree *l,*r,*rr;
-	GList *li;
+	GelETree *l,*r,*rr;
+	GelETree *li;
 
 	switch(n->op.oper) {
 		case E_SEPAR:
-			append_binaryoper(gs,out,";",n); break;
+			append_binaryoper(gelo,";",n); break;
 		case E_EQUALS:
-			append_binaryoper(gs,out,"=",n); break;
+			append_binaryoper(gelo,"=",n); break;
+		case E_PARAMETER:
+			GET_LRR(n,l,r,rr);
+			if (l->type != NULL_NODE) {
+				gel_output_string(gelo,"(parameter (");
+				print_etree(gelo, l, FALSE);
+				gel_output_string(gelo,") ");
+				print_etree(gelo, r, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, rr, FALSE);
+				gel_output_string(gelo,")");
+			} else {
+				gel_output_string(gelo,"(parameter ");
+				print_etree(gelo, r, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, rr, FALSE);
+				gel_output_string(gelo,")");
+			}
+			break;
 		case E_ABS:
 			GET_L(n,l);
-			appendout(gs,out,"(|");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out,"|)");
+			gel_output_string(gelo,"(|");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,"|)");
 			break;
 		case E_PLUS:
-			append_binaryoper(gs,out,"+",n); break;
+			append_binaryoper(gelo,"+",n); break;
 		case E_MINUS:
-			append_binaryoper(gs,out,"-",n); break;
+			append_binaryoper(gelo,"-",n); break;
 		case E_MUL:
-			append_binaryoper(gs,out,"*",n); break;
+			append_binaryoper(gelo,"*",n); break;
+		case E_ELTMUL:
+			append_binaryoper(gelo,".*",n); break;
 		case E_DIV:
-			append_binaryoper(gs,out,"/",n); break;
+			append_binaryoper(gelo,"/",n); break;
+		case E_ELTDIV:
+			append_binaryoper(gelo,"./",n); break;
+		case E_BACK_DIV:
+			if(n->op.args->type == VALUE_NODE &&
+			   n->op.args->any.next->type == VALUE_NODE)
+				append_binaryoper(gelo," \\ ",n);
+			else
+				append_binaryoper(gelo,"\\",n);
+			break;
+		case E_ELT_BACK_DIV:
+			if(n->op.args->type == VALUE_NODE &&
+			   n->op.args->any.next->type == VALUE_NODE)
+				append_binaryoper(gelo," .\\ ",n);
+			else
+				append_binaryoper(gelo,".\\",n);
+			break;
 		case E_MOD:
-			append_binaryoper(gs,out,"%",n); break;
+			append_binaryoper(gelo,"%",n); break;
+		case E_ELTMOD:
+			append_binaryoper(gelo,".%",n); break;
 		case E_NEG:
-			append_unaryoper(gs,out,"-",n); break;
+			append_unaryoper(gelo,"-",n); break;
 		case E_EXP:
-			append_binaryoper(gs,out,"^",n); break;
+			append_binaryoper(gelo,"^",n); break;
+		case E_ELTEXP:
+			append_binaryoper(gelo,".^",n); break;
 		case E_FACT:
 			GET_L(n,l);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout_c(gs,out,'!');
-			appendout_c(gs,out,')');
+			gel_output_string(gelo, "(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo, "!)");
 			break;
+		case E_DBLFACT:
+			GET_L(n,l);
+			gel_output_string(gelo, "(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo, "!!)");
+			break;
+
 		case E_TRANSPOSE:
 			GET_L(n,l);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout_c(gs,out,'\'');
-			appendout_c(gs,out,')');
+			gel_output_string(gelo, "(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo, ".')");
+			break;
+			
+		case E_CONJUGATE_TRANSPOSE:
+			GET_L(n,l);
+			gel_output_string(gelo, "(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo, "')");
 			break;
 
 		case E_EQ_CMP:
-			append_binaryoper(gs,out,"==",n); break;
+			append_binaryoper(gelo,"==",n); break;
 		case E_NE_CMP:
-			append_binaryoper(gs,out,"!=",n); break;
+			append_binaryoper(gelo,"!=",n); break;
 		case E_CMP_CMP:
-			append_binaryoper(gs,out,"<=>",n); break;
+			append_binaryoper(gelo,"<=>",n); break;
 		case E_LT_CMP:
-			append_binaryoper(gs,out,"<",n); break;
+			append_binaryoper(gelo,"<",n); break;
 		case E_GT_CMP:
-			append_binaryoper(gs,out,">",n); break;
+			append_binaryoper(gelo,">",n); break;
 		case E_LE_CMP:
-			append_binaryoper(gs,out,"<=",n); break;
+			append_binaryoper(gelo,"<=",n); break;
 		case E_GE_CMP:
-			append_binaryoper(gs,out,">=",n); break;
+			append_binaryoper(gelo,">=",n); break;
 		case E_LOGICAL_AND:
-			append_binaryoper(gs,out," and ",n); break;
+			append_binaryoper(gelo," and ",n); break;
 		case E_LOGICAL_OR:
-			append_binaryoper(gs,out," or ",n); break;
+			append_binaryoper(gelo," or ",n); break;
 		case E_LOGICAL_XOR:
-			append_binaryoper(gs,out," xor ",n); break;
+			append_binaryoper(gelo," xor ",n); break;
 		case E_LOGICAL_NOT:
-			append_unaryoper(gs,out,"not ",n); break;
+			append_unaryoper(gelo,"not ",n); break;
 
 		case E_REGION_SEP:
-			append_binaryoper(gs,out,"..",n); break;
+			append_binaryoper(gelo,":",n); break;
+
+		case E_REGION_SEP_BY:
+			GET_LRR(n,l,r,rr);
+			gel_output_string(gelo,"(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,":");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,":");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,")");
+			break;
 
 		case E_GET_VELEMENT:
 			GET_LR(n,l,r);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout(gs,out,"@(");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,"))");
+			gel_output_string(gelo,"(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,"@(");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,"))");
 			break;
 
 		case E_GET_ELEMENT:
-		case E_GET_REGION:
 			GET_LRR(n,l,r,rr);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout(gs,out,"@(");
-			print_etree(gs,out,r,-1);
-			appendout_c(gs,out,',');
-			print_etree(gs,out,rr,-1);
-			appendout(gs,out,"))");
+			gel_output_string(gelo,"(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,"@(");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,",");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,"))");
 			break;
 		case E_GET_ROW_REGION:
 			GET_LR(n,l,r);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout(gs,out,"@[");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,",])");
+			gel_output_string(gelo,"(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,"@[");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,",])");
 			break;
 		case E_GET_COL_REGION:
 			GET_LR(n,l,r);
-			appendout_c(gs,out,'(');
-			print_etree(gs,out,l,-1);
-			appendout(gs,out,"@[,");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,"])");
+			gel_output_string(gelo,"(");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo,"@[,");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,"])");
 			break;
 
+		case E_QUOTE:
+			append_unaryoper(gelo,"`",n); break;
 		case E_REFERENCE:
-			append_unaryoper(gs,out,"&",n); break;
+			append_unaryoper(gelo,"&",n); break;
 		case E_DEREFERENCE:
-			append_unaryoper(gs,out,"*",n); break;
+			append_unaryoper(gelo,"*",n); break;
 
 		case E_IF_CONS:
 			GET_LR(n,l,r);
-			appendout(gs,out,"(if ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," then ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(if ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," then ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_IFELSE_CONS:
 			GET_LRR(n,l,r,rr);
-			appendout(gs,out,"(if ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," then ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out," else ");
-			print_etree(gs,out,rr,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(if ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," then ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo," else ");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_WHILE_CONS:
 			GET_LR(n,l,r);
-			appendout(gs,out,"(while ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," do ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(while ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," do ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_UNTIL_CONS:
 			GET_LR(n,l,r);
-			appendout(gs,out,"(until ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," do ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(until ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," do ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_DOWHILE_CONS:
 			GET_LR(n,l,r);
-			appendout(gs,out,"(do ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," while ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(do ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," while ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_DOUNTIL_CONS:
 			GET_LR(n,l,r);
-			appendout(gs,out,"(do ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," until ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(do ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," until ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo,")");
 			break;
 		case E_FOR_CONS:
 			{
-				ETree *a,*b,*c,*d;
+				GelETree *a,*b,*c,*d;
 				GET_ABCD(n,a,b,c,d);
-				appendout(gs,out,"(for ");
-				print_etree(gs,out,a,-1);
-				appendout(gs,out," = ");
-				print_etree(gs,out,b,-1);
-				appendout(gs,out," to ");
-				print_etree(gs,out,c,-1);
-				appendout(gs,out," do ");
-				print_etree(gs,out,d,-1);
-				appendout(gs,out,")");
+				gel_output_string(gelo,"(for ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo,")");
 				break;
 			}
 		case E_FORBY_CONS:
 			{
-				ETree *a,*b,*c,*d,*e;
+				GelETree *a,*b,*c,*d,*e;
 				GET_ABCDE(n,a,b,c,d,e);
-				appendout(gs,out,"(for ");
-				print_etree(gs,out,a,-1);
-				appendout(gs,out," = ");
-				print_etree(gs,out,b,-1);
-				appendout(gs,out," to ");
-				print_etree(gs,out,c,-1);
-				appendout(gs,out," by ");
-				print_etree(gs,out,d,-1);
-				appendout(gs,out," do ");
-				print_etree(gs,out,e,-1);
-				appendout(gs,out,")");
+				gel_output_string(gelo,"(for ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," by ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, e, FALSE);
+				gel_output_string(gelo,")");
 				break;
 			}
 		case E_FORIN_CONS:
 			GET_LRR(n,l,r,rr);
-			appendout(gs,out,"(for ");
-			print_etree(gs,out,l,-1);
-			appendout(gs,out," in ");
-			print_etree(gs,out,r,-1);
-			appendout(gs,out," do ");
-			print_etree(gs,out,rr,-1);
-			appendout(gs,out,")");
+			gel_output_string(gelo,"(for ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," in ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo," do ");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,")");
+			break;
+		case E_SUM_CONS:
+			{
+				GelETree *a,*b,*c,*d;
+				GET_ABCD(n,a,b,c,d);
+				gel_output_string(gelo,"(sum ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo,")");
+				break;
+			}
+		case E_SUMBY_CONS:
+			{
+				GelETree *a,*b,*c,*d,*e;
+				GET_ABCDE(n,a,b,c,d,e);
+				gel_output_string(gelo,"(sum ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," by ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, e, FALSE);
+				gel_output_string(gelo,")");
+				break;
+			}
+		case E_SUMIN_CONS:
+			GET_LRR(n,l,r,rr);
+			gel_output_string(gelo,"(sum ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," in ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo," do ");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,")");
+			break;
+		case E_PROD_CONS:
+			{
+				GelETree *a,*b,*c,*d;
+				GET_ABCD(n,a,b,c,d);
+				gel_output_string(gelo,"(prod ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo,")");
+				break;
+			}
+		case E_PRODBY_CONS:
+			{
+				GelETree *a,*b,*c,*d,*e;
+				GET_ABCDE(n,a,b,c,d,e);
+				gel_output_string(gelo,"(prod ");
+				print_etree(gelo, a, FALSE);
+				gel_output_string(gelo," = ");
+				print_etree(gelo, b, FALSE);
+				gel_output_string(gelo," to ");
+				print_etree(gelo, c, FALSE);
+				gel_output_string(gelo," by ");
+				print_etree(gelo, d, FALSE);
+				gel_output_string(gelo," do ");
+				print_etree(gelo, e, FALSE);
+				gel_output_string(gelo,")");
+				break;
+			}
+		case E_PRODIN_CONS:
+			GET_LRR(n,l,r,rr);
+			gel_output_string(gelo,"(prod ");
+			print_etree(gelo, l, FALSE);
+			gel_output_string(gelo," in ");
+			print_etree(gelo, r, FALSE);
+			gel_output_string(gelo," do ");
+			print_etree(gelo, rr, FALSE);
+			gel_output_string(gelo,")");
 			break;
 
 		case E_DIRECTCALL:
 		case E_CALL:
 			GET_L(n,l);
-			appendout_c(gs,out,'(');
+			gel_output_string(gelo,"(");
 			if(l->type==IDENTIFIER_NODE) {
-				appendout(gs,out,l->id.id->token);
+				gel_output_string(gelo,l->id.id->token);
 			} else if(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE) {
-				ETree *t;
+				GelETree *t;
 				GET_L(l,t);
 				if(t->type!=IDENTIFIER_NODE) {
 					(*errorout)(_("Bad identifier for function node!"));
-					appendout(gs,out,"???)");
+					gel_output_string(gelo,"?)");
 					break;
 				}
-				appendout_c(gs,out,'*');
-				appendout(gs,out,t->id.id->token);
+				gel_output_string(gelo,"*");
+				gel_output_string(gelo,t->id.id->token);
 			} else {
 				(*errorout)(_("Bad identifier for function node!"));
-				appendout(gs,out,"???)");
+				gel_output_string(gelo,"?)");
 				break;
 			}
-			appendout_c(gs,out,'(');
-			li = n->op.args->next;
+			gel_output_string(gelo,"(");
+			li = n->op.args->any.next;
 			if(li) {
-				print_etree(gs,out,li->data,-1);
-				li=g_list_next(li);
+				print_etree(gelo, li, FALSE);
+				li=li->any.next;
 			}
-			for(;li!=NULL;li=g_list_next(li)) {
-				appendout_c(gs,out,',');
-				print_etree(gs,out,li->data,-1);
+			for(;li!=NULL;li=li->any.next) {
+				gel_output_string(gelo,",");
+				print_etree(gelo, li, FALSE);
 			}
-			appendout(gs,out,"))");
+			gel_output_string(gelo,"))");
 			break;
 		case E_RETURN:
-			append_unaryoper(gs,out,"return ",n); break;
+			append_unaryoper(gelo,"return ",n); break;
 		case E_BAILOUT:
-			appendout(gs,out,"(bailout)"); break;
+			gel_output_string(gelo,"(bailout)"); break;
 		case E_EXCEPTION:
-			appendout(gs,out,"(exception)"); break;
+			gel_output_string(gelo,"(exception)"); break;
 		case E_CONTINUE:
-			appendout(gs,out,"(continue)"); break;
+			gel_output_string(gelo,"(continue)"); break;
 		case E_BREAK:
-			appendout(gs,out,"(break)"); break;
+			gel_output_string(gelo,"(break)"); break;
 		case E_MOD_CALC:
-			append_binaryoper(gs,out,"mod",n); break;
+			append_binaryoper(gelo," mod ",n); break;
 
 		default:
 			(*errorout)(_("Unexpected operator!"));
-			appendout(gs,out,"(???)");
-		       break;
+			gel_output_string(gelo,"(?)");
+			break;
 	}
 }
 
 static void
-appendcomp(GString *gs,FILE *out, ETree *n)
+appendcomp(GelOutput *gelo, GelETree *n)
 {
-	GList *li,*oli;
+	GelETree *li;
+	GSList *oli;
 	
-	appendout_c(gs,out,'(');
+	gel_output_string(gelo,"(");
 	
 	for(oli=n->comp.comp,li=n->comp.args;oli;
-	    li=g_list_next(li),oli=g_list_next(oli)) {
+	    li=li->any.next,oli=g_slist_next(oli)) {
 		int oper= GPOINTER_TO_INT(oli->data);
-		print_etree(gs,out,li->data,-1);
+		print_etree(gelo, li, FALSE);
 		switch(oper) {
 		case E_EQ_CMP:
-			appendout(gs,out,"=="); break;
+			gel_output_string(gelo,"=="); break;
 		case E_NE_CMP:
-			appendout(gs,out,"!="); break;
+			gel_output_string(gelo,"!="); break;
 		case E_LT_CMP:
-			appendout(gs,out,"<"); break;
+			gel_output_string(gelo,"<"); break;
 		case E_GT_CMP:
-			appendout(gs,out,">"); break;
+			gel_output_string(gelo,">"); break;
 		case E_LE_CMP:
-			appendout(gs,out,"<="); break;
+			gel_output_string(gelo,"<="); break;
 		case E_GE_CMP:
-			appendout(gs,out,">="); break;
+			gel_output_string(gelo,">="); break;
 		default:
 			g_assert_not_reached();
 		}
 	}
-	print_etree(gs,out,li->data,-1);
+	print_etree(gelo, li, FALSE);
 
-	appendout_c(gs,out,')');
+	gel_output_string(gelo,")");
 }
 
 static void
-appendmatrix(GString *gs, FILE *out, MatrixW *m)
+appendmatrix_troff (GelOutput *gelo, GelMatrixW *m, gboolean nice)
+{
+	int i, j;
+	if (nice)
+		gel_output_string (gelo, "\n");
+	gel_output_string (gelo, "left [ matrix { ");
+	if (nice)
+		gel_output_string (gelo, "\n");
+	
+	for (i = 0; i < gel_matrixw_width (m); i++) {
+		gel_output_string (gelo, "rcol { ");
+		print_etree (gelo, gel_matrixw_index (m, i, 0), FALSE);
+		for(j = 1; j < gel_matrixw_height (m); j++) {
+			gel_output_string (gelo, " above ");
+			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+		}
+		gel_output_string (gelo, " } ");
+		if (nice)
+			gel_output_string (gelo, "\n");
+	}
+	
+	gel_output_string (gelo, "} right ]");
+}
+
+static void
+appendmatrix_latex (GelOutput *gelo, GelMatrixW *m, gboolean nice)
+{
+	int i, j;
+	if (nice)
+		gel_output_string (gelo, "\n");
+	gel_output_string (gelo, "\\left( \\begin{array}{");
+	for (i = 0; i < gel_matrixw_width (m); i++)
+		gel_output_string (gelo, "r");
+	gel_output_string (gelo, "}");
+	if (nice)
+		gel_output_string (gelo, "\n");
+	else
+		gel_output_string (gelo, " ");
+	
+	for (j = 0; j < gel_matrixw_height (m); j++) {
+		print_etree (gelo, gel_matrixw_index (m, 0, j), FALSE);
+		for(i = 1; i < gel_matrixw_width (m); i++) {
+			gel_output_string (gelo, " & ");
+			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+		}
+		gel_output_string (gelo, " \\\\");
+		if (nice)
+			gel_output_string (gelo, "\n");
+		else
+			gel_output_string (gelo, " ");
+	}
+	
+	gel_output_string (gelo, "\\end{array} \\right)");
+}
+
+static void
+appendmatrix (GelOutput *gelo, GelMatrixW *m)
 {
 	int i,j;
-	appendout(gs,out,"[");
-	
-	print_etree(gs,out,matrixw_index(m,0,0),-1);
-	
-	for(i=1;i<matrixw_width(m);i++) {
-		appendout(gs,out,",");
-		print_etree(gs,out,matrixw_index(m,i,0),-1);
+
+	if (calcstate.output_style == GEL_OUTPUT_TROFF) {
+		appendmatrix_troff (gelo, m, FALSE /* nice */);
+		return;
+	} else if (calcstate.output_style == GEL_OUTPUT_LATEX) {
+		appendmatrix_latex (gelo, m, FALSE /* nice */);
+		return;
 	}
-	for(j=1;j<matrixw_height(m);j++) {
-		appendout(gs,out,":");
-		print_etree(gs,out,matrixw_index(m,0,j),-1);
-		for(i=1;i<matrixw_width(m);i++) {
-			appendout(gs,out,",");
-			print_etree(gs,out,matrixw_index(m,i,j),-1);
+
+	gel_output_string(gelo,"[");
+	
+	print_etree(gelo, gel_matrixw_index(m,0,0), FALSE);
+	
+	for(i=1;i<gel_matrixw_width(m);i++) {
+		gel_output_string(gelo, ",");
+		print_etree(gelo, gel_matrixw_index(m,i,0), FALSE);
+	}
+	for(j=1;j<gel_matrixw_height(m);j++) {
+		gel_output_string(gelo, ";");
+		print_etree(gelo, gel_matrixw_index(m,0,j), FALSE);
+		for(i=1;i<gel_matrixw_width(m);i++) {
+			gel_output_string(gelo, ",");
+			print_etree(gelo, gel_matrixw_index(m,i,j), FALSE);
 		}
 	}
 
-	appendout(gs,out,"]");
+	gel_output_string(gelo,"]");
 }
 
 
 /*make a string representation of an expression*/
-/*if full_exp == -1 then the last maxline is used,
-  if full_exp == 0 then maxline is reset
-  if full_exp == 1 then maxline will be 0*/
 void
-print_etree(GString *gs, FILE *out, ETree *n, int full_exp)
+print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 {
 	char *p;
 
-	if(full_exp>=0) {
-		if(full_exp || calcstate.full_expressions)
-			maxline = 0;
-		else
-			maxline = get_term_width()-2; /* for the equals sign */
-	}
-	
-	if(!n) {
+	if (n == NULL) {
 		(*errorout)(_("NULL tree!"));
-		appendout(gs,out,"(???)");
+		gel_output_string (gelo, "(?)");
 		return;
 	}
 
+	gel_output_push_nonotify (gelo);
+
 	switch(n->type) {
 	case NULL_NODE:
-		appendout(gs,out,"(null)");
+		gel_output_string (gelo, "(null)");
 		break;
 	case VALUE_NODE:
-		/*if at toplevel, then always print the full number*/
-		if(full_exp>=0)
-			maxline = 0;
 		p=mpw_getstring(n->val.value,calcstate.max_digits,
 				calcstate.scientific_notation,
-				calcstate.results_as_floats);
-		appendout(gs,out,p);
+				calcstate.results_as_floats,
+				calcstate.mixed_fractions,
+				calcstate.integer_output_base);
+		/*if at toplevel, then always print the full number*/
+		if(toplevel)
+			gel_output_full_string(gelo,p);
+		else
+			gel_output_string(gelo,p);
 		g_free(p);
 		break;
 	case MATRIX_NODE:
-		if(n->mat.quoted)
-			appendout_c(gs,out,'`');
-		appendmatrix(gs,out,n->mat.matrix);
+		if (calcstate.output_style != GEL_OUTPUT_TROFF &&
+		    calcstate.output_style != GEL_OUTPUT_LATEX &&
+		    n->mat.quoted)
+			gel_output_string (gelo, "`");
+		appendmatrix (gelo, n->mat.matrix);
 		break;
 	case OPERATOR_NODE:
-		appendoper(gs,out,n);
+		appendoper(gelo,n);
 		break;
 	case IDENTIFIER_NODE:
-		appendout(gs,out,n->id.id->token);
+		gel_output_string(gelo,n->id.id->token);
 		break;
 	case STRING_NODE:
-		appendout_c(gs,out,'"');
+		gel_output_string(gelo,"\"");
 		p = escape_string(n->str.str);
-		appendout(gs,out,p);
+		gel_output_string(gelo,p);
 		g_free(p);
-		appendout_c(gs,out,'"');
+		gel_output_string(gelo,"\"");
 		break;
 	case FUNCTION_NODE:
 		{
-			GList *li;
-			EFunc *f;
+			GSList *li;
+			GelEFunc *f;
 			
 			f = n->func.func;
 			if(!f) {
 				(*errorout)(_("NULL function!"));
-				appendout(gs,out,"(???)");
+				gel_output_string(gelo,"(?)");
 				break;
 			}
-			if(f->type==BUILTIN_FUNC) {
-				appendout(gs,out,"(<builtin function>)");
+			if(f->type==GEL_BUILTIN_FUNC) {
+				gel_output_string(gelo,"(<builtin function>)");
 				break;
 			}
 
-			appendout(gs,out,"(`(");
+			gel_output_string(gelo,"(`(");
 
-			for(li=f->named_args; li!=NULL; li=g_list_next(li)) {
-				Token *id = li->data;
+			for(li=f->named_args; li!=NULL; li=g_slist_next(li)) {
+				GelToken *id = li->data;
 				if(li!=f->named_args)
-					appendout_c(gs,out,',');
-				appendout(gs,out,id->token);
+					gel_output_string(gelo,",");
+				gel_output_string(gelo,id->token);
 			}
 
-			if(f->type==USER_FUNC) {
-				appendout(gs,out,")=(");
-				if(!f->data.user) {
-					g_assert(uncompiled);
-					f->data.user =
-						decompile_tree(g_hash_table_lookup(uncompiled,f->id));
-					g_hash_table_remove(uncompiled,f->id);
-					g_assert(f->data.user);
-				}
-				print_etree(gs,out,f->data.user,-1);
-				appendout(gs,out,"))");
+			if (f->vararg)
+				gel_output_string (gelo, "...");
+
+			if(f->type==GEL_USER_FUNC) {
+				gel_output_string(gelo,")=(");
+				D_ENSURE_USER_BODY (f);
+				print_etree(gelo, f->data.user, FALSE);
+				gel_output_string(gelo,"))");
 			} else {
 				/*variable and reference functions should
 				  never be in the etree*/
 				(*errorout)(_("Unexpected function type!"));
-				appendout(gs,out,")(???)");
+				gel_output_string(gelo,")(?)");
 			}
 			break;
 		}
 	case COMPARISON_NODE:
-		appendcomp(gs,out,n);
+		appendcomp(gelo,n);
 		break;
 	default:
 		(*errorout)(_("Unexpected node!"));
-		appendout(gs,out,"(???)");
+		gel_output_string(gelo,"(?)");
 	       break;
 	}
+	gel_output_pop_nonotify (gelo);
 }
 
 void
-pretty_print_etree(GString *gs, FILE *out, ETree *n, int full_exp)
+pretty_print_etree(GelOutput *gelo, GelETree *n)
 {
 	/*do a nice printout of matrices if that's the
 	  top node*/
+	gel_output_push_nonotify (gelo);
 	if(n->type == MATRIX_NODE) {
 		int i,j;
+
+		if (calcstate.output_style == GEL_OUTPUT_TROFF) {
+			appendmatrix_troff (gelo, n->mat.matrix, TRUE /* nice */);
+			gel_output_pop_nonotify (gelo);
+			return;
+		} else if (calcstate.output_style == GEL_OUTPUT_LATEX) {
+			appendmatrix_latex (gelo, n->mat.matrix, TRUE /* nice */);
+			gel_output_pop_nonotify (gelo);
+			return;
+		}
+
 		if(n->mat.quoted)
-			appendout(gs,out,"\n`[");
+			gel_output_string(gelo,"\n`[");
 		else
-			appendout(gs,out,"\n[");
-		for(j=0;j<matrixw_height(n->mat.matrix);j++) {
+			gel_output_string(gelo,"\n[");
+		for(j=0;j<gel_matrixw_height(n->mat.matrix);j++) {
 			if(j>0) {
 				if(n->mat.quoted)
-					appendout(gs,out,"\n  ");
+					gel_output_string(gelo, "\n  ");
 				else
-					appendout(gs,out,"\n ");
+					gel_output_string(gelo, "\n ");
 			}
-			for(i=0;i<matrixw_width(n->mat.matrix);i++) {
-				if(i>0) appendout(gs,out,"\t");
-				print_etree(gs, out,
-					    matrixw_index(n->mat.matrix,i,j),
-					    full_exp);
+			for(i=0;i<gel_matrixw_width(n->mat.matrix);i++) {
+				if(i>0) gel_output_string(gelo, "\t");
+				print_etree(gelo,
+					    gel_matrixw_index(n->mat.matrix,i,j),
+					    FALSE);
 			}
 		}
-		appendout(gs,out,"]");
-	} else
-		print_etree(gs,out,n,full_exp);
+		gel_output_string(gelo, "]");
+	} else {
+		print_etree (gelo, n, FALSE);
+	}
+	gel_output_pop_nonotify (gelo);
+}
+
+/*make a string representation of an expression*/
+char *
+string_print_etree(GelETree *n)
+{
+	GelOutput *gelo = gel_output_new();
+	char *ret;
+	gel_output_setup_string(gelo, 0, NULL);
+
+	print_etree (gelo, n, TRUE);
+
+	ret = gel_output_snarf_string(gelo);
+
+	gel_output_unref(gelo);
+
+	if(!ret)
+		return g_strdup("");
+	else
+		return ret;
 }
 
 /*add the right parenthesis and brackets to the end of the expression*/
 char *
 addparenth(char *s)
 {
-	GList *stack = NULL;
+	GSList *stack = NULL;
 	char *p;
 	int l;
 
@@ -764,7 +1254,7 @@ addparenth(char *s)
 				if(!stack)
 					return s; /*too many trailing*/
 				if(*(char *)stack_pop(&stack) != ']') {
-					if(stack) g_list_free(stack);
+					if(stack) g_slist_free(stack);
 					return s; /*non matching*/
 				}
 				break;
@@ -772,7 +1262,7 @@ addparenth(char *s)
 				if(!stack)
 					return s; /*too many trailing*/
 				if(*(char *)stack_pop(&stack) != ')') {
-					if(stack) g_list_free(stack);
+					if(stack) g_slist_free(stack);
 					return s; /*non matching*/
 				}
 				break;
@@ -780,14 +1270,14 @@ addparenth(char *s)
 				if(!stack)
 					return s; /*too many trailing*/
 				if(*(char *)stack_pop(&stack) != '}') {
-					if(stack) g_list_free(stack);
+					if(stack) g_slist_free(stack);
 					return s; /*non matching*/
 				}
 				break;
 		}
 	}
 	l = strlen(s);
-	s = g_realloc(s,l+g_list_length(stack)+1);
+	s = g_realloc(s,l+g_slist_length(stack)+1);
 	while(stack)
 		s[l++]=*((char *)stack_pop(&stack));
 	s[l]='\0';
@@ -797,55 +1287,129 @@ addparenth(char *s)
 void
 compile_all_user_funcs(FILE *outfile)
 {
-	GList *funcs;
+	GSList *funcs;
+	GSList *li;
 	fprintf(outfile,"CGEL "VERSION"\n");
 	funcs = d_getcontext();
-	for(funcs=g_list_last(funcs);funcs;funcs=g_list_previous(funcs)) {
-		EFunc *func = funcs->data;
+	if(!funcs) return;
+	funcs = g_slist_reverse(g_slist_copy(funcs));
+	for(li=funcs;li;li=g_slist_next(li)) {
+		GelEFunc *func = li->data;
+		GelHelp *help;
 		char *body;
-		GList *li;
-		char *d;
+		GSList *l;
 
-		if((func->type!=USER_FUNC &&
-		    func->type!=VARIABLE_FUNC) ||
+		if((func->type!=GEL_USER_FUNC &&
+		    func->type!=GEL_VARIABLE_FUNC) ||
 		   !func->id ||
 		   !func->id->token ||
 		   strcmp(func->id->token,"Ans")==0)
 			continue;
 
 		if(func->data.user) {
-			body = compile_tree(func->data.user);
+			body = gel_compile_tree(func->data.user);
 		} else {
 			body = g_strdup(g_hash_table_lookup(uncompiled,func->id));
 			g_assert(body);
 		}
-		if(func->type==USER_FUNC) {
-			fprintf(outfile,"F;%d;%s;%d",(int)strlen(body),func->id->token,(int)func->nargs);
-			for(li=func->named_args;li;li=g_list_next(li)) {
-				Token *tok = li->data;
+		if(func->type==GEL_USER_FUNC) {
+			fprintf (outfile,
+				 "F;%d;%s;%d;%d",
+				(int)strlen (body),
+				func->id->token,
+				(int)func->nargs,
+				(int)func->vararg);
+			for (l = func->named_args; l != NULL; l = l->next) {
+				GelToken *tok = l->data;
 				fprintf(outfile,";%s",tok->token);
 			}
-		} else /*VARIABLE_FUNC*/ {
+		} else /*GEL_VARIABLE_FUNC*/ {
 			fprintf(outfile,"V;%d;%s",(int)strlen(body),func->id->token);
 		}
 
 		fprintf(outfile,"\n%s\n",body);
 		g_free(body);
-		d = get_description(func->id->token);
-		if(*d)
-			fprintf(outfile,"D;%s;%s\n",func->id->token,d);
+
+		/* FIXME: ugly, make this into a subroutine */
+		for (l = func->extra_dict; l != NULL; l = l->next) {
+			GelEFunc *f = li->data;
+			GSList *nl;
+
+			if((f->type!=GEL_USER_FUNC &&
+			    f->type!=GEL_VARIABLE_FUNC) ||
+			   !f->id ||
+			   !f->id->token)
+				continue;
+
+			if(f->data.user) {
+				body = gel_compile_tree(f->data.user);
+			} else {
+				body = g_strdup(g_hash_table_lookup(uncompiled,f->id));
+				g_assert(body);
+			}
+			if(f->type==GEL_USER_FUNC) {
+				fprintf (outfile,
+					 "f;%d;%s;%d;%d",
+					 (int)strlen (body),
+					 f->id->token,
+					 (int)f->nargs,
+					 (int)f->vararg);
+				for (nl = f->named_args; nl != NULL; nl = nl->next) {
+					GelToken *tok = nl->data;
+					fprintf(outfile,";%s",tok->token);
+				}
+			} else /*GEL_VARIABLE_FUNC*/ {
+				fprintf(outfile,"v;%d;%s",(int)strlen(body),f->id->token);
+			}
+
+			fprintf(outfile,"\n%s\n",body);
+			g_free(body);
+		}
+
+		help = get_help (func->id->token, FALSE /* insert */);
+		if (help != NULL && help->aliasfor != NULL) {
+			fprintf (outfile, "A;%s;%s\n",
+				 help->aliasfor,
+				 func->id->token);
+		} else if (help != NULL) {
+			if (help->category != NULL)
+				fprintf (outfile, "C;%s;%s\n",
+					 func->id->token,
+					 help->category);
+			if (help->description != NULL)
+				fprintf (outfile, "D;%s;%s\n",
+					 func->id->token,
+					 help->description);
+			if (help->help_link != NULL) {
+				char *s = gel_encode_string (help->help_link);
+				fprintf (outfile, "L;%s;%s\n",
+					 func->id->token, s);
+				g_free (s);
+			}
+			/* FIXME: This may be too demanding */
+			if (help->help_html != NULL) {
+				char *s = gel_encode_string (help->help_html);
+				fprintf (outfile, "H;%s;%s\n",
+					 func->id->token, s);
+				g_free (s);
+			}
+		}
+		if(func->id->protected)
+			fprintf(outfile,"P;%s\n",func->id->token);
 	}
+	g_slist_free(funcs);
 }
 
 static void
-load_compiled_fp(char *file, FILE *fp)
+load_compiled_fp(const char *file, FILE *fp)
 {
-	char buf[4096];
+	char buf[8192];
+	GelEFunc *last_func = NULL;
 
-	if(!fgets(buf,4096,fp))
+	if(!fgets(buf,sizeof(buf),fp))
 		return;
 	if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
-		g_snprintf(buf,4096,_("File '%s' is a wrong version of GEL"),file);
+		g_snprintf(buf,sizeof(buf),_("File '%s' is a wrong version of GEL"),file);
 		(*errorout)(buf);
 		return;
 	}
@@ -862,13 +1426,14 @@ load_compiled_fp(char *file, FILE *fp)
 	  sure*/
 	g_assert(calcstate.float_prec>0);
 
-	while(fgets(buf,4096,fp)) {
+	while(fgets(buf,sizeof(buf),fp)) {
 		char *p;
 		char *b2;
-		Token *tok;
-		int size,nargs;
+		GelToken *tok;
+		int size, nargs, vararg;
+		gboolean extra_dict = FALSE;
 		int i;
-		GList *li = NULL;
+		GSList *li = NULL;
 		int type;
 
 		incr_file_info();
@@ -882,6 +1447,34 @@ load_compiled_fp(char *file, FILE *fp)
 			continue;
 		} else if(*p == 'T') {
 			(*errorout)(_("Record out of place"));
+			continue;
+		} else if(*p == 'A') {
+			char *d;
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			d = strtok(NULL,";");
+			if(!d) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			add_alias(p,d);
+			continue;
+		} else if(*p == 'C') {
+			char *d;
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			d = strtok(NULL,";");
+			if(!d) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			add_category(p,d);
 			continue;
 		} else if(*p == 'D') {
 			char *d;
@@ -897,11 +1490,58 @@ load_compiled_fp(char *file, FILE *fp)
 			}
 			add_description(p,d);
 			continue;
-		} else if(*p != 'F' && *p != 'V') {
+		} else if(*p == 'L') {
+			char *d, *h;
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			d = strtok(NULL,";");
+			if(!d) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			h = gel_decode_string (d);
+			add_help_link (p, h);
+			g_free (h);
+			continue;
+		} else if(*p == 'H') {
+			char *d, *h;
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			d = strtok(NULL,";");
+			if(!d) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			h = gel_decode_string (d);
+			add_help_html (p, h);
+			g_free (h);
+			continue;
+		} else if(*p == 'P') {
+			GelToken *tok;
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			tok = d_intern(p);
+			tok->protected = 1;
+			continue;
+		} else if(*p != 'F' && *p != 'V' && *p != 'f' && *p != 'v') {
 			(*errorout)(_("Badly formed record"));
 			continue;
 		}
-		type = *p=='F'?USER_FUNC:VARIABLE_FUNC;
+		type = (*p == 'F' || *p == 'f') ? GEL_USER_FUNC : GEL_VARIABLE_FUNC;
+
+		if (*p == 'f' || *p == 'v')
+			extra_dict = TRUE;
+		else
+			extra_dict = FALSE;
 
 		/*size*/
 		p = strtok(NULL,";");
@@ -924,7 +1564,7 @@ load_compiled_fp(char *file, FILE *fp)
 		}
 		tok = d_intern(p);
 
-		if(type == USER_FUNC) {
+		if(type == GEL_USER_FUNC) {
 			/*nargs*/
 			p = strtok(NULL,";");
 			if(!p) {
@@ -933,7 +1573,20 @@ load_compiled_fp(char *file, FILE *fp)
 			}
 			nargs = -1;
 			sscanf(p,"%d",&nargs);
-			if(size==-1) {
+			if (nargs == -1) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+
+			/*vararg*/
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			vararg = -1;
+			sscanf(p,"%d",&vararg);
+			if (vararg == -1) {
 				(*errorout)(_("Badly formed record"));
 				continue;
 			}
@@ -944,10 +1597,10 @@ load_compiled_fp(char *file, FILE *fp)
 				p = strtok(NULL,";");
 				if(!p) {
 					(*errorout)(_("Badly formed record"));
-					g_list_free(li);
+					g_slist_free(li);
 					goto continue_reading;
 				}
-				li = g_list_append(li,d_intern(p));
+				li = g_slist_append(li,d_intern(p));
 			}
 		}
 
@@ -956,38 +1609,361 @@ load_compiled_fp(char *file, FILE *fp)
 		if(!fgets(b2,size+2,fp)) {
 			(*errorout)(_("Missing value for function"));
 			g_free(b2);
-			g_list_free(li);
+			g_slist_free(li);
 			goto continue_reading;
 		}
 		incr_file_info();
 		p=strchr(b2,'\n');
 		if(p) *p='\0';
-		if(!uncompiled)
-			uncompiled = g_hash_table_new(NULL,NULL);
-		g_hash_table_insert(uncompiled,tok,b2);
-		if(type == USER_FUNC)
-			d_addfunc(d_makeufunc(tok,NULL,li,nargs));
-		else /*VARIABLE_FUNC*/
-			d_addfunc(d_makevfunc(tok,NULL));
+
+		if (extra_dict) {
+			GelEFunc *func;
+			if (type == GEL_USER_FUNC) {
+				func = d_makeufunc (tok, NULL, li, nargs, NULL);
+				func->vararg = vararg ? 1 : 0;
+			} else /*GEL_VARIABLE_FUNC*/ {
+				func = d_makevfunc (tok, NULL);
+			}
+			func->context = -1;
+			if (last_func == NULL)
+				(*errorout)(_("Extra dictionary for NULL function"));
+			else
+				last_func->extra_dict = g_slist_append
+					(last_func->extra_dict, func);
+		} else {
+			GelEFunc *func;
+			if(!uncompiled)
+				uncompiled = g_hash_table_new(NULL,NULL);
+			g_hash_table_insert(uncompiled,tok,b2);
+			if(type == GEL_USER_FUNC) {
+				func = d_makeufunc (tok, NULL, li, nargs, NULL);
+				func->vararg = vararg ? 1 : 0;
+			} else /*GEL_VARIABLE_FUNC*/ {
+				func = d_makevfunc(tok,NULL);
+			}
+			last_func = func;
+			d_addfunc (func);
+		}
 continue_reading:	;
 	}
 	fclose(fp);
 }
 
 void
-load_compiled_file(char *file, int warn)
+load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
-	if((fp = fopen(file,"r"))) {
-		push_file_info(file,1);
-		load_compiled_fp(file,fp);
+	char *newfile;
+	if(dirprefix && file[0]!='/')
+		newfile = g_strconcat(dirprefix, "/", file, NULL);
+	else
+		newfile = g_strdup (file);
+	if((fp = fopen(newfile,"r"))) {
+		push_file_info(newfile,1);
+		load_compiled_fp(newfile,fp);
 		pop_file_info();
-	} else if(warn) {
+	} else if (warn) {
 		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
+		g_snprintf(buf,256,_("Can't open file: '%s'"), newfile);
 		(*errorout)(buf);
 	}
+	g_free (newfile);
 }
+
+static void
+do_blue (void)
+{
+	if (genius_is_gui) {
+		gel_output_full_string (main_out, "\e[01;34m");
+	}
+}
+
+static void
+do_green (void)
+{
+	if (genius_is_gui) {
+		gel_output_full_string (main_out, "\e[0:32m");
+	}
+}
+
+/*
+static void
+do_red (void)
+{
+	if (genius_is_gui) {
+		gel_output_full_string (main_out, "\e[01;31m");
+	}
+}
+*/
+
+static void
+do_black (void)
+{
+	if (genius_is_gui) {
+		gel_output_full_string (main_out, "\e[0m");
+	}
+}
+
+static char *
+make_function_with_aliases (const char *func, GSList *aliases)
+{
+	GSList *li;
+	GString *gs = g_string_new (func);
+	for (li = aliases; li != NULL; li = li->next) {
+		g_string_append (gs, ",");
+		g_string_append (gs, li->data);
+	}
+	return g_string_free (gs, FALSE);
+}
+
+static void
+print_function_help (GelHelp *help)
+{
+	if (help->aliasfor == NULL) {
+		char *f;
+		int len;
+		f = make_function_with_aliases (help->func, help->aliases);
+		len = strlen (f);
+		do_blue ();
+		if (len <= 20)
+			gel_output_printf_full (main_out, FALSE,
+						"%-20s", f);
+		else
+			gel_output_printf_full (main_out, FALSE,
+						"%-20s", help->func);
+		g_free (f);
+		do_black ();
+		gel_output_full_string (main_out, " - ");
+		do_green ();
+		if (help->description != NULL)
+			gel_output_printf_full (main_out, FALSE,
+						"%s\n", help->description);
+		else
+			gel_output_full_string (main_out, "\n");
+		/* if we didn't fit aliases on one line */
+		if (len > 20 && help->aliases != NULL) {
+			GSList *li;
+			GString *gs = g_string_new (_("Aliases for "));
+			g_string_append (gs, help->func);
+			g_string_append (gs, ":");
+			for (li = help->aliases; li != NULL; li = li->next) {
+				g_string_append (gs, " ");
+				g_string_append (gs, li->data);
+			}
+			gel_output_printf_full (main_out, FALSE,
+						"%s\n", gs->str);
+			g_string_free (gs, TRUE);
+		}
+	}
+}
+
+static void
+print_command_help (const char *cmd)
+{
+	do_blue ();
+	gel_output_printf_full (main_out, FALSE, "%-20s", cmd);
+	do_black ();
+	gel_output_full_string (main_out, " - ");
+	do_green ();
+
+	if (strcmp (cmd, "load") == 0) {
+		gel_output_full_string (main_out,
+					_("Load a file into the interpretor"));
+	} else if (strcmp (cmd, "plugin") == 0) {
+		gel_output_full_string (main_out,
+					_("Load a plugin"));
+	} else if (strcmp (cmd, "ls") == 0) {
+		gel_output_full_string (main_out,
+					_("List files in the current directory"));
+	} else if (strcmp (cmd, "cd") == 0) {
+		gel_output_full_string (main_out,
+					_("Change directory"));
+	} else if (strcmp (cmd, "pwd") == 0) {
+		gel_output_full_string (main_out,
+					_("Print current directory"));
+	} else if (strcmp (cmd, "help") == 0) {
+		gel_output_full_string (main_out,
+					_("Print help (or help on a function/command)"));
+	}
+	gel_output_full_string (main_out, "\n");
+}
+
+static void
+full_help (void)
+{
+	GSList *categories = get_categories ();
+	GSList *functions;
+	GSList *cli, *fli;
+	int i;
+
+	gel_output_push_nonotify (main_out);
+
+	do_black ();
+	gel_output_full_string (main_out,
+				"\nCommands:\n");
+	for (i = 0; genius_toplevels[i] != NULL; i++)
+		print_command_help (genius_toplevels[i]);
+
+	for (cli = categories; cli != NULL; cli = cli->next) {
+		char *cat = cli->data;
+		functions = get_helps (cat);
+
+		if (functions != NULL) {
+			do_black ();
+			gel_output_printf_full (main_out, FALSE, "\n%s:\n",
+						get_category_name (cat));
+
+			for (fli = functions; fli != NULL; fli = fli->next) {
+				GelHelp *help = fli->data;
+				print_function_help (help);
+			}
+
+			g_slist_free (functions);
+		}
+
+		g_free (cat);
+	}
+	g_slist_free (categories);
+
+	functions = get_helps (NULL);
+	if (functions != NULL) {
+		do_black ();
+		gel_output_printf_full (main_out, FALSE, "\n%s:\n",
+					get_category_name (NULL));
+
+		for (fli = functions; fli != NULL; fli = fli->next) {
+			GelHelp *help = fli->data;
+			print_function_help (help);
+		}
+
+		g_slist_free (functions);
+	}
+
+	functions = get_undocumented ();
+	if (functions != NULL) {
+		GString *gs = g_string_new (NULL);
+		int len = 0;
+
+		do_black ();
+
+		gel_output_full_string (main_out,
+					_("\nUndocumented:\n"));
+		do_blue ();
+
+		for (fli = functions; fli != NULL; fli = fli->next) {
+			char *f = fli->data;
+			int flen = strlen (f);
+
+			if (len + flen + 1 > 78 && len > 0) {
+				gel_output_printf_full (main_out, FALSE, "%s\n",
+							gs->str);
+				g_string_truncate (gs, 0);
+				len = 0;
+			}
+			g_string_append (gs, f);
+			len += flen;
+			if (fli->next != NULL) {
+				g_string_append_c (gs, ',');
+				len++;
+			}
+
+			g_free (f);
+		}
+		if (len > 0) {
+			gel_output_printf_full (main_out, FALSE, "%s\n",
+						gs->str);
+		}
+		g_string_free (gs, TRUE);
+
+		g_slist_free (functions);
+	}
+
+	do_black ();
+
+	gel_output_pop_nonotify (main_out);
+}
+
+static void
+help_on (const char *text)
+{
+	GelHelp *help;
+	GelEFunc *f;
+	int i;
+
+	gel_output_push_nonotify (main_out);
+
+	for (i = 0; genius_toplevels[i] != NULL; i++)
+		if (strcmp (text, genius_toplevels[i]) == 0) {
+			print_command_help (text);
+			do_black ();
+			gel_output_pop_nonotify (main_out);
+			return;
+		}
+
+	help = get_help (text, FALSE /*insert*/);
+	if (help == NULL) {
+		char *s = g_strdup_printf (_("'%s' is not documented"), text);
+		(*errorout) (s);
+		g_free (s);
+		do_black ();
+		gel_output_pop_nonotify (main_out);
+		return;
+	}
+
+	if (help->aliasfor) {
+		gel_output_printf_full (main_out, FALSE,
+					"%s is an alias for %s\n",
+					text, help->aliasfor);
+		help_on (help->aliasfor);
+		do_black ();
+		gel_output_pop_nonotify (main_out);
+		return;
+	}
+
+	do_blue ();
+
+	f = d_lookup_global (d_intern (text));
+	if (f == NULL) {
+		gel_output_printf_full (main_out, FALSE, "%s\n", text);
+	} else {
+		GSList *li;
+		gel_output_printf_full (main_out, FALSE, "%s (", text);
+
+		for (li = f->named_args; li != NULL; li = li->next) {
+			GelToken *id = li->data;
+			if (li != f->named_args)
+				gel_output_full_string (main_out, ",");
+			gel_output_full_string (main_out, id->token);
+		}
+
+		if (f->vararg)
+			gel_output_full_string (main_out, "...");
+		gel_output_full_string (main_out, ")\n");
+	}
+	do_green ();
+
+	if (help->aliases != NULL) {
+		GSList *li;
+		GString *gs = g_string_new (_("Aliases:"));
+		for (li = help->aliases; li != NULL; li = li->next) {
+			g_string_append (gs, " ");
+			g_string_append (gs, li->data);
+		}
+		gel_output_printf_full (main_out, FALSE,
+					"%s\n", gs->str);
+		g_string_free (gs, TRUE);
+	}
+
+	if (help->description != NULL) {
+		gel_output_printf_full (main_out, FALSE,
+					_("Description: %s\n"),
+					help->description);
+	}
+
+	do_black ();
+	gel_output_pop_nonotify (main_out);
+}
+
 
 void
 set_new_calcstate(calcstate_t state)
@@ -995,7 +1971,7 @@ set_new_calcstate(calcstate_t state)
 	if(calcstate.float_prec != state.float_prec) {
 		mpw_init_mp(); /*just in case we haven't yet*/
 		mpw_set_default_prec(state.float_prec);
-		break_fp_caches();
+		gel_break_fp_caches();
 	}
 	/*set the state variable for calculator*/
 	calcstate=state;
@@ -1007,10 +1983,11 @@ set_new_calcstate(calcstate_t state)
 }
 
 static void
-load_fp(FILE *fp)
+load_fp(FILE *fp, char *dirprefix)
 {
+	my_yy_open(fp);
 	while(1) {
-		evalexp(NULL,fp,NULL,NULL,NULL,FALSE);
+		evalexp(NULL, fp, NULL, NULL, FALSE, dirprefix);
 		if(got_eof) {
 			got_eof = FALSE;
 			break;
@@ -1018,166 +1995,295 @@ load_fp(FILE *fp)
 		if(interrupted)
 			break;
 	}
-	fclose(fp);
+	my_yy_close(fp);
+	/*fclose(fp);*/
 }
 
 void
-load_file(char *file, int warn)
+load_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
+	char *newfile;
 	int oldgeof = got_eof;
 	got_eof = FALSE;
-	if((fp = fopen(file,"r"))) {
-		push_file_info(file,1);
-		load_fp(fp);
+	if(dirprefix && file[0]!='/')
+		newfile = g_strconcat(dirprefix, "/", file, NULL);
+	else
+		newfile = g_strdup (file);
+
+	if((fp = fopen(newfile,"r"))) {
+		char *dir = g_dirname(newfile);
+		push_file_info(newfile,1);
+		load_fp(fp, dir);
 		pop_file_info();
+		g_free(dir);
 		got_eof = oldgeof;
-	} else if(warn) {
+	} else if (warn) {
 		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
+		g_snprintf(buf,256,_("Can't open file: '%s'"),newfile);
 		(*errorout)(buf);
 		got_eof = oldgeof;
 	}
+	g_free(newfile);
 }
 
 void
-load_guess_file(char *file, int warn)
+load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
+	char *newfile;
 	int oldgeof = got_eof;
 	got_eof = FALSE;
-	if((fp = fopen(file,"r"))) {
+	if(dirprefix && file[0]!='/')
+		newfile = g_strconcat(dirprefix, "/", file, NULL);
+	else
+		newfile = g_strdup (file);
+
+	if((fp = fopen(newfile,"r"))) {
 		char buf[6];
-		push_file_info(file,1);
+		push_file_info(newfile,1);
 		if(fgets(buf,6,fp) &&
 		   strncmp(buf,"CGEL ",5)==0) {
 			rewind(fp);
-			load_compiled_fp(file,fp);
+			load_compiled_fp(newfile,fp);
 		} else {
+			char *dir = g_dirname(newfile);
 			rewind(fp);
-			load_fp(fp);
+			load_fp(fp, dir);
+			g_free(dir);
 		}
 		pop_file_info();
 		got_eof = oldgeof;
-	} else if(warn) {
+	} else if (warn) {
 		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
+		g_snprintf(buf,256,_("Can't open file: '%s'"), newfile);
 		(*errorout)(buf);
 		got_eof = oldgeof;
 	}
+	g_free (newfile);
 }
 
 void
-set_new_errorout(void (*func)(char *))
+set_new_errorout(void (*func)(const char *))
 {
 	errorout = func;
 }
 
 void
-set_new_infoout(void (*func)(char *))
+set_new_infoout(void (*func)(const char *))
 {
 	infoout = func;
 }
 
 static void
-do_load_files(void)
+our_chdir (const char *dirprefix, const char *dir)
 {
-	if(loadfile) {
-		char *file = loadfile;
-		loadfile=NULL;
-		while(evalstack)
-			freetree(stack_pop(&evalstack));
-		load_file(file,TRUE);
-		g_free(file);
+	if (dirprefix == NULL ||
+	    dir[0] == '/') {
+		chdir (dir);
+	} else {
+		char *d = g_strconcat (dirprefix, "/", dir, NULL);
+		chdir (d);
+		g_free (d);
 	}
+}
 
-	if(loadfile_glob) {
+static GSList *
+get_wordlist (const char *lst)
+{
+	GSList *list = NULL;
 #if HAVE_WORDEXP
-		wordexp_t we;
-		char *flist = loadfile_glob;
-		int i;
-		loadfile_glob = NULL;
-		while(evalstack)
-			freetree(stack_pop(&evalstack));
-		wordexp(flist,&we,WRDE_NOCMD);
-		for(i=0;i<we.we_wordc;i++) {
-			load_guess_file(we.we_wordv[i],TRUE);
-			if(interrupted) {
-				wordfree(&we);
-				free(flist);
-				return;
-			}
-		}
-		wordfree(&we);
-		free(flist);
-#else
-		char *s;
-		FILE *fp;
-		char buf[258]; /*so that we fit 256 chars in there*/
-		char *flist = loadfile_glob;
-
-		loadfile_glob = NULL;
-		while(evalstack)
-			freetree(stack_pop(&evalstack));
-		
-		s = g_strdup_printf("for n in %s ; do echo $n ; done",flist);
-		fp = popen(s,"r");
-		g_free(s);
-		while(fgets(buf,258,fp)) {
-			int len = strlen(buf);
-			if(buf[len-1]=='\n')
-				buf[len-1]='\0';
-			load_guess_file(buf,TRUE);
-			if(interrupted) {
-				fclose(fp);
-				free(flist);
-				return;
-			}
-		}
-		fclose(fp);
-		free(flist);
-#endif
+	wordexp_t we;
+	int i;
+	if (wordexp (lst, &we, WRDE_NOCMD) != 0) {
+		char *s = g_strdup_printf (_("Can't expand '%s'"), lst);
+		(*errorout) (s);
+		g_free (s);
+		return NULL;
 	}
-	
-	if(load_plugin) {
-		char *plugin = g_strstrip(load_plugin);
-		GList *li;
+	for (i = 0; i < we.we_wordc; i++) {
+		list = g_slist_prepend (list, g_strdup (we.we_wordv[i]));
+	}
+	wordfree (&we);
+#else
+	glob_t gl;
+	int i;
+	if (glob (lst, 0, NULL, &gl) != 0) {
+		char *s = g_strdup_printf (_("Can't expand '%s'"), lst);
+		(*errorout) (s);
+		g_free (s);
+		return NULL;
+	}
+	for (i = 0; i < gl.gl_pathc; i++) {
+		list = g_slist_prepend (list, g_strdup (gl.gl_pathc[i]));
+	}
+	globfree (&gl);
+#endif
+	return list;
+}
 
-		load_plugin = NULL;
-		
-		for(li=plugin_list;li;li=g_list_next(li)) {
+
+static gboolean
+do_exec_commands (const char *dirprefix)
+{
+	GelCommand cmd = gel_command;
+	char *arg = gel_command_arg;
+	gboolean ret = FALSE;
+	GSList *list, *li;
+	DIR *dir;
+	char buf[4096] = "";
+
+	gel_command = GEL_NO_COMMAND;
+	gel_command_arg = NULL;
+
+	switch (cmd) {
+	case GEL_NO_COMMAND:
+		ret = FALSE;
+		break;
+	case GEL_LOADFILE:
+		while (evalstack)
+			gel_freetree (stack_pop (&evalstack));
+		load_file (dirprefix, arg, TRUE);
+		ret = TRUE;
+		break;
+	case GEL_LOADFILE_GLOB:
+		list = get_wordlist (arg);
+		while (evalstack)
+			gel_freetree (stack_pop (&evalstack));
+		for (li = list; li != NULL; li = li->next) {
+			load_guess_file (dirprefix, li->data, TRUE);
+			if (interrupted)
+				break;
+		}
+		g_slist_foreach (list, (GFunc)g_free, NULL);
+		g_slist_free (list);
+		ret = TRUE;
+		break;
+	case GEL_CHANGEDIR:
+		list = get_wordlist (arg);
+		while (evalstack)
+			gel_freetree (stack_pop (&evalstack));
+		for (li = list; li != NULL; li = li->next) {
+			our_chdir (dirprefix, li->data);
+		}
+		g_slist_foreach (list, (GFunc)g_free, NULL);
+		g_slist_free (list);
+		ret = TRUE;
+		break;
+	case GEL_LOADPLUGIN:
+		g_strstrip (arg);
+
+		for(li=plugin_list;li;li=g_slist_next(li)) {
 			plugin_t *plg = li->data;
-			if(strcmp(plg->base,plugin)==0) {
+			if(strcmp(plg->base,arg)==0) {
 				open_plugin(plg);
 				break;
 			}
 		}
 		if(!li) {
 			char *p = g_strdup_printf(_("Cannot open plugin '%s'!"),
-						  plugin);
+						  arg);
 			(*errorout)(p);
 			g_free(p);
 		}
+		break;
+	case GEL_LS:
+		dir = opendir (".");
+		if (dir != NULL) {
+			struct dirent *de;
+			while ((de = readdir (dir)) != NULL) {
+				struct stat s;
+				if (strcmp (de->d_name, ".") == 0 ||
+				    strcmp (de->d_name, "..") == 0)
+					continue;
+				if (stat (de->d_name, &s) == 0 &&
+				    S_ISDIR (s.st_mode)) {
+					gel_output_string (main_out, de->d_name);
+					gel_output_string (main_out, "/\n");
+				}
+			}
+			rewinddir (dir);
+			while ((de = readdir (dir)) != NULL) {
+				struct stat s;
+				if (strcmp (de->d_name, ".") == 0 ||
+				    strcmp (de->d_name, "..") == 0)
+					continue;
+				if (stat (de->d_name, &s) == 0 &&
+				     ! S_ISDIR (s.st_mode)) {
+					gel_output_string (main_out, de->d_name);
+					gel_output_string (main_out, "\n");
+				}
+			}
 
-		g_free(plugin);
+			closedir (dir);
+		}
+		ret = TRUE;
+		break;
+	case GEL_LS_ARG:
+		list = get_wordlist (arg);
+
+		for (li = list; li != NULL; li = li->next) {
+			struct stat s;
+			if (stat (li->data, &s) == 0 &&
+			    S_ISDIR (s.st_mode)) {
+				gel_output_string (main_out, li->data);
+				gel_output_string (main_out, "/\n");
+			}
+		}
+
+		for (li = list; li != NULL; li = li->next) {
+			struct stat s;
+			if (stat (li->data, &s) == 0 &&
+			    ! S_ISDIR (s.st_mode)) {
+				gel_output_string (main_out, li->data);
+				gel_output_string (main_out, "\n");
+			}
+		}
+
+		g_slist_foreach (list, (GFunc)g_free, NULL);
+		g_slist_free (list);
+		ret = TRUE;
+		break;
+	case GEL_PWD:
+		getcwd (buf, sizeof (buf));
+
+		gel_output_string (main_out, buf);
+		gel_output_string (main_out, "\n");
+		ret = TRUE;
+		break;
+	case GEL_HELP:
+		full_help ();
+		ret = TRUE;
+		break;
+	case GEL_HELP_ARG:
+		g_strstrip (arg);
+		help_on (arg);
+		ret = TRUE;
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
 	}
+	g_free (arg);
+	return ret;
 }
 
-ETree *
-parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
+GelETree *
+parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean testparse,
+	 gboolean *finished, const char *dirprefix)
 {
 	int stacklen;
-	
+
 	interrupted = FALSE;
-	
+
 	/*init the context stack and clear out any stale dictionaries
 	  except the global one, if this is the first time called it
 	  will also register the builtin routines with the global
 	  dictionary*/
 	d_singlecontext();
-	
+
 	error_num=NO_ERROR;
-	
+
 	/*if we this was set, then the mp library was initialized for
 	  sure*/
 	g_assert(calcstate.float_prec>0);
@@ -1190,43 +2296,40 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 	if(str) {
 		int l = strlen(str);
 		pipe(lex_fd);
-		yyin=fdopen(lex_fd[0],"r");
-		write(lex_fd[1],str,l);
-		if(str[l-1]!='\n')
-			write(lex_fd[1],"\n",1);
+		infile = fdopen(lex_fd[0], "r");
+		write(lex_fd[1], str, l);
+		if(str[l-1] != '\n')
+			write(lex_fd[1], "\n", 1);
 		close(lex_fd[1]);
-	} else
-		yyin = infile;
+		my_yy_open(infile);
+	}
 
-	g_free(loadfile); loadfile = NULL;
-	g_free(loadfile_glob); loadfile_glob = NULL;
-	g_free(load_plugin); load_plugin = NULL;
+	gel_command = GEL_NO_COMMAND;
+	g_free (gel_command_arg); gel_command_arg = NULL;
 
 	lex_init = TRUE;
 	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
 	if(testparse) ignore_end_parse_errors = TRUE;
 	got_end_too_soon = FALSE;
-	yyparse();
+	my_yy_parse(infile);
 	ignore_end_parse_errors = FALSE;
 
 	/*while(yyparse() && !feof(yyin))
 		;*/
-
+	
 	if(str) {
 		while(my_yyinput()!=EOF)
 			;
 		close(lex_fd[0]);
-		fflush(yyin);
-		fclose(yyin);
-		yyin = NULL;
+		fflush(infile);
+		my_yy_close(infile);
+		/*fclose(infile);*/
 	}
 	
-	if(!load_files) {
-		g_free(loadfile); loadfile = NULL;
-		g_free(loadfile_glob); loadfile_glob = NULL;
-		g_free(load_plugin); load_plugin = NULL;
-	} else if(loadfile || loadfile_glob || load_plugin) {
-		do_load_files();
+	if ( ! exec_commands) {
+		gel_command = GEL_NO_COMMAND;
+		g_free(gel_command_arg); gel_command_arg = NULL;
+	} else if (do_exec_commands (dirprefix)) {
 		if(finished) *finished = TRUE;
 		return NULL;
 	}
@@ -1234,20 +2337,20 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 	/*if we are testing and got an unfinished expression just report that*/
 	if(testparse && got_end_too_soon) {
 		while(evalstack)
-			freetree(stack_pop(&evalstack));
+			gel_freetree(stack_pop(&evalstack));
 		if(finished) *finished = FALSE;
 		return NULL;
 	}
-	
+
 	/*catch parsing errors*/
 	if(error_num!=NO_ERROR) {
 		while(evalstack)
-			freetree(stack_pop(&evalstack));
+			gel_freetree(stack_pop(&evalstack));
 		if(finished) *finished = TRUE;
 		return NULL;
 	}
 	
-	stacklen = g_list_length(evalstack);
+	stacklen = g_slist_length(evalstack);
 	
 	if(stacklen==0) {
 		if(finished) *finished = FALSE;
@@ -1257,24 +2360,27 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 	/*stack is supposed to have only ONE entry*/
 	if(stacklen!=1) {
 		while(evalstack)
-			freetree(stack_pop(&evalstack));
+			gel_freetree(stack_pop(&evalstack));
 		if(!testparse)
 			(*errorout)(_("ERROR: Probably corrupt stack!"));
 		if(finished) *finished = FALSE;
 		return NULL;
 	}
-	evalstack->data = gather_comparisons(evalstack->data);
-	evalstack->data = replace_parameters(evalstack->data);
+	replace_equals (evalstack->data, FALSE /* in_expression */);
+	evalstack->data = gather_comparisons (evalstack->data);
+	try_to_do_precalc (evalstack->data);
 	
-	if(finished) *finished = TRUE;
-	return stack_pop(&evalstack);
+	if (finished != NULL)
+		*finished = TRUE;
+	return stack_pop (&evalstack);
 }
 
-ETree *
-runexp(ETree *exp)
+GelETree *
+runexp(GelETree *exp)
 {
 	static int busy = FALSE;
-	ETree *ret;
+	GelETree *ret;
+	GelCtx *ctx;
 	
 	if(busy) {
 		(*errorout)(_("ERROR: Can't execute more things at once!"));
@@ -1283,34 +2389,14 @@ runexp(ETree *exp)
 	
 	busy = TRUE;
 
-	error_num=NO_ERROR;
+	error_num = NO_ERROR;
 	
 	push_file_info(NULL,0);
-	if(returnval)
-		freetree(returnval);
-	returnval = NULL;
-	inbailout = FALSE;
-	inexception = FALSE;
-	interrupted = FALSE;
-	if(inloop) g_slist_free(inloop);
-	inloop = g_slist_prepend(NULL,GINT_TO_POINTER(0));
 
-	ret = evalnode(exp);
+	ctx = eval_get_context();
+	ret = eval_etree(ctx,copynode(exp));
+	eval_free_context(ctx);
 
-	g_slist_free(inloop);
-	inloop = NULL;
-	if(interrupted || inbailout || inexception) {
-		if(returnval) freetree(returnval);
-		returnval = NULL;
-	}
-	inbailout = FALSE;
-	inexception = FALSE;
-	/* we need to catch this later as well: interrupted = FALSE;*/
-	if(!ret && returnval)
-		ret = returnval;
-	else if(returnval)
-		freetree(returnval);
-	returnval = NULL;
 	pop_file_info();
 
 	busy = FALSE;
@@ -1319,49 +2405,32 @@ runexp(ETree *exp)
 	if(!ret)
 		return NULL;
 	if(error_num!=NO_ERROR) {
-		freetree(ret);
+		gel_freetree(ret);
 		return NULL;
 	}
 	return ret;
 }
 
 void
-evalexp_parsed(ETree *parsed, FILE *outfile, char **outstring, char *prefix,int pretty)
+evalexp_parsed(GelETree *parsed, GelOutput *gelo,
+	       const char *prefix, gboolean pretty)
 {
-	ETree *ret;
-	
-	if(!outputfp)
-		outputfp=stdout;
-	
-	if(outstring)
-		*outstring = NULL;
+	GelETree *ret;
 	
 	if(!parsed) return;
 	ret = runexp(parsed);
-	freetree(parsed);
+	gel_freetree(parsed);
 	if(!ret) return;
 
-	if(ret->type != NULL_NODE && (outstring || outfile)) {
-		GString *gs = NULL;
-		if(outstring)
-			gs = g_string_new(NULL);
+	if(ret->type != NULL_NODE && gelo) {
 		if(prefix) {
-			if(outfile)
-				fputs(prefix,outfile);
-			if(outstring)
-				g_string_append(gs,prefix);
+			gel_output_string(gelo, prefix);
 		}
 		if(pretty)
-			pretty_print_etree(gs,outfile,ret,0);
+			pretty_print_etree(gelo,ret);
 		else
-			print_etree(gs,outfile,ret,1);
-		if(outfile)
-			fputc('\n',outfile);
-
-		if(outstring) {
-			*outstring = gs->str;
-			g_string_free(gs,FALSE);
-		}
+			print_etree(gelo, ret, TRUE);
+		gel_output_string(gelo, "\n");
 	}
 
 	/*set ans to the last answer*/
@@ -1369,30 +2438,31 @@ evalexp_parsed(ETree *parsed, FILE *outfile, char **outstring, char *prefix,int 
 		if(ret->func.func)
 			d_addfunc(d_makerealfunc(ret->func.func,d_intern("Ans"),TRUE));
 		else
-			d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
-		freetree(ret);
+			d_addfunc(d_makevfunc(d_intern("Ans"),gel_makenum_ui(0)));
+		gel_freetree(ret);
 	} else if(ret->type == OPERATOR_NODE &&
 		ret->op.oper == E_REFERENCE) {
-		ETree *t = ret->op.args->data;
+		GelETree *t = ret->op.args;
 		if(!t) {
-			EFunc *rf = d_lookup_global(t->id.id);
+			GelEFunc *rf = d_lookup_global(t->id.id);
 			if(rf)
 				d_addfunc(d_makereffunc(d_intern("Ans"),rf));
 			else
-				d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
+				d_addfunc(d_makevfunc(d_intern("Ans"),gel_makenum_ui(0)));
 		} else
-				d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
-		freetree(ret);
+				d_addfunc(d_makevfunc(d_intern("Ans"),gel_makenum_ui(0)));
+		gel_freetree(ret);
 	} else
 		d_addfunc(d_makevfunc(d_intern("Ans"),ret));
 }
 
 void
-evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+evalexp (const char *str, FILE *infile, GelOutput *gelo,
+	 const char *prefix, gboolean pretty, const char *dirprefix)
 {
-	ETree *parsed;
-	parsed = parseexp(str,infile,TRUE,FALSE,NULL);
-	evalexp_parsed(parsed,outfile,outstring,prefix,pretty);
+	GelETree *parsed;
+	parsed = parseexp (str, infile, TRUE, FALSE, NULL, dirprefix);
+	evalexp_parsed (parsed, gelo, prefix, pretty);
 }
 
 /*just to make the compiler happy*/

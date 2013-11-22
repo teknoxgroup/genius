@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1999 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -22,8 +22,8 @@
 #ifndef _PLUG_API_H_
 #define _PLUG_API_H_
 
-typedef struct _PluginInfo PluginInfo;
-struct _PluginInfo {
+typedef struct _GelPluginInfo GelPluginInfo;
+struct _GelPluginInfo {
 	void (*open)(void); /*open the plugin (this happens every
 			      time the user selects the menuitem)*/
 	int (*save_state)(char *prefix); /*save state using gnome_config
@@ -35,6 +35,6 @@ struct _PluginInfo {
 
 /*this is here to avoid "prototype warnings", this is a function which the
   plugins should define*/
-PluginInfo * init_func(void);
+GelPluginInfo * init_func(void);
 
 #endif

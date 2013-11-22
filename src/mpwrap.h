@@ -1,5 +1,5 @@
-/* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+/* GENIUS Calculator
+ * Copyright (C) 1997-2002 George Lebl
  *
  * Author: George Lebl
  *
@@ -69,6 +69,42 @@ struct _mpw_t {
 typedef struct _mpw_t mpw_t[1];
 typedef struct _mpw_t *mpw_ptr;
 
+enum {
+	MPW_NO_ERROR=0,
+	MPW_INTERNAL_ERROR,
+	MPW_NUMERICAL_ERROR,
+};
+
+/* private struct, use accessors for fields */
+typedef struct _MpwCtx MpwCtx;
+
+/*************************************************************************/
+/*conext level stuff                                                     */
+/*************************************************************************/
+
+typedef void (*MpwErrorFunc) (MpwCtx *, char *);
+
+/* make new context with a refcount of 1 */
+MpwCtx *mpw_ctx_new(MpwErrorFunc errorout,
+		    int default_mpf_prec,
+		    gboolean double_math,
+		    gpointer data);
+
+void mpw_ctx_set_errorout(MpwCtx *mctx, MpwErrorFunc errorout);
+void mpw_ctx_set_default_mpf_prec(MpwCtx *mctx, int default_mpf_prec);
+void mpw_ctx_set_double_math(MpwCtx *mctx, gboolean double_math);
+/* if mctx is one gotten from an GelExecCtx, then user code should not
+   use data as it points to the GelExecCtx */
+void mpw_ctx_set_data(MpwCtx *mctx, gpointer data);
+
+MpwErrorFunc mpw_ctx_get_errorout(MpwCtx *mctx);
+int mpw_ctx_get_default_mpf_prec(MpwCtx *mctx);
+gboolean mpw_ctx_get_double_math(MpwCtx *mctx);
+gpointer mpw_ctx_get_data(MpwCtx *mctx);
+
+void mpw_ctx_ref(MpwCtx *mctx);
+void mpw_ctx_unref(MpwCtx *mctx);
+
 
 /*************************************************************************/
 /*high level stuff                                                       */
@@ -115,9 +151,12 @@ void mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op);
 void mpw_mod(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 
 void mpw_gcd(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+void mpw_lcm(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_jacobi(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_legendre(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
-int mpw_perfect_square(mpw_ptr op);
+void mpw_kronecker(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+gboolean mpw_perfect_square(mpw_ptr op);
+gboolean mpw_perfect_power(mpw_ptr op);
 
 void mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e);
@@ -131,7 +170,12 @@ void mpw_cos(mpw_ptr rop,mpw_ptr op);
 void mpw_sinh(mpw_ptr rop,mpw_ptr op);
 void mpw_cosh(mpw_ptr rop,mpw_ptr op);
 void mpw_arctan(mpw_ptr rop,mpw_ptr op);
-void mpw_pi(mpw_ptr rop);
+void mpw_pi (mpw_ptr rop);
+void mpw_i (mpw_ptr rop);
+void mpw_rand (mpw_ptr rop);
+void mpw_randint (mpw_ptr rop, mpw_ptr op);
+
+void mpw_conj (mpw_ptr rop, mpw_ptr op);
 
 int mpw_cmp(mpw_ptr op1, mpw_ptr op2);
 int mpw_cmp_ui(mpw_ptr op, unsigned long int i);
@@ -141,6 +185,7 @@ int mpw_eql_ui(mpw_ptr op, unsigned long int i);
 
 void mpw_fac_ui(mpw_ptr rop,unsigned long int i);
 void mpw_fac(mpw_ptr rop,mpw_ptr op);
+void mpw_dblfac(mpw_ptr rop,mpw_ptr op);
 
 /*make a number int if possible*/
 void mpw_make_int(mpw_ptr rop);
@@ -154,16 +199,16 @@ void mpw_init_mp(void);
 
 /*get a string (g_malloc'ed) with the number in it*/
 char * mpw_getstring(mpw_ptr num,int max_digits,int scientific_notation,
-	int results_as_floats);
+	int results_as_floats,int mixed_fractions, int integer_output_base);
 
-void mpw_set_str_float(mpw_ptr rop,char *s,int base);
+void mpw_set_str_float(mpw_ptr rop,const char *s,int base);
 
 /*reads only the imaginary part (use add for real part)*/
-void mpw_set_str_complex(mpw_ptr rop,char *s,int base);
+void mpw_set_str_complex(mpw_ptr rop,const char *s,int base);
 
-void mpw_set_str_int(mpw_ptr rop,char *s,int base);
+void mpw_set_str_int(mpw_ptr rop,const char *s,int base);
 
-void mpw_set_str(mpw_ptr rop,char *s,int base);
+void mpw_set_str (mpw_ptr rop, const char *s, int base);
 
 int mpw_is_complex(mpw_ptr op);
 int mpw_is_integer(mpw_ptr op);
@@ -180,5 +225,8 @@ void mpw_trunc(mpw_ptr rop, mpw_ptr op);
 
 /*try to get a long number representation of the number*/
 long mpw_get_long(mpw_ptr op);
+
+void mpw_denominator(mpw_ptr rop, mpw_ptr op);
+void mpw_numerator(mpw_ptr rop, mpw_ptr op);
 
 #endif
