@@ -1,3 +1,167 @@
+Sun Feb 08 00:21:32 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.4
+
+Sun Feb 08 00:09:50 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: make sure the x and y point spinboxes are updated
+	  when we click on the canvas to draw a solution
+
+Tue Feb 03 00:00:11 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix typo (not adding a new string, in fact just
+	  getting rid of a bad one, the good one is already in the
+	  translations)
+
+Mon Feb 02 23:40:32 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix typo, it is dy/dx not dx/dy.  Also fix the
+	  slopefield vectorfield sizing stuff to actually get it right in
+	  every aspect.  I.e., scale to uniform size AFTER converting to
+	  pixels, DUH!
+
+Mon Feb 02 01:11:11 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix the plot scale precision (especially for y).  
+	  When we just click on the plot do zoom in instead of zoom into an
+	  incredibly small window.  And finally make the create plot window
+	  usable on a netbook by adding a scrollwindow on small screens
+	  for the lineplot tab.
+
+Sun Feb 01 10:54:30 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix typo thanks to Daniel Nylander
+
+Sun Feb 01 00:11:32 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: do Runge-Kutta instead of Euler for the graphical
+	  slopefield solver.  Whack VectorfieldCPlot (never implemented,
+	  should not be a separate function anyway).  Implement
+	  VectorfieldPlot and SlopefieldPlot.
+
+	* help/C/genius.xml, help/C/gel-function-list.xml: update for all
+	  the new changes
+
+Sat Jan 31 18:44:38 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: resolve some GtkExtra nonsense (dx and dy for flux
+	  are specified in pixels, that is some serious crack!) so that
+	  slope/vector fields draw correctly in non-aspect zoom.  Implement
+	  the "clear solutions" functions and included a GUI.  Implement
+	  a solver dialog and implement "clicky-solutions" when the dialog
+	  is ON.
+
+Sat Jan 31 09:42:58 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: it turns out the gmp cmp functions can return other
+	  values than -1,0,1.  So normalize on the mpw_cmp* level.  This
+	  broke for loops that started at negative numbers.
+
+	* src/geniustests.txt: add some tests for the for loops starting at
+	  negative values
+
+	* src/graphing.c: fixup the tick size for slopefield and vectorfield
+	  Implement stubs for the GEL interface to all of these, allow
+	  setting the increment in SlopefieldDrawSolution
+
+	* src/calc.h: update the COPYRIGHT_STRING
+
+Fri Jan 30 18:30:30 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix some leaks.  Implement a simple euler method
+	  graphical solver for the slopefield.  Currently it is only
+	  accessible by a temporary function just to see if it works.  It
+	  needs a proper interface and also a UI interface.
+	  Slopefield/Vectorfield do not yet have proper GEL interface either
+
+Mon Jan 26 23:59:06 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Finish the GUI plotting of vectorfield and
+	  slopefield, fix a leak on parametric plots, stretch out the labels
+	  in the dialogs to make things fit better and look nicer.
+
+Fri Dec 05 23:17:22 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: raise the plot window on gui actions (pressing the
+	  plot button) if it exists.  Add a "Reset to original zoom" menuitem.
+
+Wed Nov 19 00:29:04 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel:  Add Eigenvectors.
+	  Currently only for 2x2 matrices where computing eigenvectors is
+	  relatively easy
+
+	* help/C/gel-function-list.xml: add Eigenvectors
+
+Fri Nov 14 00:29:17 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: slopefield works from GUI in a very rudimentary way
+
+Sun Nov 09 23:33:04 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: another step forwards towards implementation of
+	  slope fields and vector fields graphs.  UI is pretty much
+	  implemented.  But it doesn't do anything yet.
+
+Thu Nov 06 00:00:28 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: a tiny bit of cleanup, start implementing
+	  slopefield/vectorfield graphing support.
+
+Tue Nov 04 00:46:40 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: add checkbutton to allow for no legends on the
+	  lineplot, useful if I want to just draw myself on the graphs
+
+Tue Nov 04 00:19:54 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix warning
+
+	* src/graphing.c: fix warning, handle error on print command, fix
+	  bad labling of functions if some functions cannot be parsed or are
+	  empty.
+
+Mon Sep 22 23:23:51 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: rename parse/eval to Parse and Evaluate to be
+	  more in line with my in-vogue naming in Genius (no need to
+	  break the consistency even further)
+
+	* src/calc.h, src/genius.c, src/gnome-genius.c, src/funclib.c:
+	  Implement function AskString to interactively ask for a string.
+	  Use a dialog in GUI mode and readline in command line mode
+
+	* src/geniustests.txt: add some tests
+
+	* help/C/gel-function-list.xml: update
+
+Mon Sep 22 00:05:25 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: raise version
+
+	* src/funclib.c: Add 'parse' and 'eval' functions
+
+	* help/C/gel-function-list.xml: add 'parse' and 'eval' blurbs
+
+	* src/calc.c, src/genius-readline-helper.c, src/gnome-genius.c:
+	  handle return values of chdir, getcwd, write, pipe properly
+
+	* src/funclib.c, src/genius.c: move manual display out of funclib.c
+	  and make it less hackish, and use less or more if available to
+	  display manual for the text mode version.
+
+	* src/funclib.c: correctly call the gel_errorout function to avoid
+	  crashes from calling "error"
+
+Sun Sep 21 17:50:50 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel: Update the Mersenne prime info
+	  to include the two newest ones.
+
+Tue Jun 10 12:25:17 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/gel-function-list.xml: minor typo fix
+
 Tue Jun 10 09:18:46 2008  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.3

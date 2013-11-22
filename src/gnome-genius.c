@@ -449,6 +449,49 @@ dialog_entry_activate (GtkWidget *e, gpointer data)
 	gtk_dialog_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
 }
 
+char *
+gel_ask_string (const char *query)
+{
+	GtkWidget *d;
+	GtkWidget *e;
+	int ret;
+	char *txt = NULL;
+
+	d = gtk_dialog_new_with_buttons
+		(_("Genius"),
+		 GTK_WINDOW (genius_window) /* parent */,
+		 0 /* flags */,
+		 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		 GTK_STOCK_OK, GTK_RESPONSE_OK,
+		 NULL);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (d), FALSE);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    gtk_label_new (ve_sure_string(query)),
+			    FALSE, FALSE, 0);
+
+	e = gtk_entry_new ();
+	g_signal_connect (G_OBJECT (e), "activate",
+			  G_CALLBACK (dialog_entry_activate), d);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    e,
+			    FALSE, FALSE, 0);
+
+	gtk_widget_show_all (d);
+	ret = gtk_dialog_run (GTK_DIALOG (d));
+
+	if (ret == GTK_RESPONSE_OK) {
+		const char *t = gtk_entry_get_text (GTK_ENTRY (e));
+		txt = g_strdup (ve_sure_string (t));
+	}
+
+	gtk_widget_destroy (d);
+
+	return txt;
+}
+
 static void
 help_on_function (GtkWidget *menuitem, gpointer data)
 {
@@ -3442,6 +3485,17 @@ run_program (GtkWidget *menu_item, gpointer data)
 		int status;
 		char *str;
 
+		errno = 0;
+		if (pipe (p) != 0) {
+			char *err = 
+				g_strdup_printf
+				(_("Cannot open pipe: %s"),
+				 g_strerror (errno));
+			genius_display_error (NULL, err);
+			g_free (err);
+			return;
+		}
+
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, 0);
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter_end, -1);
 		prog = gtk_text_buffer_get_text (buffer, &iter, &iter_end,
@@ -3455,8 +3509,6 @@ run_program (GtkWidget *menu_item, gpointer data)
 		vte_terminal_feed (VTE_TERMINAL (term),
 				   "\e[0m (((\r\n", -1);
 		gtk_notebook_set_current_page (GTK_NOTEBOOK (notebook), 0);
-
-		pipe (p);
 
 		/* run this in a fork so that we don't block on very
 		   long input */
@@ -3472,10 +3524,14 @@ run_program (GtkWidget *menu_item, gpointer data)
 		}
 
 		if (pid == 0) {
+			int status = 0;
+			int len = strlen (prog);
 			close (p[0]);
-			write (p[1], prog, strlen (prog));
+			if (write (p[1], prog, len) < len) {
+				status = 1;
+			}
 			close (p[1]);
-			_exit (0);
+			_exit (status);
 		}
 		close (p[1]);
 		fp = fdopen (p[0], "r");
@@ -3529,6 +3585,13 @@ run_program (GtkWidget *menu_item, gpointer data)
 			/* must kill it, just in case we were interrupted */
 			kill (pid, SIGTERM);
 			waitpid (pid, &status, 0);
+			if (WIFEXITED (status) &&
+			    WEXITSTATUS (status) == 1) {
+				genius_display_error (NULL,
+						      _("<b>Error executing program</b>\n\n"
+							"There was an error while writing the\n"
+							"program to the engine."));
+			}
 		}
 	}
 

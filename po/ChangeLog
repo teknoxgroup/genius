@@ -1,3 +1,65 @@
+Sat Feb 07 18:37:09 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update to 100%
+
+Mon Feb 02 23:59:28 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* po/cs.po: update
+
+2009-02-01  Daniel Nylander <po@danielnylander.se>
+
+	* sv.po: Updated Swedish translation.
+
+2009-01-10  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+	* es.po: Updated Spanish translation by Francisco Javier F.
+	  Serrador
+
+2008-11-05  Jonh Wendell  <jwendell@gnome.org>  
+
+	* pt_BR.po: Updated Brazilian Portuguese translation by Carlos Eduardo Santos.
+
+Tue Nov 04 00:26:51 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update
+
+2008-10-16  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+	* es.po: Updated Spanish translation
+
+Sun Sep 21 17:45:37 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* nl.po: Apply fix from Koos <koos91 at hetnet.nl> to add
+	  more linebreaks to the pref dialog to make it not too wide.
+
+2008-09-21  Leonardo Ferreira Fontenelle  <leonardof@gnome.org>
+
+	* pt_BR.po: Updated Brazilian Portuguese translation by Fábio Nogueira.
+
+2008-08-24  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+	* es.po: Updated Spanish translation
+
+2008-07-31  Djihed Afifi <djihed@gmail.com> 
+
+	* ar.po: Updated Arabic Translation by Djihed Afifi.
+
+2008-07-31  Djihed Afifi <djihed@gmail.com> 
+
+	* ar.po: Updated Arabic Translation by Djihed Afifi.
+
+2008-07-07  Hendrik Richter  <hendrikr@gnome.org>
+
+	* de.po: Updated German translation.
+
+2008-06-17  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+	* es.po: Updated Spanish translation by Jesse Aviles
+
+2008-06-10  Hendrik Richter  <hendrikr@gnome.org>
+
+	* de.po: Updated German translation.
+
 2008-06-09  Hendrik Richter  <hendrikr@gnome.org>
 
 	* de.po: Updated German translation.
