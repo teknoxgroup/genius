@@ -1701,7 +1701,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.7.0
+VERSION=0.7.1
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { { echo "$as_me:$LINENO: error: source directory already configured; run \"make distclean\" there first" >&5
@@ -2909,7 +2909,7 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 if test "x$GCC" = xyes ; then
-	CFLAGS="$CFLAGS -O3"
+	CFLAGS="-O3 $CFLAGS"
 fi
 
 

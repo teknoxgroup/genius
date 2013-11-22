@@ -286,35 +286,35 @@ static mpf_ptr *free_mpf_top = free_mpf;
 	}						\
 }
 #define MAKE_COPY(n) {					\
-	if(n->alloc.usage>1) {				\
+	if((n)->alloc.usage>1) {			\
 		MpwRealNum *m;				\
 		GET_NEW_REAL(m);			\
 		m->alloc.usage = 1;			\
-		mpwl_init_type(m,n->type);		\
-		mpwl_set(m,n);				\
-		n->alloc.usage --;			\
-		n = m;					\
+		mpwl_init_type(m,(n)->type);		\
+		mpwl_set(m,(n));			\
+		(n)->alloc.usage --;			\
+		(n) = m;				\
 	}						\
 }
 #define MAKE_REAL(n) {					\
-	if(n->type==MPW_COMPLEX) {			\
-		n->type=MPW_REAL;			\
-		if(n->i != zero) {			\
-			n->i->alloc.usage--;		\
-			if(n->i->alloc.usage==0)	\
-				mpwl_free(n->i,FALSE);	\
-			n->i = zero;			\
+	if ((n)->type == MPW_COMPLEX) {			\
+		(n)->type = MPW_REAL;			\
+		if((n)->i != zero) {			\
+			(n)->i->alloc.usage--;		\
+			if((n)->i->alloc.usage==0)	\
+				mpwl_free((n)->i,FALSE);\
+			(n)->i = zero;			\
 			zero->alloc.usage++;		\
 		}					\
 	}						\
 }
 #define MAKE_IMAG(n) {					\
-	n->type = MPW_COMPLEX;				\
-	if(n->r != zero) {				\
-		n->r->alloc.usage--;			\
-		if(n->r->alloc.usage==0)		\
-			mpwl_free(n->r,FALSE);		\
-		n->r = zero;				\
+	(n)->type = MPW_COMPLEX;			\
+	if((n)->r != zero) {				\
+		(n)->r->alloc.usage--;			\
+		if((n)->r->alloc.usage==0)		\
+			mpwl_free((n)->r,FALSE);	\
+		(n)->r = zero;				\
 		zero->alloc.usage++;			\
 	}						\
 }
@@ -3786,15 +3786,17 @@ mpwl_getstring(MpwRealNum * num, int max_digits,
 	return NULL;
 }
 
-/* FIXME: the init is bogus! */
 #define mpw_uncomplex(rop)					\
 {								\
-	if(mpwl_sgn(rop->i)==0) {				\
-		rop->type=MPW_REAL;				\
-		if(rop->i->type!=MPW_INTEGER) {		\
-			mpwl_clear(rop->i);			\
-			mpwl_init_type(rop->i,MPW_INTEGER);	\
-		}						\
+	if ((rop)->i == zero) {					\
+		(rop)->type = MPW_REAL;				\
+	} else if ((rop)->type == MPW_COMPLEX &&		\
+		   mpwl_sgn ((rop)->i) == 0) {			\
+		(rop)->type = MPW_REAL;				\
+		(rop)->i->alloc.usage--;			\
+		if ((rop)->i->alloc.usage==0)			\
+			mpwl_free ((rop)->i, FALSE);		\
+		(rop)->i = zero;				\
 	}							\
 }
 
@@ -3838,14 +3840,24 @@ mpw_init (mpw_ptr op)
 }
 
 void
-mpw_init_set(mpw_ptr rop,mpw_ptr op)
+mpw_init_set(mpw_ptr rop, mpw_ptr op)
 {
-	rop->type=op->type;
+	rop->type = op->type;
 	rop->r = op->r;
 	rop->r->alloc.usage++;
 	rop->i = op->i;
 	rop->i->alloc.usage++;
-	mpw_uncomplex(rop);
+	mpw_uncomplex (rop);
+}
+
+void
+mpw_init_set_no_uncomplex (mpw_ptr rop, mpw_ptr op)
+{
+	rop->type = op->type;
+	rop->r = op->r;
+	rop->r->alloc.usage++;
+	rop->i = op->i;
+	rop->i->alloc.usage++;
 }
 
 /*clear memory held by number*/

@@ -1,3 +1,92 @@
+Thu Aug 19 16:38:14 2004  George Lebl <jirka@5z.com>
+
+	* Release 0.7.1
+
+Thu Aug 19 16:15:32 2004  George Lebl <jirka@5z.com>
+
+	* lib/calculus/differentiation.gel, lib/calculus/limits.gel:
+	  Optimize and clean up the limitting/differentiating functions
+	  a bit, and add NumericalLeftDerivative and NumericalRightDerivative
+
+	* lib/misc/misc.gel, src/funclib.c, src/eval.[ch]: Make Identity
+	  built-in for speed.  Also allow for stealing out of the parameter
+	  list and use this technique in some places to further increased
+	  speed (though this is a very small gain as numbers/matrices are
+	  already copy-on-write, so we just avoid copying some structures)
+
+	* src/mpwrap.c: fix mpw_uncomplex and allow setting without resorting
+	  to mpw_uncomplex
+
+	* lib/equation_solving/find_root.gel,
+	  lib/linear_algebra/linear_algebra.gel,
+	  lib/number_theory/primes.gel, lib/calculus/integration.gel,
+	  lib/calculus/integration.gel, lib/combinatorics/factorial.gel,
+	  lib/combinatorics/recursive_sequences.gel,
+	  lib/equation_solving/find_root.gel,
+	  lib/functions/complex_numbers.gel, lib/functions/delta.gel,
+	  lib/linear_algebra/bilinear_forms.gel,
+	  lib/linear_algebra/linear_algebra.gel, lib/linear_algebra/misc.gel,
+	  lib/number_theory/modulus.gel, lib/number_theory/primes.gel,
+	  lib/sets/basic.gel: tiny bit of optimizations and gel style cleanup 
+
+	* lib/calculus/sums_products.gel: Fix InfiniteProduct2, change
+	  behaviour of InfiniteSum/Product(2) no longer takes tolerance
+	  argument but has similar parameters like the limiting operations
+	  with SumProductTolerance, SumProductSFS, SumProductNumberOfTries
+
+	* src/geniustests.txt: add more tests
+
+Thu Aug 19 12:02:28 2004  George Lebl <jirka@5z.com>
+
+	* src/eval.c: be even nicer in mem debug friendly mode and some
+	  cleanup
+
+	* src/mpwrap.c: a bit of cleanup
+
+	* lib/calculus/differentiation.gel, lib/calculus/limits.gel,
+	  lib/combinatorics/recursive_sequences.gel:  Fixup limit/derivative
+	  functions.  Use better name NumericalDerivative instead of
+	  NDerivative (but keep that as an alias) and add help strings to
+	  everything (yay 100% of library functions have the simple help
+	  strings now)
+
+	* src/geniustests.txt: add tests for the
+	  NDerivative/IsContinuous/IsDifferentiable functions.  Also update
+	  tests for the change in parenthesis printing
+
+Fri Aug 13 10:13:46 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix crash of LinePlot() when no arguments are
+	  passed by requiring at least one argument (same for SurfacePlot)
+
+Thu Aug 12 18:15:20 2004  George Lebl <jirka@5z.com>
+
+	* genius.spec.in: applied patch from Florin Andrei <florin@andrei.myip.org>
+	  to export custom compiler flags to the build and to require vte-devel for the build
+
+	* configure.in: add -O3 in front of CFLAGS not after to allow custom
+	  CFLAGS to override this
+
+	* gtkextra/gtkplot3d.h: fix prototype, thanks to Erik Sigra
+          <sigra@home.se> for noticing
+
+Thu Aug 12 10:48:59 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: run EPS output through ps2epsi if found which adds
+	  a bitmap preview.  The preview kind of sucks but it's better then
+	  nothing.  Fix EPS/PS export for gtk older then 2.4.  Add PNG
+	  export.
+
+	* src/graphing.c, src/calc.c: remove some parenthesis from output
+	  where it doesn't make sense (still some places are overzelaous).
+	  Also when graphing from a dialog take the entered string as the
+	  function string to display in the plot.  Makes things even nicer.
+
+	* src/gnome-genius.c: change the "translator_credits-..." to
+	  "translator-credits" which is apparently more translation
+	  software friendly as it doesn't contain underscores.  Plus a hack
+	  to get the old translation to not lose credits
+
 Tue Aug 10 17:30:32 2004  George Lebl <jirka@5z.com>
 
 	* Release 0.7.0
