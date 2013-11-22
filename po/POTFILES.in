@@ -1,0 +1,5 @@
+src/gnome-genius-ide.c
+src/gnome-genius.c
+src/eval.c
+src/calc.c
+src/util.c

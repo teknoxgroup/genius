@@ -1,0 +1,154 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 1998-07-02 13:31+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: ENCODING\n"
+
+#: src/gnome-genius-ide.c:238 src/gnome-genius-ide.c:520 src/gnome-genius.c:243 src/gnome-genius.c:525
+msgid "GnomENIUS Calculator"
+msgstr ""
+
+#. another comments
+#: src/gnome-genius-ide.c:243
+msgid "The Gnome Calculator program"
+msgstr ""
+
+#: src/gnome-genius-ide.c:371 src/gnome-genius.c:376
+msgid "GnomENIUS Calculator setup"
+msgstr ""
+
+#: src/gnome-genius-ide.c:381 src/gnome-genius.c:386
+msgid "General"
+msgstr "Obecn\351"
+
+#. options area
+#: src/gnome-genius-ide.c:384 src/gnome-genius.c:389
+msgid "Properties"
+msgstr ""
+
+#: src/gnome-genius-ide.c:388 src/gnome-genius.c:393
+msgid "Prefix notation"
+msgstr ""
+
+#: src/gnome-genius-ide.c:399 src/gnome-genius.c:404
+msgid "Infix notation"
+msgstr ""
+
+#: src/gnome-genius-ide.c:410 src/gnome-genius.c:415
+msgid "Postfix notation (RPN)"
+msgstr ""
+
+#: src/gnome-genius-ide.c:424 src/gnome-genius.c:429
+msgid "Full (exact) answers"
+msgstr ""
+
+#: src/gnome-genius-ide.c:434 src/gnome-genius.c:439
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr ""
+
+#: src/gnome-genius-ide.c:443 src/gnome-genius.c:448
+msgid "Results as floats"
+msgstr ""
+
+#: src/gnome-genius-ide.c:452 src/gnome-genius.c:457
+msgid "Floats in scientific notation"
+msgstr ""
+
+#: src/gnome-genius-ide.c:475 src/gnome-genius.c:480
+msgid "Properties..."
+msgstr "Vlastnosti ..."
+
+#: src/gnome-genius-ide.c:477 src/gnome-genius.c:482
+msgid "Exit"
+msgstr "Konec"
+
+#. numpad
+#: src/gnome-genius-ide.c:483 src/gnome-genius-ide.c:674 src/gnome-genius.c:488 src/gnome-genius.c:679
+msgid "Numpad"
+msgstr ""
+
+#. scientific
+#: src/gnome-genius-ide.c:485 src/gnome-genius-ide.c:705 src/gnome-genius.c:490 src/gnome-genius.c:710
+msgid "Scientific"
+msgstr ""
+
+#: src/gnome-genius-ide.c:494 src/gnome-genius.c:499
+msgid "About..."
+msgstr "O programu ..."
+
+#: src/gnome-genius-ide.c:501 src/gnome-genius.c:506
+msgid "Calculator"
+msgstr ""
+
+#: src/gnome-genius-ide.c:504 src/gnome-genius.c:509
+msgid "View"
+msgstr "Zobrazen\355"
+
+#: src/gnome-genius-ide.c:507 src/gnome-genius.c:512
+msgid "Help"
+msgstr "N\341pov\354da"
+
+#: src/gnome-genius-ide.c:638 src/gnome-genius.c:643
+msgid "Display"
+msgstr "Zobrazit"
+
+#: src/gnome-genius.c:248
+msgid "The Gnome calculator style edition of genius"
+msgstr ""
+
+#: src/eval.c:335
+msgid "Variable used uninitialized!"
+msgstr ""
+
+#: src/eval.c:479
+msgid "Left value is NOT a number! (ignoring if construct)"
+msgstr ""
+
+#: src/eval.c:492
+msgid "Left value is NOT a number! (ignoring ifelse construct)"
+msgstr ""
+
+#: src/eval.c:709
+msgid "'=' can't function without proper nodes!"
+msgstr ""
+
+#: src/eval.c:713
+msgid "Left value is NOT a 0\\function! (ignoring '=')"
+msgstr ""
+
+#: src/eval.c:717
+msgid "Right value is NOT computed! (ignoring '=')"
+msgstr ""
+
+#: src/eval.c:730
+msgid "funcdefop can't function without proper nodes!"
+msgstr ""
+
+#: src/eval.c:733
+msgid "Left value is NOT a function! (ignoring function definition)"
+msgstr ""
+
+#: src/calc.c:349
+msgid "ERROR: Probably corrupt stack!"
+msgstr ""
+
+#: src/calc.c:383
+msgid "ERROR: "
+msgstr ""
+
+#: src/calc.c:383
+msgid " before '"
+msgstr ""
+
+#: src/util.c:128
+msgid "Stack underflow!"
+msgstr ""

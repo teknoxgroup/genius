@@ -1,0 +1,564 @@
+Sat Sep 19 15:05:42 1998  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: optimized use of gmp vars with a copy-on-write
+	  type alg, and got rid of a few temp gmp vars for common special
+	  cases, this makes genius about twice as fast on my tests
+
+Fri Sep 18 20:31:29 1998  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: profiling, I will need to make a copy-on-write
+	  type varibales for the gmp variables, in large computations,
+	  genius goes nuts with gmp calls
+
+Fri Sep 18 18:22:39 1998  George Lebl  <jirka@5z.com>
+
+	* src/genius.c: fix bug to allow processing of more then one
+	  expression per file
+
+	* src/{calc.[ch],genius.c,gnome-genius.c,funclib.c}: made the
+	  output function utilize file handles as well for saner use with
+	  the command line
+
+	* src/{lexer.l,parser.y}: add possibility of changing the ntoation
+	  within an expression (this was just too cool not to add, but I
+	  doubt it's all that usefull)
+
+Fri Sep 18 01:22:06 1998  George Lebl  <jirka@5z.com>
+
+	* src/{eval.c,calc.c,structs.h,mpwrap.[ch]}: cleanups in structures
+	  and memory handling
+
+Thu Sep 17 01:17:54 1998  George Lebl  <jirka@5z.com>
+
+	* src/matrix.[ch]: more matrix lowlevel work
+
+	* src/{eval.c,dict.c}: keep a free list of tree_t/func_t nodes and
+	  fix a memory leak
+
+Sun Sep 13 23:45:11 1998  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: better prompt, comments
+
+        * src/{parse.y,calc.c,eval.c}: NULL command '.', it makes the
+	  expression return empty string (null)
+
+        * src/funclib.c: print function
+
+	* src/genius.c: act like a real unix interpretor, so one can now
+	  write genius scripts
+
+1998-09-14  Nuno Ferreira  <nmrf@rnl.ist.utl.pt>
+
+	* po/pt.po: Updated.
+
+Sun Sep 13 19:21:49 PDT 1998 Manish Singh <yosh@gimp.org>
+
+	* configure.in: correct test for -lgmp2 case
+
+Sun Sep 13 03:26:50 1998  George Lebl  <jirka@5z.com>
+
+	* configure.in,src/{lexer.l,calc.c,genius.c}: make it possible to
+	  build even if readline isn't found
+
+Sun Sep 13 01:21:46 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: now fully functional command line version
+
+	* funclib.c: couple of administrative functions
+
+	* parse.y,lexer.l: add some matrix reading code (far from done)
+
+	* parse.y,lexer.l,calc.[ch]: make it work with the command line
+	  version and readline
+
+Thu Sep 10 21:32:10 1998  George Lebl  <jirka@5z.com>
+
+	* src/parse.y: added grammar for matrixes, now to just fill in
+	  the code:)
+
+	* src/geniustest.pl: made it print out the number of errors encountered
+
+Thu Sep 10 15:56:58 1998  George Lebl  <jirka@5z.com>
+
+	* src/parse.y: more general index grammar
+
+Thu Sep 10 15:43:07 1998  George Lebl  <jirka@5z.com>
+
+	* src/parse.y: start on the grammar for matrix support
+
+Wed Sep 09 23:39:49 1998  George Lebl  <jirka@5z.com>
+
+	* Restructuring, there will be 3 programs in the future,
+	  gnome (the command line script like interface), gnome-genius
+	  which will basically be the current one, and gnome-genius-ide
+	  which will be the IDE style interface
+
+Wed Sep 09 23:10:51 1998  George Lebl  <jirka@5z.com>
+
+	* src/dict.[ch],src/structs.h: made a dictinary hash, plus made
+	  stacks into glists, should be faster and less memory hungry now
+
+Sat Aug 08 23:38:43 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: added a dumb scientific frame, it's dumb and ugly,
+	  the interface really does need to be reworked
+
+1998-07-01  Nuno Ferreira  <nmrf@rnl.ist.utl.pt>
+
+	* genius.desktop: Added Portuguese translation.
+
+1998-06-10  Chris Lahey  <clahey@umich.edu>
+
+	* geniustest.c: #included <stdio.h> for std{err,in}.
+
+Thu May 14 07:52:40 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.c: convert imaginary to integer if it's 0
+	  when uncomplexifying, complex support in mod most
+	  likely makes no sense
+
+Thu May 14 07:23:48 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.c: hunted down a sigfpe, and added complex
+	  division (all that is missing now is pow and mod)
+
+	* genius.c: cleanups, fixed bug where the properties
+	  could only be shown once.
+
+Thu May 14 04:57:34 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: fixup the errorbox show code
+
+Sat Apr 25 21:28:38 1998  Havoc Pennington  <hp@pobox.com>
+
+	* genius.c: Use GnomePropertyBox. This basically involved
+	reversing tmpstate and curstate in setup_calc; before we 
+	saved original in tmpstate while changing curstate, now
+	we change tmpstate and copy back to curstate on apply.
+	Also declare tmpstate static, since it's used after the
+	function returns.
+
+Tue Apr 21 14:45:41 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: get sane defaults when config file is
+	  not found
+
+Tue Apr 14 01:04:46 1998  George Lebl  <jirka@5z.com>
+
+	* *.[chly], README: copyright notice updates,
+	  README updates
+
+Wed Apr 08 02:13:23 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.c: fixed a bug in mpwl_pow_ui, and made
+	  functions to do powers of mpz's instead of ui, to
+	  eliminate a stupid limit.
+
+Wed Mar 27 13:19:00 CST 1998 Arturo Espinosa <arturo@nuclecu.unam.mx>
+
+        * genius.c: Final touches for the properties dialog by arturo & aspuru.
+	
+Wed Mar 27 12:41:00 CST 1998 Alan Aspuru Guzik <aspuru@eros.pquim.unam.mx>
+
+        * genius.c: The thing now saves and loads its properties.
+
+Wed Mar 27 12:00:00 CST 1998 Arturo Espinosa <arturo@nuclecu.unam.mx>
+
+        * genius.c: Modal dialog for properties (used to be options).
+	
+Wed Mar 25 22:15:18 CST 1998 Arturo Espinosa <arturo@nuclecu.unam.mx>
+
+        * genius.c: Clean-up. gnome_config & gnome_stock stuff.
+	
+Tue Mar 24 20:28:32 1998  George Lebl  <jirka@5z.com>
+
+	* lexer.l: generate an error on base >36 integers
+	  (parse error)
+
+	* mpwrap.c: radically faster power function for
+	  float^ui, but this improves everything except
+	  rat^int and int^int, thx to Havoc Pennington
+	  for pointing that out.
+
+Sat Mar 21 15:31:20 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* genius.c: Use gnome_message_box_*, not gnome_messagebox_*.
+
+Sun Mar  8 16:37:50 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* calc.h: Renamed error_t to calc_error_t.
+
+	* Makefile.am (INCLUDES): Added GNOME_INCLUDEDIR.
+
+	* genius.c (main): Use new gnome_init.
+
+Mon Mar 02 14:25:47 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.[ch]: partial support for complex numbers
+
+	* funclib.c: a few new functions
+
+	* parse.y,lexer.l: cleanup imaginary numbers
+
+1998-03-01  Raja R Harinath  <harinath@cs.umn.edu>
+
+	* genius.c (addkey): `current_pos' is now part of GtkEditable, not
+	GtkEntry. 
+
+Thu Feb 26 22:57:39 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* Makefile.am (BUILT_SOURCES): New macro.
+
+1998-02-19  Federico Mena Quintero  <federico@nuclecu.unam.mx>
+
+	* genius.c (main): Added app_id "genius".
+
+1998-02-19  Carsten Schaar  <nhadcasc@fs-maphy.uni-hannover.de>
+
+	* Makefile.am (genius_LDADD): Added '$(INTLLIBS)'
+	(geniustest_LDADD): Added '$(INTLLIBS)'
+
+Tue Feb 17 21:32:43 1998  Miguel de Icaza  <miguel@nuclecu.unam.mx>
+
+	* Internationalization.
+
+Tue Feb 17 21:24:17 KST 1998  Changwoo Ryu  <cwryu@adam.kaist.ac.kr>
+
+	* genius.c (geniuserrorbox): Fixed gnome_messagebox use.
+
+Thu Feb 05 01:21:44 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: clist now expands the column according to the
+	  largest entry, result has white background, and the
+	  clist has two columns so that expresison and result
+	  line up
+
+Fri Jan 30 12:33:04 1998  Tom Tromey  <tromey@cygnus.com>
+
+	* Makefile.am (EXTRA_DIST): Include genius.desktop.
+	(geniustest_LDADD): Include $(INTLLIBS).
+	(genius_LDADD): Likewise.
+
+Thu Jan 29 03:45:15 1998  George Lebl  <jirka@5z.com>
+
+	* util.c: fixed stack pop (this was an ugly bug)
+
+Thu Jan 29 02:07:37 1998  George Lebl  <jirka@5z.com>
+
+	* util.[ch],calc.c,eval.[ch]: using GList for stacks now
+	  which makes some parts better, can't really use them
+	  for context stacks though
+
+1998-01-28  Raja R Harinath  <harinath@cs.umn.edu>
+
+	* Makefile.am: Don't install geniustest.  Misc fixes.
+
+Tue Jan 27 20:52:56 1998  George Lebl  <jirka@5z.com>
+
+	* eval.c: fixed unitialized variable use
+
+Mon Jan 26 00:35:15 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: chage Quit to Exit, use CList, when row
+	  is selected it is put into the entrybox
+
+Tue Jan 13 22:21:25 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.c: if the result would be complex, an error is
+	  returned for now
+
+Tue Jan 13 21:24:10 1998  George Lebl  <jirka@5z.com>
+
+	* parse.y: UMINUS and NEG bind more closely then ^
+
+	* mpwrap.c: fixed a cosmetic error in format_float with 0.0
+	  displaying 0. instead of 0
+
+Tue Jan 13 19:49:29 1998  George Lebl  <jirka@5z.com>
+
+	* mymath.c: e is calculated as a float not rational :)
+
+	* mpwrap.[ch]: new function, mpw_make_float
+
+Mon Jan 12 02:54:50 1998  George Lebl  <jirka@5z.com>
+
+	* Makefile.am,geniustest.c,geniustest.pl,geniustests.txt: simple
+	  files for testing may be a base for a command line
+	  implementation of genius (geniustests.txt are some tests)
+
+	* eval.c: fixed YET ANOTHER BUG in copynode (didn't set new
+	  args to NULL when the old ones were NULL, STUPID!)
+
+	* mymath.c: fixed a small memory leak in getpi
+
+	* mpwrap.c: fixed pow_ui, fixed pow_q
+
+Sun Jan 11 19:03:13 1998  George Lebl  <jirka@5z.com>
+
+	* funclib.[ch]: ported to mp wrappers
+
+	* util.c: a minor bug fixed in my_realloc
+
+Sun Jan 11 19:00:12 1998  George Lebl  <jirka@5z.com>
+
+	* mpwrap.c,mpwrap.h,Makefile.am: added the MP wrapper functions.
+
+	* mymath.[ch]: ported to the new mp wrappers
+
+	* calc.[ch]: ported to mp wrappers
+
+	* eval.[ch],structs.h,lexer.l,parse.y: ported to the new wrappers
+
+	* eval.c: fixed a bug in copynode
+
+Sat Jan 10 15:41:27 1998  George Lebl  <jirka@5z.com>
+
+	* eval.c: "while" now works right
+
+	* README: examples updated to work
+
+	* eval.[ch],calc.c: took out primstr, and reimplemented a
+	  better function in calc.c, this one now has the right output
+	  (only spits out infix notation)
+
+	* calc.h: added all prototypes
+
+	* calc.c: got rid of some unused vars, added #include "dict.h"
+
+	* eval.c: got rid of some unused vars
+
+	* dict.[ch]: d_initcontext is now void not int
+
+	* struct.h,dict.[ch],calc.c,eval.c,lexer.l: slight changes in naming
+	  to be more consistent
+
+	* calc.[ch],genius.c: added function to add missing parentheses
+	  on the end of expression to calc, and made it do just that
+	  in genius.c
+
+	* genius.c: the entrybox is cleared after an expression is evaluated
+
+Sat Jan 10 00:45:07 1998  George Lebl  <jirka@5z.com>
+
+	* lexer.l,parse.y,eval.[ch]: added logical and,or,xor and not
+	  operators. ! was not touched and still means factorial
+
+	* README: updated
+
+	* Makefile.am: using YACCFLAGS for arguments instead fo YACC
+
+	* eval.c,calc.c: messed with the expression printing to at
+	  least print something debuggable before making it right
+
+	* eval.c: secondright is now copied, this fixes ifelse
+
+	* lexer.l: fixed a bug in argument references during parse
+
+	* eval.c: while doesn't check for a number (it does it's
+	  own evaluation), but it still seems broken
+
+Fri Jan 09 21:05:18 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: couple of minor changes, Ctrl-Q now also quits
+
+	* eval.[ch]: added if,while and ifelse construct operations, also
+	  reversed how branches returns the argument (it was wrong) and
+	  made a function for telling which ones should get evaluated during
+	  calculations (evalnode)
+
+	* structs.h, eval.[ch]: added a secondright argument to primitives
+	  since ifelse needs it
+
+	* parse.y: added the parsing info for while,if,ifelse. lexer already
+	  included it
+
+	* eval.c: split up evalnode to several functions
+
+	* README: updated
+
+	* eval.h: took out an obscolete prototype
+
+	* eval.[ch],parse.y,lexer.l: added comparison operators,
+	  ==,!=,<=>,>,<,>=,<=
+
+	* genius.c: ! taken out of the numpad, % put in
+
+Fri Jan 09 16:17:38 1998  George Lebl  <jirka@5z.com>
+
+	* eval.c: fixed another bug in copynode, this fixes some segfaults,
+	  and makes global functions work, local ones still segfault
+
+	* eval.c: fixed a bug in evaluation, first evaluate left THEN
+	  the right side. this caused trouble with separators and
+	  function declarations
+
+	* calc.c: the parse error message now says "before" instead of
+	  "at" since it makes more sense
+
+Fri Jan 09 02:08:11 1998  George Lebl  <jirka@5z.com>
+
+	* eval.[ch],parse.y,lexer.l,dict.c: took function declaration from
+	  parse time to execution time. Still segfaults all over the place
+
+	* eval.c: fixed copynode, added function for adding fake function
+	  nodes for declarations
+
+Thu Jan 08 00:11:22 1998  George Lebl  <jirka@5z.com>
+
+	* README: updated to reflect the changes
+
+	* COPYING: added
+
+	* genius.c: make floats ints is now disabled by default as
+	  it is not too intuitive, meaning it might not do what a user
+	  expects
+
+Wed Jan 07 23:44:13 1998  George Lebl  <jirka@5z.com>
+
+	* dict.[ch]: addfunc now returns a pointer to the actual created
+	  record
+
+	* eval.[ch],parse.y,lexer.y: added a separator primitive, all it does is
+	  right side. meaning you can have more expressions after each other
+	  and taht will return the value of the last one
+
+	* dict.[ch]: created dictionary contexts so that local
+	  variables/functions are possible
+
+	* eval.[ch],parse.y,lexer.y,funclib.c: added user function support, not
+	  yet completely finished, but it is working quite nicely already,
+	  recursion does not yet work and I know what's the problem and will
+	  fix it, though there are not yet any structures for programming,
+	  there are many MANY small changes around these files to support this
+
+Tue Jan 06 18:38:17 1998  George Lebl  <jirka@5z.com>
+
+	* eval.[ch],parse.y: added mod ('%') operator
+
+Tue Jan 06 15:38:49 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: Make use of the app widget, get rid of buttons in favor of
+	  menus, use gnome_init instead of gtk_init, add #include <gnome.h>
+
+Mon Jan 05 23:14:56 1998  George Lebl  <jirka@5z.com>
+
+	* eval.c,calc.c,structs.h: changed some tree_t internals to
+	  match the new constant names
+
+	* eval.c,struct.c: it should be now possible to evaluate user
+	  which are just compiled into evaluation trees
+
+	* util.[ch]: took out makelc
+
+	* dict.[ch]: made searches case sensitive and added support for
+	  user functions
+
+	* lexer.l,parser.y: added support for no-argument user functions
+	  (variables) setting
+
+	* calc.c: fixed a bug so that the builtin functions don't get
+	  added again and again
+
+	* eval.[ch]: added the '=' operation and changed evalexp to be able
+	  to set variables
+
+Sun Jan 04 23:50:25 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: accelerator stuff revamped, and all is done through
+	  the keypress event, nothing will happen on empty string
+
+Sun Jan 04 22:59:28 1998  George Lebl  <jirka@5z.com>
+
+	* genius.c: Got the keybindings to work, so it can be completely
+	  keyboard driven. ^C quits \n runs calculations.
+
+Sun Jan 04 20:57:01 1998  George Lebl  <jirka@5z.com>
+
+	* calc.[ch],eval.c,genius.c: implemented calcstate structure,
+	  instead of separate variables
+
+	* genius.c: added some options for the new calcstate structure
+	  these are the make results floats and scientific notation
+
+	* calc.c: if the number of digits is reduced the number is now
+	  rounded, implemented scientific notation, implemented conversion
+	  to floats, some cleanup, a typo fixed
+
+	* lexer.l: can now read integers in scientific notation as
+	  floats
+
+	* structs.h,calc.c,eval.c: changed some enum constants' names to
+	  be more meaningful
+
+	* dict.c: small typo to make builtin functions
+
+	* eval.c: some cleanup, reduced the number of temporaries used in
+	  some operations, put switch statements in the code instead of
+	  some if/else structures
+
+	* mymath.c: mympf_pow_ui now safely works when rop and op are one
+	  and the same number (it will still not use a temp when the numbers
+	  are in fact different)
+
+Sat Jan 03 16:57:17 1998  George Lebl  <jirka@5z.com>
+
+	* calc.c, eval.c: it's possible to have functions in uncomputed
+	  expressions, they will display properly
+
+	* funclib.[ch]: deleted test_op ("test" function), added functions
+	  "cos", "tan", "pi", "e"
+
+	* mymath.[ch]: created these files for some helper gmp functions
+
+	* eval.c: taken out mympf_pow_ui and put it into mymath.[ch]
+	  added an ugly ans slow temporary way to do exponentials of
+	  floats, it converts it to a rational first
+
+Sat Jan 03 12:48:31 1998  George Lebl  <jirka@5z.com>
+
+	* genius.[ch]: deleted old unused functions, added prototypes
+	  to genius.h, added errorreporting functions
+
+	* calc.c, eval.c: now use the error reporting function
+
+Sat Jan 03 02:18:55 1998  George Lebl  <jirka@5z.com>
+
+	* eval.[ch], calc.c, parse.y: the stack is now a structure of type
+	  evalstack_t, it's a dynamic array now
+
+	* eval.c: added #include "util.h"
+
+	* util.c: made my_realloc safer
+
+	* funclib.c: added #include <gmp.h>
+
+	* funclib.[ch]: sine function added ("sin"), works only for -pi<x<pi
+
+Sat Jan 03 00:37:52 1998  George Lebl  <jirka@5z.com>
+
+	* util.c: proper casting in makelc
+
+	* dict.c: makebifunc now doesn't segfault.
+
+	* dict.c: d_addfunc fixed, it adds dictinary entries now
+
+	* eval.c: added NULL checking to freetree and freetree now does
+	  freeargs, not freenode and makefuncd sets n->left and right to
+	  NULL ... that made ugly segfaults
+
+	* eval.c: evalnode now evaluates function args correctly
+
+Fri Jan 02 21:21:27 1998  George Lebl  <jirka@5z.com>
+
+	* calc.h: removed FACTORIAL_ERROR since it's not a fatal error
+
+	* eval.c: Should be able to run functions from funclib
+
+	* funclib.[ch]: removed funclib_exec function since that's
+	  obscolete, added addall and test_op functions and there's a
+	  "test" function returns sum of three arguments (no typechecking
+	  is done and they have to be integers! it's just a testroutine)
+
+	* calc.c: added #include "funclib.h", and it will add all the
+	  funclib functions the first time evalexpr is run.
+

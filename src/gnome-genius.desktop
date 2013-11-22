@@ -1,0 +1,21 @@
+[Desktop Entry]
+Name=Calculator
+Name[es]=Calculadora
+Name[cs]=Kalkulátor
+Name[de]=Taschenrechner
+Name[ko]=°è»ê±â
+Name[fr]=Calculatrice
+Name[no]=Kalkulator
+Name[pt]=Calculadora
+Comment=Genius Calculator
+Comment[es]=Calculadora Genius
+Comment[cs]=Kalkulátor Genius
+Comment[de]=Taschenrechner Genius
+Comment[ko]=Áö´Ï¾î½º(Genius) °è»ê±â
+Comment[fr]=Calculatrice Genius
+Comment[no]=Kalkulatoren Genius
+Comment[pt]=Calculadora Genius
+Exec=gnome-genius
+Icon=gnome-calc2.png
+Terminal=0
+Type=Application

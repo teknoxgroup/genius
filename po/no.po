@@ -1,0 +1,154 @@
+# Norwegian (bokmål dialect) translation of the gnome-utils module
+# Copyright (C) 1998 Free Software Foundation, Inc.
+# Kjartan Maraas <kmaraas@fib.hl.no>, 1998.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gnome-utils-0.13\n"
+"POT-Creation-Date: 1998-05-03 01:21+0200\n"
+"PO-Revision-Date: 1998-05-04 08:10+0100\n"
+"Last-Translator: Kjartan Maraas <kmaraas@fib.hl.no>\n"
+"Language-Team: Norwegian <no@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8-bit\n"
+
+#: src/gnome-genius-ide.c:238 src/gnome-genius-ide.c:520 src/gnome-genius.c:243 src/gnome-genius.c:525
+msgid "GnomENIUS Calculator"
+msgstr "GnomeENIUS Kalkulator"
+
+#. another comments
+#: src/gnome-genius-ide.c:243
+msgid "The Gnome Calculator program"
+msgstr "Gnome Kalkulator"
+
+#: src/gnome-genius-ide.c:371 src/gnome-genius.c:376
+msgid "GnomENIUS Calculator setup"
+msgstr "GnomENIUS Kalkulator oppsett"
+
+#: src/gnome-genius-ide.c:381 src/gnome-genius.c:386
+msgid "General"
+msgstr "Generelt"
+
+#. options area
+#: src/gnome-genius-ide.c:384 src/gnome-genius.c:389
+msgid "Properties"
+msgstr "Egenskaper"
+
+#: src/gnome-genius-ide.c:388 src/gnome-genius.c:393
+msgid "Prefix notation"
+msgstr "Prefiks notasjon"
+
+#: src/gnome-genius-ide.c:399 src/gnome-genius.c:404
+msgid "Infix notation"
+msgstr "Infiks notasjon"
+
+#: src/gnome-genius-ide.c:410 src/gnome-genius.c:415
+msgid "Postfix notation (RPN)"
+msgstr "Postfiks notasjon (RPN)"
+
+#: src/gnome-genius-ide.c:424 src/gnome-genius.c:429
+msgid "Full (exact) answers"
+msgstr "Hele (eksakte) svar"
+
+#: src/gnome-genius-ide.c:434 src/gnome-genius.c:439
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr "Gj\370r flyttall om til heltall (f.eks. 10.0=10)"
+
+#: src/gnome-genius-ide.c:443 src/gnome-genius.c:448
+msgid "Results as floats"
+msgstr "Svar som flyttall"
+
+#: src/gnome-genius-ide.c:452 src/gnome-genius.c:457
+msgid "Floats in scientific notation"
+msgstr "Flyttall i vitenskaplig notasjon"
+
+#: src/gnome-genius-ide.c:475 src/gnome-genius.c:480
+msgid "Properties..."
+msgstr "Egenskaper..."
+
+#: src/gnome-genius-ide.c:477 src/gnome-genius.c:482
+msgid "Exit"
+msgstr "Avslutt"
+
+#. numpad
+#: src/gnome-genius-ide.c:483 src/gnome-genius-ide.c:674 src/gnome-genius.c:488 src/gnome-genius.c:679
+msgid "Numpad"
+msgstr "Nummerpad"
+
+#. scientific
+#: src/gnome-genius-ide.c:485 src/gnome-genius-ide.c:705 src/gnome-genius.c:490 src/gnome-genius.c:710
+msgid "Scientific"
+msgstr "Vitenskaplig"
+
+#: src/gnome-genius-ide.c:494 src/gnome-genius.c:499
+msgid "About..."
+msgstr "Om..."
+
+#: src/gnome-genius-ide.c:501 src/gnome-genius.c:506
+msgid "Calculator"
+msgstr "Kalkulator"
+
+#: src/gnome-genius-ide.c:504 src/gnome-genius.c:509
+msgid "View"
+msgstr "Vis"
+
+#: src/gnome-genius-ide.c:507 src/gnome-genius.c:512
+msgid "Help"
+msgstr "Hjelp"
+
+#: src/gnome-genius-ide.c:638 src/gnome-genius.c:643
+msgid "Display"
+msgstr "Skjerm"
+
+#: src/gnome-genius.c:248
+msgid "The Gnome calculator style edition of genius"
+msgstr ""
+
+#: src/eval.c:335
+msgid "Variable used uninitialized!"
+msgstr "Variabel brukt uinitialisert!"
+
+#: src/eval.c:479
+msgid "Left value is NOT a number! (ignoring if construct)"
+msgstr "Venstre verdi er IKKE et tall! (ignorerer if-konstruksjon)"
+
+#: src/eval.c:492
+msgid "Left value is NOT a number! (ignoring ifelse construct)"
+msgstr "Venstre verdi er IKKE et tall! (ignorerer ifelse-konstruksjon)"
+
+#: src/eval.c:709
+msgid "'=' can't function without proper nodes!"
+msgstr "'=' fungerer ikke uten ordentlige noder!"
+
+#: src/eval.c:713
+msgid "Left value is NOT a 0\\function! (ignoring '=')"
+msgstr "Venstre verdi er IKKE en 0\\funksjon (ignorerer '=')"
+
+#: src/eval.c:717
+msgid "Right value is NOT computed! (ignoring '=')"
+msgstr "H\370yre verdi er IKKE utregnet! (ignorerer '=')"
+
+#: src/eval.c:730
+msgid "funcdefop can't function without proper nodes!"
+msgstr "funcdefop fungerer ikke uten ordentlige noder!"
+
+#: src/eval.c:733
+msgid "Left value is NOT a function! (ignoring function definition)"
+msgstr "Venstre verdi er IKKE en funksjon! (ignorerer funksjonsdefinisjon)"
+
+#: src/calc.c:349
+msgid "ERROR: Probably corrupt stack!"
+msgstr "FEIL: Sannsynligvis korrupt stakk!"
+
+#: src/calc.c:383
+msgid "ERROR: "
+msgstr "FEIL: "
+
+#: src/calc.c:383
+msgid " before '"
+msgstr " f\370r '"
+
+#: src/util.c:128
+msgid "Stack underflow!"
+msgstr "Stakk underflyt"

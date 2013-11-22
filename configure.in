@@ -1,0 +1,50 @@
+AC_INIT(src/calc.c)
+
+AM_CONFIG_HEADER(config.h)
+AM_INIT_AUTOMAKE(genius,0.1)
+AM_MAINTAINER_MODE
+AM_ACLOCAL_INCLUDE(macros)
+
+GNOME_INIT
+AC_ISC_POSIX
+AC_PROG_CC
+AC_STDC_HEADERS
+AC_PROG_YACC
+AM_PROG_LEX
+AC_ARG_PROGRAM
+AM_PROG_LIBTOOL
+
+## this should come after `AC_PROG_CC'
+GNOME_X_CHECKS
+
+GMP_LIB=""
+AC_CHECK_LIB(gmp, mpz_init_set,[GMP_LIB=-lgmp], [
+	AC_CHECK_LIB(gmp2, mpz_init_set_d,[GMP_LIB=-lgmp2
+		AC_DEFINE(HAVE_GMP2_INCLUDE_DIR)],
+		AC_MSG_ERROR(GMP Library not found))])
+AC_SUBST(GMP_LIB)
+
+READLINE_LIB=""
+READLINE_SUPPORT=""
+AC_CHECK_LIB(readline, readline,[READLINE_LIB=-lreadline
+				 READLINE_SUPPORT=-DWITH_READLINE_SUPPORT])
+AC_SUBST(READLINE_LIB)
+AC_SUBST(READLINE_SUPPORT)
+
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+
+dnl ## internationalization support
+ALL_LINGUAS="de es fr it ko cs no ga pt"
+AM_GNU_GETTEXT
+AC_LINK_FILES($nls_cv_header_libgt, $nls_cv_header_intl)
+
+AC_OUTPUT([
+Makefile
+src/Makefile
+intl/Makefile
+po/Makefile.in
+macros/Makefile
+stamp.h],[sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile])
+

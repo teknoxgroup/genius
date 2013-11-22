@@ -1,0 +1,147 @@
+msgid ""
+msgstr ""
+"Date: 1998-02-23 15:09:38+0100\n"
+"From: Tristan Tarrant <ttarrant@suntlc.etnoteam.it>\n"
+"Content-Type: text/plain; charset=\n"
+"Xgettext-Options: --default-domain=gnome-utils --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
+"Files: gtt/app.c gtt/toolbar.c gtt/main.c gtt/menucmd.c gtt/menus.c gtt/proj.c gtt/log.c gtt/options.c gtt/prop.c gtt/clist.c gtop/main.c gtop/procbar.c gtop/procview.c genius/calc.c genius/genius.c genius/eval.c genius/util.c\n"
+
+#: src/gnome-genius-ide.c:238 src/gnome-genius-ide.c:520 src/gnome-genius.c:243 src/gnome-genius.c:525
+msgid "GnomENIUS Calculator"
+msgstr "Calcolatrice GnomENIUS"
+
+#. another comments
+#: src/gnome-genius-ide.c:243
+msgid "The Gnome Calculator program"
+msgstr "La calcolatrice di Gnome"
+
+#: src/gnome-genius-ide.c:371 src/gnome-genius.c:376
+msgid "GnomENIUS Calculator setup"
+msgstr ""
+
+#: src/gnome-genius-ide.c:381 src/gnome-genius.c:386
+msgid "General"
+msgstr ""
+
+#. options area
+#: src/gnome-genius-ide.c:384 src/gnome-genius.c:389
+msgid "Properties"
+msgstr "Propriet\340"
+
+#: src/gnome-genius-ide.c:388 src/gnome-genius.c:393
+msgid "Prefix notation"
+msgstr "Notazione prefissa"
+
+#: src/gnome-genius-ide.c:399 src/gnome-genius.c:404
+msgid "Infix notation"
+msgstr "Notazione infissa"
+
+#: src/gnome-genius-ide.c:410 src/gnome-genius.c:415
+msgid "Postfix notation (RPN)"
+msgstr "Notazione postfissa (RPN)"
+
+#: src/gnome-genius-ide.c:424 src/gnome-genius.c:429
+msgid "Full (exact) answers"
+msgstr "Risposte complete (esatte)"
+
+#: src/gnome-genius-ide.c:434 src/gnome-genius.c:439
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr "Trasforma reali in interi (es. 10.0=10)"
+
+#: src/gnome-genius-ide.c:443 src/gnome-genius.c:448
+msgid "Results as floats"
+msgstr "Risultati in reali"
+
+#: src/gnome-genius-ide.c:452 src/gnome-genius.c:457
+msgid "Floats in scientific notation"
+msgstr "Reali in notazione scientifica"
+
+#: src/gnome-genius-ide.c:475 src/gnome-genius.c:480
+msgid "Properties..."
+msgstr ""
+
+#: src/gnome-genius-ide.c:477 src/gnome-genius.c:482
+msgid "Exit"
+msgstr "Esci"
+
+#. numpad
+#: src/gnome-genius-ide.c:483 src/gnome-genius-ide.c:674 src/gnome-genius.c:488 src/gnome-genius.c:679
+msgid "Numpad"
+msgstr "Tastierino numerico"
+
+#. scientific
+#: src/gnome-genius-ide.c:485 src/gnome-genius-ide.c:705 src/gnome-genius.c:490 src/gnome-genius.c:710
+msgid "Scientific"
+msgstr "Scientifica"
+
+#: src/gnome-genius-ide.c:494 src/gnome-genius.c:499
+msgid "About..."
+msgstr "Informazioni..."
+
+#: src/gnome-genius-ide.c:501 src/gnome-genius.c:506
+msgid "Calculator"
+msgstr ""
+
+#: src/gnome-genius-ide.c:504 src/gnome-genius.c:509
+msgid "View"
+msgstr "Vista"
+
+#: src/gnome-genius-ide.c:507 src/gnome-genius.c:512
+msgid "Help"
+msgstr "Aiuto"
+
+#: src/gnome-genius-ide.c:638 src/gnome-genius.c:643
+msgid "Display"
+msgstr "Visualizzazione"
+
+#: src/gnome-genius.c:248
+msgid "The Gnome calculator style edition of genius"
+msgstr ""
+
+#: src/eval.c:335
+msgid "Variable used uninitialized!"
+msgstr "Variabile utilizzata non inizializzata"
+
+#: src/eval.c:479
+msgid "Left value is NOT a number! (ignoring if construct)"
+msgstr "Valore sinistro NON \350 un numero! (costrutto if ignorato)"
+
+#: src/eval.c:492
+msgid "Left value is NOT a number! (ignoring ifelse construct)"
+msgstr "Valore sinistro NON \350 un numero! (costrutto ifelse ignorato)"
+
+#: src/eval.c:709
+msgid "'=' can't function without proper nodes!"
+msgstr "'=' non pu\362 funzionare senza nodi corretti!"
+
+#: src/eval.c:713
+msgid "Left value is NOT a 0\\function! (ignoring '=')"
+msgstr "Valore sinistro NON \350 un 0\\funzione! ('=' ignorato)"
+
+#: src/eval.c:717
+msgid "Right value is NOT computed! (ignoring '=')"
+msgstr "Valore destro NON calcolato! ('=' ignorato)"
+
+#: src/eval.c:730
+msgid "funcdefop can't function without proper nodes!"
+msgstr "funcdefop non pu\362 funzionare senza nodi corretti!"
+
+#: src/eval.c:733
+msgid "Left value is NOT a function! (ignoring function definition)"
+msgstr "Valore sinistro NON \350 una funzione! (definizione di funzione ignorata)"
+
+#: src/calc.c:349
+msgid "ERROR: Probably corrupt stack!"
+msgstr "ERRORE: Probabilmente lo stack \350 danneggiato!"
+
+#: src/calc.c:383
+msgid "ERROR: "
+msgstr "ERRORE: "
+
+#: src/calc.c:383
+msgid " before '"
+msgstr " prima '"
+
+#: src/util.c:128
+msgid "Stack underflow!"
+msgstr "Underflow di stack!"
