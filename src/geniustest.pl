@@ -2,12 +2,14 @@
 open(TESTS,"geniustests.txt") || die "can't open the geniustests.txt file";
 
 $errors = 0;
+$tests = 0;
 $options = "";
 
 while(<TESTS>) {
 	if(/^OPTIONS[ 	]+(.*)$/) {
 		$options = $1;
 	} elsif(/^([^	]+)	+([^	]+)$/) {
+		$tests++;
 		open(GENIUS,"echo '$1' | ./genius $options |") ||
 			die "can't open pipe!";
 		print "$1\n";
@@ -32,4 +34,4 @@ while(<TESTS>) {
 	}
 }
 
-print "errors: $errors\n"
+print "tests: $tests, errors: $errors\n"

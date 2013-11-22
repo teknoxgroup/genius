@@ -5,30 +5,19 @@ AC_DEFUN([GNOME_COMPILE_WARNINGS],[
   AC_ARG_ENABLE(compile-warnings, 
     [  --enable-compile-warnings=[no/minimum/yes]	Turn on compiler warnings.],,enable_compile_warnings=minimum)
 
-  AC_ARG_ENABLE(warn-unused,
-    [  --enable-warn-unused    Warn about unused variables and parameters],,
-    enable_warn_unused=no)
-
-  AC_MSG_CHECKING(what "unused" warning flags to use)
-  wunusedCFLAGS=
-  if test "x$enable_warn_unused" = xyes ; then
-    wunusedCFLAGS='-Wunused'
-  else
-    wunusedCFLAGS='-Wno-unused'
-  fi
-  AC_MSG_RESULT($wunusedCFLAGS)
-
   AC_MSG_CHECKING(what warning flags to pass to the C compiler)
   warnCFLAGS=
   if test "x$enable_compile_warnings" != "xno"; then
     if test "x$GCC" = "xyes"; then
       case " $CFLAGS " in
       *[\ \	]-Wall[\ \	]*) ;;
-      *) warnCFLAGS="-Wall" ;;
+      *) warnCFLAGS="-Wall -Wno-unused" ;;
       esac
 
+      ## -W is not all that useful.  And it cannot be controlled
+      ## with individual -Wno-xxx flags, unlike -Wall
       if test "x$enable_compile_warnings" = "xyes"; then
-	warnCFLAGS="$warnCFLAGS -W $wunusedCFLAGS -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith"
+	warnCFLAGS="$warnCFLAGS -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith"
       fi
     fi
   fi
@@ -55,4 +44,45 @@ AC_DEFUN([GNOME_COMPILE_WARNINGS],[
   fi
   AC_MSG_RESULT($complCFLAGS)
   CFLAGS="$CFLAGS $warnCFLAGS $complCFLAGS"
+])
+
+dnl For C++, do basically the same thing.
+
+AC_DEFUN([GNOME_CXX_WARNINGS],[
+  AC_ARG_ENABLE(cxx-warnings, 
+    [  --enable-cxx-warnings=[no/minimum/yes]	Turn on compiler warnings.],,enable_cxx_warnings=minimum)
+
+  AC_MSG_CHECKING(what warning flags to pass to the C++ compiler)
+  warnCXXFLAGS=
+  if test "x$enable_cxx_warnings" != "xno"; then
+    if test "x$GCC" = "xyes"; then
+      case " $CXXFLAGS " in
+      *[\ \	]-Wall[\ \	]*) ;;
+      *) warnCXXFLAGS="-Wall -Wno-unused" ;;
+      esac
+
+      ## -W is not all that useful.  And it cannot be controlled
+      ## with individual -Wno-xxx flags, unlike -Wall
+      if test "x$enable_cxx_warnings" = "xyes"; then
+	warnCXXFLAGS="$warnCXXFLAGS -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wshadow -Woverloaded-virtual"
+      fi
+    fi
+  fi
+  AC_MSG_RESULT($warnCXXFLAGS)
+
+  AC_MSG_CHECKING(what language compliance flags to pass to the C compiler)
+  complCFLAGS=
+    if test "x$GCC" = "xyes"; then
+      case " $CXXFLAGS " in
+      *[\ \	]-ansi[\ \	]*) ;;
+      *) complCXXFLAGS="$complCXXFLAGS -ansi" ;;
+      esac
+
+      case " $CXXFLAGS " in
+      *[\ \	]-pedantic[\ \	]*) ;;
+      *) complCXXFLAGS="$complCXXFLAGS -pedantic" ;;
+      esac
+    fi
+  AC_MSG_RESULT($complCXXFLAGS)
+  CXXFLAGS="$CXXFLAGS $warnCXXFLAGS $complCXXFLAGS"
 ])

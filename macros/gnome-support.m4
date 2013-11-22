@@ -1,14 +1,15 @@
 dnl GNOME_SUPPORT_CHECKS
 dnl    Check for various support functions needed by the standard
-dnl    Gnome libraries.  Sets LIBOBJS, might define some macros,
-dnl    and will set the need_gnome_support shell variable to "yes"
-dnl    or "no".  Also sets up the Automake BUILD_GNOME_SUPPORT
-dnl    conditional.  This should only be used when building the Gnome
-dnl    libs; Gnome clients should not need this macro.
+dnl    Gnome libraries.  Sets LIBOBJS, might define some macros.
+dnl    This should only be used when building the Gnome libs; 
+dnl    Gnome clients should not need this macro.
 AC_DEFUN([GNOME_SUPPORT_CHECKS],[
   # we need an `awk' to build `gnomesupport.h'
   AC_REQUIRE([AC_PROG_AWK])
-  need_gnome_support=no
+
+  # this should go away soon
+  need_gnome_support=yes
+
   save_LIBOBJS="$LIBOBJS"
   LIBOBJS=
 
@@ -57,19 +58,13 @@ AC_DEFUN([GNOME_SUPPORT_CHECKS],[
     fi
   done
 
-  AC_CHECK_FUNCS(vsnprintf,,[
-    AC_CHECK_FUNCS(__vsnprintf,
-      LIBOBJS="$LIBOBJS easy-vsnprintf.o",
-      LIBOBJS="$LIBOBJS vsnprintf.o")])
-
   AC_REPLACE_FUNCS(memmove mkstemp scandir strcasecmp strerror strndup strnlen)
-  AC_REPLACE_FUNCS(strtok_r strtod strtol strtoul vasprintf)
+  AC_REPLACE_FUNCS(strtok_r strtod strtol strtoul vasprintf vsnprintf)
 
-  #AC_CHECK_FUNCS(canonicalize_file_name,,LIBOBJS="$LIBOBJS canonicalize.o")
   AC_CHECK_FUNCS(realpath,,LIBOBJS="$LIBOBJS canonicalize.o")
 
   # to include `error.c' error.c has some HAVE_* checks
-  AC_CHECK_FUNCS(vprintf doprnt sterror_r)
+  AC_CHECK_FUNCS(vprintf doprnt strerror_r)
   AM_FUNC_ERROR_AT_LINE
 
   # This is required if we declare setreuid () and setregid ().
@@ -80,9 +75,6 @@ AC_DEFUN([GNOME_SUPPORT_CHECKS],[
   AC_CHECK_HEADERS(string.h strings.h stdlib.h unistd.h)
   GCC_NEED_DECLARATIONS(gethostname setreuid setregid getpagesize)
 
-  if test "$LIBOBJS$gcc_need_declarations" != ""; then
-     need_gnome_support=yes
-  fi
   # Turn our LIBOBJS into libtool objects.  This is gross, but it
   # requires changes to autoconf before it goes away.
   LTLIBOBJS=`echo "$LIBOBJS" | sed 's/\.o/.lo/g'`

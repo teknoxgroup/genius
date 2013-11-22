@@ -1,6 +1,15 @@
 Genius Calculator
 =================
 
+**********************************************************
+(Read Changes-0.2 for changes description from 0.1 to 0.2)
+**********************************************************
+
+NOTE: to build it if you don't have gnome installed, configure with
+./configure --disable-gnome
+I haven't tried it on a machine that really doesn't have gnome so YMMV.
+You still need glib though
+
 Although it's under heavy development, it's actually getting usable.
 I use it myself as my desktop calculator.
 
@@ -12,15 +21,12 @@ Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
 
 - need to make more built-in functions!
 - complex numbers (they mostly work now but need to be finished)
-- CORBA interface (whichever GNOME will use)
+- CORBA interface
 - do a code clean-up (such as split up eval.[ch]) and make the names of
   types, functions and variables more consistent
 - clean up calc.[ch] to be a better "interface to the calculator
 - make the string functions stop reallocating ALL the time
-- anonymous functions (functions that do not have a name, might be a
-	problem though)
 - profile and make the code leaner and meaner
-- instead of functions calls and recursion, use an evaluation stack
 - optimize the engine a bit more
 
 Features of Genius:
@@ -31,10 +37,13 @@ Features of Genius:
    could not be completed
  * tries to optionally convert floats to integers to make calculatons more
    acurate (since integers are arbitrary precision)
- * can read prefix, infix or postfix expressions
  * variables
  * user functions
- * it will now add missing parenthesis on the ends of expressions
+ * variable and function references with Cc like syntax
+ * bc like sytax
+ * anonymous functions
+ * it will now add missing parenthesis on the ends of expressions (only in
+   the GUI version)
  * more ...
 
 How to use this thing: (this is just a quick description)
@@ -53,35 +62,36 @@ since there exist only numbers.
 
 For variables use the = operator, that operator sets the variable and
 returns the number you set, so you can do something like "a=b=5", just
-like in C. (this is in infix mode in postfix this would be "a b 5 = =").
-Variables are really functions with no argument
+like in C. Variables are really functions with no argument
 
-there are a number of built in functions (currently "e" "pi" "sin" "cos"
+There are a number of built in functions (currently "e" "pi" "sin" "cos"
 "tan")
 
-to type functions in:
+To type functions in:
 
-infix)		function(argument1,argument1)
-prefix)		function argument1 argument2 
-postfix)	argument1 argument2 function 
+function(argument1, argument2, argument3)
+function()
+function
 
-(of course the number of arguments is different for each function, up to 8)
+(of course the number of arguments is different for each function)
 
-NOTE: that if there are no arguments you can't put any parenthesis around
-them, so "function()" is illegal, it has to be "function", this is only
-in infix mode.
+NOTE: that if there are no arguments you can but don't have to put
+the parentheses in
 
 To define a function do:
 
-<number of arguments>\<function name> { <function body> }
+define <identifier>(<comma separated argument names>) { <function body> }
 
-to use the arguments use arg1, arg2 ... also note this is exactly the same
-for all notations (prefix,infix,postfix) due to some limitations of the
-parser I can't do this postfix-like for that notation
+or alternatively
+
+<identifier> = `(<comma separated argument names>) { <function body> }
+
+NOTE: that's a backquote and signifies an anonymous function, by setting
+it to a variable name you effectively define a function
 
 for example:
 
-3\sum { arg1 + arg2 + arg3 }
+define sum(a,b,c) { a+b+c}
 
 then "sum(1,1,1)" yields 3
 
@@ -96,31 +106,30 @@ yeilds 5
 this will require some parenthesizing to make it unambiguous sometimes,
 especially if the ; is not the top most primitive
 
-There are 3 constructs, if, ifelse and while. They are rather simple
+There are also a number of constructs:
 
-here's the syntax:
-infix or prefix)
-	if expression1 (expression2)
-	ifelse expression1 (expression2) (expression3)
-	while expression1 (expression2)
-postfix)
-	expression1 (expression2) if
-	expression1 (expression2) (expression3) ifelse
-	expression1 (expression2) while
+Conditionals:
 
-if will evaluate to expression2 if expression1 is not 0 otherwise it
-will evaluate to 0.
+if <expression1> then <expression2> [else <expression3>]
 
-ifelse will evaluate to expression2 if expression1 is not 0 otherwise it
-will evaluate to expression3.
+If else is omitted, then if the expression1 yeilds 0, NULL is returned.
 
-while will evaluate to the last iteration of expression2 or 0 if no
-iterations were made. It will also evaluate expression2 n times and
-expression1 n+1 times, where n is the number of iterations that were
-done.
+Examples:
 
-NOTE: Parenthesis are required around expressions 2 and 3 in both infix
-and prefix, they are optional, but recommended in postfix.
+if(a==5)then(a=a-1)
+if b<a then b=a
+if c>0 then c=c-1 else c=0
+a = ( if b>0 then b else 1 )
+
+Loops:
+
+while <expression1> do <expression2>
+until <expression1> do <expression2>
+do <expression2> while <expression1>
+do <expression2> until <expression1>
+
+These are similiar to other languages, they return the result of
+the last iteration or NULL if no iteration was done
 
 And now the comparison operators:
 
@@ -131,35 +140,116 @@ And now the comparison operators:
 
 To build up logical expressions use the words "not","and","or","xor"
 
+Null:
+
+Null is a special value, if it is returned, nothing is printed on
+screen, no operations can be done on it. It is also usefull if you want
+no output from a command. Null can be achieved as an expression when you
+type . or nothing
+
+Example:
+
+    x=5;.
+    x=5;
+
+Returning:
+
+Sometimes it's not good to return the last thing calculated, you may for
+example want to return from a middle of a function. This is what the return
+keyword is for, it takes one argument which is the return value
+
+Example:
+
+    define f(x) {
+	    y=1;
+	    while(1) do (
+		    if(x>50) then return y;
+		    y=y+1;
+		    x=x+1;
+	    );
+    }	
+
+References: 
+
+GEL contains references with a C like syntax. & references a variable
+and * dereferences a variable, both can only be applied to an identifier
+so **a is not legal in GEL
+
+Example:
+
+    a=1;
+    b=&a;
+    *b=2;
+
+    now a contains 2
+
+    define f(x){x+1};
+    t=&f;
+    *t(3)
+
+    gives us 4
+
+Anonymous functions:
+
+It is possible to say use a function in another function yet you don't know
+what the function will be, you use an anonymous function. Anonymous function
+is declared as:
+
+`(<comma separated argument names>) { <function body> }
+
+NOTE: Unlike in setting a variable, when an anonymous function is passed it
+is passed as reference, this is for consistency for function using functional
+arguments
+
+Example:
+
+    define f(a,b) {*a(b)+1};
+    f(`(x){x*x},2)
+
+    will return 5 (2*2+1)
+
+You can also use function references for that:
+
+    define f(a,b) {*a(b)+1};
+    define b(x){x*x};
+    f(&b,2)
+
 
 EXAMPLE PROGRAM in GEL:
     a user factorial function (there already is one built in so
     this function is useless)
 
-    1\f { ifelse (arg1 <= 1) (1) (f(arg1-1) * arg1) }
+    define f(x) { if x<=1 then 1 else (f(x-1)*x) }
 
     or with indentation it becomes
 
-    1\f {
-	    ifelse (arg1 <= 1)
-		    (1)
-		    (f(arg1-1) * arg1)
+    define f(x) {
+	    if x<=1 then
+		    1
+	    else
+		    (f(x-1)*x)
     }
 
     this is a direct port of the factorial function from the bc manpage :)
+    it seems similiar to bc syntax, but different in that in gel, the
+    last expression is the one that is returned. It can be done with with
+    returns as:
+
+    define f(x) {
+	    if (x <= 1) then return (1);
+	    return (f(x-1) * x)
+    }
+
+    which is almost verbatim bc code, except for "then" and the missing ;
 
     here's an iterative version:
 
-    1\f { r=arg1 ; while (arg1>1) ( arg1=arg1-1 ; r=r*arg1 ) ; r }
-
-    let's try this in posfix:
-
-    1\f { r arg1 = ; (arg1 1 >) (arg1 arg1 1 - =;r r arg1 * =) while;r }
-
-    or fully parenthesized prefix (to make it lisplike if you wish)
-
-    1\f { (= r arg1);while(> arg1 1)((= arg1 (- arg1 1));(= r (* r arg1)));r }
-    
+    define f(x) {
+	    r=x;
+	    while (x>1) do
+		    (x=x-1;r=r*x);
+	    r
+    }
 
 ****************************************************************************
 

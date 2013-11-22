@@ -1,3 +1,23 @@
+Mon Nov 30 02:29:55 1998  George Lebl  <jirka@5z.com>
+
+	* src/*: merge in the GEL2 language stuff, the old GEL is dead,
+	  long live the new GEL
+
+Thu Nov 26 21:55:59 EST 1998 Gregory McLean <gregm@comstar.net>
+
+	* gnome-genius.c : gtk_clist changes to sync with new gtk.
+
+Thu Nov  19 16:20:16 CST 1998 Richard Hestilow <hestgray@ionet.net>
+
+	* gnome-genius.c, gnome-genius-ide.c: Added underscore accelerators, no
+	longer right justify "Help" menu either.
+
+Sat Nov  7 22:10:05 PST 1998 Manish Singh <yosh@gimp.org>
+
+	* gnome-genius.c
+	* gnome-genius-ide.c: commented out bogus GNOME_APP_UI_HELP entry.
+	Updated for new gnome-init params
+
 Mon Sep 28 22:05:19 1998  George Lebl  <jirka@5z.com>
 
 	* src/mpwrap.c: fixed a couple of bugs

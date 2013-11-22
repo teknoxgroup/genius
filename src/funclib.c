@@ -19,6 +19,16 @@
  * USA.
  */
 
+#include <config.h>
+
+#ifndef WITHOUT_GNOME
+#include <gnome.h>
+#else
+#ifndef _
+#define _(x) x
+#endif
+#endif
+
 #include <string.h>
 #include <glib.h>
 #include "mpwrap.h"
@@ -30,9 +40,10 @@
 
 extern void (*errorout)(char *);
 extern calc_error_t error_num;
+extern int got_eof;
 
-static tree_t *
-warranty_op(tree_t * * a)
+static ETree *
+warranty_op(ETree * * a, int *exception)
 {
 	(*errorout)("Genius "VERSION"\n"
 		    "Copyright (c) 1997,1998 Free Software Foundation, Inc.\n\n"
@@ -51,59 +62,91 @@ warranty_op(tree_t * * a)
 		    "    Foundation,  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,\n"
 		    "    USA.\n");
 	error_num = IGNORE_ERROR;
+	if(exception) *exception = TRUE; /*raise exception*/
 	return NULL;
 }
 
-static tree_t *
-exit_op(tree_t * * a)
+static ETree *
+exit_op(ETree * * a, int *exception)
 {
-	error_num = EOF_ERROR;
+	got_eof = TRUE;
+	if(exception) *exception = TRUE; /*raise exception*/
 	return NULL;
 }
 
-static tree_t *
-ni_op(tree_t * * a)
+static ETree *
+ni_op(ETree * * a, int *exception)
 {
 	(*errorout)("We are the Knights Who Say... Ni!");
+	if(exception) *exception = TRUE; /*raise exception*/
 	error_num = IGNORE_ERROR;
 	return NULL;
 }
 
-static tree_t *
-shrubbery_op(tree_t * * a)
+static ETree *
+shrubbery_op(ETree * * a, int *exception)
 {
 	(*errorout)("Then, when you have found the shrubbery, you must\n"
 		    "cut down the mightiest tree in the forest... with...\n"
 		    "A HERRING!");
+	if(exception) *exception = TRUE; /*raise exception*/
 	error_num = IGNORE_ERROR;
 	return NULL;
 }
 	
 /*print function*/
-static tree_t *
-print_op(tree_t * * a)
+static ETree *
+print_op(ETree * * a, int *exception)
 {
-	makeexprstr(NULL,stdout,a[0]);
+	if(a[0]->type==STRING_NODE)
+		printf("%s",a[0]->data.id);
+	else
+		print_etree(NULL,stdout,a[0]);
 	puts("");
-	return makenum_ui(1);
+	return makenum_null();
+}
+/*print function*/
+static ETree *
+printn_op(ETree * * a, int *exception)
+{
+	if(a[0]->type==STRING_NODE)
+		printf("%s",a[0]->data.id);
+	else
+		print_etree(NULL,stdout,a[0]);
+	fflush(stdout);
+	return makenum_null();
+}
+/*print function*/
+static ETree *
+display_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=STRING_NODE) {
+		(*errorout)("display: first argument must be string!");
+		return NULL;
+	}
+	printf("%s: ",a[0]->data.id);
+	print_etree(NULL,stdout,a[1]);
+	puts("");
+	return makenum_null();
 }
 
 /*sin function*/
-static tree_t *
-sin_op(tree_t * * a)
+static ETree *
+sin_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 	mpw_t pitmp;
 
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value)) {
+		(*errorout)("sin: argument not a real number");
 		return NULL;
-	if(mpw_is_complex(a[0]->data.val))
-		return NULL;
+	}
 
 	mpw_init(fr);
-	mpw_set(fr,a[0]->data.val);
+	mpw_set(fr,a[0]->data.value);
 
 	mpw_init(pitmp);
 	mympw_getpi(pitmp);
@@ -125,21 +168,22 @@ sin_op(tree_t * * a)
 }
 
 /*cos function*/
-static tree_t *
-cos_op(tree_t * * a)
+static ETree *
+cos_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 	mpw_t pitmp;
 
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value)) {
+		(*errorout)("cos: argument not a real number");
 		return NULL;
-	if(mpw_is_complex(a[0]->data.val))
-		return NULL;
+	}
 
 	mpw_init(fr);
-	mpw_set(fr,a[0]->data.val);
+	mpw_set(fr,a[0]->data.value);
 
 
 	mpw_init(pitmp);
@@ -163,22 +207,23 @@ cos_op(tree_t * * a)
 }
 
 /*tan function*/
-static tree_t *
-tan_op(tree_t * * a)
+static ETree *
+tan_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 	mpw_t fr2;
 	mpw_t pitmp;
 
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value)) {
+		(*errorout)("tan: argument not a real number");
 		return NULL;
-	if(mpw_is_complex(a[0]->data.val))
-		return NULL;
+	}
 
 	mpw_init(fr);
-	mpw_set(fr,a[0]->data.val);
+	mpw_set(fr,a[0]->data.value);
 
 
 	mpw_init(pitmp);
@@ -206,12 +251,12 @@ tan_op(tree_t * * a)
 }
 
 /*e function (or e variable actually)*/
-static tree_t *
-e_op(tree_t * * a)
+static ETree *
+e_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 
-	tree_t *n;
+	ETree *n;
 
 	mpw_init(fr);
 	mympw_gete(fr);
@@ -222,12 +267,12 @@ e_op(tree_t * * a)
 }
 
 /*pi function (or pi variable or whatever)*/
-static tree_t *
-pi_op(tree_t * * a)
+static ETree *
+pi_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 
-	tree_t *n;
+	ETree *n;
 
 	mpw_init(fr);
 	mympw_getpi(fr);
@@ -237,98 +282,125 @@ pi_op(tree_t * * a)
 	return n;
 }
 
-static tree_t *
-is_complex_op(tree_t * * a)
+static ETree *
+is_complex_op(ETree * * a, int *exception)
 {
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("is_complex: argument not a number");
 		return NULL;
-	if(mpw_is_complex(a[0]->data.val))
+	}
+	if(mpw_is_complex(a[0]->data.value))
 		n = makenum_ui(1);
 	else
 		n = makenum_ui(0);
 	return n;
 }
 
-static tree_t *
-round_op(tree_t * * a)
+static ETree *
+round_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("round: argument not a number");
 		return NULL;
+	}
 	mpw_init(fr);
-	mpw_round(fr,a[0]->data.val);
+	mpw_round(fr,a[0]->data.value);
 	n = makenum(fr);
 	mpw_clear(fr);
 	return n;
 }
 
-static tree_t *
-Re_op(tree_t * * a)
+static ETree *
+Re_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("Re: argument not a number");
 		return NULL;
+	}
 	mpw_init(fr);
-	mpw_re(fr,a[0]->data.val);
+	mpw_re(fr,a[0]->data.value);
 	n = makenum(fr);
 	mpw_clear(fr);
 	return n;
 }
 
-static tree_t *
-Im_op(tree_t * * a)
+static ETree *
+Im_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("Im: argument not a number");
 		return NULL;
+	}
 	mpw_init(fr);
-	mpw_im(fr,a[0]->data.val);
+	mpw_im(fr,a[0]->data.value);
 	n = makenum(fr);
 	mpw_clear(fr);
 	return n;
 }
 
-static tree_t *
-sqrt_op(tree_t * * a)
+static ETree *
+sqrt_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	tree_t *n;
+	ETree *n;
 
-	if(a[0]->type!=NUMBER_NODE)
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("sqrt: argument not a number");
 		return NULL;
+	}
 	mpw_init(fr);
-	mpw_sqrt(fr,a[0]->data.val);
+	mpw_sqrt(fr,a[0]->data.value);
 	n = makenum(fr);
 	mpw_clear(fr);
 	return n;
+}
+
+static ETree *
+isnull_op(ETree * * a, int *exception)
+{
+	mpw_t fr;
+	mpw_t pitmp;
+
+	ETree *n;
+
+	if(a[0]->type!=NULL_NODE)
+		return makenum_ui(0);
+	else
+		return makenum_ui(1);
 }
 
 /*add the routines to the dictionary*/
 void
 funclib_addall(void)
 {
-	d_addfunc(d_makebifunc("warranty",warranty_op,0,FALSE));
-	d_addfunc(d_makebifunc("exit",exit_op,0,FALSE));
-	d_addfunc(d_makebifunc("quit",exit_op,0,FALSE));
-	d_addfunc(d_makebifunc("print",print_op,1,FALSE));
-	d_addfunc(d_makebifunc("ni",ni_op,0,FALSE));
-	d_addfunc(d_makebifunc("shrubbery",shrubbery_op,0,FALSE));
-	d_addfunc(d_makebifunc("sin",sin_op,1,FALSE));
-	d_addfunc(d_makebifunc("cos",cos_op,1,FALSE));
-	d_addfunc(d_makebifunc("tan",tan_op,1,FALSE));
-	d_addfunc(d_makebifunc("pi",pi_op,0,FALSE));
-	d_addfunc(d_makebifunc("e",e_op,0,FALSE));
-	d_addfunc(d_makebifunc("is_complex",is_complex_op,1,FALSE));
-	d_addfunc(d_makebifunc("round",round_op,1,FALSE));
-	d_addfunc(d_makebifunc("Re",Re_op,1,FALSE));
-	d_addfunc(d_makebifunc("Im",Im_op,1,FALSE));
-	d_addfunc(d_makebifunc("sqrt",sqrt_op,1,FALSE));
+	d_addfunc(d_makebifunc("warranty",warranty_op,0));
+	d_addfunc(d_makebifunc("exit",exit_op,0));
+	d_addfunc(d_makebifunc("quit",exit_op,0));
+	d_addfunc(d_makebifunc("print",print_op,1));
+	d_addfunc(d_makebifunc("printn",printn_op,1));
+	d_addfunc(d_makebifunc("display",display_op,2));
+	d_addfunc(d_makebifunc("ni",ni_op,0));
+	d_addfunc(d_makebifunc("shrubbery",shrubbery_op,0));
+	d_addfunc(d_makebifunc("sin",sin_op,1));
+	d_addfunc(d_makebifunc("cos",cos_op,1));
+	d_addfunc(d_makebifunc("tan",tan_op,1));
+	d_addfunc(d_makebifunc("pi",pi_op,0));
+	d_addfunc(d_makebifunc("e",e_op,0));
+	d_addfunc(d_makebifunc("is_complex",is_complex_op,1));
+	d_addfunc(d_makebifunc("round",round_op,1));
+	d_addfunc(d_makebifunc("Re",Re_op,1));
+	d_addfunc(d_makebifunc("Im",Im_op,1));
+	d_addfunc(d_makebifunc("sqrt",sqrt_op,1));
+	d_addfunc(d_makebifunc("isnull",isnull_op,1));
 }

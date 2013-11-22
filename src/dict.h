@@ -25,26 +25,41 @@
 /*declarations of structures*/
 #include "structs.h"
 
-typedef tree_t *(*dictfunc)(tree_t * *);
+typedef ETree *(*dictfunc)(ETree * * /*arguments*/,int * /*exception*/);
 
 /*return current context number (0 is global, -1 is uninitialized)*/
 int d_curcontext(void);
 
 /*make builtin function and return it*/
-func_t * d_makebifunc(char *id, dictfunc f, int nargs, int dynamic);
+EFunc * d_makebifunc(char *id, dictfunc f, int nargs);
 
 /*make a user function and return it*/
-func_t * d_makeufunc(char *id, tree_t *value, GList *dict, int nargs, 
-	int dynamic);
+EFunc * d_makeufunc(char *id, ETree *value, GList *argnames, int nargs);
+
+/*make a user function and return it*/
+EFunc * d_makereffunc(char *id, EFunc *ref);
+
+/*copy a function*/
+EFunc *d_copyfunc(EFunc *o);
+
+/*make a real function from a fake*/
+EFunc * d_makerealfunc(EFunc *o,char *id);
+
+/*make real func and replace o with it, without changing o's context or id*/
+void d_setrealfunc(EFunc *n,EFunc *fake);
 
 void d_initcontext(void);
 
 /*add a functuion struct to the dict (in current context)*/
-func_t * d_addfunc(func_t *func);
+EFunc * d_addfunc(EFunc *func);
 
 /*set value of an existing function (in local context), used for arguments
   WARNING, does not free the memory allocated by previous value!*/
-int d_setvalue(char *id,tree_t *value);
+int d_setvalue(char *id,ETree *value);
+
+/*this will work right in all situations*/
+void d_set_value(EFunc *n,ETree *value);
+void d_set_ref(EFunc *n,EFunc *ref);
 
 /*dictionary functions*/
 
@@ -52,7 +67,7 @@ int d_setvalue(char *id,tree_t *value);
   is TRUE, or just the current context otherwise
   a terribly inefficent linear search, it was just easy to code nothing
   else, a hash would be more appropriate*/
-func_t * d_lookup(char *id,int global);
+EFunc * d_lookup(char *id,int global);
 
 int d_delete(char *id);
 
@@ -61,14 +76,13 @@ int d_delete(char *id);
   also init the context stack if it hasn't been done*/
 void d_singlecontext(void);
 
-/*free all memory allocated by a dictionary (except for non-dynamic (static)
-  functions if dynamiconly is TRUE)*/
-void freedict(GList *n,int dynamiconly);
+/*free all memory allocated by a dictionary*/
+void freedict(GList *n);
 
-void freefunc(func_t *n);
+void freefunc(EFunc *n);
 
 /*replace old with stuff from new and free new*/
-void replacefunc(func_t *old,func_t *new);
+void replacefunc(EFunc *old,EFunc *new);
 
 /*copy a dictionary, but not functions, they stay the same pointers, this
   should only be done with dictionaries with no dymanic entries as those

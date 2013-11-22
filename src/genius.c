@@ -35,9 +35,7 @@
 
 /*calculator state*/
 calcstate_t curstate={
-	INFIX_NOTATION,
 	256,
-	INFIX_NOTATION,
 	0,
 	FALSE,
 	FALSE,
@@ -45,6 +43,7 @@ calcstate_t curstate={
 	};
 	
 extern calc_error_t error_num;
+extern int got_eof;
 
 void
 puterror(char *s)
@@ -67,12 +66,6 @@ main(int argc, char *argv[])
 			files = g_list_append(files,argv[i]);
 		else if(strcmp(argv[i],"--")==0)
 			lastarg = TRUE;
-		else if(strcmp(argv[i],"--prefix")==0)
-			curstate.notation_in = PREFIX_NOTATION;
-		else if(strcmp(argv[i],"--infix")==0)
-			curstate.notation_in = INFIX_NOTATION;
-		else if(strcmp(argv[i],"--postfix")==0)
-			curstate.notation_in = POSTFIX_NOTATION;
 		else if(sscanf(argv[i],"--precision=%d",&val)==1)
 			curstate.float_prec = val;
 		else if(sscanf(argv[i],"--maxdigits=%d",&val)==1)
@@ -89,21 +82,9 @@ main(int argc, char *argv[])
 			curstate.scientific_notation = TRUE;
 		else if(strcmp(argv[i],"--noscinot")==0)
 			curstate.scientific_notation = FALSE;
-		/*else if(strcmp(argv[i],"--prefixout")==0)
-			curstate.notation_out = PREFIX_NOTATION;
-		else if(strcmp(argv[i],"--infixout")==0)
-			curstate.notation_out = INFIX_NOTATION;
-		else if(strcmp(argv[i],"--postfixout")==0)
-			curstate.notation_out = POSTFIX_NOTATION;*/
 		else if(strcmp(argv[i],"--help")==0) {
 			puts("Genius "VERSION" usage:\n\n"
 			     "genius [options] [files]\n\n"
-			     "\t--prefix          \tPrefix notation intput [OFF]\n"
-			     "\t--infix           \tInfix notation input [ON]\n"
-			     "\t--postfix         \tPostfix notation intput [OFF]\n"
-			     /*"\t--prefixout       \tPrefix notation output\n"
-			     "\t--infixout        \tInfix notation output\n"
-			     "\t--postfixout      \tPostfix notation output\n"*/
 			     "\t--precision=num   \tFloating point precision [256]\n"
 			     "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
 			     "\t--[no]floatstoints\tConvert floats to integers in the\n"
@@ -140,7 +121,7 @@ main(int argc, char *argv[])
 #endif
 				evalexp(NULL,fp,stdout,NULL,curstate,puterror);
 
-			if(error_num == EOF_ERROR) {
+			if(got_eof) {
 				if(inter)
 					puts("");
 				break;

@@ -1,141 +1,205 @@
 msgid ""
 msgstr ""
-"Date: 1998-02-23 15:09:38+0100\n"
-"From: Tristan Tarrant <ttarrant@suntlc.etnoteam.it>\n"
+"Date: 1998-11-30 20:56:21-0800\n"
+"From: George <jirka@julia.linux.bogus>\n"
 "Content-Type: text/plain; charset=\n"
-"Xgettext-Options: --default-domain=gnome-utils --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
-"Files: gtt/app.c gtt/toolbar.c gtt/main.c gtt/menucmd.c gtt/menus.c gtt/proj.c gtt/log.c gtt/options.c gtt/prop.c gtt/clist.c gtop/main.c gtop/procbar.c gtop/procview.c genius/calc.c genius/genius.c genius/eval.c genius/util.c\n"
+"Xgettext-Options: --default-domain=genius --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
+"Files: src/gnome-genius.c src/eval.c src/calc.c src/util.c\n"
 
-#: src/gnome-genius.c:243 src/gnome-genius.c:525
+#: src/gnome-genius.c:242 src/gnome-genius.c:465
 msgid "GnomENIUS Calculator"
-msgstr "Calcolatrice GnomENIUS"
+msgstr ""
 
-#: src/gnome-genius.c:248
+#. another comments
+#: src/gnome-genius.c:247
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
-#: src/gnome-genius.c:376
+#: src/gnome-genius.c:349
 msgid "GnomENIUS Calculator setup"
 msgstr ""
 
-#: src/gnome-genius.c:386
+#: src/gnome-genius.c:359
 msgid "General"
 msgstr ""
 
 #. options area
-#: src/gnome-genius.c:389
+#: src/gnome-genius.c:362
 msgid "Properties"
-msgstr "Propriet\340"
+msgstr ""
 
-#: src/gnome-genius.c:393
-msgid "Prefix notation"
-msgstr "Notazione prefissa"
-
-#: src/gnome-genius.c:404
-msgid "Infix notation"
-msgstr "Notazione infissa"
-
-#: src/gnome-genius.c:415
-msgid "Postfix notation (RPN)"
-msgstr "Notazione postfissa (RPN)"
-
-#: src/gnome-genius.c:429
+#: src/gnome-genius.c:369
 msgid "Full (exact) answers"
-msgstr "Risposte complete (esatte)"
+msgstr ""
+
+#: src/gnome-genius.c:379
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr ""
+
+#: src/gnome-genius.c:388
+msgid "Results as floats"
+msgstr ""
+
+#: src/gnome-genius.c:397
+msgid "Floats in scientific notation"
+msgstr ""
+
+#: src/gnome-genius.c:420
+msgid "_Properties..."
+msgstr ""
+
+#: src/gnome-genius.c:422
+msgid "E_xit"
+msgstr ""
+
+#: src/gnome-genius.c:428
+msgid "_Numpad"
+msgstr ""
+
+#: src/gnome-genius.c:430
+msgid "_Scientific"
+msgstr ""
 
 #: src/gnome-genius.c:439
-msgid "Make floats integers (e.g. 10.0=10)"
-msgstr "Trasforma reali in interi (es. 10.0=10)"
-
-#: src/gnome-genius.c:448
-msgid "Results as floats"
-msgstr "Risultati in reali"
-
-#: src/gnome-genius.c:457
-msgid "Floats in scientific notation"
-msgstr "Reali in notazione scientifica"
-
-#: src/gnome-genius.c:480
-msgid "Properties..."
+msgid "_About..."
 msgstr ""
 
-#: src/gnome-genius.c:482
-msgid "Exit"
-msgstr "Esci"
+#: src/gnome-genius.c:446
+msgid "_Calculator"
+msgstr ""
 
-#: src/gnome-genius.c:488 src/gnome-genius.c:679
+#: src/gnome-genius.c:449
+msgid "_View"
+msgstr ""
+
+#: src/gnome-genius.c:452
+msgid "_Help"
+msgstr ""
+
+#: src/gnome-genius.c:579
+msgid "Display"
+msgstr ""
+
+#. numpad
+#: src/gnome-genius.c:618
 msgid "Numpad"
-msgstr "Tastierino numerico"
+msgstr ""
 
 #. scientific
-#: src/gnome-genius.c:490 src/gnome-genius.c:710
+#: src/gnome-genius.c:649
 msgid "Scientific"
-msgstr "Scientifica"
-
-#: src/gnome-genius.c:499
-msgid "About..."
-msgstr "Informazioni..."
-
-#: src/gnome-genius.c:506
-msgid "Calculator"
 msgstr ""
 
-#: src/gnome-genius.c:509
-msgid "View"
-msgstr "Vista"
+#: src/eval.c:373
+msgid "Lvalue not an identifier/dereference!"
+msgstr ""
 
-#: src/gnome-genius.c:512
-msgid "Help"
-msgstr "Aiuto"
+#: src/eval.c:390 src/eval.c:420 src/eval.c:445 src/eval.c:549 src/eval.c:597 src/eval.c:707
+msgid "Variable '%s' used unintialized"
+msgstr ""
 
-#: src/gnome-genius.c:643
-msgid "Display"
-msgstr "Visualizzazione"
+#: src/eval.c:410
+msgid "Dereference of non-identifier!"
+msgstr ""
 
-#: src/eval.c:335
-msgid "Variable used uninitialized!"
-msgstr "Variabile utilizzata non inizializzata"
+#: src/eval.c:430
+msgid "Dereference of non-reference!"
+msgstr ""
 
-#: src/eval.c:482
-msgid "Left value is NOT a number! (ignoring if construct)"
-msgstr "Valore sinistro NON \350 un numero! (costrutto if ignorato)"
+#: src/eval.c:533
+msgid "Function '%s' used unintialized"
+msgstr ""
 
-#: src/eval.c:495
-msgid "Left value is NOT a number! (ignoring ifelse construct)"
-msgstr "Valore sinistro NON \350 un numero! (costrutto ifelse ignorato)"
+#: src/eval.c:557
+msgid "Can't dereference '%s'!"
+msgstr ""
 
-#: src/eval.c:712
-msgid "'=' can't function without proper nodes!"
-msgstr "'=' non pu\362 funzionare senza nodi corretti!"
+#: src/eval.c:566
+msgid "Can't call a non-function!"
+msgstr ""
+
+#: src/eval.c:574 src/eval.c:711 src/eval.c:802
+msgid ""
+"Call of '%s' with the wrong number of arguments!\n"
+"(should be %d)"
+msgstr ""
+
+#: src/eval.c:612 src/eval.c:727 src/eval.c:809 src/eval.c:1278
+msgid "Extraneous return value!"
+msgstr ""
+
+#: src/eval.c:650
+msgid "Reference function with arguments encountered!"
+msgstr ""
+
+#: src/eval.c:657
+msgid "Unnamed reference function encountered!"
+msgstr ""
+
+#: src/eval.c:688 src/eval.c:781 src/eval.c:783 src/eval.c:860
+msgid "Unevaluatable function type encountered!"
+msgstr ""
 
 #: src/eval.c:716
-msgid "Left value is NOT a 0\\function! (ignoring '=')"
-msgstr "Valore sinistro NON \350 un 0\\funzione! ('=' ignorato)"
+msgid "Trying to dereference '%s' which is not a reference!\n"
+msgstr ""
 
-#: src/eval.c:720
-msgid "Right value is NOT computed! (ignoring '=')"
-msgstr "Valore destro NON calcolato! ('=' ignorato)"
+#: src/eval.c:722
+msgid "NULL reference encountered!"
+msgstr ""
 
-#: src/eval.c:733
-msgid "funcdefop can't function without proper nodes!"
-msgstr "funcdefop non pu\362 funzionare senza nodi corretti!"
+#: src/eval.c:754
+msgid "Unnamed reference function encountered"
+msgstr ""
 
-#: src/eval.c:736
-msgid "Left value is NOT a function! (ignoring function definition)"
-msgstr "Valore sinistro NON \350 una funzione! (definizione di funzione ignorata)"
+#: src/eval.c:795
+msgid "Variable '%s' used unitialized"
+msgstr ""
 
-#: src/calc.c:349
+#: src/eval.c:1241
+msgid "Logical not only define on numbers"
+msgstr ""
+
+#: src/calc.c:293 src/eval.c:1289
+msgid "Unexpected operator!"
+msgstr ""
+
+#: src/calc.c:370 src/eval.c:1311
+msgid "Unexpected node!"
+msgstr ""
+
+#: src/eval.c:1347
+msgid "Could not evaluate predicate into a numeric boolean value!"
+msgstr ""
+
+#: src/calc.c:268 src/calc.c:275
+msgid "Bad identifier for function node!"
+msgstr ""
+
+#: src/calc.c:307
+msgid "NULL tree!"
+msgstr ""
+
+#: src/calc.c:346
+msgid "NULL function!"
+msgstr ""
+
+#: src/calc.c:364
+msgid "Unexpected function type!"
+msgstr ""
+
+#: src/calc.c:510
 msgid "ERROR: Probably corrupt stack!"
-msgstr "ERRORE: Probabilmente lo stack \350 danneggiato!"
+msgstr ""
 
-#: src/calc.c:383
+#: src/calc.c:561
 msgid "ERROR: "
-msgstr "ERRORE: "
+msgstr ""
 
-#: src/calc.c:383
+#: src/calc.c:561
 msgid " before '"
-msgstr " prima '"
+msgstr ""
 
-#: src/util.c:128
+#: src/util.c:137
 msgid "Stack underflow!"
-msgstr "Underflow di stack!"
+msgstr ""

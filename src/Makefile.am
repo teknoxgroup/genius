@@ -2,17 +2,20 @@ Utilitiesdir = $(datadir)/apps/Utilities
 
 YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @READLINE_SUPPORT@
+CFLAGS += @READLINE_SUPPORT@ @GNOME_SUPPORT@
 
 
-INCLUDES = 						\
+INCLUDES =					\
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	\
 	-DLOCALEDIR=\"$(datadir)/locale\"		\
 	-I$(includedir)					\
 	$(GMP_INCLUDEDIR)				\
-	$(GNOME_INCLUDEDIR)
+	$(GNOME_INCLUDEDIR)				\
+	$(GLIB_CFLAGS)
 
-bin_PROGRAMS = gnome-genius genius #gnome-genius-mdi
+bin_PROGRAMS = @GNOME_GENIUS@ genius #gnome-genius-mdi
+
+EXTRA_PROGRAMS = gnome-genius
 
 gnome_genius_SOURCES = 	\
 	calc.c		\
@@ -69,8 +72,8 @@ genius_SOURCES = 	\
 	parse.y
 
 genius_LDADD = \
-	$(GNOME_LIBDIR) \
-	$(GNOMEUI_LIBS) \
+	-lm \
+	$(GLIB_LIBS) \
 	@GMP_LIB@ \
 	@LEXLIB@ \
 	$(INTLLIBS) \

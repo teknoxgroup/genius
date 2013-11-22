@@ -123,6 +123,7 @@ main (void)
 	  libgtop_sysdeps_dir=freebsd
 	  libgtop_use_machine_h=yes
 	  libgtop_need_server=yes
+	  libgtop_postinstall='chgrp kmem $(bindir)/libgtop_server && chmod 2755 $(bindir)/libgtop_server'
 	  ;;
 	*)
 	  libgtop_sysdeps_dir=stub
@@ -131,10 +132,80 @@ main (void)
 	  ;;
 	esac
 
+	test -z "$libgtop_postinstall" && libgtop_postinstall=:
+
 	AC_MSG_RESULT($libgtop_sysdeps_dir)
 
 	AC_SUBST(libgtop_sysdeps_dir)
+	AC_SUBST(libgtop_postinstall)
 	AC_SUBST(libgtop_have_sysinfo)
+
+	case "$host_os" in
+	*bsd*)
+	  AC_CHECK_HEADERS(net/if_var.h)
+	  AC_MSG_CHECKING([for I4B])
+	  AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+
+#ifdef HAVE_NET_IF_VAR_H
+#include <net/if_var.h>
+#endif
+
+#include <net/netisr.h>
+#include <net/route.h>
+
+#ifdef __FreeBSD__
+#include <net/if_sppp.h>
+#else
+#include <i4b/sppp/if_sppp.h>
+#endif
+],[
+	size_t size = sizeof (struct sppp);
+], have_i4b=yes, have_i4b=no)
+	  AC_MSG_RESULT($have_i4b)
+	  if test x$have_i4b = xyes; then
+	    AC_DEFINE(HAVE_I4B)
+	    AC_MSG_CHECKING([for I4B accounting])
+	    AC_TRY_COMPILE([
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <net/if.h>
+#include <net/if_types.h>
+
+#ifdef HAVE_NET_IF_VAR_H
+#include <net/if_var.h>
+#endif
+
+#include <net/netisr.h>
+#include <net/route.h>
+
+#ifdef __FreeBSD__
+#include <net/if_sppp.h>
+#else
+#include <i4b/sppp/if_sppp.h>
+#endif
+
+#include <machine/i4b_acct.h>
+],[
+	size_t size = sizeof (struct i4bisppp_softc);
+], have_i4b_acct=yes, have_i4b_acct=no)
+	    AC_MSG_RESULT($have_i4b_acct)
+	    if test x$have_i4b_acct = xyes ; then
+	      AC_DEFINE(HAVE_I4B_ACCT)
+	    else
+	      AC_WARN([
+*** I4B accounting disabled - you won't get any PPP statistics.
+*** Read "misc/i4b_acct.txt" in the LibGTop source directory
+*** to see how to enable it.])
+	    fi
+	  fi
+	  ;;
+	esac
 
 	AC_MSG_CHECKING(for machine.h in libgtop sysdeps dir)
 	AC_MSG_RESULT($libgtop_use_machine_h)

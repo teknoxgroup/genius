@@ -18,7 +18,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
+#include <config.h>
+
+#ifndef WITHOUT_GNOME
 #include <gnome.h>
+#else
+#ifndef _
+#define _(x) x
+#endif
+#endif
+
+#include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
@@ -30,232 +40,236 @@
 #include "funclib.h"
 #include "mymath.h"
 
+
 extern calc_error_t error_num;
 extern calcstate_t calcstate;
 
+/*if we "return" we jump out of the current function using an exception and
+  set this, if we are at the top most context, this is what is "returned to
+  the "screen"*/
+ETree *returnval = NULL;
+
 extern void (*errorout)(char *);
 
-static tree_t *free_trees = NULL;
+static ETree *free_trees = NULL;
 
-/*returns 100 010 or 110 depending if the operation has left, right or both
-branches, sometimes ??1 will mean a second right is used*/
+/*returns the number of args for an operator, or -1 if it takes up till
+  exprlist marker or -2 if it takes one more for the first argument*/
 int
 branches(int op)
 {
 	switch(op) {
-		case E_SEPAR: return 6;
-		case E_EQUALS: return 6;
-		case E_PLUS: return 6;
-		case E_MINUS: return 6;
-		case E_MUL: return 6;
-		case E_DIV: return 6;
-		case E_MOD: return 6;
-		case E_NEG: return 2;
-		case E_EXP: return 6;
-		case E_FACT: return 4;
-		case E_FUNCDEF: return 6;
-		case E_IF_CONS: return 6;
-		case E_IFELSE_CONS: return 7;
-		case E_WHILE_CONS: return 6;
-		case E_EQ_CMP: return 6;
-		case E_NE_CMP: return 6;
-		case E_CMP_CMP: return 6;
-		case E_LT_CMP: return 6;
-		case E_GT_CMP: return 6;
-		case E_LE_CMP: return 6;
-		case E_GE_CMP: return 6;
-		case E_LOGICAL_AND: return 6;
-		case E_LOGICAL_OR: return 6;
-		case E_LOGICAL_XOR: return 6;
-		case E_LOGICAL_NOT: return 2;
-	}
-	return 0;
-}
-
-/*similiar to the above, which branches should be evaluated*/
-int
-brancheseval(int op)
-{
-	switch(op) {
-		case E_SEPAR: return 6;
+		case E_SEPAR: return 2;
 		case E_EQUALS: return 2;
-		case E_PLUS: return 6;
-		case E_MINUS: return 6;
-		case E_MUL: return 6;
-		case E_DIV: return 6;
-		case E_MOD: return 6;
-		case E_NEG: return 2;
-		case E_EXP: return 6;
-		case E_FACT: return 4;
-		case E_FUNCDEF: return 0;
-		case E_IF_CONS: return 4;
-		case E_IFELSE_CONS: return 4;
-		case E_WHILE_CONS: return 0; /*this has to be done each
-						iteration!*/
-		case E_EQ_CMP: return 6;
-		case E_NE_CMP: return 6;
-		case E_CMP_CMP: return 6;
-		case E_LT_CMP: return 6;
-		case E_GT_CMP: return 6;
-		case E_LE_CMP: return 6;
-		case E_GE_CMP: return 6;
-		case E_LOGICAL_AND: return 6;
-		case E_LOGICAL_OR: return 6;
-		case E_LOGICAL_XOR: return 6;
-		case E_LOGICAL_NOT: return 2;
+		case E_PLUS: return 2;
+		case E_MINUS: return 2;
+		case E_MUL: return 2;
+		case E_DIV: return 2;
+		case E_MOD: return 2;
+		case E_NEG: return 1;
+		case E_EXP: return 2;
+		case E_FACT: return 1;
+		case E_IF_CONS: return 2;
+		case E_IFELSE_CONS: return 3;
+		case E_WHILE_CONS: return 2;
+		case E_UNTIL_CONS: return 2;
+		case E_DOWHILE_CONS: return 2;
+		case E_DOUNTIL_CONS: return 2;
+		case E_EQ_CMP: return 2;
+		case E_NE_CMP: return 2;
+		case E_CMP_CMP: return 2;
+		case E_LT_CMP: return 2;
+		case E_GT_CMP: return 2;
+		case E_LE_CMP: return 2;
+		case E_GE_CMP: return 2;
+		case E_LOGICAL_AND: return 2;
+		case E_LOGICAL_OR: return 2;
+		case E_LOGICAL_XOR: return 2;
+		case E_LOGICAL_NOT: return 1;
+		case E_GET_ELEMENT: return 3;
+		case E_GET_ROW: return 2;
+		case E_GET_COLUMN: return 2;
+		case E_REFERENCE: return 1;
+		case E_DEREFERENCE: return 1;
+		case E_DIRECTCALL: return -2;
+		case E_CALL: return -2;
+		case E_RETURN: return 1;
 	}
 	return 0;
 }
 
-tree_t *
+ETree *
+makenum_null(void)
+{
+	ETree *n;
+	if(!free_trees)
+		n = g_new(ETree,1);
+	else {
+		n = free_trees;
+		free_trees = free_trees->data.next;
+	}
+	n->type = NULL_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	return n;
+}
+
+ETree *
 makenum_ui(unsigned long num)
 {
-	tree_t *n;
+	ETree *n;
 	if(!free_trees)
-		n = g_new(tree_t,1);
+		n = g_new(ETree,1);
 	else {
 		n = free_trees;
-		free_trees = free_trees->args[0];
+		free_trees = free_trees->data.next;
 	}
-	n->type=NUMBER_NODE;
-	mpw_init(n->data.val);
-	mpw_set_ui(n->data.val,num);
-	memset(n->args,0,sizeof(void *)*8);
+	n->type=VALUE_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	mpw_init(n->data.value);
+	mpw_set_ui(n->data.value,num);
 	return n;
 }
 
-tree_t *
+ETree *
 makenum_si(long num)
 {
-	tree_t *n;
+	ETree *n;
 	if(!free_trees)
-		n = g_new(tree_t,1);
+		n = g_new(ETree,1);
 	else {
 		n = free_trees;
-		free_trees = free_trees->args[0];
+		free_trees = free_trees->data.next;
 	}
-	n->type=NUMBER_NODE;
-	mpw_init(n->data.val);
-	mpw_set_si(n->data.val,num);
-	memset(n->args,0,sizeof(void *)*8);
+	n->type=VALUE_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	mpw_init(n->data.value);
+	mpw_set_si(n->data.value,num);
 	return n;
 }
 
-tree_t *
+ETree *
 makenum(mpw_t num)
 {
-	tree_t *n;
+	ETree *n;
 	if(!free_trees)
-		n = g_new(tree_t,1);
+		n = g_new(ETree,1);
 	else {
 		n = free_trees;
-		free_trees = free_trees->args[0];
+		free_trees = free_trees->data.next;
 	}
-	n->type=NUMBER_NODE;
-	mpw_init(n->data.val);
-	mpw_set(n->data.val,num);
-	memset(n->args,0,sizeof(void *)*8);
+	n->type=VALUE_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	mpw_init(n->data.value);
+	mpw_set(n->data.value,num);
 	return n;
 }
 
-tree_t *
-makefuncb(int func,evalstack_t * stack)
+ETree *
+makeoperator(int oper, evalstack_t * stack)
 {
-	tree_t *n;
+	ETree *n;
+	int args;
+	GList *list = NULL;
+	args = branches(oper);
+	if(args>=0) {
+		int i;
+		for(i=0;i<args;i++) {
+			ETree *tree = stack_pop(stack);
+			if(!tree)  {
+				g_list_foreach(list,(GFunc)freetree,NULL);
+				g_list_free(list); 
+				return NULL;
+			}
+			list = g_list_prepend(list,tree);
+		}
+	} else {
+		int i=0;
+		for(;;) {
+			ETree *tree;
+			tree = stack_pop(stack);
+			/*we have gone all the way to the top and haven't
+			  found a marker*/
+			if(!tree) {
+				g_list_foreach(list,(GFunc)freetree,NULL);
+				g_list_free(list); 
+				return NULL;
+			}
+			if(tree->type==EXPRLIST_START_NODE) {
+				freetree(tree);
+				/*pop one more in case of -2*/
+				if(args==-2) {
+					ETree *t;
+					t = stack_pop(stack);
+					/*we have gone all the way to the top
+					  whoops!*/
+					if(!t) {
+						g_list_foreach(list,
+							       (GFunc)freetree,
+							       NULL);
+						g_list_free(list); 
+						return NULL;
+					}
+					list = g_list_prepend(list,t);
+					i++;
+				}
+				break;
+			}
+			list = g_list_prepend(list,tree);
+			i++;
+		}
+		args = i;
+	}
+
 	if(!free_trees)
-		n = g_new(tree_t,1);
+		n = g_new(ETree,1);
 	else {
 		n = free_trees;
-		free_trees = free_trees->args[0];
+		free_trees = free_trees->data.next;
 	}
-	n->type=ACTION_NODE;
-	n->data.action.type=PRIMITIVE_TYPE;
-	n->data.action.data.primitive=func;
-	memset(n->args,0,sizeof(void *)*8);
-	if(branches(func)&1)
-		n->args[2]=stack_pop(stack);
-	if(branches(func)&2)
-		n->args[1]=stack_pop(stack);
-	if(branches(func)&4)
-		n->args[0]=stack_pop(stack);
-	return n;
-}
+	n->type = OPERATOR_NODE;
+	n->data.oper = oper;
+	
+	n->args = list;
+	n->nargs = args;
 
-tree_t *
-makefuncd(func_t * func,evalstack_t * stack)
-{
-	tree_t *n;
-	int i;
-
-	if(!free_trees)
-		n = g_new(tree_t,1);
-	else {
-		n = free_trees;
-		free_trees = free_trees->args[0];
-	}
-	n->type=ACTION_NODE;
-	n->data.action.type=FUNCTION_TYPE;
-	n->data.action.data.func=func;
-	memset(n->args,0,sizeof(void *)*8);
-	for(i=func->nargs-1;i>=0;i--)
-		n->args[i]=stack_pop(stack);
-	return n;
-}
-
-/*same as above but used for declarations, it doesn'y pop any arguments of
-  the stack and doesn't build an argument array*/
-tree_t *
-makefuncd0(func_t * func)
-{
-	tree_t *n;
-
-	if(!free_trees)
-		n = g_new(tree_t,1);
-	else {
-		n = free_trees;
-		free_trees = free_trees->args[0];
-	}
-	n->type=ACTION_NODE;
-	n->data.action.type=FUNCTION_TYPE;
-	n->data.action.data.func=func;
-	memset(n->args,0,sizeof(void *)*8);
 	return n;
 }
 
 void
-freenode(tree_t *n)
+freenode(ETree *n)
 {
 	if(!n)
 		return;
-	if(n->type==NUMBER_NODE)
-		mpw_clear(n->data.val);
+	if(n->type==VALUE_NODE)
+		mpw_clear(n->data.value);
+	else if(n->type == IDENTIFIER_NODE)
+		g_free(n->data.id);
+	else if(n->type == FUNCTION_NODE)
+		freefunc(n->data.func);
 	/*put onto the free list*/
-	n->args[0] = free_trees;
+	n->data.next = free_trees;
 	free_trees = n;
 }
 
 /*free arguments to a dictionary function*/
 void
-freeargs(tree_t *n)
+freeargs(ETree *n)
 {
 	int i;
 
-	if(n->type!=ACTION_NODE)
+	if(!n)
 		return;
 
-	if(n->data.action.type==PRIMITIVE_TYPE) {
-		for(i=0;i<3;i++)
-			if(n->args[i])
-				freetree(n->args[i]);
-	} else { /*function*/
-		for(i=0;i<n->data.action.data.func->nargs;i++)
-			if(n->args[i])
-				freetree(n->args[i]);
-	}
+	g_list_foreach(n->args,(GFunc)freetree,NULL);
+	g_list_free(n->args); 
 }
 
 void
-freetree(tree_t *n)
+freetree(ETree *n)
 {
 	if(!n)
 		return;
@@ -263,527 +277,720 @@ freetree(tree_t *n)
 	freenode(n);
 }
 
-tree_t *
-copynode(tree_t *o)
+ETree *
+copynode(ETree *o)
 {
-	tree_t *n;
+	ETree *n;
+	GList *li;
 	int i;
 
 	if(!o)
 		return NULL;
 
 	if(!free_trees)
-		n = g_new(tree_t,1);
+		n = g_new(ETree,1);
 	else {
 		n = free_trees;
-		free_trees = free_trees->args[0];
+		free_trees = free_trees->data.next;
 	}
 
-	memcpy(n,o,sizeof(tree_t));
+	memcpy(n,o,sizeof(ETree));
 
-	if(o->type==NUMBER_NODE) {
-		mpw_init_set(n->data.val,o->data.val);
-	} else { /*type==ACTION_NODE*/
-		if(o->data.action.type==PRIMITIVE_TYPE) {
-			for(i=0;i<3;i++)
-				if(o->args[i])
-					n->args[i]=copynode(o->args[i]);
-		} else if(o->data.action.type==FUNCTION_TYPE) {
-			for(i=0;i<n->data.action.data.func->nargs;i++)
-				n->args[i]=copynode(o->args[i]);
-		}
-	}
+	if(o->type==VALUE_NODE)
+		mpw_init_set(n->data.value,o->data.value);
+	else if(o->type == IDENTIFIER_NODE ||
+		o->type == STRING_NODE)
+		n->data.id = g_strdup(o->data.id);
+	else if(o->type == FUNCTION_NODE)
+		n->data.func = d_copyfunc(o->data.func);
+	/*FIXME: copy matrix as well*/
+	
+	/*copy the arguments*/
+	n->args = NULL;
+	for(li = o->args;li!=NULL;li=g_list_next(li))
+		n->args = g_list_append(n->args,copynode(li->data));
 
 	return n;
 }
 
-/*evaluate arguments of a function*/
-tree_t *
-evalargs(tree_t *n)
+/*evaluate arguments, will crash if the node doesn't have at least
+  one arg*/
+static int
+evalargs(ETree *n, ETree *ret[], int eval_first)
 {
+	GList *li;
 	int i;
-	if(n->type!=ACTION_NODE || n->data.action.type!=FUNCTION_TYPE)
-		return NULL;
-
-	for(i=0;i<n->data.action.data.func->nargs;i++)
-		if((n->args[i]=evalnode(n->args[i]))==NULL)
-			return NULL;
-	return n;
-}
-
-/*evaluate a user function*/
-tree_t *
-evaluserfunc(tree_t *n)
-{
-	tree_t *r;
-	char tmp[5]="arg?";
-	int i;
-	func_t *f;
-
-	if(n->type!=ACTION_NODE || n->data.action.type!=FUNCTION_TYPE ||
-		n->data.action.data.func->type!=USER_FUNC)
-		return NULL;
-
-	if(n->data.action.data.func->data.user.value)
-		r=copynode(n->data.action.data.func->
-			data.user.value);
+	
+	/*if the first shouldn't be evaluated just pass it*/
+	if(!eval_first)
+		ret[0] = copynode(n->args->data);
 	else {
-		/*this was a dummy function, find the real
-		  one*/
-		f=d_lookup(n->data.action.data.func->id,TRUE);
-		if(!f || !f->data.user.value) {
-			(*errorout)(_("Variable used uninitialized!"));
-			return NULL;
+		ret[0] = evalnode(n->args->data);
+		/*exception is signaled by NULL*/
+		if(!ret[0])
+			return FALSE;
+			
+	}
+	
+	for(i=1,li=n->args->next; li!=NULL; li=g_list_next(li),i++) {
+		ret[i] = evalnode(li->data);
+		/*exception is signaled by NULL*/
+		if(!ret[i]) {
+			while(--i>=0)
+				freetree(ret[i]);
+			return FALSE;
 		}
-
-		r=copynode(f->data.user.value);
-		/*FIXME: maybe some reference counting here!*/
-		n->data.action.data.func=f;
 	}
-
-	/*only a variable*/
-	if(r->type==NUMBER_NODE)
-		return r;
-
-	d_addcontext(NULL);
-	/*push arguments on context stack*/
-	for(i=0;i<n->data.action.data.func->nargs;i++){
-		tmp[3]=(char)i+'1'; /*the arg var name*/
-		d_addfunc(d_makeufunc(tmp,copynode( n->args[i]),
-				      NULL,0,TRUE));
-	}
-	r=evalnode(r);
-	freedict(d_popcontext(),TRUE);
-
-	return r;
+	return TRUE;
 }
 
-/*evaluate branches of a primitive, returns 0 if all ok, 1 if n should
-  be returned or 2 on a serious error*/
-int
-evalbranches(tree_t *n)
+/*evaluate a matrix (or try to), this might error out if the result is not
+  a matrix such as if b = [8,7]; a = [1,2:3,b] .. then evaluating the second
+  matrix will fail with an error, however a = [1,2,4:3,b] will work just fine */
+static ETree *
+evalmatrix(ETree *n)
 {
-	int noeval=FALSE;
-	int i;
-	int be;
+	/*FIXME:EVALUATE MATRIX HERE*/
+	return copynode(n);
+}
 
-	if(n->type!=ACTION_NODE || n->data.action.type!=PRIMITIVE_TYPE)
-		return 2;
+static ETree *
+equalsop(ETree *n)
+{
+	ETree *l;
+	ETree *r;
+	ETree *set;
+	GET_LR(n,l,r);
+	
+	set = evalnode(r);
+	/*exception*/
+	if(!set)
+		return NULL;
 
-	be = brancheseval(n->data.action.data.primitive);
+	if(l->type != IDENTIFIER_NODE &&
+	   !(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE)) {
+		ETree *ret = copynode(n);
+		(*errorout)(_("Lvalue not an identifier/dereference!"));
+		freetree(ret->args->next->data);
+		ret->args->next->data = set;
+		return ret;
+	}
 
-	/*primitives have maximum of 3 arguments*/
-	for(i=0;i<3;i++) {
-		if(be & (1<<(2-i)) ) {
-			if((n->args[i]=evalnode(n->args[i]))==NULL) {
-				freetree(n);
-				return 2; /*an error occured*/
+	if(l->type == IDENTIFIER_NODE) {
+		set = evalnode(r);
+		if(set->type == FUNCTION_NODE)
+			d_addfunc(d_makerealfunc(set->data.func,l->data.id));
+		else if(set->type == OPERATOR_NODE &&
+			set->data.oper == E_REFERENCE) {
+			ETree *t = set->args->data;
+			EFunc *rf = d_lookup(t->data.id,TRUE);
+			if(!rf) {
+				ETree *ret;
+				char buf[256];
+				g_snprintf(buf,256,_("Variable '%s' used unintialized"),
+					   t->data.id);
+				(*errorout)(buf);
+				ret = copynode(n);
+				if(set) {
+					freetree(ret->args->next->data);
+					ret->args->next->data = set;
+				}
+				return ret;
 			}
-			/*can't evaluate this!*/
-			if(n->args[i]->type!=NUMBER_NODE)
-				noeval=TRUE;
+			d_addfunc(d_makereffunc(l->data.id,rf));
+		} else
+			d_addfunc(d_makeufunc(l->data.id,copynode(set),NULL,0));
+	} else { /*dereference*/
+		ETree *ll;
+		EFunc *f;
+		GET_L(l,ll);
+
+		if(ll->type != IDENTIFIER_NODE) {
+			ETree *ret = copynode(n);
+			(*errorout)(_("Dereference of non-identifier!"));
+			freetree(ret->args->next->data);
+			ret->args->next->data = set;
+			return ret;
 		}
-	}
-	/*if something didn't evaluate we can't calculate this
-	  primitive except for SEPARATOR which will just copy
-	  the right side and so it works even with unevaluated
-	  arguments*/
-	if(noeval && n->data.action.data.primitive!=E_SEPAR)
-		return 1;
-	return 0;
-}
-
-/*return TRUE if node is true (a number node !=0), false otherwise*/
-int
-isnodetrue(tree_t *n)
-{
-	if(n->type!=NUMBER_NODE)
-		return FALSE;
-	if(mpw_sgn(n->data.val)!=0)
-		return TRUE;
-	else
-		return FALSE;
-}
-
-int
-eval_isnodetrue(tree_t *n)
-{
-	/*we don't have to make a copy and evaluate if the tree is a number
-	  already*/
-	if(n->type!=NUMBER_NODE) {
-		int r=FALSE;
-		tree_t *m;
-
-		m=evalnode(copynode(n));
-		if(!m)
-			return FALSE;
-		if(m->type!=NUMBER_NODE) {
-			freetree(m);
-			return FALSE;
+		
+		f = d_lookup(ll->data.id,TRUE);
+		if(!f) {
+			ETree *ret;
+			char buf[256];
+			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
+				   ll->data.id);
+			(*errorout)(buf);
+			ret = copynode(n);
+			freetree(ret->args->next->data);
+			ret->args->next->data = set;
+			return ret;
 		}
-		if(mpw_sgn(m->data.val)!=0)
-			r = TRUE;
-		else
-			r = FALSE;
-		freetree(m);
-		return r;
+		if(f->type!=REFERENCE_FUNC) {
+			ETree *ret = copynode(n);
+			(*errorout)(_("Dereference of non-reference!"));
+			freetree(ret->args->next->data);
+			ret->args->next->data = set;
+			return ret;
+		}
+		
+		if(set->type == FUNCTION_NODE)
+			d_setrealfunc(f->data.ref,set->data.func);
+		else if(set->type == OPERATOR_NODE &&
+			set->data.oper == E_REFERENCE) {
+			ETree *t = set->args->data;
+			EFunc *rf = d_lookup(t->data.id,TRUE);
+			if(!rf) {
+				ETree *ret;
+				char buf[256];
+				g_snprintf(buf,256,_("Variable '%s' used unintialized"),
+					   t->data.id);
+				(*errorout)(buf);
+				ret = copynode(n);
+				freetree(ret->args->next->data);
+				ret->args->next->data = set;
+				return ret;
+			}
+			d_set_ref(f->data.ref,rf);
+		} else
+			d_set_value(f->data.ref,copynode(set));
 	}
-	if(mpw_sgn(n->data.val)!=0)
-		return TRUE;
-	else
-		return FALSE;
+	return set;
 }
 
-/*evaluate a treenode, the tree node will become a number node
-  or at least all the calculatable parts will be calculated so
-  it will be a reduced tree
-  the tree will be freed*/
-tree_t *
-evalnode(tree_t *n)
+/*copy node but use the args from r*/
+ETree *
+copynode_args(ETree *o, ETree *r[])
 {
-	tree_t *r=NULL;
+	ETree *n;
+	GList *li;
+	int i;
 
-	if(!n || n->type!=ACTION_NODE)
-		return n;
+	if(!o || !r)
+		return NULL;
 
-	if(n->data.action.type==FUNCTION_TYPE) {
-		/*evaluate arguments*/
-		if(!evalargs(n))
+	if(!free_trees)
+		n = g_new(ETree,1);
+	else {
+		n = free_trees;
+		free_trees = free_trees->data.next;
+	}
+
+	memcpy(n,o,sizeof(ETree));
+
+	if(o->type==VALUE_NODE)
+		mpw_init_set(n->data.value,o->data.value);
+	else if(o->type == IDENTIFIER_NODE)
+		n->data.id = g_strdup(o->data.id);
+	else if(o->type == FUNCTION_NODE)
+		n->data.func = d_copyfunc(o->data.func);
+	/*FIXME: copy matrix as well*/
+	
+	/*add the arguments*/
+	n->args = NULL;
+	for(i=0;i<n->nargs;i++)
+		n->args = g_list_append(n->args,r[i]);
+
+	return n;
+}
+
+static void
+freeargarr(ETree *r[],int n)
+{
+	int i;
+	for(i=0;i<n;i++)
+		freetree(r[i]);
+}
+
+static ETree *
+funccallop(ETree *n,int direct_call)
+{
+	ETree **r;
+	ETree *ret;
+	EFunc *f;
+	ETree *l;
+	
+	GET_L(n,l);
+	
+	r = g_new(ETree *,n->nargs);
+	if(direct_call ||
+	   (l->type == OPERATOR_NODE &&
+	    l->data.oper == E_DEREFERENCE)) {
+		if(!evalargs(n,r,FALSE)) {
+			g_free(r);
 			return NULL;
-
-		if(n->data.action.data.func->type==USER_FUNC)
-			r=evaluserfunc(n);
-		else
-			r=(*n->data.action.data.func->data.func)
-				(n->args);
+		}
 	} else {
-		/*evaluate the different primitive branches
-		  note that some type of operations will not
-		  allow certain branches to be evaluated at this
-		  time*/
-		switch(evalbranches(n)) {
-			case 1: return n;
-			case 2: return NULL;
-		}
-		switch(n->data.action.data.primitive) {
-			case E_SEPAR: r=n->args[1]; n->args[1]=NULL; break;
-			case E_EQUALS: r=equalsop(n->args[0],n->args[1]); break;
-			case E_PLUS: r=plusop(n->args[0],n->args[1]); break;
-			case E_MINUS: r=minusop(n->args[0],n->args[1]); break;
-			case E_MUL: r=mulop(n->args[0],n->args[1]); break;
-			case E_DIV: r=divop(n->args[0],n->args[1]); break;
-			case E_MOD: r=modop(n->args[0],n->args[1]); break;
-			case E_NEG: r=negop(n->args[1]); break;
-			case E_EXP: r=expop(n->args[0],n->args[1]); break;
-			case E_FACT: r=factop(n->args[0]); break;
-			case E_FUNCDEF: r=funcdefop(n->args[0],n->args[1]); break;
-			case E_IF_CONS:
-				if(n->args[0]->type!=NUMBER_NODE) {
-					(*errorout)(_("Left value is NOT a"
-						" number!"
-						" (ignoring if construct)"));
-					return n;
-				}
-				if(isnodetrue(n->args[0])) {
-					r=evalnode(n->args[1]);
-					n->args[1]=NULL;
-				} else
-					r=makenum_ui(0);
-				break;
-			case E_IFELSE_CONS:
-				if(n->args[0]->type!=NUMBER_NODE) {
-					(*errorout)(_("Left value is NOT a"
-						" number!"
-						" (ignoring ifelse construct)"));
-					return n;
-				}
-				if(isnodetrue(n->args[0])) {
-					r=evalnode(n->args[1]);
-					n->args[1]=NULL;
-				} else {
-					r=evalnode(n->args[2]);
-					n->args[2]=NULL;
-				}
-				break;
-			case E_WHILE_CONS:
-				/*if there is NO iteration return 0*/
-				if(eval_isnodetrue(n->args[0])) {
-					r = evalnode(copynode(n->args[1]));
-					while(eval_isnodetrue(n->args[0])) {
-						/*get rid of previous results*/
-						freetree(r);
-						r = evalnode(copynode(n->args[1]));
-					}
-				} else
-					r = makenum_ui(0);
-				break;
-			case E_EQ_CMP: r=eqcmpop(n->args[0],n->args[1]); break;
-			case E_NE_CMP: r=necmpop(n->args[0],n->args[1]); break;
-			case E_CMP_CMP: r=cmpcmpop(n->args[0],n->args[1]); break;
-			case E_LT_CMP: r=ltcmpop(n->args[0],n->args[1]); break;
-			case E_GT_CMP: r=gtcmpop(n->args[0],n->args[1]); break;
-			case E_LE_CMP: r=lecmpop(n->args[0],n->args[1]); break;
-			case E_GE_CMP: r=gecmpop(n->args[0],n->args[1]); break;
-			case E_LOGICAL_AND:
-				r=logicalandop(n->args[0],n->args[1]); break;
-			case E_LOGICAL_OR:
-				r=logicalorop(n->args[0],n->args[1]); break;
-			case E_LOGICAL_XOR:
-				r=logicalxorop(n->args[0],n->args[1]); break;
-			case E_LOGICAL_NOT:
-				r=logicalnotop(n->args[1]); break;
+		if(!evalargs(n,r,TRUE)) {
+			g_free(r);
+			return NULL;
 		}
 	}
-	if(r!=NULL) {
-		freetree(n);
-		return r;
-	} else if(error_num!=NO_ERROR) {
-		/*something errored out*/
-		freetree(n);
-		return NULL;
-	} /*r==NULL && error_num==NO_ERROR*/
-	/*this error is not too serious, just this action can't be computed*/
-	return n;
-}
-
-tree_t *
-plusop(tree_t *l,tree_t *r)
-{
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_add(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	
+	if(l->type == IDENTIFIER_NODE) {
+		f = d_lookup(l->data.id,TRUE);
+		if(!f) {
+			char buf[256];
+			g_snprintf(buf,256,_("Function '%s' used unintialized"),
+				   l->data.id);
+			(*errorout)(buf);
+			ret = copynode_args(n,r);
+			g_free(r);
+			return ret;
+		}
+	} else if(l->type == FUNCTION_NODE)
+		f = l->data.func;
+	else if(l->type == OPERATOR_NODE &&
+		l->data.oper == E_DEREFERENCE) {
+		ETree *ll;
+		GET_L(l,ll);
+		f = d_lookup(ll->data.id,TRUE);
+		if(!f) {
+			char buf[256];
+			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
+				   ll->data.id);
+			(*errorout)(buf);
+			ret = copynode_args(n,r);
+			g_free(r);
+			return ret;
+		} else if(f->type != REFERENCE_FUNC) {
+			char buf[256];
+			g_snprintf(buf,256,_("Can't dereference '%s'!"),
+				   ll->data.id);
+			(*errorout)(buf);
+			ret = copynode_args(n,r);
+			g_free(r);
+			return ret;
+		}
+		f = f->data.ref;
+	} else {
+		(*errorout)(_("Can't call a non-function!"));
+		ret = copynode_args(n,r);
+		g_free(r);
+		return ret;
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
+	
+	if(f->nargs + 1 != n->nargs) {
+		char buf[256];
+		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
+				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+		(*errorout)(buf);
+		ret = copynode_args(n,r);
+		g_free(r);
+		return ret;
+	} else if(f->type == USER_FUNC) {
+		int i;
+		GList *li;
+		GList *tofree=NULL;
+		d_addcontext(NULL);
+		/*push arguments on context stack*/
+		for(i=1,li=f->named_args;i<n->nargs;i++,li=g_list_next(li)) {
+			if(r[i]->type == FUNCTION_NODE) {
+				d_addfunc(d_makereffunc(li->data,
+							r[i]->data.func));
+				tofree = g_list_append(tofree,r[i]);
+			} else if(r[i]->type == OPERATOR_NODE &&
+			   r[i]->data.oper == E_REFERENCE) {
+				ETree *t = r[i]->args->data;
+				EFunc *rf = d_lookup(t->data.id,TRUE);
+				if(!rf) {
+					char buf[256];
+					g_snprintf(buf,256,_("Variable '%s' used unintialized"),
+						   t->data.id);
+					(*errorout)(buf);
+					ret = copynode_args(n,r);
+					g_free(r);
+					freedict(d_popcontext());
+					return ret;
+				}
+				d_addfunc(d_makereffunc(li->data,rf));
+				freetree(r[i]);
+			} else
+				d_addfunc(d_makeufunc(li->data,r[i],NULL,0));
+		}
+		g_free(r);
+		if(returnval) {
+			(*errorout)(_("Extraneous return value!"));
+			freetree(returnval);
+		}
+		returnval = NULL;
+		ret = evalnode(f->data.user);
+		/*free trees that are shcedhuled to be freed after execution
+		  of body*/
+		if(tofree){
+			freetree(tofree->data);
+			for(li=g_list_next(tofree);li!=NULL;li=g_list_next(li))
+				freetree(li->data);
+			g_list_free(tofree);
+		}
+		freedict(d_popcontext());
+		if(!ret && returnval)
+			ret = returnval;
+		else if(returnval)
+			freetree(returnval);
+		returnval = NULL;
+		return ret;
+	} else if(f->type == BUILTIN_FUNC) {
+		int exception = FALSE;
+		ret = (*f->data.func)(&r[1],&exception);
+		if(!ret && !exception)
+			ret = copynode_args(n,r);
+		else
+			freeargarr(r,n->nargs);
+		g_free(r);
+		if(exception) {
+			if(ret)
+				freetree(ret);
+			return NULL;
+		}
+		return ret;
+	} else if(f->type == REFERENCE_FUNC) {
+		ETree *a;
+		ETree *i;
+		if(f->nargs>0) {
+			(*errorout)(_("Reference function with arguments encountered!"));
+			ret = copynode_args(n,r);
+			g_free(r);
+			return ret;
+		}
+		f = f->data.ref;
+		if(!f->id) {
+			(*errorout)(_("Unnamed reference function encountered!"));
+			ret = copynode_args(n,r);
+			g_free(r);
+			return ret;
+		}
+		if(!free_trees)
+			i = g_new(ETree,1);
+		else {
+			i = free_trees;
+			free_trees = free_trees->data.next;
+		}
+		i->type = IDENTIFIER_NODE;
+		i->data.id = g_strdup(f->id); /*this WILL have an id*/
+		i->args = NULL;
+		i->nargs = 0;
 
-	return n;
-}
+		if(!free_trees)
+			a = g_new(ETree,1);
+		else {
+			a = free_trees;
+			free_trees = free_trees->data.next;
+		}
+		a->type = OPERATOR_NODE;
+		a->data.oper = E_REFERENCE;
 
-tree_t *
-minusop(tree_t *l,tree_t *r)
-{
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_sub(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+		a->args = g_list_append(NULL,i);
+		a->nargs = 1;
+		freeargarr(r,n->nargs);
+		g_free(r);
+		return a;
+	} else {
+		(*errorout)(_("Unevaluatable function type encountered!"));
+		ret = copynode_args(n,r);
+		g_free(r);
+		return ret;
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
-
-	return n;
 }
 
-tree_t *
-mulop(tree_t *l,tree_t *r)
+static ETree *
+derefvarop(ETree *n)
 {
-	tree_t *n=NULL;
-	mpw_t res;
+	EFunc *f;
+	ETree *l;
+	
+	GET_L(n,l);
+	
+	
+	f = d_lookup(l->data.id,TRUE);
+	if(!f) {
+		char buf[256];
+		g_snprintf(buf,256,_("Variable '%s' used unintialized"),l->data.id);
+		(*errorout)(buf);
+	} else if(f->nargs != 0) {
+		char buf[256];
+		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
+				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+		(*errorout)(buf);
+	} else if(f->type == USER_FUNC || f->type == BUILTIN_FUNC) {
+		char buf[256];
+		g_snprintf(buf,256,_("Trying to dereference '%s' which is not a reference!\n"),
+				     f->id?f->id:"anonymous");
+		(*errorout)(buf);
+	} else if(f->type == REFERENCE_FUNC) {
+		f = f->data.ref;
+		if(!f) {
+			(*errorout)(_("NULL reference encountered!"));
+		} else if(f->type == USER_FUNC) {
+			ETree *ret;
+			d_addcontext(NULL);
+			if(returnval) {
+				(*errorout)(_("Extraneous return value!"));
+				freetree(returnval);
+			}
+			returnval = NULL;
+			ret = evalnode(f->data.user);
+			freedict(d_popcontext());
+			if(!ret && returnval)
+				ret = returnval;
+			else if(returnval)
+				freetree(returnval);
+			returnval = NULL;
+			return ret;
+		} else if(f->type == BUILTIN_FUNC) {
+			ETree *ret;
+			int exception = FALSE;
+			ret = (*f->data.func)(NULL,&exception);
+			if(!ret && !exception) ret = copynode(n);
+			if(exception) {
+				if(ret)
+					freetree(ret);
+				return NULL;
+			}
+			return ret;
+		} else if(f->type == REFERENCE_FUNC) {
+			ETree *a;
+			ETree *i;
+			if(!f->id) {
+				(*errorout)(_("Unnamed reference function encountered"));
+				return copynode(n);
+			}
+			if(!free_trees)
+				i = g_new(ETree,1);
+			else {
+				i = free_trees;
+				free_trees = free_trees->data.next;
+			}
+			i->type = IDENTIFIER_NODE;
+			i->data.id = g_strdup(f->id); /*this WILL have an id*/
+			i->args = NULL;
+			i->nargs = 0;
 
-	mpw_init(res);
-	mpw_mul(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+			if(!free_trees)
+				a = g_new(ETree,1);
+			else {
+				a = free_trees;
+				free_trees = free_trees->data.next;
+			}
+			a->type = OPERATOR_NODE;
+			a->data.oper = E_REFERENCE;
+			
+			a->args = g_list_append(NULL,i);
+			a->nargs = 1;
+			return a;
+		} else
+			(*errorout)(_("Unevaluatable function type encountered!"));
+	} else
+		(*errorout)(_("Unevaluatable function type encountered!"));
+	return copynode(n);
+}
+
+static ETree *
+variableop(ETree *n)
+{
+	EFunc *f;
+	
+	f = d_lookup(n->data.id,TRUE);
+	if(!f) {
+		char buf[256];
+		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->data.id);
+		(*errorout)(buf);
+		return copynode(n);
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
+	
+	if(f->nargs != 0) {
+		char buf[256];
+		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
+				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+		(*errorout)(buf);
+	} else if(f->type == USER_FUNC) {
+		ETree *ret;
+		d_addcontext(NULL);
+		if(returnval) {
+			(*errorout)(_("Extraneous return value!"));
+			freetree(returnval);
+		}
+		returnval = NULL;
+		ret = evalnode(f->data.user);
+		freedict(d_popcontext());
+		if(!ret && returnval)
+			ret = returnval;
+		else if(returnval)
+			freetree(returnval);
+		returnval = NULL;
+		return ret;
+	} else if(f->type == BUILTIN_FUNC) {
+		ETree *ret;
+		int exception = FALSE;
+		ret = (*f->data.func)(NULL,&exception);
+		if(!ret && !exception) ret = copynode(n);
+		if(exception) {
+			if(ret)
+				freetree(ret);
+			return NULL;
+		}
+		return ret;
+	} else if(f->type == REFERENCE_FUNC) {
+		ETree *a;
+		ETree *i;
+		f = f->data.ref;
+		if(!free_trees)
+			i = g_new(ETree,1);
+		else {
+			i = free_trees;
+			free_trees = free_trees->data.next;
+		}
+		i->type = IDENTIFIER_NODE;
+		i->data.id = g_strdup(f->id); /*this WILL have an id*/
+		i->args = NULL;
+		i->nargs = 0;
 
-	return n;
+		if(!free_trees)
+			a = g_new(ETree,1);
+		else {
+			a = free_trees;
+			free_trees = free_trees->data.next;
+		}
+		a->type = OPERATOR_NODE;
+		a->data.oper = E_REFERENCE;
+
+		a->args = g_list_append(NULL,i);
+		a->nargs = 1;
+		return a;
+	} else
+		(*errorout)(_("Unevaluatable function type encountered!"));
+	return copynode(n);
 }
 
-tree_t *
-divop(tree_t *l,tree_t *r)
+static ETree *
+ifop(ETree *n)
 {
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_div(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	ETree *l,*r,*rr;
+	ETree *errorret;
+	int exception=FALSE;
+	if(n->data.oper == E_IF_CONS) {
+		GET_LR(n,l,r);
+	} else { /*IF_ELSE*/
+		GET_LRR(n,l,r,rr);
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
 
-	return n;
-}
-
-tree_t *
-modop(tree_t *l,tree_t *r)
-{
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_mod(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	if(eval_isnodetrue(l,&exception,&errorret)) {
+		return evalnode(r);
+	} else {
+		/*if we got a non-critical error and just can't evaluate*/
+		if(errorret) {
+			/*copy the current node and replace the predicate with the
+			  evaluated value*/
+			ETree *a = copynode(n);
+			freetree(a->args->data);
+			a->args->data = errorret;
+			return a;
+		}
+		if(exception) return NULL;
+		if(n->data.oper == E_IF_CONS)
+			return makenum_null();
+		else /*IF_ELSE*/
+			return evalnode(rr);
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
-
-	return n;
 }
 
-tree_t *
-negop(tree_t *r)
+static ETree *
+loopop(ETree *n)
 {
-	tree_t *n=NULL;
-	mpw_t res;
+	ETree *l,*r,*ret = makenum_null();
+	ETree *t;
+	ETree *errorret;
+	int exception=FALSE;
+	int until=FALSE;
+	int first=FALSE;
 
-	mpw_init(res);
-	mpw_neg(res,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	GET_LR(n,l,r);
+	
+	switch (n->data.oper) {
+	case E_WHILE_CONS:
+		until = FALSE;
+		first = FALSE;
+		break;
+	case E_UNTIL_CONS:
+		until = TRUE;
+		first = FALSE;
+		break;
+	case E_DOWHILE_CONS:
+		/*swap left/right*/
+		t = l; l = r; r = t;
+		until = FALSE;
+		first = TRUE;
+		break;
+	case E_DOUNTIL_CONS:
+		/*swap left/right*/
+		t = l; l = r; r = t;
+		until = TRUE;
+		first = TRUE;
+		break;
 	}
-	n=makenum(res);
-	mpw_clear(res);
-
-	return n;
-}
-
-tree_t *
-expop(tree_t *l, tree_t *r)
-{
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_pow(res,l->data.val,r->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	if(first) {
+		freetree(ret);
+		ret = evalnode(r);
+		if(!ret) return NULL;
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
-
-	return n;
-}
-
-tree_t *
-factop(tree_t *l)
-{
-	tree_t *n=NULL;
-	mpw_t res;
-
-	mpw_init(res);
-	mpw_fac(res,l->data.val);
-	if(error_num==NUMERICAL_MPW_ERROR) {
-		mpw_clear(res);
-		error_num=NO_ERROR;
-		return NULL;
+	while(until?
+	      !eval_isnodetrue(l,&exception,&errorret):
+	      eval_isnodetrue(l,&exception,&errorret)) {
+		freetree(ret);
+		if(exception)
+			return NULL;
+		/*if we got a non-critical error and just can't evaluate*/
+		else if(errorret) {
+			/*copy the current node and replace the predicate with the
+			  evaluated value*/
+			ETree *a = copynode(n);
+			freetree(a->args->data);
+			a->args->data = errorret;
+			return a;
+		}
+		ret = evalnode(r);
+		if(!ret) return NULL;
 	}
-	mpw_make_int(res,calcstate.make_floats_ints);
-	n=makenum(res);
-	mpw_clear(res);
-
-	return n;
-}
-
-tree_t *
-equalsop(tree_t *l, tree_t *r)
-{
-	if(!l || !r)
-		g_error(_("'=' can't function without proper nodes!"));
-	if(l->type!=ACTION_NODE ||
-		l->data.action.type!=FUNCTION_TYPE ||
-		l->data.action.data.func->nargs!=0) {
-		(*errorout)(_("Left value is NOT a 0\\function! (ignoring '=')"));
+	if(exception) {
+		freetree(ret);
 		return NULL;
+	/*if we got a non-critical error and just can't evaluate*/
+	} else if(errorret) {
+		/*copy the current node and replace the predicate with the
+		  evaluated value*/
+		ETree *a = copynode(n);
+		freetree(ret);
+		freetree(a->args->data);
+		a->args->data = errorret;
+		return a;
 	}
-	if(r->type!=NUMBER_NODE) {
-		(*errorout)(_("Right value is NOT computed! (ignoring '=')"));
-		return NULL;
-	}
-	d_addfunc(d_makeufunc(l->data.action.data.func->id,
-			      copynode(r),NULL,0,TRUE));
-
-	return copynode(r);
+	return ret;
 }
-
-tree_t *
-funcdefop(tree_t *l, tree_t *r)
-{
-	if(!l || !r)
-		g_error(_("funcdefop can't function without proper nodes!"));
-	if(l->type!=ACTION_NODE ||
-		l->data.action.type!=FUNCTION_TYPE) {
-		(*errorout)(_("Left value is NOT a function!"
-			" (ignoring function definition)"));
-		return NULL;
-	}
-	d_addfunc(d_makeufunc(l->data.action.data.func->id,
-			      copynode(r),NULL,
-			      l->data.action.data.func->nargs, TRUE));
-
-	return makenum_ui(1);
-}
-
-/*tree_t *
-ifconsop(tree_t *l, tree_t *r)
-{
-}
-
-tree_t *
-ifelseconsop(tree_t *l, tree_t *r, tree_t *sr)
-{
-}
-
-tree_t *
-whileconsop(tree_t *l, tree_t *r)
-{
-}*/
 
 /*compare nodes, return TRUE if equal
   makes them the same type as a side effect*/
-int
-eqlnodes(tree_t *l, tree_t *r)
+static int
+eqlnodes(ETree *l, ETree *r)
 {
-	return mpw_eql(l->data.val,r->data.val);
+	return mpw_eql(l->data.value,r->data.value);
 }
 
 /*compare nodes, return -1 if first one is smaller, 0 if they are
   equal, 1 if the first one is greater
   makes them the same type as a side effect*/
-int
-cmpnodes(tree_t *l, tree_t *r)
+static int
+cmpnodes(ETree *l, ETree *r)
 {
 	int n=0;
 
-	n=mpw_cmp(l->data.val,r->data.val);
+	n=mpw_cmp(l->data.value,r->data.value);
 
 	if(n>0) n=1;
 	else if(n<0) n=-1;
 	return n;
 }
 
-tree_t *
-eqcmpop(tree_t *l, tree_t *r)
+static ETree *
+eqcmpop(ETree *l, ETree *r)
 {
 	if(eqlnodes(l,r))
 		return makenum_ui(1);
@@ -791,8 +998,8 @@ eqcmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-necmpop(tree_t *l, tree_t *r)
+static ETree *
+necmpop(ETree *l, ETree *r)
 {
 	if(!eqlnodes(l,r))
 		return makenum_ui(1);
@@ -800,14 +1007,14 @@ necmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-cmpcmpop(tree_t *l, tree_t *r)
+static ETree *
+cmpcmpop(ETree *l, ETree *r)
 {
 	return makenum_si(cmpnodes(l,r));
 }
 
-tree_t *
-ltcmpop(tree_t *l, tree_t *r)
+static ETree *
+ltcmpop(ETree *l, ETree *r)
 {
 	if(cmpnodes(l,r)<0)
 		return makenum_ui(1);
@@ -815,8 +1022,8 @@ ltcmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-gtcmpop(tree_t *l, tree_t *r)
+static ETree *
+gtcmpop(ETree *l, ETree *r)
 {
 	if(cmpnodes(l,r)>0)
 		return makenum_ui(1);
@@ -824,8 +1031,8 @@ gtcmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-lecmpop(tree_t *l, tree_t *r)
+static ETree *
+lecmpop(ETree *l, ETree *r)
 {
 	if(cmpnodes(l,r)<=0)
 		return makenum_ui(1);
@@ -833,8 +1040,8 @@ lecmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-gecmpop(tree_t *l, tree_t *r)
+static ETree *
+gecmpop(ETree *l, ETree *r)
 {
 	if(cmpnodes(l,r)>=0)
 		return makenum_ui(1);
@@ -842,8 +1049,8 @@ gecmpop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-logicalandop(tree_t *l, tree_t *r)
+static ETree *
+logicalandop(ETree *l, ETree *r)
 {
 	if(isnodetrue(l) && isnodetrue(r))
 		return makenum_ui(1);
@@ -851,8 +1058,8 @@ logicalandop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-logicalorop(tree_t *l, tree_t *r)
+static ETree *
+logicalorop(ETree *l, ETree *r)
 {
 	if(isnodetrue(l) || isnodetrue(r))
 		return makenum_ui(1);
@@ -860,8 +1067,8 @@ logicalorop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-logicalxorop(tree_t *l, tree_t *r)
+static ETree *
+logicalxorop(ETree *l, ETree *r)
 {
 	if(isnodetrue(l) != isnodetrue(r))
 		return makenum_ui(1);
@@ -869,12 +1076,291 @@ logicalxorop(tree_t *l, tree_t *r)
 		return makenum_ui(0);
 }
 
-tree_t *
-logicalnotop(tree_t *r)
+static ETree *
+logicalnotop(ETree *r)
 {
 	if(isnodetrue(r))
 		return makenum_ui(0);
 	else
 		return makenum_ui(1);
+}
+
+
+typedef void (*doubleopfunc)(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+typedef void (*singleopfunc)(mpw_ptr rop,mpw_ptr op);
+
+static ETree *
+doubleop(ETree *n, ETree *arg[], doubleopfunc f)
+{
+	ETree *r=NULL;
+	mpw_t res;
+
+	mpw_init(res);
+	(*f)(res,arg[0]->data.value,arg[1]->data.value);
+	if(error_num==NUMERICAL_MPW_ERROR) {
+		mpw_clear(res);
+		error_num=NO_ERROR;
+		return copynode(n);
+	}
+	mpw_make_int(res,calcstate.make_floats_ints);
+	r=makenum(res);
+	mpw_clear(res);
+
+	return r;
+}
+
+static ETree *
+singleop(ETree *n, ETree *arg[], singleopfunc f)
+{
+	ETree *r=NULL;
+	mpw_t res;
+
+	mpw_init(res);
+	(*f)(res,arg[0]->data.value);
+	if(error_num==NUMERICAL_MPW_ERROR) {
+		mpw_clear(res);
+		error_num=NO_ERROR;
+		return copynode(n);
+	}
+	r=makenum(res);
+	mpw_clear(res);
+
+	return r;
+}
+
+/*returns 0 if all numeric, 1 if numeric/matrix, 2 otherwise*/
+int
+arglevel(ETree *r[], int cnt)
+{
+	int i;
+	int level = 0;
+	for(i=0;i<cnt;i++) {
+		if(r[i]->type!=VALUE_NODE) {
+			if(r[i]->type==MATRIX_NODE)
+				level = 1;
+			else
+				return 2;
+		}
+	}
+	return level;
+}
+
+typedef ETree * (*matrixpfunc_t)(ETree *,ETree **);
+
+#define EVAL_PRIMITIVE(n,numop,numfunc,matrixfunc) {	\
+	ETree *r[2]; 					\
+	ETree *ret;					\
+	if(!evalargs(n,r,TRUE))				\
+		return NULL;				\
+	switch(arglevel(r,n->nargs)) {			\
+	case 0: ret = numop(n,r,numfunc);		\
+		freeargarr(r,n->nargs);			\
+		return ret;				\
+	case 1: if(matrixfunc) {			\
+			matrixpfunc_t m = matrixfunc;	\
+			ret = (*m)(n,r);		\
+			freeargarr(r,n->nargs);		\
+			return ret;			\
+		} else {				\
+			(*errorout)(_("Primitive on matrixes undefined")); \
+			return copynode_args(n,r);	\
+		}					\
+	default:					\
+		(*errorout)(_("Primitives must get numeric/matrix arguments")); \
+		return copynode_args(n,r);		\
+	}						\
+}
+
+typedef ETree * (*matrixlfunc_t)(ETree *,ETree *);
+
+#define EVAL_LOGIC(n,numfunc,matrixfunc) {		\
+	ETree *r[2]; 					\
+	ETree *ret;					\
+	if(!evalargs(n,r,TRUE))				\
+		return NULL;				\
+	switch(arglevel(r,2)) {				\
+	case 0: ret = numfunc(r[0],r[1]);		\
+		freeargarr(r,2);			\
+		return ret;				\
+	case 1: if(matrixfunc) {			\
+			matrixlfunc_t m = matrixfunc;	\
+			ret = (*m)(r[0],r[1]);		\
+			freeargarr(r,2);		\
+			return ret;			\
+		} else {				\
+			(*errorout)(_("Logical operation on matrixes undefined")); \
+			return copynode_args(n,r);	\
+		}					\
+	default:					\
+		(*errorout)(_("Logical ops must get numeric/matrix arguments")); \
+		return copynode_args(n,r);		\
+	}						\
+}
+
+static ETree *
+evaloper(ETree *n)
+{
+	switch(n->data.oper) {
+		case E_SEPAR:
+			if(!evalnode(n->args->data))
+				return NULL; /*exception*/
+			return evalnode(n->args->next->data);
+
+		case E_EQUALS:
+			return equalsop(n);
+
+		case E_PLUS: EVAL_PRIMITIVE(n,doubleop,mpw_add,NULL);
+		case E_MINUS: EVAL_PRIMITIVE(n,doubleop,mpw_sub,NULL);
+		case E_MUL: EVAL_PRIMITIVE(n,doubleop,mpw_mul,NULL);
+		case E_DIV: EVAL_PRIMITIVE(n,doubleop,mpw_div,NULL);
+		case E_MOD: EVAL_PRIMITIVE(n,doubleop,mpw_mod,NULL);
+		case E_NEG: EVAL_PRIMITIVE(n,singleop,mpw_neg,NULL);
+		case E_EXP: EVAL_PRIMITIVE(n,doubleop,mpw_pow,NULL);
+		case E_FACT: EVAL_PRIMITIVE(n,singleop,mpw_fac,NULL);
+		case E_EQ_CMP: EVAL_LOGIC(n,eqcmpop,NULL);
+		case E_NE_CMP: EVAL_LOGIC(n,necmpop,NULL);
+		case E_CMP_CMP: EVAL_LOGIC(n,cmpcmpop,NULL);
+		case E_LT_CMP: EVAL_LOGIC(n,ltcmpop,NULL);
+		case E_GT_CMP: EVAL_LOGIC(n,gtcmpop,NULL);
+		case E_LE_CMP: EVAL_LOGIC(n,lecmpop,NULL);
+		case E_GE_CMP: EVAL_LOGIC(n,gecmpop,NULL);
+		case E_LOGICAL_AND: EVAL_LOGIC(n,logicalandop,NULL);
+		case E_LOGICAL_OR: EVAL_LOGIC(n,logicalorop,NULL);
+		case E_LOGICAL_XOR: EVAL_LOGIC(n,logicalxorop,NULL);
+		case E_LOGICAL_NOT: {
+			ETree *r;
+			ETree *ret;
+			r = evalnode(n->args->data);
+			if(!r)
+				return NULL;
+			if(r->type == VALUE_NODE) {
+				ret = logicalnotop(r);
+				freetree(r);
+				return ret;
+			} else {
+				(*errorout)(_("Logical not only define on numbers"));
+				ret = copynode(n);
+				freetree(ret->args->data);
+				ret->args->data = r;
+				return ret;
+			}
+		}
+
+		/*FIXME:*/
+		case E_GET_ELEMENT:
+		case E_GET_ROW:
+		case E_GET_COLUMN:
+			return copynode(n);/*!!!*/
+
+		case E_REFERENCE:
+			return copynode(n);
+		case E_DEREFERENCE:
+			return derefvarop(n);
+
+		case E_IF_CONS:
+		case E_IFELSE_CONS:
+			return ifop(n);
+		case E_WHILE_CONS:
+		case E_UNTIL_CONS:
+		case E_DOWHILE_CONS:
+		case E_DOUNTIL_CONS:
+			return loopop(n);
+
+		case E_DIRECTCALL:
+			return funccallop(n,TRUE);
+		case E_CALL:
+			return funccallop(n,FALSE);
+		case E_RETURN:
+			{
+				ETree *l;
+				GET_L(n,l);
+				if(returnval) {
+					(*errorout)(_("Extraneous return value!"));
+					freetree(returnval);
+				}
+				returnval = evalnode(l);
+				/*use exception to jump out of the current
+				  context (that is until a caller realizes
+				  that returnval is set)*/
+				return NULL;
+			}
+
+		default:
+			(*errorout)(_("Unexpected operator!"));
+			return copynode(n);
+	}
+}
+
+ETree *
+evalnode(ETree *n)
+{
+	if(!n)
+		return NULL;
+	else if(n->type == VALUE_NODE ||
+		n->type == NULL_NODE ||
+		n->type == FUNCTION_NODE ||
+		n->type == STRING_NODE)
+		return copynode(n);
+	else if(n->type == MATRIX_NODE)
+		return evalmatrix(n);
+	else if(n->type == OPERATOR_NODE)
+		return evaloper(n);
+	else if(n->type == IDENTIFIER_NODE)
+		return variableop(n);
+	else {
+		(*errorout)(_("Unexpected node!"));
+		return copynode(n);
+	}
+}
+
+/*return TRUE if node is true (a number node !=0), false otherwise*/
+int
+isnodetrue(ETree *n)
+{
+	if(n->type!=VALUE_NODE)
+		return FALSE;
+	if(mpw_sgn(n->data.value)!=0)
+		return TRUE;
+	else
+		return FALSE;
+}
+
+int
+eval_isnodetrue(ETree *n, int *exception, ETree **errorret)
+{
+	/*sane return values*/
+	if(exception) *exception = FALSE;
+	if(errorret) *errorret = NULL;
+	/*we don't have to make a copy and evaluate if the tree is a number
+	  already*/
+	if(n->type!=VALUE_NODE) {
+		int r=FALSE;
+		ETree *m;
+
+		m=evalnode(n);
+		if(!m) {
+			/*raise exception*/
+			if(exception) *exception = TRUE;
+			return FALSE;
+		}
+		if(m->type!=VALUE_NODE) {
+			(*errorout)(_("Could not evaluate predicate into a numeric boolean value!"));
+			if(errorret)
+				*errorret = m;
+			else
+				freetree(m);
+			return FALSE;
+		}
+		if(mpw_sgn(m->data.value)!=0)
+			r = TRUE;
+		else
+			r = FALSE;
+		freetree(m);
+		return r;
+	}
+	if(mpw_sgn(n->data.value)!=0)
+		return TRUE;
+	else
+		return FALSE;
 }
 

@@ -19,6 +19,16 @@
  * USA.
  */
 
+#include <config.h>
+
+#ifndef WITHOUT_GNOME
+#include <gnome.h>
+#else
+#ifndef _
+#define _(x) x
+#endif
+#endif
+
 #include <string.h>
 #include <glib.h>
 #include <math.h>
@@ -1458,7 +1468,6 @@ mpwl_getstring(MpwRealNum * num, int max_digits,int scientific_notation,
 	}							\
 }
 
-
 /*************************************************************************/
 /*high level stuff                                                       */
 /*************************************************************************/
@@ -1489,6 +1498,7 @@ mpw_init_set(mpw_ptr rop,mpw_ptr op)
 	rop->r->alloc.usage++;
 	rop->i = op->i;
 	rop->i->alloc.usage++;
+	mpw_uncomplex(rop);
 }
 
 /*clear memory held by number*/
@@ -1526,6 +1536,7 @@ mpw_set(mpw_ptr rop,mpw_ptr op)
 	rop->r->alloc.usage++;
 	rop->i = op->i;
 	rop->i->alloc.usage++;
+	mpw_uncomplex(rop);
 }
 
 void
@@ -2022,6 +2033,7 @@ char *
 mpw_getstring(mpw_ptr num, int max_digits,int scientific_notation,
 	      int results_as_floats)
 {
+	mpw_uncomplex(num);
 	if(num->type==MPW_REAL) {
 		return mpwl_getstring(num->r,max_digits,scientific_notation,
 			results_as_floats);
@@ -2077,6 +2089,7 @@ mpw_set_str_complex(mpw_ptr rop,char *s,int base)
 int
 mpw_is_complex(mpw_ptr op)
 {
+	mpw_uncomplex(op);
 	return op->type == MPW_COMPLEX;
 }
 
@@ -2138,5 +2151,6 @@ mpw_round(mpw_ptr rop, mpw_ptr op)
 	if(op->type==MPW_COMPLEX) {
 		MAKE_COPY(rop->i);
 		mpwl_round(rop->i);
+		mpw_uncomplex(rop);
 	}
 }

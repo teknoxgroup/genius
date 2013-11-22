@@ -41,10 +41,12 @@ enum {
 	E_NEG,
 	E_EXP,
 	E_FACT,
-	E_FUNCDEF,
 	E_IF_CONS,
 	E_IFELSE_CONS,
 	E_WHILE_CONS,
+	E_UNTIL_CONS,
+	E_DOWHILE_CONS,
+	E_DOUNTIL_CONS,
 	E_EQ_CMP,
 	E_NE_CMP,
 	E_CMP_CMP,
@@ -58,80 +60,54 @@ enum {
 	E_LOGICAL_NOT,
 	E_GET_ELEMENT,
 	E_GET_ROW,
-	E_GET_COLUMN
+	E_GET_COLUMN,
+	E_REFERENCE,
+	E_DEREFERENCE,
+	E_DIRECTCALL,
+	E_CALL,
+	E_RETURN,
 };
 
 /*functions for manipulating a tree*/
-tree_t * makenum(mpw_t num);
-tree_t * makenum_ui(unsigned long num);
-tree_t * makenum_si(long num);
-tree_t * makefuncb(int func, evalstack_t * stack);
-tree_t * makefuncd(func_t * func, evalstack_t * stack);
-/*same as above but used for declarations, it doesn'y pop any arguments of
-  the stack and doesn't build an argument array*/
-tree_t * makefuncd0(func_t * func);
+ETree * makenum(mpw_t num);
+ETree * makenum_ui(unsigned long num);
+ETree * makenum_si(long num);
+ETree * makenum_null(void);
+ETree * makeoperator(int oper, evalstack_t * stack);
 
-/*returns 1 or 2 depending if the operation has one or two branches*/
+/*returns the number of args for an operator, or -1 if it takes up till
+  exprlist marker -2 if it takes 1 past the marker for the first argument*/
 int branches(int op);
 
-/*similiar to the above, which branches should be evaluated*/
-int brancheseval(int op);
+/*copy a node*/
+ETree * copynode(ETree *o);
+
+/*copy node but use the args from r*/
+ETree * copynode_args(ETree *o, ETree *r[]);
 
 /*functions for reclaiming memory*/
-void freenode(tree_t *n);
-void freetree(tree_t *n);
+void freenode(ETree *n);
+void freetree(ETree *n);
 /*free arguments to a dictionary function*/
-void freeargs(tree_t *n);
+void freeargs(ETree *n);
 
-/*copy a node*/
-tree_t * copynode(tree_t *o);
-
-/*evaluate arguments of a function*/
-tree_t * evalargs(tree_t *n);
-
-/*evaluate a user function*/
-tree_t * evaluserfunc(tree_t *n);
-
-/*evaluate branches of a primitive, returns 0 if all ok, 1 if n should
-  be returned or 2 on a serious error*/
-int evalbranches(tree_t *n);
-
-/*return TRUE if node is true (a number node !=0), false otherwise*/
-int isnodetrue(tree_t *n);
+/*returns 0 if all numeric, 1 if numeric/matrix, 2 otherwise*/
+int arglevel(ETree *r[], int cnt);
 
 /*evaluate a treenode, the treenode will become a number node*/
-/*the tree will be freed*/
-tree_t *evalnode(tree_t *n);
+/*returns a newly allocated tree, doesn't hurt n*/
+ETree *evalnode(ETree *n);
 
-/*operations take two/one number nodes and return a number node*/
-tree_t *plusop(tree_t *l,tree_t *r);
-tree_t *minusop(tree_t *l,tree_t *r);
-tree_t *mulop(tree_t *l,tree_t *r);
-tree_t *divop(tree_t *l,tree_t *r);
-tree_t *modop(tree_t *l,tree_t *r);
-tree_t *negop(tree_t *l);
-tree_t *expop(tree_t *l, tree_t *r);
-tree_t *factop(tree_t *l);
-tree_t *equalsop(tree_t *l, tree_t *r);
-tree_t *funcdefop(tree_t *l, tree_t *r);
-/*tree_t *ifconsop(tree_t *l, tree_t *r);
-tree_t *ifelseconsop(tree_t *l, tree_t *r, tree_t *sr);
-tree_t *whileconsop(tree_t *l, tree_t *r);*/
-tree_t *eqcmpop(tree_t *l, tree_t *r);
-tree_t *necmpop(tree_t *l, tree_t *r);
-tree_t *cmpcmpop(tree_t *l, tree_t *r);
-tree_t *ltcmpop(tree_t *l, tree_t *r);
-tree_t *gtcmpop(tree_t *l, tree_t *r);
-tree_t *lecmpop(tree_t *l, tree_t *r);
-tree_t *gecmpop(tree_t *l, tree_t *r);
-tree_t *logicalandop(tree_t *l, tree_t *r);
-tree_t *logicalorop(tree_t *l, tree_t *r);
-tree_t *logicalxorop(tree_t *l, tree_t *r);
-tree_t *logicalnotop(tree_t *r);
+/*return TRUE if node is true (a number node !=0), false otherwise*/
+int isnodetrue(ETree *n);
+int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 
-/*compare nodes, return -1 if first one is smaller, 0 if they are
-  equal, 1 if the first one is greater
-  makes them the same type as a side effect*/
-int cmpnodes(tree_t *l, tree_t *r);
+#define GET_LRR(n,l,r,rr) { l = n->args->data; \
+	r = n->args->next->data; \
+	rr = n->args->next->next->data; \
+}
+#define GET_LR(n,l,r) { l = n->args->data; r = n->args->next->data; }
+#define GET_L(n,l) { l = n->args->data; }
+
 
 #endif

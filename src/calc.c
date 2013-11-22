@@ -18,13 +18,25 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
+
+#include <config.h>
+
+#ifndef WITHOUT_GNOME
 #include <gnome.h>
+#else
+#ifndef _
+#define _(x) x
+#endif
+#endif
+
+#include <glib.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <glib.h>
+
 #ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #endif
@@ -42,18 +54,20 @@
 extern int lex_fd[2];
 extern int first_tok;
 extern int lex_init;
-extern GList * notation_stack;
 extern int use_readline;
 
 extern FILE *yyin;
 extern char *yytext;
 extern int yydebug;
 
+extern ETree *returnval;
+
 /* stack ... has to be global:-( */
 evalstack_t evalstack=NULL;
 
 /*error .. global as well*/
 calc_error_t error_num = NO_ERROR;
+int got_eof = FALSE;
 
 /*the current state of the calculator*/
 calcstate_t calcstate;
@@ -61,144 +75,302 @@ calcstate_t calcstate;
 /*error reporting function*/
 void (*errorout)(char *)=NULL;
 
-static char *
-output_str(char *s, FILE *out, char *p)
+static void
+appendout_c(GString *gs, FILE *out, char c)
 {
 	if(!out)
-		return appendstr(s,p);
-	fputs(p,out);
-	return NULL;
+		g_string_append_c(gs,c);
+	else
+		fputc(c,out);
 }
 
-/*spit out ordinary primitives, such as plus, minus etc*/
-static char *
-get_normalprim(char *s, FILE *out, char *p, tree_t *l, tree_t *r)
+static void
+appendout(GString *gs, FILE *out, char *s)
 {
-	s=makeexprstr(s,out,l);
-	s=output_str(s,out,p);
-	s=makeexprstr(s,out,r);
-	return s;
+	if(!out)
+		g_string_append(gs,s);
+	else
+		fputs(s,out);
 }
 
-/*appends to S the primitive op and it's arguments*/
-static char *
-get_prim(char *s, FILE *out, int op, tree_t *l, tree_t *r, tree_t *sr)
+static void
+append_binaryoper(GString *gs,FILE *out,char *p, ETree *n)
 {
-	char tmp[3];
-	s=output_str(s,out,"(");
-	switch(op) {
-		case E_SEPAR: s=get_normalprim(s,out,";",l,r); break;
-		case E_EQUALS: s=get_normalprim(s,out,"=",l,r); break;
-		case E_PLUS: s=get_normalprim(s,out,"+",l,r); break;
-		case E_MINUS: s=get_normalprim(s,out,"-",l,r); break;
-		case E_MUL: s=get_normalprim(s,out,"*",l,r); break;
-		case E_DIV: s=get_normalprim(s,out,"/",l,r); break;
-		case E_MOD: s=get_normalprim(s,out,"%",l,r); break;
-		case E_NEG: s=get_normalprim(s,out,"~",l,r); break;
-		case E_EXP: s=get_normalprim(s,out,"^",l,r); break;
-		case E_FACT: s=get_normalprim(s,out,"!",l,r); break;
-		case E_FUNCDEF:
-			if(l->type!=ACTION_NODE ||
-				l->data.action.type!=FUNCTION_TYPE) {
-				s=output_str(s,out,"?error?)");
-				return s;
-			}
+	ETree *l,*r;
+	GET_LR(n,l,r);
+	appendout_c(gs,out,'(');
+	print_etree(gs,out,l);
+	appendout(gs,out,p);
+	print_etree(gs,out,r);
+	appendout_c(gs,out,')');
+}
 
-			tmp[2]='\0';
-			tmp[1]='\\';
-			tmp[0]=(char)(l->data.action.data.func->nargs)
-				+'0';
-			s=output_str(s,out,tmp);
-			s=output_str(s,out,l->data.action.data.func->id);
-			s=output_str(s,out,"{");
-			s=makeexprstr(s,out,r);
-			s=output_str(s,out,"}");
+static void
+append_unaryoper(GString *gs,FILE *out,char *p, ETree *n)
+{
+	ETree *l;
+	GET_L(n,l);
+	appendout_c(gs,out,'(');
+	appendout(gs,out,p);
+	print_etree(gs,out,l);
+	appendout_c(gs,out,')');
+}
+
+static void
+appendoper(GString *gs,FILE *out, ETree *n)
+{
+	ETree *l,*r,*rr;
+	GList *li;
+
+	switch(n->data.oper) {
+		case E_SEPAR:
+			append_binaryoper(gs,out,";",n); break;
+		case E_EQUALS:
+			append_binaryoper(gs,out,"=",n); break;
+		case E_PLUS:
+			append_binaryoper(gs,out,"+",n); break;
+		case E_MINUS:
+			append_binaryoper(gs,out,"-",n); break;
+		case E_MUL:
+			append_binaryoper(gs,out,"*",n); break;
+		case E_DIV:
+			append_binaryoper(gs,out,"/",n); break;
+		case E_MOD:
+			append_binaryoper(gs,out,"%",n); break;
+		case E_NEG:
+			append_unaryoper(gs,out,"-",n); break;
+		case E_EXP:
+			append_binaryoper(gs,out,"^",n); break;
+		case E_FACT:
+			GET_L(n,l);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout_c(gs,out,'!');
+			appendout_c(gs,out,')');
 			break;
+
+		case E_EQ_CMP:
+			append_binaryoper(gs,out,"==",n); break;
+		case E_NE_CMP:
+			append_binaryoper(gs,out,"!=",n); break;
+		case E_CMP_CMP:
+			append_binaryoper(gs,out,"<=>",n); break;
+		case E_LT_CMP:
+			append_binaryoper(gs,out,"<",n); break;
+		case E_GT_CMP:
+			append_binaryoper(gs,out,">",n); break;
+		case E_LE_CMP:
+			append_binaryoper(gs,out,"<=",n); break;
+		case E_GE_CMP:
+			append_binaryoper(gs,out,">=",n); break;
+		case E_LOGICAL_AND:
+			append_binaryoper(gs,out," and ",n); break;
+		case E_LOGICAL_OR:
+			append_binaryoper(gs,out," or ",n); break;
+		case E_LOGICAL_XOR:
+			append_binaryoper(gs,out," xor ",n); break;
+		case E_LOGICAL_NOT:
+			append_unaryoper(gs,out,"not ",n); break;
+
+		case E_GET_ELEMENT:
+			GET_LRR(n,l,r,rr);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout(gs,out,"@[");
+			print_etree(gs,out,r);
+			appendout_c(gs,out,',');
+			print_etree(gs,out,rr);
+			appendout(gs,out,"])");
+			break;
+		case E_GET_ROW:
+			GET_LR(n,l,r);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout(gs,out,"@[");
+			print_etree(gs,out,r);
+			appendout(gs,out,",])");
+			break;
+		case E_GET_COLUMN:
+			GET_LR(n,l,r);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout(gs,out,"@[,");
+			print_etree(gs,out,r);
+			appendout(gs,out,"])");
+			break;
+
+		case E_REFERENCE:
+			append_unaryoper(gs,out,"&",n); break;
+		case E_DEREFERENCE:
+			append_unaryoper(gs,out,"*",n); break;
+
 		case E_IF_CONS:
-			s=output_str(s,out,"if(");
-			s=makeexprstr(s,out,l);
-			s=output_str(s,out,")(");
-			s=makeexprstr(s,out,r);
-			s=output_str(s,out,")");
+			GET_LR(n,l,r);
+			appendout(gs,out,"(if ");
+			print_etree(gs,out,l);
+			appendout(gs,out," then ");
+			print_etree(gs,out,r);
+			appendout(gs,out,")");
 			break;
 		case E_IFELSE_CONS:
-			s=output_str(s,out,"ifelse(");
-			s=makeexprstr(s,out,l);
-			s=output_str(s,out,")(");
-			s=makeexprstr(s,out,r);
-			s=output_str(s,out,")(");
-			s=makeexprstr(s,out,sr);
-			s=output_str(s,out,")");
+			GET_LRR(n,l,r,rr);
+			appendout(gs,out,"(if ");
+			print_etree(gs,out,l);
+			appendout(gs,out," then ");
+			print_etree(gs,out,r);
+			appendout(gs,out," else ");
+			print_etree(gs,out,rr);
+			appendout(gs,out,")");
 			break;
 		case E_WHILE_CONS:
-			s=output_str(s,out,"while(");
-			s=makeexprstr(s,out,l);
-			s=output_str(s,out,")(");
-			s=makeexprstr(s,out,r);
-			s=output_str(s,out,")");
+			GET_LR(n,l,r);
+			appendout(gs,out,"(while ");
+			print_etree(gs,out,l);
+			appendout(gs,out," do ");
+			print_etree(gs,out,r);
+			appendout(gs,out,")");
 			break;
-		case E_EQ_CMP: s=get_normalprim(s,out,"==",l,r); break;
-		case E_NE_CMP: s=get_normalprim(s,out,"!=",l,r); break;
-		case E_CMP_CMP: s=get_normalprim(s,out,"<=>",l,r); break;
-		case E_LT_CMP: s=get_normalprim(s,out,"<",l,r); break;
-		case E_GT_CMP: s=get_normalprim(s,out,">",l,r); break;
-		case E_LE_CMP: s=get_normalprim(s,out,"<=",l,r); break;
-		case E_GE_CMP: s=get_normalprim(s,out,">=",l,r); break;
-		case E_LOGICAL_AND: s=get_normalprim(s,out,"and",l,r); break;
-		case E_LOGICAL_OR: s=get_normalprim(s,out,"or",l,r); break;
-		case E_LOGICAL_XOR: s=get_normalprim(s,out,"xor",l,r); break;
-		case E_LOGICAL_NOT: s=get_normalprim(s,out,"not",l,r); break;
+		case E_UNTIL_CONS:
+			GET_LR(n,l,r);
+			appendout(gs,out,"(until ");
+			print_etree(gs,out,l);
+			appendout(gs,out," do ");
+			print_etree(gs,out,r);
+			appendout(gs,out,")");
+			break;
+		case E_DOWHILE_CONS:
+			GET_LR(n,l,r);
+			appendout(gs,out,"(do ");
+			print_etree(gs,out,l);
+			appendout(gs,out," while ");
+			print_etree(gs,out,r);
+			appendout(gs,out,")");
+			break;
+		case E_DOUNTIL_CONS:
+			GET_LR(n,l,r);
+			appendout(gs,out,"(do ");
+			print_etree(gs,out,l);
+			appendout(gs,out," until ");
+			print_etree(gs,out,r);
+			appendout(gs,out,")");
+			break;
+
+		case E_DIRECTCALL:
+		case E_CALL:
+			GET_L(n,l);
+			appendout_c(gs,out,'(');
+			if(l->type==IDENTIFIER_NODE) {
+				appendout(gs,out,l->data.id);
+			} else if(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE) {
+				ETree *t;
+				GET_L(l,t);
+				if(t->type!=IDENTIFIER_NODE) {
+					(*errorout)(_("Bad identifier for function node!"));
+					appendout(gs,out,"???)");
+					break;
+				}
+				appendout_c(gs,out,'*');
+				appendout(gs,out,t->data.id);
+			} else {
+				(*errorout)(_("Bad identifier for function node!"));
+				appendout(gs,out,"???)");
+				break;
+			}
+			appendout_c(gs,out,'(');
+			li = n->args->next;
+			print_etree(gs,out,li->data);
+			li=g_list_next(li);
+			for(;li!=NULL;li=g_list_next(li)) {
+				appendout_c(gs,out,',');
+				print_etree(gs,out,li->data);
+			}
+			appendout(gs,out,"))");
+			break;
+		case E_RETURN:
+			append_unaryoper(gs,out,"return ",n); break;
+
 		default:
-			s=output_str(s,out,"<???>");
-			break;
+			(*errorout)(_("Unexpected operator!"));
+			appendout(gs,out,"(???)");
+		       break;
 	}
-	s=output_str(s,out,")");
-	return s;
 }
 
+
 /*make a string representation of an expression*/
-char *
-makeexprstr(char *s, FILE *out, tree_t *n)
+void
+print_etree(GString *gs, FILE *out, ETree *n)
 {
 	char *p;
-	int i;
-
-	if(!n)
-		return s;
-
-	if(n->type==NUMBER_NODE) {
-		p=mpw_getstring(n->data.val,calcstate.max_digits,
-			calcstate.scientific_notation,
-			calcstate.results_as_floats);
-		/*if(!s)
-			return p;*/
-		s=output_str(s,out,p);
-		g_free(p);
-		return s;
-	} else if(n->type==ACTION_NODE) {
-		if(n->data.action.type==PRIMITIVE_TYPE) {
-			s=get_prim(s,out,n->data.action.data.primitive,
-				n->args[0],n->args[1],n->args[2]);
-			return s;
-		} else { /*type==FUNCTION_TYPE*/
-			s=output_str(s,out,n->data.action.data.func->id);
-			if(n->data.action.data.func->nargs<=0)
-				return s;
-			s=output_str(s,out,"(");
-			s=makeexprstr(s,out, n->args[0]);
-			for(i=1;i<n->data.action.data.func->nargs;i++) {
-				s=output_str(s,out,",");
-				s=makeexprstr(s,out, n->args[i]);
-			}
-			s=output_str(s,out,")");
-			return s;
-		}
-	} else if(n->type == NULL_NODE) {
-		s=output_str(s,out,"(null)");
-		return s;
+	
+	if(!n) {
+		(*errorout)(_("NULL tree!"));
+		appendout(gs,out,"(???)");
+		return;
 	}
-	s=output_str(s,out,"(???)");
-	return s;
+
+	switch(n->type) {
+	case NULL_NODE:
+		appendout(gs,out,"(null)");
+		break;
+	case VALUE_NODE:
+		p=mpw_getstring(n->data.value,calcstate.max_digits,
+				calcstate.scientific_notation,
+				calcstate.results_as_floats);
+		appendout(gs,out,p);
+		g_free(p);
+		break;
+	case MATRIX_NODE:
+	case MATRIX_ROW_NODE:
+		/*FIXME: add matrixen*/
+		appendout(gs,out,"(FIXME:matrix)");
+		break;
+	case OPERATOR_NODE:
+		appendoper(gs,out,n);
+		break;
+	case IDENTIFIER_NODE:
+		appendout(gs,out,n->data.id);
+		break;
+	case STRING_NODE:
+		appendout_c(gs,out,'"');
+		appendout(gs,out,n->data.id);
+		appendout_c(gs,out,'"');
+		break;
+	case FUNCTION_NODE:
+		{
+			GList *li;
+			EFunc *f;
+			
+			f = n->data.func;
+			if(!f) {
+				(*errorout)(_("NULL function!"));
+				appendout(gs,out,"(???)");
+				break;
+			}
+
+			appendout(gs,out,"(`(");
+
+			for(li=f->named_args; li!=NULL; li=g_list_next(li)) {
+				if(li!=f->named_args)
+					appendout_c(gs,out,',');
+				appendout(gs,out,li->data);
+			}
+
+			if(f->type==USER_FUNC) {
+				appendout(gs,out,"){");
+				print_etree(gs,out,f->data.user);
+				appendout(gs,out,"})");
+			} else {
+				(*errorout)(_("Unexpected function type!"));
+				appendout(gs,out,"){???}");
+			}
+			break;
+		}
+	default:
+		(*errorout)(_("Unexpected node!"));
+		appendout(gs,out,"(???)");
+	       break;
+	}
 }
 
 /*add the right parenthesis and brackets to the end of the expression*/
@@ -260,6 +432,8 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 {
 	char * p;
 	int stacklen;
+	ETree *ret;
+	int willquit = FALSE;
 
 	/*init the context stack and clear out any stale dictionaries
 	  except the global one, if this is the first time called it
@@ -276,14 +450,8 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 	
 	mpw_init_mp();
 	mpw_set_default_prec(state.float_prec);
-
-
-	if(calcstate.notation_in==INFIX_NOTATION)
-		first_tok = INFIX_EXPR;
-	else if(calcstate.notation_in==POSTFIX_NOTATION)
-		first_tok = POSTFIX_EXPR;
-	else
-		first_tok = PREFIX_EXPR;
+	
+	first_tok = STARTTOK;
 
 	use_readline = FALSE;
 	if(str || !infile) {
@@ -297,7 +465,7 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 			char *s = readline("genius> ");
 			char buf[256];
 			if(!s) {
-				error_num = EOF_ERROR;
+				got_eof = TRUE;
 				return NULL;
 			}
 			if(*s)
@@ -313,13 +481,9 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		yyin = infile;
 
 	lex_init = TRUE;
-	notation_stack =
-		g_list_prepend(NULL, GINT_TO_POINTER(calcstate.notation_in));
 	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
 	yyparse();
 	
-	while(notation_stack)
-		stack_pop(&notation_stack);
 	/*while(yyparse() && !feof(yyin))
 		;*/
 
@@ -335,11 +499,8 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 	
 	stacklen = g_list_length(evalstack);
 	
-	/*found end of file*/
-	if(stacklen==0) {
-		error_num = EOF_ERROR;
+	if(stacklen==0)
 		return NULL;
-	}
 
 	/*stack is supposed to have only ONE entry*/
 	if(stacklen!=1) {
@@ -350,28 +511,45 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		return NULL;
 	}
 
-	evalstack->data = evalnode(evalstack->data);
+	if(returnval)
+		freetree(returnval);
+	returnval = NULL;
+	ret = evalnode(evalstack->data);
+	freetree(stack_pop(&evalstack));
+	if(!ret && returnval)
+		ret = returnval;
+	else if(returnval)
+		freetree(returnval);
+	returnval = NULL;
 
 	/*catch evaluation errors*/
+	if(!ret)
+		return NULL;
 	if(error_num!=NO_ERROR) {
-		freetree(stack_pop(&evalstack));
+		freetree(ret);
 		return NULL;
 	}
 
 	p = NULL;
-	if(((tree_t *)evalstack->data)->type != NULL_NODE) {
+	if(ret->type != NULL_NODE) {
+		GString *gs = g_string_new("");
 		if(prefix) {
 			if(outfile)
 				fputs(prefix,outfile);
 			else
-				p = g_strdup(prefix);
+				g_string_append(gs,prefix);
 		}
-		p = makeexprstr(p, outfile,evalstack->data);
-		if(outfile)
+		print_etree(gs, outfile,ret);
+		if(outfile) {
+			g_string_free(gs,TRUE);
 			fputc('\n',outfile);
+		} else {
+			p = gs->str;
+			g_string_free(gs,FALSE);
+		}
 	}
 
-	freetree(stack_pop(&evalstack));
+	freetree(ret);
 
 	return p;
 }

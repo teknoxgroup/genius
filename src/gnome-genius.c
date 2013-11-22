@@ -33,9 +33,7 @@
 
 /*calculator state*/
 calcstate_t curstate={
-	INFIX_NOTATION,
 	256,
-	INFIX_NOTATION,
 	12,
 	FALSE,
 	FALSE,
@@ -43,6 +41,7 @@ calcstate_t curstate={
         };
 
 extern calc_error_t error_num;
+extern int got_eof;
 
 /*static int base=10;*/
 static GtkWidget *history; /*history list (CList) */
@@ -197,7 +196,7 @@ dorun(GtkWidget * widget, gpointer * data)
 		errors=NULL;
 	}
 	
-	if(error_num == EOF_ERROR)
+	if(got_eof)
 		gtk_main_quit();
 	if(!o[1])
 		return;
@@ -257,32 +256,6 @@ quitapp(GtkWidget * widget, gpointer * data)
 {
 	set_properties();
 	gtk_main_quit();
-}
-
-/*set notation functions*/
-static void
-infixnot(GtkWidget * widget, gpointer * data)
-{
-	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*(int *)data=INFIX_NOTATION;
-
-	gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
-}
-static void
-prefixnot(GtkWidget * widget, gpointer * data)
-{
-	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*(int *)data=PREFIX_NOTATION;
-
-	gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
-}
-static void
-postfixnot(GtkWidget * widget, gpointer * data)
-{
-	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*(int *)data=POSTFIX_NOTATION;
-
-	gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
 }
 
 /*exact answer callback*/
@@ -390,39 +363,6 @@ setup_calc(GtkWidget *widget, gpointer data)
 	box=gtk_vbox_new(FALSE,0);
 	boxt=gtk_hbox_new(FALSE,0);
 	
-	wt=gtk_radio_button_new_with_label(NULL, _("Prefix notation"));
-	gtk_signal_connect(GTK_OBJECT(wt), "toggled",
-		   GTK_SIGNAL_FUNC(prefixnot),&tmpstate.notation_in);
-	gtk_box_pack_start(GTK_BOX(boxt),wt,TRUE,TRUE,5);
-	gtk_widget_show(wt);
-	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(wt),
-				    (tmpstate.notation_in == PREFIX_NOTATION) ?
-				    TRUE : FALSE);
-	
-	w=gtk_radio_button_new_with_label(
-		gtk_radio_button_group(GTK_RADIO_BUTTON(wt)),
-		_("Infix notation"));
-	gtk_signal_connect(GTK_OBJECT(w), "toggled",
-		   GTK_SIGNAL_FUNC(infixnot),&tmpstate.notation_in);
-	gtk_box_pack_start(GTK_BOX(boxt),w,TRUE,TRUE,5);
-	gtk_widget_show(w);
-	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w),
-				    (tmpstate.notation_in == INFIX_NOTATION) ?
-				    TRUE : FALSE);
-	
-	w=gtk_radio_button_new_with_label(
-		gtk_radio_button_group(GTK_RADIO_BUTTON(wt)),
-		_("Postfix notation (RPN)"));
-	gtk_signal_connect(GTK_OBJECT(w), "toggled",
-		   GTK_SIGNAL_FUNC(postfixnot),&tmpstate.notation_in);
-	gtk_box_pack_start(GTK_BOX(boxt),w,TRUE,TRUE,5);
-	gtk_widget_show(w);
-	gtk_box_pack_start(GTK_BOX(box),boxt,FALSE,FALSE,5);
-	gtk_widget_show(boxt);
-	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w),
-				    (tmpstate.notation_in == POSTFIX_NOTATION) ?
-				    TRUE : FALSE);
-
 	boxt = gtk_table_new(2, 2, TRUE);
 	gtk_box_pack_start(GTK_BOX(box),boxt,TRUE,TRUE,5);
 	gtk_widget_show(boxt);
@@ -477,39 +417,39 @@ setup_calc(GtkWidget *widget, gpointer data)
 }
 
 GnomeUIInfo calc_menu[] = {
-	{GNOME_APP_UI_ITEM, N_("Properties..."), NULL, setup_calc, NULL, NULL,
+	{GNOME_APP_UI_ITEM, N_("_Properties..."), NULL, setup_calc, NULL, NULL,
 		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_PROP, 0, 0, NULL},
-	{GNOME_APP_UI_ITEM, N_("Exit"), NULL, quitapp, NULL, NULL,
+	{GNOME_APP_UI_ITEM, N_("E_xit"), NULL, quitapp, NULL, NULL,
 		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_EXIT, 'X', GDK_CONTROL_MASK, NULL},
 	{GNOME_APP_UI_ENDOFINFO}
 };
 
 GnomeUIInfo view_menu[] = {  
-	{GNOME_APP_UI_TOGGLEITEM, N_("Numpad"), NULL, showhide, (gpointer) 1, NULL,
+	{GNOME_APP_UI_TOGGLEITEM, N_("_Numpad"), NULL, showhide, (gpointer) 1, NULL,
 		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	{GNOME_APP_UI_TOGGLEITEM, N_("Scientific"), NULL, showhide, (gpointer) 2, NULL,
+	{GNOME_APP_UI_TOGGLEITEM, N_("_Scientific"), NULL, showhide, (gpointer) 2, NULL,
 		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
 	{GNOME_APP_UI_ENDOFINFO}
 };
 
 GnomeUIInfo help_menu[] = {  
-	{ GNOME_APP_UI_HELP, NULL, NULL, NULL, NULL, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL}, 
+/* 	{ GNOME_APP_UI_HELP, NULL, NULL, NULL, NULL, NULL,
+		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},  */
 	
-	{GNOME_APP_UI_ITEM, N_("About..."), NULL, aboutcb, NULL, NULL,
+	{GNOME_APP_UI_ITEM, N_("_About..."), NULL, aboutcb, NULL, NULL,
 		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_ABOUT, 0, 0, NULL},
 	
 	{GNOME_APP_UI_ENDOFINFO}
 };
   
 GnomeUIInfo genius_menu[] = {
-	{GNOME_APP_UI_SUBTREE, N_("Calculator"), NULL, calc_menu, NULL, NULL,
+	{GNOME_APP_UI_SUBTREE, N_("_Calculator"), NULL, calc_menu, NULL, NULL,
 		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
 	
-	{GNOME_APP_UI_SUBTREE, N_("View"), NULL, view_menu, NULL, NULL,
+	{GNOME_APP_UI_SUBTREE, N_("_View"), NULL, view_menu, NULL, NULL,
 		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
 	
-	{GNOME_APP_UI_SUBTREE, N_("Help"), NULL, help_menu, NULL, NULL,
+	{GNOME_APP_UI_SUBTREE, N_("_Help"), NULL, help_menu, NULL, NULL,
 		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
 	
 	{GNOME_APP_UI_ENDOFINFO}
@@ -547,9 +487,6 @@ get_properties (void)
 		showhide(GTK_WIDGET(view_menu[i].widget), (gpointer *) (i + 1));
 	}
 	
-	g_snprintf(buf,256,"/genius/properties/notation=%d",
-		   curstate.notation_in);
-	curstate.notation_in = gnome_config_get_int(buf);
 	g_snprintf(buf,256,"/genius/properties/max_digits=%s",
 		   (curstate.max_digits == 0)?"true":"false");
 	curstate.max_digits = (gnome_config_get_bool(buf))? 0 : 12;
@@ -567,7 +504,6 @@ get_properties (void)
 static void
 set_properties (void)
 {
-	gnome_config_set_int("/genius/properties/notation", curstate.notation_in);
 	gnome_config_set_bool("/genius/properties/max_digits", 
 			      (curstate.max_digits == 0) ? TRUE : FALSE);
 	gnome_config_set_bool("/genius/properties/make_floats_ints", 
@@ -626,7 +562,7 @@ main(int argc, char *argv[])
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 	textdomain(PACKAGE);
 
-	gnome_init("genius", NULL, argc, argv, 0, NULL);
+	gnome_init("genius", NULL, argc, argv);
 	
         /*set up the top level window*/
 	window=create_main_window();
@@ -643,15 +579,18 @@ main(int argc, char *argv[])
 	frame=gtk_frame_new(_("Display"));
 	box=gtk_vbox_new(FALSE,0);
 
+	w = gtk_scrolled_window_new(NULL,NULL);
+	gtk_widget_show(w);
+	gtk_widget_set_usize(w,200,100);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(w),
+				       GTK_POLICY_AUTOMATIC,
+				       GTK_POLICY_ALWAYS);
+	gtk_box_pack_start(GTK_BOX(box),w,TRUE,TRUE,0);
 	history=gtk_clist_new(2);
-	gtk_clist_set_policy(GTK_CLIST(history),
-		GTK_POLICY_ALWAYS,
-		GTK_POLICY_AUTOMATIC);
-	gtk_widget_set_usize(history,200,100);
-	gtk_box_pack_start(GTK_BOX(box),history,TRUE,TRUE,0);
+	gtk_widget_show(history);
+	gtk_container_add(GTK_CONTAINER(w),history);
 	gtk_signal_connect(GTK_OBJECT(history), "select_row",
                       GTK_SIGNAL_FUNC(history_select_row), NULL);
-	gtk_widget_show(history);
 
 	boxt=gtk_hbox_new(FALSE,0);
 	entry=gtk_entry_new();
@@ -739,7 +678,7 @@ main(int argc, char *argv[])
 
 	/*set up the menu*/
         gnome_app_create_menus(GNOME_APP(window), genius_menu);
-	gtk_menu_item_right_justify(GTK_MENU_ITEM(genius_menu[2].widget));
+/*	gtk_menu_item_right_justify(GTK_MENU_ITEM(genius_menu[2].widget));*/
 
 	/*read gnome_config parameters */
 	

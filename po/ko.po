@@ -1,148 +1,205 @@
-# gnome-utils ko.po
-# Copyright (C) 1998 Free Software Foundation, Inc.
-# Changwoo Ryu <cwryu@adam.kaist.ac.kr>, 1998
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: GNOME-utils 0.13\n"
-"POT-Creation-Date: 1998-02-16 20:29+0900\n"
-"PO-Revision-Date: 1998-09-03 05:33:03+0900\n"
-"Last-Translator: Sung-Hyun Nam <namsh@lgic.co.kr>\n"
-"Language-Team: Korean <ko@li.org>\n"
-"MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=euc-kr\n"
-"Content-Transfer-Encoding: 8bit\n"
+"Date: 1998-11-30 20:56:21-0800\n"
+"From: George <jirka@julia.linux.bogus>\n"
+"Content-Type: text/plain; charset=\n"
+"Xgettext-Options: --default-domain=genius --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
+"Files: src/gnome-genius.c src/eval.c src/calc.c src/util.c\n"
 
-#: src/gnome-genius.c:243 src/gnome-genius.c:525
+#: src/gnome-genius.c:242 src/gnome-genius.c:465
 msgid "GnomENIUS Calculator"
-msgstr "GnomENIUS \260\350\273\352\261\342"
+msgstr ""
 
-#: src/gnome-genius.c:248
+#. another comments
+#: src/gnome-genius.c:247
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
-#: src/gnome-genius.c:376
+#: src/gnome-genius.c:349
 msgid "GnomENIUS Calculator setup"
-msgstr "GnomENIUS \260\350\273\352\261\342 \310\257\260\346\274\263\301\244"
+msgstr ""
 
-#: src/gnome-genius.c:386
+#: src/gnome-genius.c:359
 msgid "General"
-msgstr "\300\317\271\335"
+msgstr ""
 
 #. options area
-#: src/gnome-genius.c:389
+#: src/gnome-genius.c:362
 msgid "Properties"
-msgstr "\274\323\274\272"
-
-#: src/gnome-genius.c:393
-msgid "Prefix notation"
 msgstr ""
 
-#: src/gnome-genius.c:404
-msgid "Infix notation"
-msgstr ""
-
-#: src/gnome-genius.c:415
-msgid "Postfix notation (RPN)"
-msgstr ""
-
-#: src/gnome-genius.c:429
+#: src/gnome-genius.c:369
 msgid "Full (exact) answers"
-msgstr "\300\374\303\274 (\301\244\310\256\307\321) \264\353\264\344"
+msgstr ""
 
-#: src/gnome-genius.c:439
+#: src/gnome-genius.c:379
 msgid "Make floats integers (e.g. 10.0=10)"
-msgstr "\275\307\274\366\267\316 \272\257\310\257 (\260\241\267\311 10.0=10)"
+msgstr ""
 
-#: src/gnome-genius.c:448
+#: src/gnome-genius.c:388
 msgid "Results as floats"
 msgstr ""
 
-#: src/gnome-genius.c:457
+#: src/gnome-genius.c:397
 msgid "Floats in scientific notation"
 msgstr ""
 
-#: src/gnome-genius.c:480
-msgid "Properties..."
-msgstr "\274\323\274\272..."
+#: src/gnome-genius.c:420
+msgid "_Properties..."
+msgstr ""
 
-#: src/gnome-genius.c:482
-msgid "Exit"
-msgstr "\263\241\263\273\261\342"
+#: src/gnome-genius.c:422
+msgid "E_xit"
+msgstr ""
 
-#: src/gnome-genius.c:488 src/gnome-genius.c:679
+#: src/gnome-genius.c:428
+msgid "_Numpad"
+msgstr ""
+
+#: src/gnome-genius.c:430
+msgid "_Scientific"
+msgstr ""
+
+#: src/gnome-genius.c:439
+msgid "_About..."
+msgstr ""
+
+#: src/gnome-genius.c:446
+msgid "_Calculator"
+msgstr ""
+
+#: src/gnome-genius.c:449
+msgid "_View"
+msgstr ""
+
+#: src/gnome-genius.c:452
+msgid "_Help"
+msgstr ""
+
+#: src/gnome-genius.c:579
+msgid "Display"
+msgstr ""
+
+#. numpad
+#: src/gnome-genius.c:618
 msgid "Numpad"
 msgstr ""
 
 #. scientific
-#: src/gnome-genius.c:490 src/gnome-genius.c:710
+#: src/gnome-genius.c:649
 msgid "Scientific"
-msgstr "\260\370\307\320\277\353"
+msgstr ""
 
-#: src/gnome-genius.c:499
-msgid "About..."
-msgstr "\300\314 \307\301\267\316\261\327\267\245\300\272..."
+#: src/eval.c:373
+msgid "Lvalue not an identifier/dereference!"
+msgstr ""
 
-#: src/gnome-genius.c:506
-msgid "Calculator"
-msgstr "\260\350\273\352\261\342"
+#: src/eval.c:390 src/eval.c:420 src/eval.c:445 src/eval.c:549 src/eval.c:597 src/eval.c:707
+msgid "Variable '%s' used unintialized"
+msgstr ""
 
-#: src/gnome-genius.c:509
-msgid "View"
-msgstr "\272\270\261\342"
+#: src/eval.c:410
+msgid "Dereference of non-identifier!"
+msgstr ""
 
-#: src/gnome-genius.c:512
-msgid "Help"
-msgstr "\265\265\277\362\270\273"
+#: src/eval.c:430
+msgid "Dereference of non-reference!"
+msgstr ""
 
-#: src/gnome-genius.c:643
-msgid "Display"
-msgstr "\307\245\275\303"
+#: src/eval.c:533
+msgid "Function '%s' used unintialized"
+msgstr ""
 
-#: src/eval.c:335
-msgid "Variable used uninitialized!"
-msgstr "\303\312\261\342\310\255\265\307\301\366 \276\312\300\272 \272\257\274\366\260\241 \273\347\277\353\265\312!"
+#: src/eval.c:557
+msgid "Can't dereference '%s'!"
+msgstr ""
 
-#: src/eval.c:482
-msgid "Left value is NOT a number! (ignoring if construct)"
-msgstr "\277\336\302\312 \260\252\300\314 \274\375\300\332\260\241 \276\306\264\325\264\317\264\331! (construct\266\363\270\351 \271\253\275\303)"
+#: src/eval.c:566
+msgid "Can't call a non-function!"
+msgstr ""
 
-#: src/eval.c:495
-msgid "Left value is NOT a number! (ignoring ifelse construct)"
-msgstr "\277\336\302\312 \260\252\300\314 \274\375\300\332\260\241 \276\306\264\325\264\317\264\331! (construct\260\241 \276\306\264\317\266\363\270\351 \271\253\275\303)"
+#: src/eval.c:574 src/eval.c:711 src/eval.c:802
+msgid ""
+"Call of '%s' with the wrong number of arguments!\n"
+"(should be %d)"
+msgstr ""
 
-#: src/eval.c:712
-msgid "'=' can't function without proper nodes!"
-msgstr "'=' \300\373\300\375\307\321 \263\353\265\345\276\370\300\314 \265\277\300\333\307\322 \274\366 \276\370\275\300\264\317\264\331!"
+#: src/eval.c:612 src/eval.c:727 src/eval.c:809 src/eval.c:1278
+msgid "Extraneous return value!"
+msgstr ""
+
+#: src/eval.c:650
+msgid "Reference function with arguments encountered!"
+msgstr ""
+
+#: src/eval.c:657
+msgid "Unnamed reference function encountered!"
+msgstr ""
+
+#: src/eval.c:688 src/eval.c:781 src/eval.c:783 src/eval.c:860
+msgid "Unevaluatable function type encountered!"
+msgstr ""
 
 #: src/eval.c:716
-msgid "Left value is NOT a 0\\function! (ignoring '=')"
-msgstr "\277\336\302\312 \260\252\300\314 0\\\307\324\274\366\260\241 \276\306\264\325\264\317\264\331! ('=' \271\253\275\303)"
+msgid "Trying to dereference '%s' which is not a reference!\n"
+msgstr ""
 
-#: src/eval.c:720
-msgid "Right value is NOT computed! (ignoring '=')"
-msgstr "\277\300\270\245\302\312 \260\252\300\314 \260\350\273\352\265\307\301\366 \276\312\276\322\275\300\264\317\264\331! ('=' \271\253\275\303)"
+#: src/eval.c:722
+msgid "NULL reference encountered!"
+msgstr ""
 
-#: src/eval.c:733
-msgid "funcdefop can't function without proper nodes!"
-msgstr "funcdefop\264\302 \300\373\300\375\307\321 \263\353\265\345\276\370\300\314\264\302 \265\277\300\333\307\322 \274\366 \276\370\275\300\264\317\264\331!"
+#: src/eval.c:754
+msgid "Unnamed reference function encountered"
+msgstr ""
 
-#: src/eval.c:736
-msgid "Left value is NOT a function! (ignoring function definition)"
-msgstr "\277\336\302\312 \260\252\300\314 \307\324\274\366\260\241 \276\306\264\325\264\317\264\331! (\307\324\274\366\301\244\300\307 \271\253\275\303)"
+#: src/eval.c:795
+msgid "Variable '%s' used unitialized"
+msgstr ""
 
-#: src/calc.c:349
+#: src/eval.c:1241
+msgid "Logical not only define on numbers"
+msgstr ""
+
+#: src/calc.c:293 src/eval.c:1289
+msgid "Unexpected operator!"
+msgstr ""
+
+#: src/calc.c:370 src/eval.c:1311
+msgid "Unexpected node!"
+msgstr ""
+
+#: src/eval.c:1347
+msgid "Could not evaluate predicate into a numeric boolean value!"
+msgstr ""
+
+#: src/calc.c:268 src/calc.c:275
+msgid "Bad identifier for function node!"
+msgstr ""
+
+#: src/calc.c:307
+msgid "NULL tree!"
+msgstr ""
+
+#: src/calc.c:346
+msgid "NULL function!"
+msgstr ""
+
+#: src/calc.c:364
+msgid "Unexpected function type!"
+msgstr ""
+
+#: src/calc.c:510
 msgid "ERROR: Probably corrupt stack!"
-msgstr "\277\241\267\257: \275\272\305\303\300\314 \261\372\301\370 \260\315 \260\260\300\275!"
+msgstr ""
 
-#: src/calc.c:383
+#: src/calc.c:561
 msgid "ERROR: "
-msgstr "\277\241\267\257: "
+msgstr ""
 
-#: src/calc.c:383
+#: src/calc.c:561
 msgid " before '"
 msgstr ""
 
-#: src/util.c:128
+#: src/util.c:137
 msgid "Stack underflow!"
-msgstr "\275\272\305\303 \276\306\267\241\263\321\304\247!"
+msgstr ""

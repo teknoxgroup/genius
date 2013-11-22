@@ -26,9 +26,6 @@
 
 #include "structs.h"
 
-typedef enum {INFIX_NOTATION=0,
-	      POSTFIX_NOTATION,
-	      PREFIX_NOTATION} notation_t;
 typedef enum {	NO_ERROR=0,
 		PARSE_ERROR,
 		INTERNAL_MPW_ERROR,
@@ -40,10 +37,8 @@ typedef enum {	NO_ERROR=0,
 
 typedef struct _calcstate_t {
 	/*about incoming stuff*/
-	notation_t notation_in; /*notation of input*/
 	int float_prec;        /*precision of floats to use*/
 	/*about outgoing stuff*/
-	notation_t notation_out; /*notation of output*/
 	int max_digits; /*max digits in the display 0= as many as I got*/
 	int make_floats_ints;  /*make ints from floats during calculations*/
 	int results_as_floats;  /*give result as float*/
@@ -55,7 +50,7 @@ typedef struct _calcstate_t {
 int yyparse(void);
 
 /*make a string representation of an expression*/
-char * makeexprstr(char *s,FILE *out, tree_t *n);
+void print_etree(GString *gs, FILE *out, ETree *n);
 
 /*add the right parenthesis and brackets to the end of the expression*/
 char * addparenth(char *s);

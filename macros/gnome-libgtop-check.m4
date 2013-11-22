@@ -70,7 +70,7 @@ AC_DEFUN([GNOME_LIBGTOP_HOOK],
 	dnl   If you increase this number here, this means that *ALL*
 	dnl   modules will require the new version, even if they explicitly
 	dnl   give a lower number in their `configure.in' !!!
-	real_min_libgtop_version=0.25.0
+	real_min_libgtop_version=0.29.0
 	min_libgtop_version=ifelse([$1], ,$real_min_libgtop_version,$1)
 	dnl I know, the following code looks really ugly, but if you want
 	dnl to make changes, please test it with a brain-dead /bin/sh and
@@ -151,5 +151,5 @@ AC_DEFUN([GNOME_LIBGTOP_HOOK],
 ])
 
 AC_DEFUN([GNOME_INIT_LIBGTOP],[
-	GNOME_LIBGTOP_HOOK($1,[],$2)
+	GNOME_LIBGTOP_HOOK($1,[ifelse([$3], [], :, [$3])],$2)
 ])

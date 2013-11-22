@@ -19,6 +19,16 @@
  * USA.
  */
 %{
+#include <config.h>
+
+#ifndef WITHOUT_GNOME
+#include <gnome.h>
+#else
+#ifndef _
+#define _(x) x
+#endif
+#endif
+
 #include <glib.h>
 #include <string.h>
 #include "mpwrap.h"
@@ -29,44 +39,32 @@
 #ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #endif
-
+	
 int lex_fd[2];
-int first_tok = INFIX_EXPR;
+int first_tok = STARTTOK;
 int return_ret = FALSE;
-static int block_depth = 0;
 static int parenth_depth = 0;
-GList *notation_stack = NULL;
 int use_readline = FALSE;
 int lex_init = TRUE;
 extern evalstack_t evalstack;
-
-void push_notation(notation_t not);
-void pop_notation(void);
-
-#define LEX_NOTATION (GPOINTER_TO_INT(notation_stack->data))
+extern int got_eof;
 
 #define NO_RET {return_ret = FALSE;}
 #define DO_RET { \
-	if(!block_depth && !parenth_depth) \
+	if(!parenth_depth) \
 		return_ret = TRUE; \
 	else \
 		return_ret = FALSE; \
-}
-
-#define FUNC_RET { \
-	if(LEX_NOTATION==POSTFIX_NOTATION) { \
-		DO_RET; \
-	} else { \
-		NO_RET; \
-	} \
 }
 
 #ifdef WITH_READLINE_SUPPORT
 #define NEXT_LINE {							\
 	while(use_readline) {						\
 		char *s = readline(!evalstack?"genius> ":"> ");		\
-		if(!s)							\
-			return EOF;					\
+		if(!s) {						\
+			got_eof = TRUE;					\
+			return '\n';					\
+		}							\
 		if(!*s)							\
 			continue;					\
 		add_history(s);						\
@@ -90,14 +88,11 @@ void pop_notation(void);
 
 %}
 
-%s NEGATIVE
-
 %%
 
 %{
 	if(lex_init) {
 		return_ret = FALSE;
-		block_depth = 0;
 		parenth_depth = 0;
 		lex_init = FALSE;
 	}
@@ -105,34 +100,20 @@ void pop_notation(void);
 	if(first_tok!=INT_MAX) {
 		int i = first_tok;
 		first_tok = INT_MAX;
-		if(i==INFIX_EXPR) {
-			BEGIN INITIAL;
-		} else {
-			BEGIN NEGATIVE;
-		}
 		return i;
 	}
 %}
 
 #.*$		; /*comment, ignore*/
 
-infix		{
-			NO_RET;
-			push_notation(INFIX_NOTATION);
-			return INLINE_INFIX;
-		}
-prefix		{
-			NO_RET;
-			push_notation(PREFIX_NOTATION);
-			return INLINE_PREFIX;
-		}
-postfix		{
-			NO_RET;
-			push_notation(POSTFIX_NOTATION);
-			return INLINE_POSTFIX;
-		}
+\;		{ DO_RET; return SEPAR; }
 
-\;		{ NO_RET; return SEPAR; }
+\"[^"]*\"	{ 
+			DO_RET;
+			yylval.id = g_strdup(&yytext[1]);
+			yylval.id[strlen(yylval.id)-1]='\0';
+			return STRING;
+		}
 
 ~		{ NO_RET; return NEG; }
 
@@ -153,116 +134,42 @@ and		{ NO_RET; return LOGICAL_AND; }
 xor		{ NO_RET; return LOGICAL_XOR; }
 or		{ NO_RET; return LOGICAL_OR; }
 
-while		{ NO_RET; return WHILE_CONS; }
+while		{ NO_RET; return WHILE; }
+do		{ NO_RET; return DO; }
+until		{ NO_RET; return UNTIL; }
+if		{ NO_RET; return IF; }
+then		{ NO_RET; return THEN; }
+else		{ NO_RET; return ELSE; }
 
-ifelse		{ NO_RET; return IFELSE_CONS; }
+define		{ NO_RET; return DEFINE; }
+call		{ NO_RET; return CALL; }
 
-if		{ NO_RET; return IF_CONS; }
+return		{ NO_RET; return XRETURN; }
 
-\{		{
-			/*create a new context and push it on top of the
-			  context stack, it's only temporary*/
-			d_addcontext(NULL);
-			block_depth++;
+@[]]		{
+			parenth_depth++;
 			NO_RET;
-			return BEGINBLOCK;
+			return AT;
 		}
 
-\}		{
-
-			/*kill the temporary context, but keep the
-			  declarations*/
-			freedict(d_popcontext(),TRUE);
-			block_depth--;
-			DO_RET;
-			return ENDBLOCK;
-		}
-		
-[[(]		{
+[[({]		{
 			parenth_depth++;
 			NO_RET;
 			return yytext[0];
 		}
 
-[])]		{
+[])}]		{
 			parenth_depth--;
 			DO_RET;
 			return yytext[0];
 		}
 
-arg[1-8]	{
-			DO_RET;
-			/*make static argument placeholders*/
-			if((yylval.func=d_lookup(yytext,FALSE))==NULL)
-				yylval.func=d_addfunc(d_makeufunc(yytext,
-					NULL,NULL,0,FALSE));
-			return FUNCID0;
-		}
-
-[0-8]\\[a-zA-Z][a-zA-Z0-9]*	{
-				/*this is the function declaration*/
-				NO_RET;
-
-				/*create a dummy function, first character is
-				  the number of arguments*/
-				yylval.func=
-					d_addfunc(d_makeufunc(&yytext[2],NULL,
-						NULL,(int)(yytext[0]-'0'),
-						FALSE));
-				return FUNCDEF;
-			}
-
 [a-zA-Z][a-zA-Z0-9]*	{
-				/* we need to find out the number of arguments
-				   for this function, this is a limitation of
-				   mostly the postfix and prefix notation
-				   without parenthesis */
-				func_t *n;
-
-				n=d_lookup(yytext,TRUE);
-				if(!n) {
-					/*create a dummy function*/
-					yylval.func=
-						d_addfunc(d_makeufunc(
-							yytext,NULL,NULL,0,
-							FALSE));
-					DO_RET;
-					return FUNCID0;
-				}
-
-				yylval.func=n;
-				switch(n->nargs) {
-					case 0: DO_RET; return FUNCID0;
-					case 1: FUNC_RET; return FUNCID1;
-					case 2: FUNC_RET; return FUNCID2;
-					case 3: FUNC_RET; return FUNCID3;
-					case 4: FUNC_RET; return FUNCID4;
-					case 5: FUNC_RET; return FUNCID5;
-					case 6: FUNC_RET; return FUNCID6;
-					case 7: FUNC_RET; return FUNCID7;
-					case 8: FUNC_RET; return FUNCID8;
-				}
-				/*too many args or corrupted entry, this
-				  shouldn't happen, and this is not a way
-				  to deal with it, but oh well, for now*/
-				REJECT;
+				/* identifier*/
+				yylval.id = g_strdup(yytext);
+				DO_RET;
+				return FUNCID;
 			}
-
-<NEGATIVE>-[0-9]*\.[0-9]+[e@]-?[0-9]+i	|
-<NEGATIVE>-[0-9]+[e@]-?[0-9]+i		|
-<NEGATIVE>-[0-9]+i			|
-<NEGATIVE>-[0-9]*\.[0-9]+i	{
-			char *s;
-			if(yytext[1] == '.')
-				s = g_strconcat("-0",&yytext[1],NULL);
-			else
-				s = g_strdup(yytext);
-			mpw_init(yylval.val);
-			mpw_set_str_complex(yylval.val,s,10);
-			g_free(s);
-			DO_RET;
-			return NEGNUM;
-		}
 
 [0-9]*\.[0-9]+[e@]-?[0-9]+i	|
 [0-9]+[e@]-?[0-9]+i		|
@@ -277,23 +184,9 @@ arg[1-8]	{
 			mpw_set_str_complex(yylval.val,s,10);
 			g_free(s);
 			DO_RET;
-			return POSNUM;
+			return NUMBER;
 		}
 
-<NEGATIVE>-[0-9]*\.[0-9]+[e@]-?[0-9]+	|
-<NEGATIVE>-[0-9]+[e@]-?[0-9]+		|
-<NEGATIVE>-[0-9]*\.[0-9]+	{
-			char *s;
-			if(yytext[1] == '.')
-				s = g_strconcat("-0",&yytext[1],NULL);
-			else
-				s = g_strdup(yytext);
-			mpw_init(yylval.val);
-			mpw_set_str_float(yylval.val,s,10);
-			g_free(s);
-			DO_RET;
-			return NEGNUM;
-		}
 
 [0-9]*\.[0-9]+[e@]-?[0-9]+	|
 [0-9]+[e@]-?[0-9]+		|
@@ -307,43 +200,21 @@ arg[1-8]	{
 			mpw_set_str_float(yylval.val,s,10);
 			g_free(s);
 			DO_RET;
-			return POSNUM;
+			return NUMBER;
 		}
 
-<NEGATIVE>-([1-3][0-9]|[1-9])#[0-9a-zA-Z]+#	{
+
+([1-3][0-9]|[1-9])\\[0-9a-zA-Z]+	{
 			char *s;
 			int base;
 
 			s=g_malloc(strlen(yytext)-2); /*minus 3 and plus 1*/
-			sscanf(yytext,"-%d#%[0-9a-zA-Z]s#",&base,s);
-			if(base>36) { g_free(s); REJECT; }
-			mpw_init(yylval.val);
-			mpw_set_str_int(yylval.val,s,base);
-			mpw_neg(yylval.val,yylval.val);
-			DO_RET;
-			return NEGNUM;
-		}
-
-([1-3][0-9]|[1-9])#[0-9a-zA-Z]+#	{
-			char *s;
-			int base;
-
-			s=g_malloc(strlen(yytext)-2); /*minus 3 and plus 1*/
-			sscanf(yytext,"%d#%[0-9a-zA-Z]s#",&base,s);
+			sscanf(yytext,"%d\\%[0-9a-zA-Z]s",&base,s);
 			if(base>36) { g_free(s); REJECT; }
 			mpw_init(yylval.val);
 			mpw_set_str_int(yylval.val,s,base);
 			DO_RET;
-			return POSNUM;
-		}
-
-<NEGATIVE>-0x[0-9a-fA-F]+	|
-<NEGATIVE>-0[0-7]+	|
-<NEGATIVE>-[0-9]+		{
-			mpw_init(yylval.val);
-			mpw_set_str_int(yylval.val,yytext,0);
-			DO_RET;
-			return NEGNUM;
+			return NUMBER;
 		}
 
 0x[0-9a-fA-F]+	|
@@ -352,7 +223,7 @@ arg[1-8]	{
 			mpw_init(yylval.val);
 			mpw_set_str_int(yylval.val,yytext,0);
 			DO_RET;
-			return POSNUM;
+			return NUMBER;
 		}
 		
 \\\n		{ NEXT_LINE; }
@@ -367,44 +238,16 @@ arg[1-8]	{
 [ \t\r]+	; /*ignore whitespace*/
 
 \!		{
-			if(LEX_NOTATION==PREFIX_NOTATION) {
-				NO_RET;
-			} else {
-				DO_RET;
-			}
+			DO_RET;
 			return yytext[0];
 		}
 
-[@^*/%+-]	{ FUNC_RET; return yytext[0]; }
+[@^*/%+-]	{ NO_RET; return yytext[0]; }
 
 \.		{ DO_RET; return '.'; }
+
+<<EOF>>		{ got_eof = TRUE; return '\n'; }
 
 .		{ NO_RET; return yytext[0]; }
 
 %%
-
-void
-push_notation(notation_t not)
-{
-	stack_push(&notation_stack,GINT_TO_POINTER(not));
-	if(not==INFIX_NOTATION) {
-		BEGIN INITIAL;
-	} else {
-		BEGIN NEGATIVE;
-	}
-}
-
-void
-pop_notation(void)
-{
-	notation_t not;
-	stack_pop(&notation_stack);
-
-	not = GPOINTER_TO_INT(notation_stack->data);
-	if(not==INFIX_NOTATION) {
-		BEGIN INITIAL;
-	} else {
-		BEGIN NEGATIVE;
-	}
-}
-

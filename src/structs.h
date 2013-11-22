@@ -24,60 +24,57 @@
 
 #include "mpwrap.h"
 
-struct _tree_t;
-
 /*dictionary function structure*/
-typedef enum {BUILTIN_FUNC,USER_FUNC} func_type_t;
-typedef struct _func_t {
-	func_type_t type;
-	char *id;
-	int nargs; /*number of args*/
-	int context;
-	int dynamic;
-	union {
-		struct {
-			struct _tree_t *value;
-			GList *dict;
-		} user;
-		struct _tree_t *(*func)(struct _tree_t * *);
-		struct _func_t *next; /*this is for keeping a free list*/
-	} data;
-} func_t;
+typedef enum {
+	BUILTIN_FUNC=0, /*function internal to genius*/
+	USER_FUNC, /*function that points to an ETree for evaluation*/
+	REFERENCE_FUNC /*a function that points to some other EFunc*/
+} EFuncType;
 
-/*evaluation tree structure, also used in parsing stack*/
+typedef struct _EFunc EFunc;
+typedef struct _ETree ETree;
+
+struct _EFunc {
+	char *id;
+	EFuncType type;
+	int context; /*the context number this is used for .. if we pop this
+		       context, we will destroy the function*/
+	int nargs; /*number of arguments*/
+	GList *named_args; /*names of arguments*/
+	union {
+		ETree *user;
+		ETree *(*func)(ETree * *, int *); /*the integer is exception*/
+		EFunc *ref;
+		EFunc *next; /*this is for keeping a free list*/
+	} data;
+};
 
 typedef enum {
 	NULL_NODE,
-	/*types that should be present after parse*/
-	NUMBER_NODE,
+	VALUE_NODE,
 	MATRIX_NODE,
-	ACTION_NODE,
-	/*intermediate types for parsing*/
 	MATRIX_ROW_NODE,
-	MATRIX_ROW_START_NODE,
-	MATRIX_START_NODE
-} node_type_t;
-typedef enum {PRIMITIVE_TYPE,FUNCTION_TYPE} op_type_t;
-typedef struct _tree_t {
-	node_type_t type;
+	OPERATOR_NODE,
+	IDENTIFIER_NODE,
+	STRING_NODE,
+	FUNCTION_NODE, /*only used for anonymous functions*/
+	
+	/*marker nodes*/
+	MATRIX_START_NODE,
+	EXPRLIST_START_NODE
+} ETreeType;
+
+struct _ETree {
+	ETreeType type;
 	union {
-		mpw_t val;
-		struct {
-			op_type_t type;
-			union {
-				int primitive;
-				func_t * func;
-			} data;
-		} action;
-		struct {
-			GList *list;
-			int size;
-		} matrixrow;
+		mpw_t value;
+		int oper;
+		char *id;
+		EFunc *func; /*anon function*/
+		ETree *next; /*this is for keeping a free list*/
 	} data;
-	struct _tree_t *args[8];
-	/*struct _tree_t *left;
-	struct _tree_t *right;
-	struct _tree_t *secondright;*/ /*rarely used, for example IFELSE*/
-} tree_t;
+	int nargs;
+	GList *args;
+};
 
 #endif

@@ -50,6 +50,11 @@ if test -z "$*"; then
     echo
 fi
 
+case $CC in
+xlc )
+    am_opt=--include-deps;;
+esac
+
 for j in `find $srcdir -name configure.in -print`
 do 
     i=`dirname $j`
@@ -68,15 +73,17 @@ do
     	done; \
     	libtoolize --copy --force; \
     	aclocal $aclocalinclude; \
-    	autoheader; automake --add-missing --gnu; autoheader; autoconf)
+    	autoheader; automake --add-missing --gnu $am_opt; autoheader; autoconf)
     fi
 done
 
-if test x$NOCONFIGURE = x; then
 conf_flags="--enable-maintainer-mode --enable-compile-warnings" #--enable-iso-c
+
+if test x$NOCONFIGURE = x; then
 echo running $srcdir/configure $conf_flags "$@"
-$srcdir/configure $conf_flags "$@" \
-&& echo Now type \`make\' to compile $PKG_NAME
+
+	$srcdir/configure $conf_flags "$@" \
+	&& echo Now type \`make\' to compile $PKG_NAME
 else
 echo Skipping configure process.
 fi

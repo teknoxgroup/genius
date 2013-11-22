@@ -66,14 +66,22 @@ CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 DATADIRNAME = @DATADIRNAME@
 GENCAT = @GENCAT@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_CONFIG = @GLIB_CONFIG@
+GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
+GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
 GNOMEUI_LIBS = @GNOMEUI_LIBS@
 GNOME_CONFIG = @GNOME_CONFIG@
+GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_INCLUDEDIR = @GNOME_INCLUDEDIR@
 GNOME_LIBDIR = @GNOME_LIBDIR@
 GNOME_LIBS = @GNOME_LIBS@
+GNOME_SUPPORT = @GNOME_SUPPORT@
+GNORBA_CFLAGS = @GNORBA_CFLAGS@
+GNORBA_LIBS = @GNORBA_LIBS@
 GTKXMHTML_LIBS = @GTKXMHTML_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_CONFIG = @GTK_CONFIG@
@@ -95,6 +103,10 @@ MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
 NM = @NM@
+ORBIT_CFLAGS = @ORBIT_CFLAGS@
+ORBIT_CONFIG = @ORBIT_CONFIG@
+ORBIT_IDL = @ORBIT_IDL@
+ORBIT_LIBS = @ORBIT_LIBS@
 PACKAGE = @PACKAGE@
 POFILES = @POFILES@
 POSUB = @POSUB@
@@ -111,14 +123,17 @@ l = @l@
 
 Utilitiesdir = $(datadir)/apps/Utilities
 
-INCLUDES = 						\
+INCLUDES =					\
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	\
 	-DLOCALEDIR=\"$(datadir)/locale\"		\
 	-I$(includedir)					\
 	$(GMP_INCLUDEDIR)				\
-	$(GNOME_INCLUDEDIR)
+	$(GNOME_INCLUDEDIR)				\
+	$(GLIB_CFLAGS)
 
-bin_PROGRAMS = gnome-genius genius #gnome-genius-mdi
+bin_PROGRAMS = @GNOME_GENIUS@ genius #gnome-genius-mdi
+
+EXTRA_PROGRAMS = gnome-genius
 
 gnome_genius_SOURCES = 	\
 	calc.c		\
@@ -175,8 +190,8 @@ genius_SOURCES = 	\
 	parse.y
 
 genius_LDADD = \
-	$(GNOME_LIBDIR) \
-	$(GNOMEUI_LIBS) \
+	-lm \
+	$(GLIB_LIBS) \
 	@GMP_LIB@ \
 	@LEXLIB@ \
 	$(INTLLIBS) \
@@ -367,25 +382,25 @@ distdir: $(DISTFILES)
 	  || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	  || cp -p $$d/$$file $(distdir)/$$file; \
 	done
-calc.o: calc.c calc.h structs.h mpwrap.h ../config.h eval.h util.h \
+calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
 	dict.h funclib.h parse.h
-dict.o: dict.c eval.h mpwrap.h ../config.h structs.h dict.h util.h \
+dict.o: dict.c ../config.h eval.h mpwrap.h structs.h dict.h util.h \
 	funclib.h
-eval.o: eval.c mpwrap.h ../config.h eval.h structs.h calc.h dict.h \
+eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
 	util.h funclib.h mymath.h
-funclib.o: funclib.c mpwrap.h ../config.h eval.h structs.h dict.h \
+funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
 	funclib.h mymath.h calc.h
 genius.o: genius.c calc.h structs.h mpwrap.h ../config.h util.h
 gnome-genius.o: gnome-genius.c ../config.h gnome-genius.h calc.h \
 	structs.h mpwrap.h util.h
-lexer.o: lexer.c mpwrap.h ../config.h eval.h structs.h dict.h calc.h \
+lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
 	parse.h
-matrix.o: matrix.c matrix.h
-mpwrap.o: mpwrap.c calc.h structs.h mpwrap.h ../config.h util.h mymath.h
-mymath.o: mymath.c mpwrap.h ../config.h mymath.h
-parse.o: parse.c mpwrap.h ../config.h eval.h structs.h dict.h util.h \
+matrix.o: matrix.c ../config.h matrix.h
+mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h mymath.h
+mymath.o: mymath.c ../config.h mpwrap.h mymath.h
+parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
 	calc.h
-util.o: util.c util.h
+util.o: util.c ../config.h util.h
 
 info:
 dvi:
@@ -455,7 +470,7 @@ mostlyclean distclean maintainer-clean
 
 YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @READLINE_SUPPORT@
+CFLAGS += @READLINE_SUPPORT@ @GNOME_SUPPORT@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
