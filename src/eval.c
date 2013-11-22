@@ -365,13 +365,16 @@ evalbranches(tree_t *n)
 {
 	int noeval=FALSE;
 	int i;
+	int be;
 
 	if(n->type!=ACTION_NODE || n->data.action.type!=PRIMITIVE_TYPE)
 		return 2;
 
+	be = brancheseval(n->data.action.data.primitive);
+
 	/*primitives have maximum of 3 arguments*/
 	for(i=0;i<3;i++) {
-		if(brancheseval(n->data.action.data.primitive)& (1<<(2-i)) ) {
+		if(be & (1<<(2-i)) ) {
 			if((n->args[i]=evalnode(n->args[i]))==NULL) {
 				freetree(n);
 				return 2; /*an error occured*/
@@ -405,14 +408,12 @@ isnodetrue(tree_t *n)
 int
 eval_isnodetrue(tree_t *n)
 {
-	tree_t *m;
-	int r=FALSE;
-	int madecopy=FALSE;
-
 	/*we don't have to make a copy and evaluate if the tree is a number
 	  already*/
 	if(n->type!=NUMBER_NODE) {
-		madecopy=TRUE;
+		int r=FALSE;
+		tree_t *m;
+
 		m=evalnode(copynode(n));
 		if(!m)
 			return FALSE;
@@ -420,15 +421,17 @@ eval_isnodetrue(tree_t *n)
 			freetree(m);
 			return FALSE;
 		}
-	} else
-		m=n;
-	if(mpw_sgn(m->data.val)!=0)
-		r = TRUE;
-	else
-		r = FALSE;
-	if(madecopy)
+		if(mpw_sgn(m->data.val)!=0)
+			r = TRUE;
+		else
+			r = FALSE;
 		freetree(m);
-	return r;
+		return r;
+	}
+	if(mpw_sgn(n->data.val)!=0)
+		return TRUE;
+	else
+		return FALSE;
 }
 
 /*evaluate a treenode, the tree node will become a number node
@@ -509,10 +512,10 @@ evalnode(tree_t *n)
 					while(eval_isnodetrue(n->args[0])) {
 						/*get rid of previous results*/
 						freetree(r);
-						r=evalnode(copynode(n->args[1]));
+						r = evalnode(copynode(n->args[1]));
 					}
 				} else
-					r=makenum_ui(0);
+					r = makenum_ui(0);
 				break;
 			case E_EQ_CMP: r=eqcmpop(n->args[0],n->args[1]); break;
 			case E_NE_CMP: r=necmpop(n->args[0],n->args[1]); break;

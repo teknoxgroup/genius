@@ -1,3 +1,7 @@
+Mon Sep 28 22:05:19 1998  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: fixed a couple of bugs
+
 Sat Sep 19 15:05:42 1998  George Lebl  <jirka@5z.com>
 
 	* src/mpwrap.c: optimized use of gmp vars with a copy-on-write

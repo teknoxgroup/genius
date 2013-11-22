@@ -13,127 +13,121 @@ msgstr ""
 "Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gnome-genius-ide.c:238 src/gnome-genius-ide.c:520 src/gnome-genius.c:243 src/gnome-genius.c:525
+#: src/gnome-genius.c:243 src/gnome-genius.c:525
 msgid "GnomENIUS Calculator"
 msgstr "GnomENIUS \260\350\273\352\261\342"
-
-#. another comments
-#: src/gnome-genius-ide.c:243
-msgid "The Gnome Calculator program"
-msgstr "\261\327\263\360 \260\350\273\352\261\342 \307\301\267\316\261\327\267\245"
-
-#: src/gnome-genius-ide.c:371 src/gnome-genius.c:376
-msgid "GnomENIUS Calculator setup"
-msgstr "GnomENIUS \260\350\273\352\261\342 \310\257\260\346\274\263\301\244"
-
-#: src/gnome-genius-ide.c:381 src/gnome-genius.c:386
-msgid "General"
-msgstr "\300\317\271\335"
-
-#. options area
-#: src/gnome-genius-ide.c:384 src/gnome-genius.c:389
-msgid "Properties"
-msgstr "\274\323\274\272"
-
-#: src/gnome-genius-ide.c:388 src/gnome-genius.c:393
-msgid "Prefix notation"
-msgstr ""
-
-#: src/gnome-genius-ide.c:399 src/gnome-genius.c:404
-msgid "Infix notation"
-msgstr ""
-
-#: src/gnome-genius-ide.c:410 src/gnome-genius.c:415
-msgid "Postfix notation (RPN)"
-msgstr ""
-
-#: src/gnome-genius-ide.c:424 src/gnome-genius.c:429
-msgid "Full (exact) answers"
-msgstr "\300\374\303\274 (\301\244\310\256\307\321) \264\353\264\344"
-
-#: src/gnome-genius-ide.c:434 src/gnome-genius.c:439
-msgid "Make floats integers (e.g. 10.0=10)"
-msgstr "\275\307\274\366\267\316 \272\257\310\257 (\260\241\267\311 10.0=10)"
-
-#: src/gnome-genius-ide.c:443 src/gnome-genius.c:448
-msgid "Results as floats"
-msgstr ""
-
-#: src/gnome-genius-ide.c:452 src/gnome-genius.c:457
-msgid "Floats in scientific notation"
-msgstr ""
-
-#: src/gnome-genius-ide.c:475 src/gnome-genius.c:480
-msgid "Properties..."
-msgstr "\274\323\274\272..."
-
-#: src/gnome-genius-ide.c:477 src/gnome-genius.c:482
-msgid "Exit"
-msgstr "\263\241\263\273\261\342"
-
-#. numpad
-#: src/gnome-genius-ide.c:483 src/gnome-genius-ide.c:674 src/gnome-genius.c:488 src/gnome-genius.c:679
-msgid "Numpad"
-msgstr ""
-
-#. scientific
-#: src/gnome-genius-ide.c:485 src/gnome-genius-ide.c:705 src/gnome-genius.c:490 src/gnome-genius.c:710
-msgid "Scientific"
-msgstr "\260\370\307\320\277\353"
-
-#: src/gnome-genius-ide.c:494 src/gnome-genius.c:499
-msgid "About..."
-msgstr "\300\314 \307\301\267\316\261\327\267\245\300\272..."
-
-#: src/gnome-genius-ide.c:501 src/gnome-genius.c:506
-msgid "Calculator"
-msgstr "\260\350\273\352\261\342"
-
-#: src/gnome-genius-ide.c:504 src/gnome-genius.c:509
-msgid "View"
-msgstr "\272\270\261\342"
-
-#: src/gnome-genius-ide.c:507 src/gnome-genius.c:512
-msgid "Help"
-msgstr "\265\265\277\362\270\273"
-
-#: src/gnome-genius-ide.c:638 src/gnome-genius.c:643
-msgid "Display"
-msgstr "\307\245\275\303"
 
 #: src/gnome-genius.c:248
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
+#: src/gnome-genius.c:376
+msgid "GnomENIUS Calculator setup"
+msgstr "GnomENIUS \260\350\273\352\261\342 \310\257\260\346\274\263\301\244"
+
+#: src/gnome-genius.c:386
+msgid "General"
+msgstr "\300\317\271\335"
+
+#. options area
+#: src/gnome-genius.c:389
+msgid "Properties"
+msgstr "\274\323\274\272"
+
+#: src/gnome-genius.c:393
+msgid "Prefix notation"
+msgstr ""
+
+#: src/gnome-genius.c:404
+msgid "Infix notation"
+msgstr ""
+
+#: src/gnome-genius.c:415
+msgid "Postfix notation (RPN)"
+msgstr ""
+
+#: src/gnome-genius.c:429
+msgid "Full (exact) answers"
+msgstr "\300\374\303\274 (\301\244\310\256\307\321) \264\353\264\344"
+
+#: src/gnome-genius.c:439
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr "\275\307\274\366\267\316 \272\257\310\257 (\260\241\267\311 10.0=10)"
+
+#: src/gnome-genius.c:448
+msgid "Results as floats"
+msgstr ""
+
+#: src/gnome-genius.c:457
+msgid "Floats in scientific notation"
+msgstr ""
+
+#: src/gnome-genius.c:480
+msgid "Properties..."
+msgstr "\274\323\274\272..."
+
+#: src/gnome-genius.c:482
+msgid "Exit"
+msgstr "\263\241\263\273\261\342"
+
+#: src/gnome-genius.c:488 src/gnome-genius.c:679
+msgid "Numpad"
+msgstr ""
+
+#. scientific
+#: src/gnome-genius.c:490 src/gnome-genius.c:710
+msgid "Scientific"
+msgstr "\260\370\307\320\277\353"
+
+#: src/gnome-genius.c:499
+msgid "About..."
+msgstr "\300\314 \307\301\267\316\261\327\267\245\300\272..."
+
+#: src/gnome-genius.c:506
+msgid "Calculator"
+msgstr "\260\350\273\352\261\342"
+
+#: src/gnome-genius.c:509
+msgid "View"
+msgstr "\272\270\261\342"
+
+#: src/gnome-genius.c:512
+msgid "Help"
+msgstr "\265\265\277\362\270\273"
+
+#: src/gnome-genius.c:643
+msgid "Display"
+msgstr "\307\245\275\303"
+
 #: src/eval.c:335
 msgid "Variable used uninitialized!"
 msgstr "\303\312\261\342\310\255\265\307\301\366 \276\312\300\272 \272\257\274\366\260\241 \273\347\277\353\265\312!"
 
-#: src/eval.c:479
+#: src/eval.c:482
 msgid "Left value is NOT a number! (ignoring if construct)"
 msgstr "\277\336\302\312 \260\252\300\314 \274\375\300\332\260\241 \276\306\264\325\264\317\264\331! (construct\266\363\270\351 \271\253\275\303)"
 
-#: src/eval.c:492
+#: src/eval.c:495
 msgid "Left value is NOT a number! (ignoring ifelse construct)"
 msgstr "\277\336\302\312 \260\252\300\314 \274\375\300\332\260\241 \276\306\264\325\264\317\264\331! (construct\260\241 \276\306\264\317\266\363\270\351 \271\253\275\303)"
 
-#: src/eval.c:709
+#: src/eval.c:712
 msgid "'=' can't function without proper nodes!"
 msgstr "'=' \300\373\300\375\307\321 \263\353\265\345\276\370\300\314 \265\277\300\333\307\322 \274\366 \276\370\275\300\264\317\264\331!"
 
-#: src/eval.c:713
+#: src/eval.c:716
 msgid "Left value is NOT a 0\\function! (ignoring '=')"
 msgstr "\277\336\302\312 \260\252\300\314 0\\\307\324\274\366\260\241 \276\306\264\325\264\317\264\331! ('=' \271\253\275\303)"
 
-#: src/eval.c:717
+#: src/eval.c:720
 msgid "Right value is NOT computed! (ignoring '=')"
 msgstr "\277\300\270\245\302\312 \260\252\300\314 \260\350\273\352\265\307\301\366 \276\312\276\322\275\300\264\317\264\331! ('=' \271\253\275\303)"
 
-#: src/eval.c:730
+#: src/eval.c:733
 msgid "funcdefop can't function without proper nodes!"
 msgstr "funcdefop\264\302 \300\373\300\375\307\321 \263\353\265\345\276\370\300\314\264\302 \265\277\300\333\307\322 \274\366 \276\370\275\300\264\317\264\331!"
 
-#: src/eval.c:733
+#: src/eval.c:736
 msgid "Left value is NOT a function! (ignoring function definition)"
 msgstr "\277\336\302\312 \260\252\300\314 \307\324\274\366\260\241 \276\306\264\325\264\317\264\331! (\307\324\274\366\301\244\300\307 \271\253\275\303)"
 

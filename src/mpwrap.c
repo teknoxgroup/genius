@@ -2015,7 +2015,7 @@ mpw_init_mp(void)
 	GET_NEW_REAL(one);
 	mpwl_init_type(one,MPW_INTEGER);
 	mpwl_set_ui(one,1);
-	zero->alloc.usage = 1;
+	one->alloc.usage = 1;
 }
 
 char *
@@ -2119,7 +2119,6 @@ mpw_im(mpw_ptr rop, mpw_ptr op)
 	MAKE_REAL(rop);
 	rop->r=op->i;
 	op->i->alloc.usage++;
-	mpwl_set(rop->r,op->i);
 }
 
 void

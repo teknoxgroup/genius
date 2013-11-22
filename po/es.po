@@ -13,127 +13,121 @@ msgstr ""
 "Xgettext-Options: --default-domain=gnome-utils --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
 "Files: gtt/app.c gtt/toolbar.c gtt/main.c gtt/menucmd.c gtt/menus.c gtt/proj.c gtt/log.c gtt/options.c gtt/prop.c gtt/clist.c\n"
 
-#: src/gnome-genius-ide.c:238 src/gnome-genius-ide.c:520 src/gnome-genius.c:243 src/gnome-genius.c:525
+#: src/gnome-genius.c:243 src/gnome-genius.c:525
 msgid "GnomENIUS Calculator"
 msgstr "GnomENIUS - Calculadora"
-
-#. another comments
-#: src/gnome-genius-ide.c:243
-msgid "The Gnome Calculator program"
-msgstr "La calculadora de GNOME"
-
-#: src/gnome-genius-ide.c:371 src/gnome-genius.c:376
-msgid "GnomENIUS Calculator setup"
-msgstr "GnomENUIS configuraci\363n de la calculadora"
-
-#: src/gnome-genius-ide.c:381 src/gnome-genius.c:386
-msgid "General"
-msgstr "General"
-
-#. options area
-#: src/gnome-genius-ide.c:384 src/gnome-genius.c:389
-msgid "Properties"
-msgstr "Propiedades"
-
-#: src/gnome-genius-ide.c:388 src/gnome-genius.c:393
-msgid "Prefix notation"
-msgstr "Notaci\363n prefija"
-
-#: src/gnome-genius-ide.c:399 src/gnome-genius.c:404
-msgid "Infix notation"
-msgstr "Notaci\363n infija"
-
-#: src/gnome-genius-ide.c:410 src/gnome-genius.c:415
-msgid "Postfix notation (RPN)"
-msgstr "Notaci\363n postfija (RPN)"
-
-#: src/gnome-genius-ide.c:424 src/gnome-genius.c:429
-msgid "Full (exact) answers"
-msgstr "Respuestas completas"
-
-#: src/gnome-genius-ide.c:434 src/gnome-genius.c:439
-msgid "Make floats integers (e.g. 10.0=10)"
-msgstr "Haga los n\372mero de punto flotante enteros (por ejemplo: 10.0=10)"
-
-#: src/gnome-genius-ide.c:443 src/gnome-genius.c:448
-msgid "Results as floats"
-msgstr "Los resultados son n\372mero de punto flotante"
-
-#: src/gnome-genius-ide.c:452 src/gnome-genius.c:457
-msgid "Floats in scientific notation"
-msgstr "N\372meros de punto flotante en la notaci\363n cient\355fica"
-
-#: src/gnome-genius-ide.c:475 src/gnome-genius.c:480
-msgid "Properties..."
-msgstr "Propiedades..."
-
-#: src/gnome-genius-ide.c:477 src/gnome-genius.c:482
-msgid "Exit"
-msgstr "Salir"
-
-#. numpad
-#: src/gnome-genius-ide.c:483 src/gnome-genius-ide.c:674 src/gnome-genius.c:488 src/gnome-genius.c:679
-msgid "Numpad"
-msgstr "Tablero de n\372meros"
-
-#. scientific
-#: src/gnome-genius-ide.c:485 src/gnome-genius-ide.c:705 src/gnome-genius.c:490 src/gnome-genius.c:710
-msgid "Scientific"
-msgstr "Cient\355fica"
-
-#: src/gnome-genius-ide.c:494 src/gnome-genius.c:499
-msgid "About..."
-msgstr "Acerca de..."
-
-#: src/gnome-genius-ide.c:501 src/gnome-genius.c:506
-msgid "Calculator"
-msgstr "Calculadora"
-
-#: src/gnome-genius-ide.c:504 src/gnome-genius.c:509
-msgid "View"
-msgstr "Ver"
-
-#: src/gnome-genius-ide.c:507 src/gnome-genius.c:512
-msgid "Help"
-msgstr "Ayuda"
-
-#: src/gnome-genius-ide.c:638 src/gnome-genius.c:643
-msgid "Display"
-msgstr "Despliegue"
 
 #: src/gnome-genius.c:248
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
+#: src/gnome-genius.c:376
+msgid "GnomENIUS Calculator setup"
+msgstr "GnomENUIS configuraci\363n de la calculadora"
+
+#: src/gnome-genius.c:386
+msgid "General"
+msgstr "General"
+
+#. options area
+#: src/gnome-genius.c:389
+msgid "Properties"
+msgstr "Propiedades"
+
+#: src/gnome-genius.c:393
+msgid "Prefix notation"
+msgstr "Notaci\363n prefija"
+
+#: src/gnome-genius.c:404
+msgid "Infix notation"
+msgstr "Notaci\363n infija"
+
+#: src/gnome-genius.c:415
+msgid "Postfix notation (RPN)"
+msgstr "Notaci\363n postfija (RPN)"
+
+#: src/gnome-genius.c:429
+msgid "Full (exact) answers"
+msgstr "Respuestas completas"
+
+#: src/gnome-genius.c:439
+msgid "Make floats integers (e.g. 10.0=10)"
+msgstr "Haga los n\372mero de punto flotante enteros (por ejemplo: 10.0=10)"
+
+#: src/gnome-genius.c:448
+msgid "Results as floats"
+msgstr "Los resultados son n\372mero de punto flotante"
+
+#: src/gnome-genius.c:457
+msgid "Floats in scientific notation"
+msgstr "N\372meros de punto flotante en la notaci\363n cient\355fica"
+
+#: src/gnome-genius.c:480
+msgid "Properties..."
+msgstr "Propiedades..."
+
+#: src/gnome-genius.c:482
+msgid "Exit"
+msgstr "Salir"
+
+#: src/gnome-genius.c:488 src/gnome-genius.c:679
+msgid "Numpad"
+msgstr "Tablero de n\372meros"
+
+#. scientific
+#: src/gnome-genius.c:490 src/gnome-genius.c:710
+msgid "Scientific"
+msgstr "Cient\355fica"
+
+#: src/gnome-genius.c:499
+msgid "About..."
+msgstr "Acerca de..."
+
+#: src/gnome-genius.c:506
+msgid "Calculator"
+msgstr "Calculadora"
+
+#: src/gnome-genius.c:509
+msgid "View"
+msgstr "Ver"
+
+#: src/gnome-genius.c:512
+msgid "Help"
+msgstr "Ayuda"
+
+#: src/gnome-genius.c:643
+msgid "Display"
+msgstr "Despliegue"
+
 #: src/eval.c:335
 msgid "Variable used uninitialized!"
 msgstr "La variable fue usada sin haber sido inicializada"
 
-#: src/eval.c:479
+#: src/eval.c:482
 msgid "Left value is NOT a number! (ignoring if construct)"
 msgstr "\241El valor de la izquiera no es un n\372mero! (ignorando la construcci\363n if)"
 
-#: src/eval.c:492
+#: src/eval.c:495
 msgid "Left value is NOT a number! (ignoring ifelse construct)"
 msgstr "\241El valor de la izquiera no es un n\372mero! (ignorando construcci\363n ifelse)"
 
-#: src/eval.c:709
+#: src/eval.c:712
 msgid "'=' can't function without proper nodes!"
 msgstr "'=' Requiere una funci\363n completa"
 
-#: src/eval.c:713
+#: src/eval.c:716
 msgid "Left value is NOT a 0\\function! (ignoring '=')"
 msgstr "\241El valor de la izquierda no es una 0\\funci\363n! (ignorando `=')"
 
-#: src/eval.c:717
+#: src/eval.c:720
 msgid "Right value is NOT computed! (ignoring '=')"
 msgstr "\241El valor de la derecha no se ha calculado! (ignorando '=')"
 
-#: src/eval.c:730
+#: src/eval.c:733
 msgid "funcdefop can't function without proper nodes!"
 msgstr "funcdefop no puedo crear una funci\363n sin los nodos adecuados"
 
-#: src/eval.c:733
+#: src/eval.c:736
 msgid "Left value is NOT a function! (ignoring function definition)"
 msgstr "El valor de la izquierda no es una funci\363n (ignorando la definici\363n de la funci\363n)"
 
