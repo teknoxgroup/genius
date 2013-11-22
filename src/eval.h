@@ -33,6 +33,7 @@ typedef GList * evalstack_t;
 enum {
 	E_SEPAR = 1,
 	E_EQUALS,
+	E_ABS,
 	E_PLUS,
 	E_MINUS,
 	E_MUL,

@@ -19,16 +19,6 @@
  * USA.
  */
 %{
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
-#include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
 #include <glib.h>
 #include <string.h>
 #include "mpwrap.h"
@@ -108,7 +98,7 @@ extern int got_eof;
 
 \;		{ DO_RET; return SEPAR; }
 
-\"[^"]*\"	{ 
+\"[^"]\"	{ 
 			DO_RET;
 			yylval.id = g_strdup(&yytext[1]);
 			yylval.id[strlen(yylval.id)-1]='\0';
@@ -144,7 +134,7 @@ else		{ NO_RET; return ELSE; }
 define		{ NO_RET; return DEFINE; }
 call		{ NO_RET; return CALL; }
 
-return		{ NO_RET; return XRETURN; }
+return		{ NO_RET; return RETURNTOK; }
 
 @[]]		{
 			parenth_depth++;
@@ -245,6 +235,8 @@ return		{ NO_RET; return XRETURN; }
 [@^*/%+-]	{ NO_RET; return yytext[0]; }
 
 \.		{ DO_RET; return '.'; }
+
+\|		{ DO_RET; return '|'; }
 
 <<EOF>>		{ got_eof = TRUE; return '\n'; }
 

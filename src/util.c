@@ -18,16 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
 #include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

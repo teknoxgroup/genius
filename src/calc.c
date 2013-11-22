@@ -18,25 +18,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
 #include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
-#include <glib.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <glib.h>
-
 #ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #endif
@@ -260,7 +248,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			GET_L(n,l);
 			appendout_c(gs,out,'(');
 			if(l->type==IDENTIFIER_NODE) {
-				appendout(gs,out,l->data.id);
+				appendout(gs,out,l->data.id->token);
 			} else if(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE) {
 				ETree *t;
 				GET_L(l,t);
@@ -270,7 +258,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 					break;
 				}
 				appendout_c(gs,out,'*');
-				appendout(gs,out,t->data.id);
+				appendout(gs,out,t->data.id->token);
 			} else {
 				(*errorout)(_("Bad identifier for function node!"));
 				appendout(gs,out,"???)");
@@ -329,11 +317,11 @@ print_etree(GString *gs, FILE *out, ETree *n)
 		appendoper(gs,out,n);
 		break;
 	case IDENTIFIER_NODE:
-		appendout(gs,out,n->data.id);
+		appendout(gs,out,n->data.id->token);
 		break;
 	case STRING_NODE:
 		appendout_c(gs,out,'"');
-		appendout(gs,out,n->data.id);
+		appendout(gs,out,n->data.str);
 		appendout_c(gs,out,'"');
 		break;
 	case FUNCTION_NODE:
@@ -351,9 +339,10 @@ print_etree(GString *gs, FILE *out, ETree *n)
 			appendout(gs,out,"(`(");
 
 			for(li=f->named_args; li!=NULL; li=g_list_next(li)) {
+				Token *id = li->data;
 				if(li!=f->named_args)
 					appendout_c(gs,out,',');
-				appendout(gs,out,li->data);
+				appendout(gs,out,id->token);
 			}
 
 			if(f->type==USER_FUNC) {

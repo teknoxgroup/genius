@@ -19,16 +19,6 @@
  * USA.
  */
 %{
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
-#include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
 #include <glib.h>
 #include <string.h>
 #include "structs.h"
@@ -56,7 +46,7 @@ extern int got_eof;
 	ETree * tree; \
 	tree = g_new0(ETree,1); \
 	tree->type = IDENTIFIER_NODE; \
-	tree->data.id = g_strdup(ID); \
+	tree->data.id = d_intern(ID); \
 	stack_push(&evalstack,tree); \
 }
 
@@ -64,7 +54,7 @@ extern int got_eof;
 	ETree * tree; \
 	tree = g_new0(ETree,1); \
 	tree->type = STRING_NODE; \
-	tree->data.id = g_strdup(ID); \
+	tree->data.str = g_strdup(ID); \
 	stack_push(&evalstack,tree); \
 }
 
@@ -97,7 +87,6 @@ push_func(void)
 			return FALSE;
 		}
 		list = g_list_prepend(list,tree->data.id);
-		tree->data.id = NULL;
 		freetree(tree);
 		i++;
 	}
@@ -215,7 +204,7 @@ push_null(void)
 
 %token DEFINE CALL
 
-%token XRETURN
+%token RETURNTOK
 
 %token WHILE UNTIL DO IF THEN ELSE
 
@@ -231,7 +220,7 @@ push_null(void)
 %left SEPAR
 
 %nonassoc LOWER_THEN_ELSE
-%nonassoc WHILE UNTIL DO IF THEN ELSE DEFINE CALL XRETURN
+%nonassoc WHILE UNTIL DO IF THEN ELSE DEFINE CALL RETURNTOK
 
 %left LOGICAL_XOR LOGICAL_OR
 %left LOGICAL_AND
@@ -261,6 +250,7 @@ fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
 
 expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr EQUALS expr	{ PUSH_ACT(E_EQUALS); }
+	|	'|' expr '|'		{ PUSH_ACT(E_ABS); }
 	|	expr '+' expr		{ PUSH_ACT(E_PLUS); }
 	|	expr '-' expr		{ PUSH_ACT(E_MINUS); }
 	|	expr '*' expr		{ PUSH_ACT(E_MUL); }
@@ -307,7 +297,7 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 					  PUSH_ACT(E_CALL); }
 	|	DEFINE ident funcdef	{ PUSH_ACT(E_EQUALS); }
 	|	'`' funcdef
-	|	XRETURN expr		{ PUSH_ACT(E_RETURN); }
+	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
 	|	NUMBER			{ stack_push(&evalstack,makenum($1));
 					  mpw_clear($1);
 					}

@@ -1,17 +1,18 @@
 Utilitiesdir = $(datadir)/apps/Utilities
+Librarydir = $(datadir)/genius
 
-YACCFLAGS += -d -t
+
+#YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @READLINE_SUPPORT@ @GNOME_SUPPORT@
+CFLAGS += @READLINE_SUPPORT@ -DLIBRARY_FILE=\""$(datadir)/genius/lib.gel"\"
 
 
-INCLUDES =					\
-	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	\
-	-DLOCALEDIR=\"$(datadir)/locale\"		\
-	-I$(includedir)					\
-	$(GMP_INCLUDEDIR)				\
-	$(GNOME_INCLUDEDIR)				\
-	$(GLIB_CFLAGS)
+INCLUDES = \
+	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" \
+	-DLOCALEDIR=\"$(datadir)/locale\" \
+	-I$(includedir) \
+	$(GMP_INCLUDEDIR) \
+	$(GNOME_INCLUDEDIR)
 
 bin_PROGRAMS = @GNOME_GENIUS@ genius #gnome-genius-mdi
 
@@ -81,6 +82,13 @@ genius_LDADD = \
 
 BUILT_SOURCES = parse.h
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop #gnome-genius-mdi.desktop
+EXTRA_DIST = geniustest.pl geniustests.txt lib.gel gnome-genius.desktop #gnome-genius-mdi.desktop
 
 Utilities_DATA = gnome-genius.desktop #gnome-genius-mdi.desktop
+
+Library_DATA = lib.gel
+
+parse.h: parse.y
+	$(YACC) $(YFLAGS) $<
+	test -f y.tab.c && mv -f y.tab.c parse.c
+	test -f y.tab.h && mv -f y.tab.h parse.h

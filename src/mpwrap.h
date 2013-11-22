@@ -30,9 +30,10 @@
 #include <gmp.h>
 #endif
 
-#define MPW_INTEGER	1
-#define MPW_RATIONAL	2
-#define MPW_FLOAT	3
+#define MPW_NATIVEINT	1
+#define MPW_INTEGER	2
+#define MPW_RATIONAL	3
+#define MPW_FLOAT	4
 
 #define MPW_REAL	1
 #define MPW_COMPLEX	2
@@ -46,9 +47,10 @@ typedef struct _MpwRealNum {
 	struct { /*this is done as a struct so that conversions don't require
 		   a temporary, make sure to clear the old one!, in the worst
 		   case we have two unused pointers*/
-		mpz_t ival;
-		mpq_t rval;
-		mpf_t fval;
+		mpz_ptr ival;
+		mpq_ptr rval;
+		mpf_ptr fval;
+		long nval;
 	} data;
 	union {
 		struct _MpwRealNum *next; /*used for free lists*/
@@ -91,6 +93,8 @@ void mpw_set_d(mpw_ptr rop,double d);
 void mpw_set_si(mpw_ptr rop,signed long int i);
 void mpw_set_ui(mpw_ptr rop,unsigned long int i);
 
+void mpw_abs(mpw_ptr rop,mpw_ptr op);
+
 int mpw_sgn(mpw_ptr op);
 
 void mpw_neg(mpw_ptr rop,mpw_ptr op);
@@ -107,6 +111,8 @@ void mpw_div_ui(mpw_ptr rop,mpw_ptr op, unsigned int i);
 void mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op);
 
 void mpw_mod(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+
+void mpw_gcd(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 
 void mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e);
@@ -152,5 +158,8 @@ void mpw_im(mpw_ptr rop, mpw_ptr op);
 void mpw_re(mpw_ptr rop, mpw_ptr op);
 
 void mpw_round(mpw_ptr rop, mpw_ptr op);
+void mpw_floor(mpw_ptr rop, mpw_ptr op);
+void mpw_ceil(mpw_ptr rop, mpw_ptr op);
+void mpw_trunc(mpw_ptr rop, mpw_ptr op);
 
 #endif

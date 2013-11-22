@@ -18,16 +18,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
-#include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
@@ -57,7 +47,7 @@ d_curcontext(void)
 
 /*make builtin function and return it*/
 EFunc *
-d_makebifunc(char *id, dictfunc f, int nargs)
+d_makebifunc(Token *id, dictfunc f, int nargs)
 {
 	EFunc *n;
 
@@ -67,7 +57,7 @@ d_makebifunc(char *id, dictfunc f, int nargs)
 		n = free_funcs;
 		free_funcs = free_funcs->data.next;
 	}
-	n->id=g_strdup(id);
+	n->id=id;
 	n->data.func=f;
 	n->nargs=nargs;
 	n->named_args = NULL;
@@ -79,7 +69,7 @@ d_makebifunc(char *id, dictfunc f, int nargs)
 
 /*make a user function and return it*/
 EFunc *
-d_makeufunc(char *id, ETree *value, GList *argnames, int nargs)
+d_makeufunc(Token *id, ETree *value, GList *argnames, int nargs)
 {
 	EFunc *n;
 
@@ -89,7 +79,7 @@ d_makeufunc(char *id, ETree *value, GList *argnames, int nargs)
 		n = free_funcs;
 		free_funcs = free_funcs->data.next;
 	}
-	n->id=g_strdup(id);
+	n->id=id;
 	n->data.user=value;
 	n->nargs=nargs;
 	n->named_args=argnames;
@@ -101,7 +91,7 @@ d_makeufunc(char *id, ETree *value, GList *argnames, int nargs)
 
 /*make a user function and return it*/
 EFunc *
-d_makereffunc(char *id, EFunc *ref)
+d_makereffunc(Token *id, EFunc *ref)
 {
 	EFunc *n;
 
@@ -111,7 +101,7 @@ d_makereffunc(char *id, EFunc *ref)
 		n = free_funcs;
 		free_funcs = free_funcs->data.next;
 	}
-	n->id=g_strdup(id);
+	n->id=id;
 	n->data.ref=ref;
 	n->nargs=0;
 	n->named_args=NULL;
@@ -135,24 +125,19 @@ d_copyfunc(EFunc *o)
 		free_funcs = free_funcs->data.next;
 	}
 	memcpy(n,o,sizeof(EFunc));
-	if(o->id)
-		n->id=g_strdup(o->id);
 	if(n->type == USER_FUNC)
 		n->data.user=copynode(o->data.user);
-	n->named_args=NULL;
-	for(li=o->named_args;li!=NULL;li=g_list_next(li))
-		n->named_args = g_list_append(n->named_args,g_strdup(li->data));
+	n->named_args = g_list_copy(o->named_args);
 	
 	return n;
 }
 
 /*make a real function from a fake*/
 EFunc *
-d_makerealfunc(EFunc *o,char *id)
+d_makerealfunc(EFunc *o,Token *id)
 {
 	EFunc *n;
 	GList *li;
-	int i;
 
 	if(!free_funcs)
 		n = g_new(EFunc,1);
@@ -161,16 +146,12 @@ d_makerealfunc(EFunc *o,char *id)
 		free_funcs = free_funcs->data.next;
 	}
 	memcpy(n,o,sizeof(EFunc));
-	if(id)
-		n->id=g_strdup(id);
+	n->id = id;
 	n->context = context.top;
 
 	if(n->type == USER_FUNC)
 		n->data.user=copynode(o->data.user);
-	n->named_args=NULL;
-	for(i=0,li=o->named_args;li!=NULL;li=g_list_next(li),i++)
-		n->named_args = g_list_append(n->named_args,g_strdup(li->data));
-	n->nargs = i;
+	n->named_args = g_list_copy(o->named_args);
 	
 	return n;
 }
@@ -180,7 +161,6 @@ void
 d_setrealfunc(EFunc *n,EFunc *fake)
 {
 	GList *li;
-	int i;
 	
 	if(n->type == USER_FUNC)
 		freenode(n->data.user);
@@ -190,11 +170,8 @@ d_setrealfunc(EFunc *n,EFunc *fake)
 	if(fake->type == USER_FUNC)
 		n->data.user = copynode(fake->data.user);
 
-	g_list_foreach(n->named_args,(GFunc)g_free,NULL);
-	n->named_args=NULL;
-	for(i=0,li=fake->named_args;li!=NULL;li=g_list_next(li),i++)
-		n->named_args = g_list_append(n->named_args,g_strdup(li->data));
-	n->nargs = i;
+	n->named_args = g_list_copy(fake->named_args);
+	n->nargs = fake->nargs;
 }
 
 
@@ -227,24 +204,19 @@ EFunc *
 d_addfunc(EFunc *func)
 {
 	EFunc *n;
-	GList *list = NULL;
-	char *origkey = NULL;
+	
+	g_return_val_if_fail(func->context == context.top,func);
 	
 	/*we already found it (in current context)*/
-	n=d_lookup(func->id,FALSE);
+	n=d_lookup_local(func->id);
 	if(n) {
 		replacefunc(n,func);
 		return n;
 	}
 
 	context.stack->data = g_list_prepend(context.stack->data,func);
-
-	g_hash_table_lookup_extended(dictionary,func->id,(gpointer *)&origkey,
-				     (gpointer *)&list);
-	list = g_list_insert_sorted(list,func,compare_func_bycontext);
-	if(!origkey)
-		origkey = g_strdup(func->id);
-	g_hash_table_insert(dictionary,origkey,list);
+	
+	func->id->refs = g_list_prepend(func->id->refs,func);
 
 	return func;
 }
@@ -252,10 +224,10 @@ d_addfunc(EFunc *func)
 /*set value of an existing function (in local context), used for arguments
   WARNING, does not free the memory allocated by previous value!*/
 int
-d_setvalue(char *id,ETree *value)
+d_setvalue(Token *id,ETree *value)
 {
 	EFunc *f;
-	f=d_lookup(id,FALSE);
+	f=d_lookup_local(id);
 	if(!f || f->type!=USER_FUNC)
 		return FALSE;
 	f->data.user=value;
@@ -264,31 +236,42 @@ d_setvalue(char *id,ETree *value)
 
 /*dictionary functions*/
 
-/*lookup a function in the dictionary, either the whole thing if global
-  is TRUE, or just the current context otherwise*/
+/*lookup a function in the dictionary in the current context*/
 EFunc *
-d_lookup(char *id,int global)
+d_lookup_local(Token *id)
 {
 	GList *list;
 	EFunc *func;
 	
-	list = g_hash_table_lookup(dictionary,id);
-	
-	if(!list)
+	if(!id ||
+	   !id->refs)
 		return NULL;
 	
 	/*the first one must be the lowest context*/
-	func = list->data;
+	func = id->refs->data;
 	
 	/*not in currect context and we only want the currect context ones*/
-	if(!global && func->context<context.top)
+	if(func->context<context.top)
 		return NULL;
 
 	return func;
 }
 
+Token *
+d_intern(char *id)
+{
+	Token * tok = g_hash_table_lookup(dictionary,id);
+	if(!tok) {
+		tok = g_new(Token,1);
+		tok->token = g_strdup(id);
+		tok->refs = NULL;
+		g_hash_table_insert(dictionary,tok->token,tok);
+	}
+	return tok;
+}
+
 int
-d_delete(char *id)
+d_delete(Token *id)
 {
 	/*FIXME: Delete function!*/
 	return FALSE;
@@ -323,12 +306,8 @@ freefunc(EFunc *n)
 	GList *li;
 	if(!n)
 		return;
-	if(n->id)
-		g_free(n->id);
 	if(n->type == USER_FUNC && n->data.user) 
 		freetree(n->data.user);
-	for(li=n->named_args;li!=NULL;li=g_list_next(li))
-		g_free(li->data);
 	g_list_free(n->named_args);
 	/*prepend to free list*/
 	n->data.next = free_funcs;
@@ -342,12 +321,8 @@ replacefunc(EFunc *old,EFunc *new)
 	GList *li;
 	if(!old || !new)
 		return;
-	if(old->id)
-		g_free(old->id);
 	if(old->type == USER_FUNC && old->data.user) 
 		freetree(old->data.user);
-	for(li=old->named_args;li!=NULL;li=g_list_next(li))
-		g_free(li->data);
 	g_list_free(old->named_args);
 	memcpy(old,new,sizeof(EFunc));
 	/*prepend to free list*/
@@ -362,10 +337,10 @@ d_set_ref(EFunc *n,EFunc *ref)
 	GList *li;
 	if(!n || !ref)
 		return;
-	if(n->type == USER_FUNC && n->data.user) 
+	if(n->type == USER_FUNC && n->data.user)
 		freetree(n->data.user);
-	for(li=n->named_args;li!=NULL;li=g_list_next(li))
-		g_free(li->data);
+	n->type = REFERENCE_FUNC;
+	g_list_free(n->named_args);
 	n->nargs = 0;
 	n->named_args = NULL;
 	
@@ -381,55 +356,20 @@ d_set_value(EFunc *n,ETree *value)
 		return;
 	if(n->type == USER_FUNC && n->data.user) 
 		freetree(n->data.user);
-	for(li=n->named_args;li!=NULL;li=g_list_next(li))
-		g_free(li->data);
+	n->type = USER_FUNC;
+	g_list_free(n->named_args);
 	n->nargs = 0;
 	n->named_args = NULL;
 	
 	n->data.user = value;
 }
 
-/*copy a dictionary, but not functions, they stay the same pointers, this
-  should only be done with dictionaries with no dymanic entries as those
-  would be easily cleared*/
-GList *
-copydict(GList *n)
-{
-	GList *r = NULL;
-
-	while(n) {
-		r = g_list_prepend(r,n);
-		n = g_list_next(n);
-	}
-	
-	return r;
-}
-
 /*push a new dictionary onto the context stack*/
 int
-d_addcontext(GList *n)
+d_addcontext(void)
 {
-	context.stack = g_list_prepend(context.stack,n);
+	context.stack = g_list_prepend(context.stack,NULL);
 	context.top++;
-	
-	while(n) {
-		EFunc *func = n->data;
-		GList *list = NULL;
-		char *origkey = NULL;
-		
-		/*can this ever happen? if it's possible we need to not
-		  make it assert*/
-		g_assert(func->context!=context.top);
-	
-		g_hash_table_lookup_extended(dictionary,func->id,
-					     (gpointer *)&origkey,
-				             (gpointer *)&list);
-		list = g_list_insert_sorted(list,func,compare_func_bycontext);
-		if(!origkey)
-			origkey = g_strdup(func->id);
-		g_hash_table_insert(dictionary,origkey,list);
-		n=g_list_next(n);
-	}
 	return TRUE;
 }
 
@@ -445,17 +385,7 @@ d_popcontext(void)
 
 		for(li=dict;li!=NULL;li=g_list_next(li)) {
 			EFunc *func = li->data;
-			GList *list = NULL;
-			char *origkey = NULL;
-
-			/*we need to take this one out of the dictionary*/
-			g_hash_table_lookup_extended(dictionary,func->id,
-					             (gpointer *)&origkey,
-						     (gpointer *)&list);
-			list = g_list_remove(list,func);
-			if(!origkey)
-				origkey = g_strdup(func->id);
-			g_hash_table_insert(dictionary,origkey,list);
+			func->id->refs = g_list_remove(func->id->refs,func);
 		}
 		context.top--;
 		li = context.stack;

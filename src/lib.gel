@@ -1,0 +1,10 @@
+define sum(min,max,func) {
+	r = 0;
+	while (min<=max) do (r = r + *func(min); min=min+1);
+	r
+}
+define prod(min,max,func) {
+	r = 1;
+	while (min<=max) do (r = r * *func(min); min=min+1);
+	r
+}

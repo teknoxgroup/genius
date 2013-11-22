@@ -8,7 +8,7 @@ typedef union {
 #define	FUNCID	261
 #define	DEFINE	262
 #define	CALL	263
-#define	XRETURN	264
+#define	RETURNTOK	264
 #define	WHILE	265
 #define	UNTIL	266
 #define	DO	267

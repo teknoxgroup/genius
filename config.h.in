@@ -127,3 +127,13 @@
 
 /* Define if you have the i library (-li).  */
 #undef HAVE_LIBI
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+
+/* define if compiled symbols have a leading underscore */
+#undef WITH_SYMBOL_UNDERSCORE
+

@@ -1,7 +1,7 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.2.0)
+AM_INIT_AUTOMAKE(genius,0.2.1)
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
 
@@ -20,11 +20,8 @@ GNOME_GENIUS=gnome-genius
 if test x$have_gnome != xyes ; then
   AC_MSG_WARN([*** The gnome version will not be built ***])
   GNOME_GENIUS=
-  GNOME_INCUDEDIRS=
-  GNOME_SUPPORT=-DWITHOUT_GNOME
 fi
 AC_SUBST(GNOME_GENIUS)
-AC_SUBST(GNOME_SUPPORT)
 
 AC_ISC_POSIX
 AC_PROG_CC

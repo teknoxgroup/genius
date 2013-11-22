@@ -19,17 +19,6 @@
  * USA.
  */
 
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
-#include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
-
 #include "mpwrap.h"
 #include "mymath.h"
 

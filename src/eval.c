@@ -18,17 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
 #include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
-#include <glib.h>
 #include <stdio.h>
 #include <string.h>
 #include <glib.h>
@@ -39,7 +29,6 @@
 #include "util.h"
 #include "funclib.h"
 #include "mymath.h"
-
 
 extern calc_error_t error_num;
 extern calcstate_t calcstate;
@@ -61,6 +50,7 @@ branches(int op)
 	switch(op) {
 		case E_SEPAR: return 2;
 		case E_EQUALS: return 2;
+		case E_ABS: return 1;
 		case E_PLUS: return 2;
 		case E_MINUS: return 2;
 		case E_MUL: return 2;
@@ -163,8 +153,7 @@ makenum(mpw_t num)
 	n->type=VALUE_NODE;
 	n->args = NULL;
 	n->nargs = 0;
-	mpw_init(n->data.value);
-	mpw_set(n->data.value,num);
+	mpw_init_set(n->data.value,num);
 	return n;
 }
 
@@ -246,8 +235,8 @@ freenode(ETree *n)
 		return;
 	if(n->type==VALUE_NODE)
 		mpw_clear(n->data.value);
-	else if(n->type == IDENTIFIER_NODE)
-		g_free(n->data.id);
+	else if(n->type == STRING_NODE)
+		g_free(n->data.str);
 	else if(n->type == FUNCTION_NODE)
 		freefunc(n->data.func);
 	/*put onto the free list*/
@@ -298,9 +287,8 @@ copynode(ETree *o)
 
 	if(o->type==VALUE_NODE)
 		mpw_init_set(n->data.value,o->data.value);
-	else if(o->type == IDENTIFIER_NODE ||
-		o->type == STRING_NODE)
-		n->data.id = g_strdup(o->data.id);
+	else if(o->type == STRING_NODE)
+		n->data.str = g_strdup(o->data.str);
 	else if(o->type == FUNCTION_NODE)
 		n->data.func = d_copyfunc(o->data.func);
 	/*FIXME: copy matrix as well*/
@@ -320,6 +308,7 @@ evalargs(ETree *n, ETree *ret[], int eval_first)
 {
 	GList *li;
 	int i;
+	int r = 0;
 	
 	/*if the first shouldn't be evaluated just pass it*/
 	if(!eval_first)
@@ -328,7 +317,7 @@ evalargs(ETree *n, ETree *ret[], int eval_first)
 		ret[0] = evalnode(n->args->data);
 		/*exception is signaled by NULL*/
 		if(!ret[0])
-			return FALSE;
+			return 2;
 			
 	}
 	
@@ -338,10 +327,18 @@ evalargs(ETree *n, ETree *ret[], int eval_first)
 		if(!ret[i]) {
 			while(--i>=0)
 				freetree(ret[i]);
-			return FALSE;
+			return 2;
 		}
+		/*unevaluated*/
+		/*FIXME: this needs to be some sort of exception
+		  or whatnot, with matrices, we won't be able to
+		  distinguish*/
+		if(ret[i]->type == IDENTIFIER_NODE ||
+		   (ret[i]->type == OPERATOR_NODE &&
+		    ret[i]->data.oper != E_REFERENCE))
+			r = 1;
 	}
-	return TRUE;
+	return r;
 }
 
 /*evaluate a matrix (or try to), this might error out if the result is not
@@ -362,18 +359,10 @@ equalsop(ETree *n)
 	ETree *set;
 	GET_LR(n,l,r);
 	
-	set = evalnode(r);
-	/*exception*/
-	if(!set)
-		return NULL;
-
 	if(l->type != IDENTIFIER_NODE &&
 	   !(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE)) {
-		ETree *ret = copynode(n);
 		(*errorout)(_("Lvalue not an identifier/dereference!"));
-		freetree(ret->args->next->data);
-		ret->args->next->data = set;
-		return ret;
+		return copynode(n);
 	}
 
 	if(l->type == IDENTIFIER_NODE) {
@@ -383,20 +372,7 @@ equalsop(ETree *n)
 		else if(set->type == OPERATOR_NODE &&
 			set->data.oper == E_REFERENCE) {
 			ETree *t = set->args->data;
-			EFunc *rf = d_lookup(t->data.id,TRUE);
-			if(!rf) {
-				ETree *ret;
-				char buf[256];
-				g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-					   t->data.id);
-				(*errorout)(buf);
-				ret = copynode(n);
-				if(set) {
-					freetree(ret->args->next->data);
-					ret->args->next->data = set;
-				}
-				return ret;
-			}
+			EFunc *rf = d_lookup_global(t->data.id);
 			d_addfunc(d_makereffunc(l->data.id,rf));
 		} else
 			d_addfunc(d_makeufunc(l->data.id,copynode(set),NULL,0));
@@ -406,50 +382,27 @@ equalsop(ETree *n)
 		GET_L(l,ll);
 
 		if(ll->type != IDENTIFIER_NODE) {
-			ETree *ret = copynode(n);
 			(*errorout)(_("Dereference of non-identifier!"));
-			freetree(ret->args->next->data);
-			ret->args->next->data = set;
-			return ret;
+			return copynode(n);
 		}
 		
-		f = d_lookup(ll->data.id,TRUE);
-		if(!f) {
-			ETree *ret;
-			char buf[256];
-			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-				   ll->data.id);
-			(*errorout)(buf);
-			ret = copynode(n);
-			freetree(ret->args->next->data);
-			ret->args->next->data = set;
-			return ret;
-		}
+		f = d_lookup_global(ll->data.id);
 		if(f->type!=REFERENCE_FUNC) {
-			ETree *ret = copynode(n);
 			(*errorout)(_("Dereference of non-reference!"));
-			freetree(ret->args->next->data);
-			ret->args->next->data = set;
-			return ret;
+			return copynode(n);
 		}
 		
+		set = evalnode(r);
+		/*exception*/
+		if(!set)
+			return NULL;
+
 		if(set->type == FUNCTION_NODE)
 			d_setrealfunc(f->data.ref,set->data.func);
 		else if(set->type == OPERATOR_NODE &&
 			set->data.oper == E_REFERENCE) {
 			ETree *t = set->args->data;
-			EFunc *rf = d_lookup(t->data.id,TRUE);
-			if(!rf) {
-				ETree *ret;
-				char buf[256];
-				g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-					   t->data.id);
-				(*errorout)(buf);
-				ret = copynode(n);
-				freetree(ret->args->next->data);
-				ret->args->next->data = set;
-				return ret;
-			}
+			EFunc *rf = d_lookup_global(t->data.id);
 			d_set_ref(f->data.ref,rf);
 		} else
 			d_set_value(f->data.ref,copynode(set));
@@ -479,8 +432,8 @@ copynode_args(ETree *o, ETree *r[])
 
 	if(o->type==VALUE_NODE)
 		mpw_init_set(n->data.value,o->data.value);
-	else if(o->type == IDENTIFIER_NODE)
-		n->data.id = g_strdup(o->data.id);
+	else if(o->type == STRING_NODE)
+		n->data.str = g_strdup(o->data.str);
 	else if(o->type == FUNCTION_NODE)
 		n->data.func = d_copyfunc(o->data.func);
 	/*FIXME: copy matrix as well*/
@@ -512,42 +465,42 @@ funccallop(ETree *n,int direct_call)
 	GET_L(n,l);
 	
 	r = g_new(ETree *,n->nargs);
-	if(direct_call ||
-	   (l->type == OPERATOR_NODE &&
-	    l->data.oper == E_DEREFERENCE)) {
-		if(!evalargs(n,r,FALSE)) {
-			g_free(r);
-			return NULL;
-		}
-	} else {
-		if(!evalargs(n,r,TRUE)) {
-			g_free(r);
-			return NULL;
-		}
+	switch(evalargs(n,r,
+			(direct_call ||
+			 (l->type == OPERATOR_NODE &&
+			  l->data.oper == E_DEREFERENCE))?FALSE:TRUE
+		       )) {
+	case 1:
+		ret = copynode_args(n,r);
+		g_free(r);
+		return ret;
+	case 2:
+		g_free(r);
+		return NULL;
 	}
 	
 	if(l->type == IDENTIFIER_NODE) {
-		f = d_lookup(l->data.id,TRUE);
+		f = d_lookup_global(l->data.id);
 		if(!f) {
 			char buf[256];
 			g_snprintf(buf,256,_("Function '%s' used unintialized"),
-				   l->data.id);
+				   l->data.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
 			return ret;
 		}
-	} else if(l->type == FUNCTION_NODE)
+	} else if(l->type == FUNCTION_NODE) {
 		f = l->data.func;
-	else if(l->type == OPERATOR_NODE &&
+	} else if(l->type == OPERATOR_NODE &&
 		l->data.oper == E_DEREFERENCE) {
 		ETree *ll;
 		GET_L(l,ll);
-		f = d_lookup(ll->data.id,TRUE);
+		f = d_lookup_global(ll->data.id);
 		if(!f) {
 			char buf[256];
 			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-				   ll->data.id);
+				   ll->data.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
@@ -555,7 +508,7 @@ funccallop(ETree *n,int direct_call)
 		} else if(f->type != REFERENCE_FUNC) {
 			char buf[256];
 			g_snprintf(buf,256,_("Can't dereference '%s'!"),
-				   ll->data.id);
+				   ll->data.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
@@ -569,10 +522,12 @@ funccallop(ETree *n,int direct_call)
 		return ret;
 	}
 	
+	g_assert(f);
+	
 	if(f->nargs + 1 != n->nargs) {
 		char buf[256];
 		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
 		(*errorout)(buf);
 		ret = copynode_args(n,r);
 		g_free(r);
@@ -581,7 +536,7 @@ funccallop(ETree *n,int direct_call)
 		int i;
 		GList *li;
 		GList *tofree=NULL;
-		d_addcontext(NULL);
+		d_addcontext();
 		/*push arguments on context stack*/
 		for(i=1,li=f->named_args;i<n->nargs;i++,li=g_list_next(li)) {
 			if(r[i]->type == FUNCTION_NODE) {
@@ -591,17 +546,7 @@ funccallop(ETree *n,int direct_call)
 			} else if(r[i]->type == OPERATOR_NODE &&
 			   r[i]->data.oper == E_REFERENCE) {
 				ETree *t = r[i]->args->data;
-				EFunc *rf = d_lookup(t->data.id,TRUE);
-				if(!rf) {
-					char buf[256];
-					g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-						   t->data.id);
-					(*errorout)(buf);
-					ret = copynode_args(n,r);
-					g_free(r);
-					freedict(d_popcontext());
-					return ret;
-				}
+				EFunc *rf = d_lookup_global(t->data.id);
 				d_addfunc(d_makereffunc(li->data,rf));
 				freetree(r[i]);
 			} else
@@ -614,7 +559,7 @@ funccallop(ETree *n,int direct_call)
 		}
 		returnval = NULL;
 		ret = evalnode(f->data.user);
-		/*free trees that are shcedhuled to be freed after execution
+		/*free trees that are schedhuled to be freed after execution
 		  of body*/
 		if(tofree){
 			freetree(tofree->data);
@@ -666,7 +611,7 @@ funccallop(ETree *n,int direct_call)
 			free_trees = free_trees->data.next;
 		}
 		i->type = IDENTIFIER_NODE;
-		i->data.id = g_strdup(f->id); /*this WILL have an id*/
+		i->data.id = f->id; /*this WILL have an id*/
 		i->args = NULL;
 		i->nargs = 0;
 
@@ -701,20 +646,20 @@ derefvarop(ETree *n)
 	GET_L(n,l);
 	
 	
-	f = d_lookup(l->data.id,TRUE);
+	f = d_lookup_global(l->data.id);
 	if(!f) {
 		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unintialized"),l->data.id);
+		g_snprintf(buf,256,_("Variable '%s' used unintialized"),l->data.id->token);
 		(*errorout)(buf);
 	} else if(f->nargs != 0) {
 		char buf[256];
 		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
 		(*errorout)(buf);
 	} else if(f->type == USER_FUNC || f->type == BUILTIN_FUNC) {
 		char buf[256];
 		g_snprintf(buf,256,_("Trying to dereference '%s' which is not a reference!\n"),
-				     f->id?f->id:"anonymous");
+				     f->id?f->id->token:"anonymous");
 		(*errorout)(buf);
 	} else if(f->type == REFERENCE_FUNC) {
 		f = f->data.ref;
@@ -722,7 +667,7 @@ derefvarop(ETree *n)
 			(*errorout)(_("NULL reference encountered!"));
 		} else if(f->type == USER_FUNC) {
 			ETree *ret;
-			d_addcontext(NULL);
+			d_addcontext();
 			if(returnval) {
 				(*errorout)(_("Extraneous return value!"));
 				freetree(returnval);
@@ -761,7 +706,7 @@ derefvarop(ETree *n)
 				free_trees = free_trees->data.next;
 			}
 			i->type = IDENTIFIER_NODE;
-			i->data.id = g_strdup(f->id); /*this WILL have an id*/
+			i->data.id = f->id; /*this WILL have an id*/
 			i->args = NULL;
 			i->nargs = 0;
 
@@ -789,10 +734,10 @@ variableop(ETree *n)
 {
 	EFunc *f;
 	
-	f = d_lookup(n->data.id,TRUE);
+	f = d_lookup_global(n->data.id);
 	if(!f) {
 		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->data.id);
+		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->data.id->token);
 		(*errorout)(buf);
 		return copynode(n);
 	}
@@ -800,11 +745,11 @@ variableop(ETree *n)
 	if(f->nargs != 0) {
 		char buf[256];
 		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
-				     "(should be %d)"),f->id?f->id:"anonymous",f->nargs);
+				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
 		(*errorout)(buf);
 	} else if(f->type == USER_FUNC) {
 		ETree *ret;
-		d_addcontext(NULL);
+		d_addcontext();
 		if(returnval) {
 			(*errorout)(_("Extraneous return value!"));
 			freetree(returnval);
@@ -840,7 +785,7 @@ variableop(ETree *n)
 			free_trees = free_trees->data.next;
 		}
 		i->type = IDENTIFIER_NODE;
-		i->data.id = g_strdup(f->id); /*this WILL have an id*/
+		i->data.id = f->id; /*this WILL have an id*/
 		i->args = NULL;
 		i->nargs = 0;
 
@@ -878,8 +823,8 @@ ifop(ETree *n)
 	} else {
 		/*if we got a non-critical error and just can't evaluate*/
 		if(errorret) {
-			/*copy the current node and replace the predicate with the
-			  evaluated value*/
+			/*copy the current node and replace the predicate
+			  with the evaluated value*/
 			ETree *a = copynode(n);
 			freetree(a->args->data);
 			a->args->data = errorret;
@@ -1150,8 +1095,12 @@ typedef ETree * (*matrixpfunc_t)(ETree *,ETree **);
 #define EVAL_PRIMITIVE(n,numop,numfunc,matrixfunc) {	\
 	ETree *r[2]; 					\
 	ETree *ret;					\
-	if(!evalargs(n,r,TRUE))				\
+	switch(evalargs(n,r,TRUE)) {			\
+	case 1:						\
+		return copynode_args(n,r);		\
+	case 2:						\
 		return NULL;				\
+	}						\
 	switch(arglevel(r,n->nargs)) {			\
 	case 0: ret = numop(n,r,numfunc);		\
 		freeargarr(r,n->nargs);			\
@@ -1176,8 +1125,12 @@ typedef ETree * (*matrixlfunc_t)(ETree *,ETree *);
 #define EVAL_LOGIC(n,numfunc,matrixfunc) {		\
 	ETree *r[2]; 					\
 	ETree *ret;					\
-	if(!evalargs(n,r,TRUE))				\
+	switch(evalargs(n,r,TRUE)) {			\
+	case 1:						\
+		return copynode_args(n,r);		\
+	case 2:						\
 		return NULL;				\
+	}						\
 	switch(arglevel(r,2)) {				\
 	case 0: ret = numfunc(r[0],r[1]);		\
 		freeargarr(r,2);			\
@@ -1209,6 +1162,7 @@ evaloper(ETree *n)
 		case E_EQUALS:
 			return equalsop(n);
 
+		case E_ABS: EVAL_PRIMITIVE(n,singleop,mpw_abs,NULL);
 		case E_PLUS: EVAL_PRIMITIVE(n,doubleop,mpw_add,NULL);
 		case E_MINUS: EVAL_PRIMITIVE(n,doubleop,mpw_sub,NULL);
 		case E_MUL: EVAL_PRIMITIVE(n,doubleop,mpw_mul,NULL);
@@ -1273,12 +1227,22 @@ evaloper(ETree *n)
 		case E_RETURN:
 			{
 				ETree *l;
+				ETree *r;
 				GET_L(n,l);
 				if(returnval) {
 					(*errorout)(_("Extraneous return value!"));
 					freetree(returnval);
 				}
-				returnval = evalnode(l);
+				r = evalnode(l);
+				if(returnval) {
+					if(r) freetree(returnval);
+				} else if(r) {
+					returnval = r;
+				} else {
+					(*errorout)(_("Can't evaluate return value!"));
+					returnval = copynode(l);
+				}
+
 				/*use exception to jump out of the current
 				  context (that is until a caller realizes
 				  that returnval is set)*/

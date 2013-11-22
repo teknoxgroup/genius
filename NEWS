@@ -1,0 +1,9 @@
+New in 0.2.1:
+	* about twice as much execution speed, it is now almost as fast as
+	  bc, execution wise ... but since it uses GMP it will be much faster
+	  when working with large numbers
+	* reads two files on startup <prefix>/share/genius/lib.gel and
+	  ~/.gnomeinit
+	* a whole bunch of new functions (floor,ceil,sum,prod,trunc,min,max,
+	  gcd)
+	* and of course bugfixes

@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -241,7 +241,7 @@ aboutcb(GtkWidget * widget, gpointer * data)
 
 	mb=gnome_about_new(_("GnomENIUS Calculator"), VERSION,
 			     /* copyright notice */
-			     "(C) 1998 the Free Software Foundation",
+			     "(C) 1997,1998,1999 the Free Software Foundation",
 			     (const char **)authors,
 			     /* another comments */
 			     _("The Gnome calculator style edition of genius"),
@@ -359,7 +359,7 @@ setup_calc(GtkWidget *widget, gpointer data)
 				       gtk_label_new(_("General")));
 
 	/*options area*/
-	optframe=gtk_frame_new(_("Properties"));
+	optframe=gtk_frame_new(_("Preferences"));
 	box=gtk_vbox_new(FALSE,0);
 	boxt=gtk_hbox_new(FALSE,0);
 	
@@ -416,43 +416,29 @@ setup_calc(GtkWidget *widget, gpointer data)
 	gtk_widget_show(setupdialog);
 }
 
-GnomeUIInfo calc_menu[] = {
-	{GNOME_APP_UI_ITEM, N_("_Properties..."), NULL, setup_calc, NULL, NULL,
-		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_PROP, 0, 0, NULL},
-	{GNOME_APP_UI_ITEM, N_("E_xit"), NULL, quitapp, NULL, NULL,
-		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_EXIT, 'X', GDK_CONTROL_MASK, NULL},
-	{GNOME_APP_UI_ENDOFINFO}
+static GnomeUIInfo file_menu[] = {
+	GNOMEUIINFO_MENU_EXIT_ITEM(quitapp,NULL),
+	GNOMEUIINFO_END,
 };
 
-GnomeUIInfo view_menu[] = {  
-	{GNOME_APP_UI_TOGGLEITEM, N_("_Numpad"), NULL, showhide, (gpointer) 1, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	{GNOME_APP_UI_TOGGLEITEM, N_("_Scientific"), NULL, showhide, (gpointer) 2, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	{GNOME_APP_UI_ENDOFINFO}
+static GnomeUIInfo settings_menu[] = {  
+	GNOMEUIINFO_TOGGLEITEM_DATA(N_("Show _Numpad"),N_("Show the number pad"),showhide, (gpointer)1, NULL),
+	GNOMEUIINFO_TOGGLEITEM_DATA(N_("Show _Scientific"),N_("Show the scientific pad"),showhide, (gpointer)2, NULL),
+	GNOMEUIINFO_MENU_PREFERENCES_ITEM(setup_calc,NULL),
+	GNOMEUIINFO_END,
 };
 
-GnomeUIInfo help_menu[] = {  
-/* 	{ GNOME_APP_UI_HELP, NULL, NULL, NULL, NULL, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},  */
-	
-	{GNOME_APP_UI_ITEM, N_("_About..."), NULL, aboutcb, NULL, NULL,
-		GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_MENU_ABOUT, 0, 0, NULL},
-	
-	{GNOME_APP_UI_ENDOFINFO}
+static GnomeUIInfo help_menu[] = {  
+	GNOMEUIINFO_HELP("genius"),
+	GNOMEUIINFO_MENU_ABOUT_ITEM(aboutcb,NULL),
+	GNOMEUIINFO_END,
 };
   
-GnomeUIInfo genius_menu[] = {
-	{GNOME_APP_UI_SUBTREE, N_("_Calculator"), NULL, calc_menu, NULL, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	
-	{GNOME_APP_UI_SUBTREE, N_("_View"), NULL, view_menu, NULL, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	
-	{GNOME_APP_UI_SUBTREE, N_("_Help"), NULL, help_menu, NULL, NULL,
-		GNOME_APP_PIXMAP_NONE, NULL, 0, 0, NULL},
-	
-	{GNOME_APP_UI_ENDOFINFO}
+static GnomeUIInfo genius_menu[] = {
+	GNOMEUIINFO_MENU_FILE_TREE(file_menu),
+	GNOMEUIINFO_MENU_SETTINGS_TREE(settings_menu),
+	GNOMEUIINFO_MENU_HELP_TREE(help_menu),
+	GNOMEUIINFO_END,
 };
 
 #define ELEMENTS(x) (sizeof (x) / sizeof (x [0]))
@@ -462,8 +448,8 @@ static GtkWidget *
 create_main_window(void)
 {
 	GtkWidget *w;
-        w=gnome_app_new("genius", _("GnomENIUS Calculator"));
-	gtk_window_set_wmclass (GTK_WINDOW (w), "genius", "genius");
+        w=gnome_app_new("gnome-genius", _("GnomENIUS Calculator"));
+	gtk_window_set_wmclass (GTK_WINDOW (w), "gnome-genius", "gnome-genius");
 	gtk_window_set_policy (GTK_WINDOW (w), TRUE, FALSE, TRUE);
 
         gtk_signal_connect(GTK_OBJECT(w), "delete_event",
@@ -483,8 +469,8 @@ get_properties (void)
 	
 	for (i = 0; i < 2; i++) {
 		tmp = gnome_config_get_bool(config_defaults[i]);
-		GTK_CHECK_MENU_ITEM (view_menu[i].widget)->active = tmp;
-		showhide(GTK_WIDGET(view_menu[i].widget), (gpointer *) (i + 1));
+		GTK_CHECK_MENU_ITEM (settings_menu[i].widget)->active = tmp;
+		showhide(GTK_WIDGET(settings_menu[i].widget), (gpointer *) (i + 1));
 	}
 	
 	g_snprintf(buf,256,"/genius/properties/max_digits=%s",
@@ -513,12 +499,12 @@ set_properties (void)
 	gnome_config_set_bool("/genius/properties/scientific_notation",
 			     curstate.scientific_notation);
 	
-	if(GTK_CHECK_MENU_ITEM(view_menu[0].widget)->active) 
+	if(GTK_CHECK_MENU_ITEM(settings_menu[0].widget)->active) 
 		gnome_config_set_bool("/genius/view/numpad",  TRUE);
 	else
 		gnome_config_set_bool("/genius/view/numpad",  FALSE);
 	
-	if(GTK_CHECK_MENU_ITEM(view_menu[1].widget)->active)
+	if(GTK_CHECK_MENU_ITEM(settings_menu[1].widget)->active)
 		gnome_config_set_bool("/genius/view/scientific",  TRUE);
 	else
 		gnome_config_set_bool("/genius/view/scientific",  FALSE);
@@ -539,6 +525,8 @@ main(int argc, char *argv[])
 	GtkWidget *frame;
 	GtkWidget *table;
 	GtkTooltips *tips;
+	char *file;
+	FILE *fp;
 
 
 	/*numpad button labels*/
@@ -678,7 +666,15 @@ main(int argc, char *argv[])
 
 	/*set up the menu*/
         gnome_app_create_menus(GNOME_APP(window), genius_menu);
-/*	gtk_menu_item_right_justify(GTK_MENU_ITEM(genius_menu[2].widget));*/
+	
+	/*setup appbar*/
+	w = gnome_appbar_new(FALSE, TRUE, GNOME_PREFERENCES_USER);
+	gnome_app_set_statusbar(GNOME_APP(window), w);
+	gtk_widget_show(w);
+
+	gnome_app_install_menu_hints(GNOME_APP(window),
+				     genius_menu);
+
 
 	/*read gnome_config parameters */
 	
@@ -693,6 +689,35 @@ main(int argc, char *argv[])
 	gtk_widget_show(window);
 
 	gdk_color_white(gtk_widget_get_colormap(history),&rescol);
+	
+	/*read standard files and init scripts*/
+	if((fp = fopen(LIBRARY_FILE,"r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
+	}
+	
+	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+
+	if(file && (fp = fopen(file,"r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
+	}
+
+	if(errors) {
+		geniuserrorbox(errors);
+		g_free(errors);
+		errors=NULL;
+	}
 
 	gtk_widget_grab_focus(entry);
 	gtk_main();

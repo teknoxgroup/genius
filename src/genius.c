@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -58,6 +58,7 @@ main(int argc, char *argv[])
 	int inter;
 	int lastarg = FALSE;
 	GList *files = NULL;
+	char *file;
 	FILE *fp;
 
 	for(i=1;i<argc;i++) {
@@ -99,9 +100,31 @@ main(int argc, char *argv[])
 	/*interactive mode, print welcome message*/
 	if(inter) {
 		puts("Genius "VERSION"\n"
-		     "Copyright (c) 1997,1998 Free Software Foundation, Inc.\n"
+		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
 		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
 		     "For details type `warranty'.\n");
+	}
+	
+	if((fp = fopen(LIBRARY_FILE,"r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
+	}
+	
+	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+
+	if(file && (fp = fopen(file,"r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
 	}
 
 	if(files) {
@@ -124,6 +147,7 @@ main(int argc, char *argv[])
 			if(got_eof) {
 				if(inter)
 					puts("");
+				got_eof = FALSE;
 				break;
 			}
 		}

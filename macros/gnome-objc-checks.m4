@@ -4,7 +4,10 @@ dnl Look for an ObjC compiler.
 dnl FIXME: extend list of possible names of ObjC compilers.
   AC_CHECK_PROGS(OBJC, $OBJC egcs, "")
   if test "x$OBJC" = "x" ; then
-    AC_CHECK_PROGS(OBJC, $OBJC gcc, "")
+    AC_CHECK_PROGS(OBJC, $OBJC egcc, "")
+    if test "x$OBJC" = "x" ; then
+      AC_CHECK_PROGS(OBJC, $OBJC gcc, "")
+    fi
   fi
 
   AC_REQUIRE([GNOME_PTHREAD_CHECK])
@@ -35,7 +38,7 @@ int main () {
 }
 EOF
 
-      $OBJC -o conftest $LDFLAGS conftest.m $OBJC_LIBS 1>&AC_FD_CC 2>&1
+      $OBJC $CFLAGS -o conftest $LDFLAGS conftest.m $OBJC_LIBS 1>&AC_FD_CC 2>&1
       result=$?
       rm -f conftest*
 

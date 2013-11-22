@@ -33,9 +33,15 @@ typedef enum {
 
 typedef struct _EFunc EFunc;
 typedef struct _ETree ETree;
+typedef struct _Token Token;
+
+struct _Token {
+	char *token;
+	GList *refs;
+};
 
 struct _EFunc {
-	char *id;
+	Token *id;
 	EFuncType type;
 	int context; /*the context number this is used for .. if we pop this
 		       context, we will destroy the function*/
@@ -69,7 +75,8 @@ struct _ETree {
 	union {
 		mpw_t value;
 		int oper;
-		char *id;
+		Token *id;
+		char *str;
 		EFunc *func; /*anon function*/
 		ETree *next; /*this is for keeping a free list*/
 	} data;

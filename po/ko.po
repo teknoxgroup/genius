@@ -1,14 +1,21 @@
+# gnome-utils ko.po
+# Copyright (C) 1998 Free Software Foundation, Inc.
+# Changwoo Ryu <cwryu@adam.kaist.ac.kr>, 1998
+#
 msgid ""
 msgstr ""
-"Date: 1998-11-30 20:56:21-0800\n"
-"From: George <jirka@julia.linux.bogus>\n"
-"Content-Type: text/plain; charset=\n"
-"Xgettext-Options: --default-domain=genius --directory=.. --add-comments --keyword=_ --keyword=N_ --files-from=./POTFILES.in\n"
-"Files: src/gnome-genius.c src/eval.c src/calc.c src/util.c\n"
+"Project-Id-Version: GNOME-utils 0.13\n"
+"POT-Creation-Date: 1999-02-19 00:00-0800\n"
+"PO-Revision-Date: 1998-09-03 05:33:03+0900\n"
+"Last-Translator: Sung-Hyun Nam <namsh@lgic.co.kr>\n"
+"Language-Team: Korean <ko@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Transfer-Encoding: 8bit\n"
 
-#: src/gnome-genius.c:242 src/gnome-genius.c:465
+#: src/gnome-genius.c:242 src/gnome-genius.c:451
 msgid "GnomENIUS Calculator"
-msgstr ""
+msgstr "GnomENIUS 계산기"
 
 #. another comments
 #: src/gnome-genius.c:247
@@ -17,24 +24,24 @@ msgstr ""
 
 #: src/gnome-genius.c:349
 msgid "GnomENIUS Calculator setup"
-msgstr ""
+msgstr "GnomENIUS 계산기 환경설정"
 
 #: src/gnome-genius.c:359
 msgid "General"
-msgstr ""
+msgstr "일반"
 
 #. options area
 #: src/gnome-genius.c:362
-msgid "Properties"
+msgid "Preferences"
 msgstr ""
 
 #: src/gnome-genius.c:369
 msgid "Full (exact) answers"
-msgstr ""
+msgstr "전체 (정확한) 대답"
 
 #: src/gnome-genius.c:379
 msgid "Make floats integers (e.g. 10.0=10)"
-msgstr ""
+msgstr "실수로 변환 (가령 10.0=10)"
 
 #: src/gnome-genius.c:388
 msgid "Results as floats"
@@ -44,162 +51,200 @@ msgstr ""
 msgid "Floats in scientific notation"
 msgstr ""
 
-#: src/gnome-genius.c:420
-msgid "_Properties..."
+#: src/gnome-genius.c:425
+msgid "Show _Numpad"
 msgstr ""
 
-#: src/gnome-genius.c:422
-msgid "E_xit"
+#: src/gnome-genius.c:425
+msgid "Show the number pad"
 msgstr ""
 
-#: src/gnome-genius.c:428
-msgid "_Numpad"
-msgstr ""
+#: src/gnome-genius.c:426
+#, fuzzy
+msgid "Show _Scientific"
+msgstr "공학용"
 
-#: src/gnome-genius.c:430
-msgid "_Scientific"
-msgstr ""
+#: src/gnome-genius.c:426
+#, fuzzy
+msgid "Show the scientific pad"
+msgstr "공학용"
 
-#: src/gnome-genius.c:439
-msgid "_About..."
-msgstr ""
-
-#: src/gnome-genius.c:446
-msgid "_Calculator"
-msgstr ""
-
-#: src/gnome-genius.c:449
-msgid "_View"
-msgstr ""
-
-#: src/gnome-genius.c:452
-msgid "_Help"
-msgstr ""
-
-#: src/gnome-genius.c:579
+#: src/gnome-genius.c:567
 msgid "Display"
-msgstr ""
+msgstr "표시"
 
 #. numpad
-#: src/gnome-genius.c:618
+#: src/gnome-genius.c:606
 msgid "Numpad"
 msgstr ""
 
 #. scientific
-#: src/gnome-genius.c:649
+#: src/gnome-genius.c:637
 msgid "Scientific"
-msgstr ""
+msgstr "공학용"
 
-#: src/eval.c:373
+#: src/eval.c:364
 msgid "Lvalue not an identifier/dereference!"
 msgstr ""
 
-#: src/eval.c:390 src/eval.c:420 src/eval.c:445 src/eval.c:549 src/eval.c:597 src/eval.c:707
-msgid "Variable '%s' used unintialized"
-msgstr ""
-
-#: src/eval.c:410
+#: src/eval.c:385
 msgid "Dereference of non-identifier!"
 msgstr ""
 
-#: src/eval.c:430
+#: src/eval.c:391
 msgid "Dereference of non-reference!"
 msgstr ""
 
-#: src/eval.c:533
+#: src/eval.c:486
+#, fuzzy, c-format
 msgid "Function '%s' used unintialized"
-msgstr ""
+msgstr "초기화되지 않은 변수가 사용됨!"
 
-#: src/eval.c:557
+#: src/eval.c:502 src/eval.c:652
+#, fuzzy, c-format
+msgid "Variable '%s' used unintialized"
+msgstr "초기화되지 않은 변수가 사용됨!"
+
+#: src/eval.c:510
+#, c-format
 msgid "Can't dereference '%s'!"
 msgstr ""
 
-#: src/eval.c:566
+#: src/eval.c:519
 msgid "Can't call a non-function!"
 msgstr ""
 
-#: src/eval.c:574 src/eval.c:711 src/eval.c:802
+#: src/eval.c:529 src/eval.c:656 src/eval.c:747
+#, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be %d)"
 msgstr ""
 
-#: src/eval.c:612 src/eval.c:727 src/eval.c:809 src/eval.c:1278
+#: src/eval.c:557 src/eval.c:672 src/eval.c:754 src/eval.c:1233
 msgid "Extraneous return value!"
 msgstr ""
 
-#: src/eval.c:650
+#: src/eval.c:595
 msgid "Reference function with arguments encountered!"
 msgstr ""
 
-#: src/eval.c:657
+#: src/eval.c:602
 msgid "Unnamed reference function encountered!"
 msgstr ""
 
-#: src/eval.c:688 src/eval.c:781 src/eval.c:783 src/eval.c:860
+#: src/eval.c:633 src/eval.c:726 src/eval.c:728 src/eval.c:805
 msgid "Unevaluatable function type encountered!"
 msgstr ""
 
-#: src/eval.c:716
+#: src/eval.c:661
+#, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr ""
 
-#: src/eval.c:722
+#: src/eval.c:667
 msgid "NULL reference encountered!"
 msgstr ""
 
-#: src/eval.c:754
+#: src/eval.c:699
 msgid "Unnamed reference function encountered"
 msgstr ""
 
-#: src/eval.c:795
+#: src/eval.c:740
+#, fuzzy, c-format
 msgid "Variable '%s' used unitialized"
-msgstr ""
+msgstr "초기화되지 않은 변수가 사용됨!"
 
-#: src/eval.c:1241
+#: src/eval.c:1195
 msgid "Logical not only define on numbers"
 msgstr ""
 
-#: src/calc.c:293 src/eval.c:1289
+#: src/eval.c:1242
+msgid "Can't evaluate return value!"
+msgstr ""
+
+#: src/calc.c:281 src/eval.c:1253
 msgid "Unexpected operator!"
 msgstr ""
 
-#: src/calc.c:370 src/eval.c:1311
+#: src/calc.c:359 src/eval.c:1275
 msgid "Unexpected node!"
 msgstr ""
 
-#: src/eval.c:1347
+#: src/eval.c:1311
 msgid "Could not evaluate predicate into a numeric boolean value!"
 msgstr ""
 
-#: src/calc.c:268 src/calc.c:275
+#: src/calc.c:256 src/calc.c:263
 msgid "Bad identifier for function node!"
 msgstr ""
 
-#: src/calc.c:307
+#: src/calc.c:295
 msgid "NULL tree!"
 msgstr ""
 
-#: src/calc.c:346
+#: src/calc.c:334
 msgid "NULL function!"
 msgstr ""
 
-#: src/calc.c:364
+#: src/calc.c:353
 msgid "Unexpected function type!"
 msgstr ""
 
-#: src/calc.c:510
+#: src/calc.c:499
 msgid "ERROR: Probably corrupt stack!"
-msgstr ""
+msgstr "에러: 스택이 깨진 것 같음!"
 
-#: src/calc.c:561
+#: src/calc.c:550
 msgid "ERROR: "
-msgstr ""
+msgstr "에러: "
 
-#: src/calc.c:561
+#: src/calc.c:550
 msgid " before '"
 msgstr ""
 
-#: src/util.c:137
+#: src/util.c:128
 msgid "Stack underflow!"
-msgstr ""
+msgstr "스택 아래넘침!"
+
+#~ msgid "Properties"
+#~ msgstr "속성"
+
+#~ msgid "Properties..."
+#~ msgstr "속성..."
+
+#~ msgid "Exit"
+#~ msgstr "끝내기"
+
+#~ msgid "About..."
+#~ msgstr "이 프로그램은..."
+
+#~ msgid "Calculator"
+#~ msgstr "계산기"
+
+#~ msgid "View"
+#~ msgstr "보기"
+
+#~ msgid "Help"
+#~ msgstr "도움말"
+
+#~ msgid "Left value is NOT a number! (ignoring if construct)"
+#~ msgstr "왼쪽 값이 숫자가 아닙니다! (construct라면 무시)"
+
+#~ msgid "Left value is NOT a number! (ignoring ifelse construct)"
+#~ msgstr "왼쪽 값이 숫자가 아닙니다! (construct가 아니라면 무시)"
+
+#~ msgid "'=' can't function without proper nodes!"
+#~ msgstr "'=' 적절한 노드없이 동작할 수 없습니다!"
+
+#~ msgid "Left value is NOT a 0\\function! (ignoring '=')"
+#~ msgstr "왼쪽 값이 0\\함수가 아닙니다! ('=' 무시)"
+
+#~ msgid "Right value is NOT computed! (ignoring '=')"
+#~ msgstr "오른쪽 값이 계산되지 않았습니다! ('=' 무시)"
+
+#~ msgid "funcdefop can't function without proper nodes!"
+#~ msgstr "funcdefop는 적절한 노드없이는 동작할 수 없습니다!"
+
+#~ msgid "Left value is NOT a function! (ignoring function definition)"
+#~ msgstr "왼쪽 값이 함수가 아닙니다! (함수정의 무시)"

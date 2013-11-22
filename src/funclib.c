@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -19,16 +19,6 @@
  * USA.
  */
 
-#include <config.h>
-
-#ifndef WITHOUT_GNOME
-#include <gnome.h>
-#else
-#ifndef _
-#define _(x) x
-#endif
-#endif
-
 #include <string.h>
 #include <glib.h>
 #include "mpwrap.h"
@@ -46,7 +36,7 @@ static ETree *
 warranty_op(ETree * * a, int *exception)
 {
 	(*errorout)("Genius "VERSION"\n"
-		    "Copyright (c) 1997,1998 Free Software Foundation, Inc.\n\n"
+		    "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n\n"
 		    "    This program is free software; you can redistribute it and/or modify\n"
 		    "    it under the terms of the GNU General Public License as published by\n"
 		    "    the Free Software Foundation; either version 2 of the License , or\n"
@@ -98,10 +88,7 @@ shrubbery_op(ETree * * a, int *exception)
 static ETree *
 print_op(ETree * * a, int *exception)
 {
-	if(a[0]->type==STRING_NODE)
-		printf("%s",a[0]->data.id);
-	else
-		print_etree(NULL,stdout,a[0]);
+	print_etree(NULL,stdout,a[0]);
 	puts("");
 	return makenum_null();
 }
@@ -109,10 +96,7 @@ print_op(ETree * * a, int *exception)
 static ETree *
 printn_op(ETree * * a, int *exception)
 {
-	if(a[0]->type==STRING_NODE)
-		printf("%s",a[0]->data.id);
-	else
-		print_etree(NULL,stdout,a[0]);
+	print_etree(NULL,stdout,a[0]);
 	fflush(stdout);
 	return makenum_null();
 }
@@ -124,7 +108,7 @@ display_op(ETree * * a, int *exception)
 		(*errorout)("display: first argument must be string!");
 		return NULL;
 	}
-	printf("%s: ",a[0]->data.id);
+	printf("%s: ",a[0]->data.str);
 	print_etree(NULL,stdout,a[1]);
 	puts("");
 	return makenum_null();
@@ -238,7 +222,7 @@ tan_op(ETree * * a, int *exception)
  		mpw_sub(fr,fr,pitmp);
  	mpw_clear(pitmp);
 
-	/*is this algorithm allways precise??? sin/cos*/
+	/*is this algorithm always precise??? sin/cos*/
 	mpw_init(fr2);
 	mympw_cos(fr2,fr);
 	mympw_sin(fr,fr);
@@ -298,6 +282,54 @@ is_complex_op(ETree * * a, int *exception)
 	return n;
 }
 
+static ETree *
+trunc_op(ETree * * a, int *exception)
+{
+	mpw_t fr;
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("trunc: argument not a number");
+		return NULL;
+	}
+	mpw_init(fr);
+	mpw_trunc(fr,a[0]->data.value);
+	n = makenum(fr);
+	mpw_clear(fr);
+	return n;
+}
+static ETree *
+floor_op(ETree * * a, int *exception)
+{
+	mpw_t fr;
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("floor: argument not a number");
+		return NULL;
+	}
+	mpw_init(fr);
+	mpw_floor(fr,a[0]->data.value);
+	n = makenum(fr);
+	mpw_clear(fr);
+	return n;
+}
+static ETree *
+ceil_op(ETree * * a, int *exception)
+{
+	mpw_t fr;
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)("ceil: argument not a number");
+		return NULL;
+	}
+	mpw_init(fr);
+	mpw_ceil(fr,a[0]->data.value);
+	n = makenum(fr);
+	mpw_clear(fr);
+	return n;
+}
 static ETree *
 round_op(ETree * * a, int *exception)
 {
@@ -380,27 +412,115 @@ isnull_op(ETree * * a, int *exception)
 		return makenum_ui(1);
 }
 
+/*sin function*/
+static ETree *
+gcd_op(ETree * * a, int *exception)
+{
+	mpw_t tmp;
+
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   a[1]->type!=VALUE_NODE) {
+		(*errorout)("gcd: arguments must be numbers");
+		return NULL;
+	}
+
+	mpw_init(tmp);
+	mpw_gcd(tmp,
+		a[0]->data.value,
+		a[1]->data.value);
+	if(error_num) {
+		error_num = 0;
+		mpw_clear(tmp);
+		return NULL;
+	}
+
+	n=makenum(tmp);
+	mpw_clear(tmp);
+	return n;
+}
+
+/*sin function*/
+static ETree *
+max_op(ETree * * a, int *exception)
+{
+	mpw_t tmp;
+
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   a[1]->type!=VALUE_NODE) {
+		(*errorout)("max: arguments must be numbers");
+		return NULL;
+	}
+
+	if(mpw_cmp(a[0]->data.value,a[1]->data.value)>0)
+		n = makenum(a[0]->data.value);
+	else {
+		if(error_num) {
+			error_num = 0;
+			return NULL;
+		}
+		n = makenum(a[1]->data.value);
+	}
+
+	return n;
+}
+/*sin function*/
+static ETree *
+min_op(ETree * * a, int *exception)
+{
+	mpw_t tmp;
+
+	ETree *n;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   a[1]->type!=VALUE_NODE) {
+		(*errorout)("min: arguments must be numbers");
+		return NULL;
+	}
+
+	if(mpw_cmp(a[0]->data.value,a[1]->data.value)>0)
+		n = makenum(a[1]->data.value);
+	else {
+		if(error_num) {
+			error_num = 0;
+			return NULL;
+		}
+		n = makenum(a[0]->data.value);
+	}
+
+	return n;
+}
+
 /*add the routines to the dictionary*/
 void
 funclib_addall(void)
 {
-	d_addfunc(d_makebifunc("warranty",warranty_op,0));
-	d_addfunc(d_makebifunc("exit",exit_op,0));
-	d_addfunc(d_makebifunc("quit",exit_op,0));
-	d_addfunc(d_makebifunc("print",print_op,1));
-	d_addfunc(d_makebifunc("printn",printn_op,1));
-	d_addfunc(d_makebifunc("display",display_op,2));
-	d_addfunc(d_makebifunc("ni",ni_op,0));
-	d_addfunc(d_makebifunc("shrubbery",shrubbery_op,0));
-	d_addfunc(d_makebifunc("sin",sin_op,1));
-	d_addfunc(d_makebifunc("cos",cos_op,1));
-	d_addfunc(d_makebifunc("tan",tan_op,1));
-	d_addfunc(d_makebifunc("pi",pi_op,0));
-	d_addfunc(d_makebifunc("e",e_op,0));
-	d_addfunc(d_makebifunc("is_complex",is_complex_op,1));
-	d_addfunc(d_makebifunc("round",round_op,1));
-	d_addfunc(d_makebifunc("Re",Re_op,1));
-	d_addfunc(d_makebifunc("Im",Im_op,1));
-	d_addfunc(d_makebifunc("sqrt",sqrt_op,1));
-	d_addfunc(d_makebifunc("isnull",isnull_op,1));
+	d_addfunc(d_makebifunc(d_intern("warranty"),warranty_op,0));
+	d_addfunc(d_makebifunc(d_intern("exit"),exit_op,0));
+	d_addfunc(d_makebifunc(d_intern("quit"),exit_op,0));
+	d_addfunc(d_makebifunc(d_intern("print"),print_op,1));
+	d_addfunc(d_makebifunc(d_intern("printn"),printn_op,1));
+	d_addfunc(d_makebifunc(d_intern("display"),display_op,2));
+	d_addfunc(d_makebifunc(d_intern("ni"),ni_op,0));
+	d_addfunc(d_makebifunc(d_intern("shrubbery"),shrubbery_op,0));
+	d_addfunc(d_makebifunc(d_intern("sin"),sin_op,1));
+	d_addfunc(d_makebifunc(d_intern("cos"),cos_op,1));
+	d_addfunc(d_makebifunc(d_intern("tan"),tan_op,1));
+	d_addfunc(d_makebifunc(d_intern("pi"),pi_op,0));
+	d_addfunc(d_makebifunc(d_intern("e"),e_op,0));
+	d_addfunc(d_makebifunc(d_intern("is_complex"),is_complex_op,1));
+	d_addfunc(d_makebifunc(d_intern("round"),round_op,1));
+	d_addfunc(d_makebifunc(d_intern("floor"),floor_op,1));
+	d_addfunc(d_makebifunc(d_intern("ceil"),ceil_op,1));
+	d_addfunc(d_makebifunc(d_intern("trunc"),trunc_op,1));
+	d_addfunc(d_makebifunc(d_intern("Re"),Re_op,1));
+	d_addfunc(d_makebifunc(d_intern("Im"),Im_op,1));
+	d_addfunc(d_makebifunc(d_intern("sqrt"),sqrt_op,1));
+	d_addfunc(d_makebifunc(d_intern("isnull"),isnull_op,1));
+	d_addfunc(d_makebifunc(d_intern("gcd"),gcd_op,2));
+	d_addfunc(d_makebifunc(d_intern("max"),max_op,2));
+	d_addfunc(d_makebifunc(d_intern("min"),min_op,2));
 }

@@ -1,3 +1,56 @@
+Thu Feb 18 23:50:19 1999  George Lebl  <jirka@5z.com>
+
+	* src/genius.c,src/gnome-genius.c: read <prefix>/share/genius/lib.gel
+	  and ~/.gnomeinit on startup as gel programs
+
+	* src/funclib.c: set error_num=0 on error to keep the expression
+
+	* src/lib.gel,Makefile.am: new library file, now has prod and sum
+	  functions
+
+Thu Feb 18 01:39:52 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch]: implemented floor,ceil,trunc,abs and corrected
+	  round
+
+	* src/parse.y,eval.c: added |<expr>| absoulte operator
+
+	* src/funclib.c: added floor,ceil,trunc,min and max functions
+
+Thu Feb 11 02:29:17 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch],src/funclib.c: added a gcd function and fixed a
+	  couple of errors
+
+Thu Feb 11 02:03:48 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch]: _move function to speed up working with
+	  temporaries, and on the fly allocation of gmp structs
+	  for more speed and less memory usage
+
+Thu Feb 11 00:51:12 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch]: add native int type for faster calculation,
+	  but gains are fairly minimal, corrected errors with negative
+	  exponentiation on integers
+
+	* src/{eval.c,calc.c,dict.[ch],parer.y,lexer.l}: fixed a whole
+	  bunch of errors, segfaults and memory leaks, and implemented
+	  a token system somewhat like the x atoms to avoid hash table
+	  lookups. This can speed up execution quite a bit.
+
+Sat Jan 09 06:56:31 1999  George Lebl  <jirka@5z.com>
+
+        * gnome-genius.c: standardize menus and use appbar for menu hints
+
+1999-01-02  Christopher Blizzard  <blizzard@appliedtheory.com>
+
+	* src/Makefile.am: Add rules to generate the parse.h file.
+
+Wed Dec  2 22:23:40 PST 1998 Manish Singh <yosh@gimp.org>
+
+	* lexer.l: fix small typo
+
 Mon Nov 30 02:29:55 1998  George Lebl  <jirka@5z.com>
 
 	* src/*: merge in the GEL2 language stuff, the old GEL is dead,

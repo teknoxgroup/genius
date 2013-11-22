@@ -3,12 +3,8 @@ Genius Calculator
 
 **********************************************************
 (Read Changes-0.2 for changes description from 0.1 to 0.2)
+Read NEWS for new stuff
 **********************************************************
-
-NOTE: to build it if you don't have gnome installed, configure with
-./configure --disable-gnome
-I haven't tried it on a machine that really doesn't have gnome so YMMV.
-You still need glib though
 
 Although it's under heavy development, it's actually getting usable.
 I use it myself as my desktop calculator.
@@ -39,8 +35,7 @@ Features of Genius:
    acurate (since integers are arbitrary precision)
  * variables
  * user functions
- * variable and function references with Cc like syntax
- * bc like sytax
+ * variable and function references with C like syntax
  * anonymous functions
  * it will now add missing parenthesis on the ends of expressions (only in
    the GUI version)
@@ -54,6 +49,10 @@ A simple GEL expression looks just like a math expression. So you don't need
 to learn GEL to use the calculator. GEL is used when you want to define 
 and use functions, and variables.
 
+The program reads two files as gel programs as startup
+<prefix>/share/genius/lib.gel and ~/.gnomeinit, lib.gel has some standard
+functions of the language implemented in gel itself
+
 ****************************************************************************
 What follows is a simple description of GEL:
 
@@ -65,7 +64,7 @@ returns the number you set, so you can do something like "a=b=5", just
 like in C. Variables are really functions with no argument
 
 There are a number of built in functions (currently "e" "pi" "sin" "cos"
-"tan")
+"tan", and a number of other (check funclib.c, all the way on the bottom))
 
 To type functions in:
 
@@ -237,10 +236,10 @@ EXAMPLE PROGRAM in GEL:
 
     define f(x) {
 	    if (x <= 1) then return (1);
-	    return (f(x-1) * x)
+	    return (f(x-1) * x);
     }
 
-    which is almost verbatim bc code, except for "then" and the missing ;
+    which is almost verbatim bc code, except for then
 
     here's an iterative version:
 
