@@ -15,12 +15,6 @@ INCLUDES = \
 #	-DGNOME_DISABLE_DEPRECATED		\
 #
 
-
-# For a gnome build set this in configure.in
-#  VICIOUS_GNOME_LIBS="libviciousui.a libviciousui-gnome.a \
-#       libviciousui-minimal.a libvicious-gnome.a"
-#  AC_SUBST(VICIOUS_GNOME_LIBS)
-
 noinst_LIBRARIES = \
 	@VICIOUS_GNOME_LIBS@ \
 	libvicious.a

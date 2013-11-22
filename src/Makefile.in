@@ -180,7 +180,7 @@ libexec_PROGRAMS = @GENIUS_READLINE_HELPER_FIFO@
 
 EXTRA_PROGRAMS = gnome-genius genius-readline-helper-fifo
 
-gnome_genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			gnome-genius.c		gnome-genius.h		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
+gnome_genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			gnome-genius.c		gnome-genius.h		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c		funclibhelper.cP
 
 
 gnome_genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lviciousui					-L$(top_builddir)/gtkextra			-lgtkextra-genius				-lm						@GMP_LIB@					$(MPFR_LIBDIR)					-lmpfr						@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
@@ -193,7 +193,7 @@ genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helpe
 genius_readline_helper_fifo_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						$(GENIUS_NOGUI_LIBS)				@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		funclibhelper.cP
 
 
 genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						@GMP_LIB@					$(MPFR_LIBDIR)					-lmpfr						@LEXLIB@					$(GENIUS_NOGUI_LIBS)				@READLINE_LIB@					@TERMCAP_LIB@
@@ -564,7 +564,8 @@ eval.o: eval.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
 	matrixw.h matop.h compil.h utype.h
 funclib.o: funclib.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
 	../mpfr/mpfr.h ../mpfr/mpf2mpfr.h mpzextra.h eval.h dict.h \
-	funclib.h matrix.h matrixw.h matop.h geloutput.h
+	funclib.h matrix.h matrixw.h matop.h geloutput.h \
+	funclibhelper.cP
 geloutput.o: geloutput.c ../config.h structs.h mpwrap.h ../mpfr/mpfr.h \
 	../mpfr/mpf2mpfr.h geloutput.h
 genius-readline-helper.o: genius-readline-helper.c
@@ -595,8 +596,8 @@ graphing.o: graphing.c ../config.h ../vicious-extensions/vicious.h \
 	../gtkextra/gtkplotps.h ../gtkextra/gtkpsfont.h calc.h \
 	genius-i18n.h structs.h mpwrap.h ../mpfr/mpfr.h \
 	../mpfr/mpf2mpfr.h eval.h util.h dict.h funclib.h matrixw.h \
-	matrix.h compil.h plugin.h geloutput.h gnome-genius.h \
-	graphing.h
+	matrix.h compil.h plugin.h geloutput.h matop.h gnome-genius.h \
+	graphing.h funclibhelper.cP
 inter.o: inter.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
 	../mpfr/mpfr.h ../mpfr/mpf2mpfr.h dict.h plugin.h inter.h
 lexer.o: lexer.c ../config.h mpwrap.h ../mpfr/mpfr.h ../mpfr/mpf2mpfr.h \

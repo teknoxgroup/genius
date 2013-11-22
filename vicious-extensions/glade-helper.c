@@ -192,7 +192,7 @@ glade_helper_bad_interface (const char *filename, const char *widget,
 				 GTK_BUTTONS_OK,
 				 FALSE /* markup */,
 				 _("Cannot load user interface"),
-				 _("An error occured while loading the user "
+				 _("An error occurred while loading the user "
 				   "interface element %s%s from file %s.  "
 				   "Possibly the glade interface description was "
 				   "corrupted.  "
@@ -245,14 +245,25 @@ glade_helper_bad_columns (const char *filename, const char *widget,
 				 GTK_BUTTONS_OK,
 				 FALSE /* markup */,
 				 _("Cannot load user interface"),
-				 _("An error occured while loading the user "
-				   "interface element %s%s from file %s.  "
-				   "CList type widget should have %d columns.  "
-				   "Possibly the glade interface description was "
-				   "corrupted.  "
-				   "%s cannot continue and will exit now.  "
-				   "You should check your "
-				   "installation of %s or reinstall %s."),
+				 ngettext ("An error occurred while loading the "
+					   "user interface element %s%s from "
+					   "file %s. CList type widget should "
+					   "have %d column. Possibly the glade "
+					   "interface description was "
+					   "corrupted. %s cannot continue and "
+					   "will exit now. You should check "
+					   "your installation of %s or "
+					   "reinstall %s.",
+					   "An error occurred while loading the "
+					   "user interface element %s%s from "
+					   "file %s. CList type widget should "
+					   "have %d columns. Possibly the "
+					   "glade interface description was "
+					   "corrupted. %s cannot continue and "
+					   "will exit now. You should check "
+					   "your installation of %s or "
+					   "reinstall %s.",
+					   columns),
 				 widget,
 				 typestring,
 				 tmp,
@@ -288,7 +299,7 @@ glade_helper_no_interface (const char *filename)
 				 GTK_BUTTONS_OK,
 				 FALSE /* markup */,
 				 _("Cannot load user interface"),
-				 _("An error occured while loading the user "
+				 _("An error occurred while loading the user "
 				   "interface from file %s.  "
 				   "Possibly the glade interface description was "
 				   "not found.  "
@@ -300,7 +311,7 @@ glade_helper_no_interface (const char *filename)
 				 PACKAGE,
 				 PACKAGE);
 	gtk_dialog_set_has_separator (GTK_DIALOG (dlg), FALSE);
-	g_warning (_("No interface could be loaded, BAD! (file: %s)"),
+	g_warning (_("No interface could be loaded. This is BAD! (file: %s)"),
 		   tmp);
 
 	g_free (tmp);

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2004 Jiri (George) Lebl
+ * Copyright (C) 1997-2005 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -40,42 +40,37 @@ enum {
 	MPW_FLOAT
 };
 
-enum {
-	MPW_REAL = 1,
-	MPW_COMPLEX
-};
-
 /*number structures, this is where low level stuff is stored so it will be
   different for each lib, members should never be directly accessed!*/
 
-/* FIXME: we really have too many structures/pointers per number here
-   that should be remedied */
-
 /*real only structure*/
 typedef struct _MpwRealNum {
-	struct { /*this is done as a struct so that conversions don't require
-		   a temporary, make sure to clear the old one!, in the worst
-		   case we have two unused pointers*/
-		mpz_ptr ival;
-		mpq_ptr rval;
-		mpfr_ptr fval;
-	} data;
 	union {
 		struct _MpwRealNum *next; /*used for free lists*/
 		int usage; /*used for copy-on-write*/
 	} alloc; /*private union for memory managment stuff*/
+	union {
+		mpz_t ival;
+		mpq_t rval;
+		mpfr_t fval;
+	} data;
 	guint8 type;
 } MpwRealNum;
 
-/*any number (includes complex) so it includes an imaginary member if type
-  is MPW_COMPLEX
-
+/*any number (includes complex) so it includes an imaginary member if 
+  i is not equal to gel_zero
   this is used as the number type*/
 struct _mpw_t {
 	MpwRealNum *r; /*real*/
 	MpwRealNum *i; /*imaginary*/
-	guint8 type;
 };
+
+#define MPW_IS_COMPLEX(n) ((n)->i != gel_zero)
+#define MPW_IS_REAL(n) ((n)->i == gel_zero)
+
+/* Should not be used outside */
+extern MpwRealNum *gel_zero;
+extern MpwRealNum *gel_one;
 
 typedef struct _mpw_t mpw_t[1];
 typedef struct _mpw_t *mpw_ptr;
@@ -128,7 +123,7 @@ mpfr_ptr mpw_peek_imag_mpf (mpw_ptr op);
    rop should be mpfr_ptr and op should be mpw_ptr */
 #define MPW_MPF_REAL(rop,op,tmp) { \
 				   if (op->r->type == MPW_FLOAT) { \
-					   rop = mpw_peek_real_mpf (op); \
+					   rop = op->r->data.fval; \
 				   } else if (op->r->type == MPW_INTEGER) { \
 					   mpfr_init (tmp); \
 					   mpfr_set_z (tmp, op->r->data.ival); \
@@ -141,7 +136,7 @@ mpfr_ptr mpw_peek_imag_mpf (mpw_ptr op);
 			       }
 #define MPW_MPF_IMAG(rop,op,tmp) { \
 				   if (op->i->type == MPW_FLOAT) { \
-					   rop = mpw_peek_imag_mpf (op); \
+					   rop = op->i->data.fval; \
 				   } else if (op->i->type == MPW_INTEGER) { \
 					   mpfr_init (tmp); \
 					   mpfr_set_z (tmp, op->i->data.ival); \

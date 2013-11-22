@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: genius HEAD\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-23 11:04-0800\n"
+"POT-Creation-Date: 2005-03-24 10:29-0800\n"
 "PO-Revision-Date: 2004-08-26 18:19+0900\n"
 "Last-Translator: Takeshi AIHANA <aihana@gnome.gr.jp>\n"
 "Language-Team: Japanese <gnome-translation@gnome.gr.jp>\n"
@@ -27,7 +27,7 @@ msgstr "エイリアス (別名) のエイリアスをセットしてみて下�
 msgid "Bad identifier for function node!"
 msgstr "関数ノードの識別子が間違っています！"
 
-#: src/calc.c:973 src/eval.c:6244 src/eval.c:6436
+#: src/calc.c:973 src/eval.c:6249 src/eval.c:6441
 msgid "Unexpected operator!"
 msgstr "期待していない演算子です！"
 
@@ -50,7 +50,7 @@ msgstr "関数が NULL です！"
 msgid "Unexpected function type!"
 msgstr "期待していない関数の型です！"
 
-#: src/calc.c:1356 src/eval.c:6664
+#: src/calc.c:1356 src/eval.c:6669
 msgid "Unexpected node!"
 msgstr "期待していないノードです！"
 
@@ -231,66 +231,66 @@ msgstr "変数ではないものの比較、または論理式だけの比較は
 msgid "Modulo arithmetic only works on integers"
 msgstr "モジュロ演算は整数値でのみ計算可能です"
 
-#: src/eval.c:1840
+#: src/eval.c:1843
 msgid "Can't add/subtract two matricies of different sizes"
 msgstr "サイズの異なる二つの行列による加算/減算はできません"
 
-#: src/eval.c:1842
+#: src/eval.c:1845
 msgid ""
 "Can't do element by element operations on two matricies of different sizes"
 msgstr "サイズの異なる行列による要素間の乗算はできません"
 
-#: src/eval.c:1905
+#: src/eval.c:1911
 msgid "Can't multiply matricies of wrong sizes"
 msgstr "サイズが間違っている行列の乗算はできません"
 
-#: src/eval.c:1954
+#: src/eval.c:1960
 msgid "Powers are defined on (square matrix)^(integer) only"
 msgstr "べき乗は (正方行列)^(整数値) でのみ定義されます"
 
-#: src/eval.c:1960
+#: src/eval.c:1966
 msgid "Powers on matrices in modulo mode are defined on integer matrices only"
 msgstr "モジュロ演算での行列のべき乗は整数値の行列でのみ定義されます"
 
-#: src/eval.c:1968
+#: src/eval.c:1974
 msgid "Exponent too large"
 msgstr "指数が大きすぎます"
 
-#: src/eval.c:1996 src/eval.c:2112 src/eval.c:2179
+#: src/eval.c:2002 src/eval.c:2118 src/eval.c:2185
 msgid "Matrix appears singular and can't be inverted"
 msgstr "行列は単数形で表現されるので反転することはできません"
 
-#: src/eval.c:2088
+#: src/eval.c:2094
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr "サイズが異なる、または正方行列ではない行列の除算はできません"
 
-#: src/eval.c:2160
+#: src/eval.c:2166
 msgid "Can't divide by a non-square matrix"
 msgstr "正方行列ではない行列の除算はできません"
 
-#: src/eval.c:2569 src/eval.c:2596 src/eval.c:2617 src/eval.c:2641
-#: src/eval.c:2686
+#: src/eval.c:2575 src/eval.c:2602 src/eval.c:2623 src/eval.c:2647
+#: src/eval.c:2692
 msgid "Operations on functions with variable argument list not supported"
 msgstr "可変引数を使った関数による計算はサポートしていません"
 
-#: src/eval.c:2574
+#: src/eval.c:2580
 msgid ""
 "Operations on functions with different number of arguments not supported"
 msgstr "異なる数の引数を使った関数による計算はサポートしていません"
 
-#: src/eval.c:2691
+#: src/eval.c:2697
 msgid "Function creation with wrong number of arguments"
 msgstr "間違った数の引数で関数を生成しました"
 
-#: src/eval.c:3233 src/eval.c:4588
+#: src/eval.c:3239 src/eval.c:4594
 msgid "Unevaluatable function type encountered!"
 msgstr "関数の型を評価できません！"
 
-#: src/eval.c:3255
+#: src/eval.c:3261
 msgid "' or '"
 msgstr "' または '"
 
-#: src/eval.c:3290
+#: src/eval.c:3296
 msgid ""
 "Variable 'i' used uninitialized.  Perhaps you meant to write '1i' for the "
 "imaginary number (square root of -1)."
@@ -298,17 +298,17 @@ msgstr ""
 "変数 'i' を初期化しないで使用しました (おそらく、虚数 - -1 の平方根 - を "
 "'1i' と入力したようです)"
 
-#: src/eval.c:3296 src/eval.c:3324
+#: src/eval.c:3302 src/eval.c:3330
 #, c-format
 msgid "Variable '%s' used uninitialized, perhaps you meant %s."
 msgstr "変数 '%s' を初期化しないで使用しました (おそらく %s の間違いでしょう)"
 
-#: src/eval.c:3303 src/eval.c:3331 src/eval.c:4341
+#: src/eval.c:3309 src/eval.c:3337 src/eval.c:4347
 #, c-format
 msgid "Variable '%s' used uninitialized"
 msgstr "変数 '%s' を初期化しないで使用しました"
 
-#: src/eval.c:3335 src/eval.c:4386
+#: src/eval.c:3341 src/eval.c:4392
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
@@ -317,47 +317,47 @@ msgstr ""
 "関数 '%s' の呼び出しで引数の数が間違っています！\n"
 "(引数の数を %d 個にして下さい)"
 
-#: src/eval.c:3338
+#: src/eval.c:3344
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr "参照ではない '%s' の値を読み出してみて下さい！\n"
 
-#: src/eval.c:3343
+#: src/eval.c:3349
 msgid "NULL reference encountered!"
 msgstr "参照が NULL です！"
 
-#: src/eval.c:3470
+#: src/eval.c:3476
 msgid "Cannot compare matrixes"
 msgstr "行列を比較でません"
 
-#: src/eval.c:3512
+#: src/eval.c:3518
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr "プリミティブは数値/行列/文字列の引数を受け取るようにして下さい"
 
-#: src/eval.c:3590
+#: src/eval.c:3596
 msgid "Bad argument to modular operation"
 msgstr "モジュロ演算の引数がおかしいです"
 
-#: src/eval.c:4319
+#: src/eval.c:4325
 #, c-format
 msgid "Function '%s' used uninitialized, perhaps you meant %s."
 msgstr "関数 '%s' を初期化しないで使用しました (おそらく %s の間違いでしょう)"
 
-#: src/eval.c:4326
+#: src/eval.c:4332
 #, c-format
 msgid "Function '%s' used uninitialized"
 msgstr "関数 '%s' を初期化しないで使用しました"
 
-#: src/eval.c:4347
+#: src/eval.c:4353
 #, c-format
 msgid "Can't dereference '%s'!"
 msgstr "参照 '%s' の値を読み出せません！"
 
-#: src/eval.c:4355
+#: src/eval.c:4361
 msgid "Can't call a non-function!"
 msgstr "関数ではないものは呼び出せません！"
 
-#: src/eval.c:4391
+#: src/eval.c:4397
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
@@ -366,312 +366,262 @@ msgstr ""
 "関数 '%s' の呼び出しで引数の数が間違っています！\n"
 "(引数の数を %d 個より多くして下さい)"
 
-#: src/eval.c:4434
+#: src/eval.c:4440
 #, c-format
 msgid "Referencing an undefined variable %s!"
 msgstr "未定義の変数 %s を参照しています！"
 
-#: src/eval.c:4567
+#: src/eval.c:4573
 msgid "Reference function with arguments encountered!"
 msgstr "参照関数に引数があります！"
 
-#: src/eval.c:4572
+#: src/eval.c:4578
 msgid "Unnamed reference function encountered!"
 msgstr "参照関数に名前が付いていません！"
 
-#: src/eval.c:4692
+#: src/eval.c:4698
 msgid "Bad type for 'for/sum/prod' loop!"
 msgstr "ループ 'for/sum/prod' の型がおかしいです！"
 
-#: src/eval.c:4697
+#: src/eval.c:4703
 msgid "'for/sum/prod' loop increment can't be 0"
 msgstr "ループ 'for/sum/prod' の増分値を 0 にしないで下さい"
 
-#: src/eval.c:4808
+#: src/eval.c:4814
 msgid "Bad type for 'for in' loop!"
 msgstr "ループ 'for in' の型が間違っています！"
 
-#: src/eval.c:4968 src/eval.c:5001
+#: src/eval.c:4974 src/eval.c:5007
 msgid "Continue or break outside a loop, assuming \"return null\""
 msgstr ""
 "\"return null\" であるとしてループの外側で continue または break しています"
 
-#: src/eval.c:5062
+#: src/eval.c:5068
 msgid "Wrong argument type as matrix index"
 msgstr "行列の添え字の型が間違っています"
 
-#: src/eval.c:5072
+#: src/eval.c:5078
 msgid "Matrix index too large"
 msgstr "行列の添え字が大きすぎます"
 
-#: src/eval.c:5075
+#: src/eval.c:5081
 msgid "Matrix index less than 1"
 msgstr "行列の添え字が 1 より小さいです"
 
-#: src/eval.c:5098 src/eval.c:5113
+#: src/eval.c:5104 src/eval.c:5119
 msgid "Matrix index out of range"
 msgstr "行列の添え字が範囲を超えています"
 
-#: src/eval.c:5160 src/eval.c:5222 src/eval.c:5285 src/eval.c:5330
+#: src/eval.c:5166 src/eval.c:5228 src/eval.c:5291 src/eval.c:5336
 #, c-format
 msgid "Trying to set a protected id '%s'"
 msgstr "保護された ID '%s' をセットしてみて下さい"
 
-#: src/eval.c:5178 src/eval.c:5217
+#: src/eval.c:5184 src/eval.c:5223
 msgid "Indexed Lvalue not user function"
 msgstr "添え字として渡された Lvalue はユーザ関数ではありません"
 
-#: src/eval.c:5201 src/eval.c:5314
+#: src/eval.c:5207 src/eval.c:5320
 msgid "Dereference of non-identifier!"
 msgstr "識別子ではない参照を読み出しました！"
 
-#: src/eval.c:5207 src/eval.c:5320
+#: src/eval.c:5213 src/eval.c:5326
 msgid "Dereference of undefined variable!"
 msgstr "定義していない変数の参照を読み出しました！"
 
-#: src/eval.c:5211 src/eval.c:5324
+#: src/eval.c:5217 src/eval.c:5330
 msgid "Dereference of non-reference!"
 msgstr "参照ではない値を読み出しました！"
 
-#: src/eval.c:5240
+#: src/eval.c:5246
 msgid "Indexed Lvalue not an identifier or a dereference"
 msgstr "添え字として渡された Lvalue は識別子でも参照の読み出しでもありません"
 
-#: src/eval.c:5278
+#: src/eval.c:5284
 msgid "Lvalue not an identifier/dereference/matrix location!"
 msgstr "Lvalue は識別子/参照の読み出し/行列ではありません！"
 
-#: src/eval.c:5301 src/eval.c:5342
+#: src/eval.c:5307 src/eval.c:5348
 msgid "Referencing an undefined variable!"
 msgstr "定義していない変数を参照しています！"
 
-#: src/eval.c:5388 src/eval.c:5466 src/eval.c:5475
+#: src/eval.c:5394 src/eval.c:5472 src/eval.c:5481
 msgid "Wrong matrix dimensions when setting"
 msgstr "セットした行列の次元が間違っています"
 
-#: src/eval.c:5406 src/eval.c:5446 src/eval.c:5512 src/eval.c:5694
-#: src/eval.c:5747
+#: src/eval.c:5412 src/eval.c:5452 src/eval.c:5518 src/eval.c:5700
+#: src/eval.c:5753
 msgid "Matrix index not an integer or a vector"
 msgstr "行列の添え字が整数値でもベクトルでもありません"
 
-#: src/eval.c:5533
+#: src/eval.c:5539
 msgid "Parameters can only be created in the global context"
 msgstr "大域コンテキスト内でのみパラメータを生成できます"
 
-#: src/eval.c:5589 src/eval.c:5631 src/eval.c:5706
+#: src/eval.c:5595 src/eval.c:5637 src/eval.c:5712
 msgid "Index works only on matricies"
 msgstr "添え字は行列でのみ動作します"
 
-#: src/eval.c:5619
+#: src/eval.c:5625
 msgid "Vector index not an integer or a vector"
 msgstr "ベクトル添え字が整数値でもベクトルでもありません"
 
-#: src/eval.c:5770
+#: src/eval.c:5776
 msgid "number"
 msgstr "数値"
 
-#: src/eval.c:5771
+#: src/eval.c:5777
 msgid "matrix"
 msgstr "行列"
 
-#: src/eval.c:5772
+#: src/eval.c:5778
 msgid "string"
 msgstr "文字列"
 
-#: src/eval.c:5773
+#: src/eval.c:5779
 msgid "function"
 msgstr "関数"
 
-#: src/eval.c:5774
+#: src/eval.c:5780
 msgid "identifier"
 msgstr "識別子"
 
-#: src/eval.c:5775
+#: src/eval.c:5781
 msgid "polynomial"
 msgstr "多項式"
 
-#: src/eval.c:5776
+#: src/eval.c:5782
 msgid "boolean"
 msgstr "論理値"
 
-#: src/eval.c:5795 lib/library-strings.c:17
+#: src/eval.c:5801 lib/library-strings.c:17
 msgid "Absolute value"
 msgstr "絶対値"
 
-#: src/eval.c:5796
+#: src/eval.c:5802
 msgid "Addition"
 msgstr "加算"
 
-#: src/eval.c:5797
+#: src/eval.c:5803
 msgid "Subtraction"
 msgstr "減算"
 
-#: src/eval.c:5798
+#: src/eval.c:5804
 msgid "Multiplication"
 msgstr "乗算"
 
-#: src/eval.c:5799
+#: src/eval.c:5805
 msgid "Element by element multiplication"
 msgstr "要素対要素の乗算"
 
-#: src/eval.c:5800
+#: src/eval.c:5806
 msgid "Division"
 msgstr "除算"
 
-#: src/eval.c:5801
+#: src/eval.c:5807
 msgid "Element by element division"
 msgstr "要素対要素の除算"
 
-#: src/eval.c:5802
+#: src/eval.c:5808
 msgid "Back division"
 msgstr "Back division"
 
-#: src/eval.c:5803
+#: src/eval.c:5809
 msgid "Element by element back division"
 msgstr "要素対要素の Back division"
 
-#: src/eval.c:5804
+#: src/eval.c:5810
 msgid "Modulo"
 msgstr "モジュロ演算"
 
-#: src/eval.c:5805
+#: src/eval.c:5811
 msgid "Element by element modulo"
 msgstr "要素対要素のモジュロ演算"
 
-#: src/eval.c:5806
+#: src/eval.c:5812
 msgid "Negation"
 msgstr "否定"
 
-#: src/eval.c:5807
+#: src/eval.c:5813
 msgid "Power"
 msgstr "べき乗"
 
-#: src/eval.c:5808
+#: src/eval.c:5814
 msgid "Element by element power"
 msgstr "要素対要素のべき乗"
 
-#: src/eval.c:5809
+#: src/eval.c:5815
 msgid "Factorial"
 msgstr "階乗"
 
-#: src/eval.c:5810
+#: src/eval.c:5816
 msgid "Double factorial"
 msgstr "二重階乗"
 
-#: src/eval.c:5811
+#: src/eval.c:5817
 msgid "Transpose"
 msgstr "転置"
 
-#: src/eval.c:5812
+#: src/eval.c:5818
 msgid "ConjugateTranspose"
 msgstr "共役転置"
 
-#: src/eval.c:5813
+#: src/eval.c:5819
 msgid "Comparison (<=>)"
 msgstr "比較 (<=>)"
 
-#: src/eval.c:5814
+#: src/eval.c:5820
 msgid "XOR"
 msgstr "排他的論理和 (XOR)"
 
-#: src/eval.c:5815
+#: src/eval.c:5821
 msgid "NOT"
 msgstr "否定 (NOT)"
 
-#: src/eval.c:5835
+#: src/eval.c:5841
 #, c-format
 msgid "Bad types for '%s'"
 msgstr "'%s' の型が間違っています"
 
-#: src/eval.c:5846
+#: src/eval.c:5852
 #, c-format
 msgid "%s not defined on <%s> and <%s>"
 msgstr "%s は <%s> と <%s> 上で定義されていません"
 
-#: src/eval.c:5865
+#: src/eval.c:5871
 #, c-format
 msgid "Bad type for '%s'"
 msgstr "'%s' の型が間違っています"
 
-#: src/eval.c:5875
+#: src/eval.c:5881
 #, c-format
 msgid "%s not defined on <%s>"
 msgstr "%s は <%s> 上で定義されていません"
 
-#: src/eval.c:5894 src/eval.c:5911
+#: src/eval.c:5900 src/eval.c:5917
 msgid "Vector building only works on numbers"
 msgstr "ベクトルは数値上でのみ動作します"
 
 #. FIXME: perhaps we should just return null like octave?
-#: src/eval.c:5904
+#: src/eval.c:5910
 msgid "Impossible arguments to vector building operator"
 msgstr "ベクトル演算子に引き渡せない引数"
 
-#: src/funclib.c:98
-#, c-format
-msgid "%s: argument number %d not an integer"
-msgstr "%s: %d 番目の引数が数値ではありません"
-
-#: src/funclib.c:111
-#, c-format
-msgid "%s: argument number %d not an integer or a matrix"
-msgstr "%s: %d 番目の引数が整数値でも行列でもありません"
-
-#: src/funclib.c:125
-#, c-format
-msgid "%s: argument number %d not a positive integer"
-msgstr "%s: %d 番目の引数が正の整数値ではありません"
-
-#: src/funclib.c:135 src/graphing.c:1853
-#, c-format
-msgid "%s: argument number %d not a number"
-msgstr "%s: %d 番目の引数が数値ではありません"
-
-#: src/funclib.c:146
-#, c-format
-msgid "%s: argument number %d not a boolean"
-msgstr "%s: %d 番目の引数が論理値ではありません"
-
-#: src/funclib.c:157
-#, c-format
-msgid "%s: argument number %d not a real number"
-msgstr "%s: %d 番目の引数が実数ではありません"
-
-#: src/funclib.c:167
-#, c-format
-msgid "%s: argument number %d not a matrix"
-msgstr "%s: %d 番目の引数が行列ではありません"
-
-#: src/funclib.c:178
-#, c-format
-msgid "%s: argument number %d not a value only matrix"
-msgstr "%s: argument number %d not a value only matrix"
-
-#: src/funclib.c:188 src/funclib.c:199
-#, c-format
-msgid "%s: argument number %d not a string"
-msgstr "%s: %d 番目の引数が文字列ではありません"
-
-#: src/funclib.c:210
-#, fuzzy, c-format
-msgid "%s: argument number %d not a function or identifier"
-msgstr "%s: %d 番目の引数が数値ではありません"
-
-#: src/funclib.c:239
+#: src/funclib.c:104
 #, c-format
 msgid "%s: argument can't be negative or 0"
 msgstr "%s: 引数を負の数や 0 以外にして下さい"
 
-#: src/funclib.c:243
+#: src/funclib.c:108
 #, c-format
 msgid "%s: argument too large"
 msgstr "%s: 引数が大きすぎます"
 
-#: src/funclib.c:278
+#: src/funclib.c:143
 msgid "Cannot locate the manual"
 msgstr "マニュアルを格納した場所を特定できません"
 
-#: src/funclib.c:294
+#: src/funclib.c:159
 #, c-format
 msgid ""
 "Genius %s\n"
@@ -713,335 +663,339 @@ msgstr ""
 "    Temple Place - Suite 330, Boston, MA 02111-1307, USA へ手紙を書いて下さ"
 "い。\n"
 
-#: src/funclib.c:457
+#: src/funclib.c:376
 #, c-format
 msgid "%s: trying to set a protected id!"
 msgstr "%s: 保護された ID をセットしてみて下さい"
 
 #. FIXME: fix this, this should just work too
-#: src/funclib.c:463
+#: src/funclib.c:382
 #, c-format
 msgid "%s: trying to set a parameter, use the equals sign"
 msgstr "%s: 等号を使って、パラメータをセットしてみて下さい"
 
-#: src/funclib.c:490 src/funclib.c:577
+#: src/funclib.c:409 src/funclib.c:496
 #, c-format
 msgid "%s: Too many arguments, should be at most %d"
 msgstr "%s: 引数が多すぎるので、最大 %d 個にして下さい"
 
-#: src/funclib.c:719
+#: src/funclib.c:638
 msgid "Cannot apply function to two differently sized matrixes"
 msgstr "サイズの異なる行列に関数を適用できません"
 
-#: src/funclib.c:1617
+#: src/funclib.c:1536
 #, c-format
 msgid "%s: square root for composite moduli is not yet implemented"
 msgstr "%s: composite moduli に対する平方根は未だ実装されていません"
 
-#: src/funclib.c:1625
+#: src/funclib.c:1544
 #, c-format
 msgid "%s: Cannot find square root function for prime moduli"
 msgstr "%s: 素数に対する平方根関数が見つかりません"
 
-#: src/funclib.c:1658
+#: src/funclib.c:1577
 #, c-format
 msgid "%s: matrix argument is not square"
 msgstr "%s: 行列の引数が正方ではありません"
 
-#: src/funclib.c:1786 src/funclib.c:1886
+#: src/funclib.c:1705 src/funclib.c:1805
 #, c-format
 msgid "%s: matrix argument must be integer only"
 msgstr "%s: 行列の引数は整数値のみにして下さい"
 
-#: src/funclib.c:1808 src/funclib.c:1908
+#: src/funclib.c:1727 src/funclib.c:1827
 #, c-format
 msgid "%s: argument must be an integer"
 msgstr "%s: 引数は整数値にして下さい"
 
-#: src/funclib.c:2143 src/funclib.c:2230
+#: src/funclib.c:2062 src/funclib.c:2149
 #, c-format
 msgid "%s: matrix argument must be value only"
 msgstr "%s: 行列の引数は値にして下さい"
 
-#: src/funclib.c:2350 src/funclib.c:2390 src/funclib.c:3450
+#: src/funclib.c:2269 src/funclib.c:2309 src/funclib.c:3369
 #, c-format
 msgid "%s: too many arguments"
 msgstr "%s: 引数が多すぎます"
 
-#: src/funclib.c:2513
+#: src/funclib.c:2432
 #, c-format
 msgid "%s: vector argument not value only"
 msgstr "%s: ベクトル引数は値以外にして下さい"
 
-#: src/funclib.c:2524 src/funclib.c:2553
+#: src/funclib.c:2443 src/funclib.c:2472
 #, c-format
 msgid "%s: vector argument has too large entries"
 msgstr "%s: ベクトル引数のエントリが大きすぎます"
 
-#: src/funclib.c:2630 src/funclib.c:2636
+#: src/funclib.c:2549 src/funclib.c:2555
 #, c-format
 msgid "%s: %s not a reference"
 msgstr "%s: %s は参照ではありません"
 
-#: src/funclib.c:2675
+#: src/funclib.c:2594
 #, c-format
 msgid "%s: matrices not of the same height"
 msgstr "%s: 同じ高さの行列ではありません"
 
-#: src/funclib.c:2680
+#: src/funclib.c:2599
 msgid "third argument"
 msgstr "3 番目の引数"
 
-#: src/funclib.c:2685
+#: src/funclib.c:2604
 msgid "fourth argument"
 msgstr "4 番目の引数"
 
-#: src/funclib.c:2957
+#: src/funclib.c:2876
 #, c-format
 msgid "%s: argument must be greater than 2"
 msgstr "%s: 引数の数を 3個以上にして下さい"
 
-#: src/funclib.c:3060 src/funclib.c:3089 src/mpwrap.c:3422 src/mpwrap.c:3437
-#: src/mpwrap.c:3488 src/mpwrap.c:3511 src/mpwrap.c:3524 src/mpwrap.c:3569
+#: src/funclib.c:2979 src/funclib.c:3008 src/mpwrap.c:3554 src/mpwrap.c:3573
+#: src/mpwrap.c:3630 src/mpwrap.c:3659 src/mpwrap.c:3676 src/mpwrap.c:3725
 msgid "Division by zero!"
 msgstr "０で除算しました！"
 
-#: src/funclib.c:3128
+#: src/funclib.c:3047
 #, c-format
 msgid "%s: arguments not horizontal vectors"
 msgstr "%s: 引数が水平ベクトルではありません"
 
-#: src/funclib.c:3137
+#: src/funclib.c:3056
 #, c-format
 msgid "%s: arguments not numeric only vectors"
 msgstr "%s: 引数が数値ではありません"
 
-#: src/funclib.c:3668 src/funclib.c:3757 src/funclib.c:3985 src/funclib.c:4040
+#: src/funclib.c:3587 src/funclib.c:3676 src/funclib.c:3904 src/funclib.c:3959
 #, c-format
 msgid "%s: value out of range"
 msgstr "%s: 範囲外の値です"
 
-#: src/funclib.c:4143
+#: src/funclib.c:4062
 #, c-format
 msgid "%s: undefined function"
 msgstr "%s: 定義されていない関数です"
 
-#: src/funclib.c:4149
+#: src/funclib.c:4068
 #, c-format
 msgid "%s: flags argument must be a string"
 msgstr "%s: フラグ引数は文字列にして下さい"
 
-#: src/funclib.c:4262
+#: src/funclib.c:4181
 #, fuzzy, c-format
 msgid "%s: argument 2 must be less than or equal to argument 3"
 msgstr "%s: 引数は 0 以上にして下さい"
 
-#: src/funclib.c:4275
+#: src/funclib.c:4194
 #, fuzzy, c-format
 msgid "%s: argument not a function of one variable"
 msgstr "%s: 引数が関数ではありません"
 
-#: src/funclib.c:4375 src/funclib.c:4411 src/funclib.c:4607
+#: src/funclib.c:4294 src/funclib.c:4330 src/funclib.c:4526
 #, c-format
 msgid "%s: argument should be between %d and %d"
 msgstr "%s: 引数は %d と %d の間にして下さい"
 
-#: src/funclib.c:4512
+#: src/funclib.c:4431
 msgid "OutputStyle must be one of normal, troff, latex or mathml"
 msgstr ""
 "OutputStyle は 'normal'、'troff'、'latex' または 'mathml' のいずれかです"
 
-#: src/funclib.c:4553
+#: src/funclib.c:4472
 #, c-format
 msgid "%s: argument should be larger or equal to 0"
 msgstr "%s: 引数は 0 以上にして下さい"
 
-#: src/funclib.c:4657
+#: src/funclib.c:4588
 msgid "Basic"
 msgstr "基本"
 
 #. internal
-#: src/funclib.c:4658
+#: src/funclib.c:4589
 msgid "Parameters"
 msgstr "パラメータ"
 
 #. internal
-#: src/funclib.c:4659
+#: src/funclib.c:4590
 msgid "Constants"
 msgstr "定数"
 
 #. internal
-#: src/funclib.c:4660
+#: src/funclib.c:4591
 msgid "Numeric"
 msgstr "数値"
 
 #. internal
-#: src/funclib.c:4661
+#: src/funclib.c:4592
 msgid "Trigonometry"
 msgstr "三角関数"
 
 #. internal
-#: src/funclib.c:4662
+#: src/funclib.c:4593
 msgid "Number Theory"
 msgstr "数論"
 
 #. internal
-#: src/funclib.c:4663
+#: src/funclib.c:4594
 msgid "Matrix Manipulation"
 msgstr "行列の操作"
 
 #. internal
-#: src/funclib.c:4664
+#: src/funclib.c:4595
 msgid "Linear Algebra"
 msgstr "線形代数"
 
 #. internal
-#: src/funclib.c:4665
+#: src/funclib.c:4596
 msgid "Combinatorics"
 msgstr "組み合わせ"
 
 #. internal
-#: src/funclib.c:4666
+#: src/funclib.c:4597
 msgid "Calculus"
 msgstr "微積"
 
 #. internal
-#: src/funclib.c:4667
+#: src/funclib.c:4598
 msgid "Functions"
 msgstr "関数"
 
 #. internal
-#: src/funclib.c:4668
+#: src/funclib.c:4599
 msgid "Equation Solving"
 msgstr "方程式の解"
 
 #. internal
-#: src/funclib.c:4669
+#: src/funclib.c:4600
 msgid "Statistics"
 msgstr "統計"
 
 #. internal
-#: src/funclib.c:4670
+#: src/funclib.c:4601
 msgid "Polynomials"
 msgstr "多項式"
 
 #. internal
-#: src/funclib.c:4671
+#: src/funclib.c:4602
 msgid "Set Theory"
 msgstr "集合論"
 
 #. internal
-#: src/funclib.c:4672
+#: src/funclib.c:4603
 msgid "Miscellaneous"
 msgstr "その他"
 
-#. bogus value
-#: src/funclib.c:4705
+#. internal
+#: src/funclib.c:4605
 msgid "Displays the user manual"
 msgstr "ユーザ・マニュアルを表示する"
 
-#: src/funclib.c:4706
+#: src/funclib.c:4606
 msgid "Gives the warranty information"
 msgstr "保証事項の情報を出力する"
 
-#: src/funclib.c:4707
+#: src/funclib.c:4607
 msgid "Exits the program"
 msgstr "プログラムを終了する"
 
-#: src/funclib.c:4709
+#: src/funclib.c:4609
 msgid "Prints a string to the error stream"
 msgstr "文字列をエラー・ストリームへ出力する"
 
-#: src/funclib.c:4710
+#: src/funclib.c:4610
+msgid "Waits a specified number of seconds"
+msgstr ""
+
+#: src/funclib.c:4611
 msgid "The true boolean value"
 msgstr "論理値の TRUE (真) を表す"
 
-#: src/funclib.c:4712
+#: src/funclib.c:4613
 msgid "The false boolean value"
 msgstr "論理値の FALSE (偽) を表す"
 
-#: src/funclib.c:4721
+#: src/funclib.c:4622
 msgid "Make integer (0 or 1) from a boolean value"
 msgstr "論理値から整数値 (0 または 1) を生成する"
 
-#: src/funclib.c:4723
+#: src/funclib.c:4624
 msgid "Prints an expression"
 msgstr "式を出力する"
 
-#: src/funclib.c:4724
+#: src/funclib.c:4625
 msgid "Changes current directory"
 msgstr "現在のフォルダを変更する"
 
-#: src/funclib.c:4725
+#: src/funclib.c:4626
 msgid "Prints an expression without a trailing newline"
 msgstr "式を出力する (改行なし)"
 
-#: src/funclib.c:4726
+#: src/funclib.c:4627
 msgid "Display a string and an expression"
 msgstr "文字列と式を表示する"
 
-#: src/funclib.c:4727
+#: src/funclib.c:4628
 msgid "Set a global variable"
 msgstr "大域変数をセットする"
 
-#: src/funclib.c:4729
+#: src/funclib.c:4630
 msgid "Set the category and help description line for a function"
 msgstr "ユーザ定義関数にカテゴリとヘルプの内容をセットする"
 
-#: src/funclib.c:4730
+#: src/funclib.c:4631
 msgid "Sets up a help alias"
 msgstr "ヘルプのエイリアスをセットする"
 
-#: src/funclib.c:4732
+#: src/funclib.c:4633
 msgid "Identity function, returns its argument"
 msgstr "恒等関数 (その引数を返す)"
 
-#: src/funclib.c:4734
+#: src/funclib.c:4635
 msgid "Generate random float"
 msgstr "乱数の種 (浮動小数点型) を生成する"
 
-#: src/funclib.c:4736
+#: src/funclib.c:4637
 msgid "Generate random integer"
 msgstr "乱数の種 (整数型) を生成する"
 
-#: src/funclib.c:4739 src/gnome-genius.c:1135
+#: src/funclib.c:4640 src/gnome-genius.c:1147
 msgid "Floating point precision"
 msgstr "浮動小数点の精度を指定する"
 
-#: src/funclib.c:4740
+#: src/funclib.c:4641
 msgid "Maximum digits to display"
 msgstr "表示する有効桁数を指定する"
 
-#: src/funclib.c:4741
+#: src/funclib.c:4642
 msgid "Maximum errors to display"
 msgstr "表示するエラー数の最大値を指定する"
 
-#: src/funclib.c:4742
+#: src/funclib.c:4643
 #, fuzzy
 msgid "Output style: normal, latex, mathml or troff"
 msgstr "出力形式を指定する: normal、latex または troff"
 
-#: src/funclib.c:4743
+#: src/funclib.c:4644
 msgid "Integer output base"
 msgstr "出力する基数 (整数型)"
 
-#: src/funclib.c:4744
+#: src/funclib.c:4645
 msgid "If true, mixed fractions are printed"
 msgstr "TRUE の場合、帯分数を表示する"
 
-#: src/funclib.c:4745
+#: src/funclib.c:4646
 msgid "Print full expressions, even if more than a line"
 msgstr "(一行に収まらなくても) 全ての式を出力する"
 
-#: src/funclib.c:4746
+#: src/funclib.c:4647
 msgid "Convert all results to floats before printing"
 msgstr "出力する前に全ての結果を浮動小数点型に変換する"
 
-#: src/funclib.c:4747
+#: src/funclib.c:4648
 msgid "Use scientific notation"
 msgstr "科学記号を使う"
 
-#: src/funclib.c:4749
+#: src/funclib.c:4650
 msgid ""
 "Number of extra Miller-Rabin tests to run on a number before declaring it a "
 "prime in IsPrime"
@@ -1049,67 +1003,67 @@ msgstr ""
 "関数 IsPrime で素数を宣言する前に、指定した数値で追加実行する素数性判定法 "
 "(Miller-Rabin テスト) の数値"
 
-#: src/funclib.c:4755
+#: src/funclib.c:4656
 msgid "Expands a matrix just like we do on unquoted matrix input"
 msgstr "Expands a matrix just like we do on unquoted matrix input"
 
-#: src/funclib.c:4756
+#: src/funclib.c:4657
 msgid "Gets the rows of a matrix as a vertical vector"
 msgstr "行列の行を垂直ベクトルとして取得する"
 
-#: src/funclib.c:4757
+#: src/funclib.c:4658
 msgid "Gets the columns of a matrix as a horizontal vector"
 msgstr "行列の列を水平ベクトルとして取得する"
 
-#: src/funclib.c:4758
+#: src/funclib.c:4659
 msgid "Gets the diagonal entries of a matrix as a horizontal vector"
 msgstr "行列の対角線上の要素を水平ベクトルとして取得する"
 
-#: src/funclib.c:4760
+#: src/funclib.c:4661
 msgid "Calculates the conjugate"
 msgstr "共役を計算する"
 
-#: src/funclib.c:4765
+#: src/funclib.c:4666
 msgid "Calculates the sine function"
 msgstr "正弦関数 sin を計算する"
 
-#: src/funclib.c:4767
+#: src/funclib.c:4668
 msgid "Calculates the cosine function"
 msgstr "余弦関数 cos を計算する"
 
-#: src/funclib.c:4769
+#: src/funclib.c:4670
 msgid "Calculates the hyperbolic sine function"
 msgstr "双曲正弦関数 sinh を計算する"
 
-#: src/funclib.c:4771
+#: src/funclib.c:4672
 msgid "Calculates the hyperbolic cosine function"
 msgstr "双曲余弦関数 cosh を計算する"
 
-#: src/funclib.c:4773
+#: src/funclib.c:4674
 msgid "Calculates the tan function"
 msgstr "正接関数 tan を計算する"
 
-#: src/funclib.c:4775
+#: src/funclib.c:4676
 msgid "Calculates the arctan function"
 msgstr "逆正接関数 atan を計算する"
 
-#: src/funclib.c:4779
+#: src/funclib.c:4680
 msgid "The number pi"
 msgstr "円周率πの数値を表す"
 
-#: src/funclib.c:4780
+#: src/funclib.c:4681
 msgid "The natural number e"
 msgstr "自然指数ｅを表す"
 
-#: src/funclib.c:4781
+#: src/funclib.c:4682
 msgid "The Golden Ratio"
 msgstr "黄金比を表す"
 
-#: src/funclib.c:4782
+#: src/funclib.c:4683
 msgid "Free fall acceleration"
 msgstr "重力の加速度ｇを表す"
 
-#: src/funclib.c:4784
+#: src/funclib.c:4685
 msgid "Euler's Constant gamma"
 msgstr ""
 
@@ -1122,105 +1076,105 @@ msgstr ""
 #. RiemannZeta_function = f;
 #. ALIAS (zeta, 1, RiemannZeta);
 #.
-#: src/funclib.c:4797
+#: src/funclib.c:4698
 msgid "The square root"
 msgstr "平方根を計算する"
 
-#: src/funclib.c:4801
+#: src/funclib.c:4702
 msgid "The exponential function"
 msgstr "指数関数を計算する"
 
-#: src/funclib.c:4803
+#: src/funclib.c:4704
 msgid "The natural logarithm"
 msgstr "自然対数を計算する"
 
-#: src/funclib.c:4805
+#: src/funclib.c:4706
 msgid "Logarithm of x base 2"
 msgstr "底が２のＸの対数を計算する"
 
-#: src/funclib.c:4808
+#: src/funclib.c:4709
 msgid "Logarithm of x base 10"
 msgstr "Ｘの自然対数を計算する"
 
-#: src/funclib.c:4810
+#: src/funclib.c:4711
 msgid "Round a number"
 msgstr "数値を四捨五入する"
 
-#: src/funclib.c:4813
+#: src/funclib.c:4714
 msgid "Get the highest integer less than or equal to n"
 msgstr "ｎ以下の整数で最大値を返す"
 
-#: src/funclib.c:4816
+#: src/funclib.c:4717
 msgid "Get the lowest integer more than or equal to n"
 msgstr "ｎ以上の整数で最大値を返す"
 
-#: src/funclib.c:4819
+#: src/funclib.c:4720
 msgid "Truncate number to an integer (return the integer part)"
 msgstr "数値を整数値に切り捨てる (整数部を返す)"
 
-#: src/funclib.c:4823
+#: src/funclib.c:4724
 msgid "Make number a float"
 msgstr "数値を浮動小数点型にする"
 
-#: src/funclib.c:4825
+#: src/funclib.c:4726
 msgid "Get the numerator of a rational number"
 msgstr "有理数の分子を取得する"
 
-#: src/funclib.c:4827
+#: src/funclib.c:4728
 msgid "Get the denominator of a rational number"
 msgstr "有理数の分母を取得する"
 
-#: src/funclib.c:4830
+#: src/funclib.c:4731
 msgid "Greatest common divisor"
 msgstr "最大公約数 (G.C.D) を取得する"
 
-#: src/funclib.c:4832
+#: src/funclib.c:4733
 msgid "Least common multiplier"
 msgstr "最小公倍数 (L.C.M) を取得する"
 
-#: src/funclib.c:4834
+#: src/funclib.c:4735
 msgid "Check a number for being a perfect square"
 msgstr "数値が正方形であるかチェックする"
 
-#: src/funclib.c:4835
+#: src/funclib.c:4736
 msgid "Check a number for being any perfect power (a^b)"
 msgstr "数値がべき乗 (a^b) であるかチェックする"
 
-#: src/funclib.c:4836
+#: src/funclib.c:4737
 msgid "Return the n'th prime (up to a limit)"
 msgstr "ｎ番目の素数を返す (有効範囲内で)"
 
-#: src/funclib.c:4838
+#: src/funclib.c:4739
 msgid "Tests if an integer is even"
 msgstr "整数が偶数であるかテストする"
 
-#: src/funclib.c:4839
+#: src/funclib.c:4740
 msgid "Tests if an integer is odd"
 msgstr "整数が奇数であるかテストする"
 
-#: src/funclib.c:4841
+#: src/funclib.c:4742
 msgid "Returns the least prime greater than n (if n is positive)"
 msgstr "ｎより大きい直近の素数を返す (ｎが正の整数の場合)"
 
-#: src/funclib.c:4842
+#: src/funclib.c:4743
 msgid "Returns the n'th Lucas number"
 msgstr "ｎ番目の Lucas 素数を返す"
 
-#: src/funclib.c:4843
+#: src/funclib.c:4744
 msgid "Returns inverse of n mod m"
 msgstr "ｎとｍの mod した結果の逆数を返す"
 
-#: src/funclib.c:4844
+#: src/funclib.c:4745
 msgid "Checks divisibility (if m divides n)"
 msgstr ""
 
-#: src/funclib.c:4845
+#: src/funclib.c:4746
 msgid ""
 "Return n/d but only if d divides n else returns garbage (this is faster than "
 "writing n/d)"
 msgstr ""
 
-#: src/funclib.c:4846
+#: src/funclib.c:4747
 msgid ""
 "Tests primality of integers, for numbers greater than 25*10^9 false positive "
 "is with low probability depending on IsPrimeMillerRabinReps"
@@ -1228,11 +1182,11 @@ msgstr ""
 "整数値が素数であるかテストする (25*10^9 より大きい数値の真偽は関数 "
 "IsPrimeMillerRabinReps に依存する低い確率を使う)"
 
-#: src/funclib.c:4847
+#: src/funclib.c:4748
 msgid "Run the strong pseudoprime test base b on n"
 msgstr "ｎがｂを底とする強疑似素数であるかテストする"
 
-#: src/funclib.c:4848
+#: src/funclib.c:4749
 msgid ""
 "Use the Miller-Rabin primality test on n, reps number of times.  The "
 "probability of false positive is (1/4)^reps"
@@ -1240,7 +1194,7 @@ msgstr ""
 "ｎ上で reps 回数分の素数性判定法 (Miller-Rabin テスト) を使う (真偽の確立は "
 "(1/4)^reps)"
 
-#: src/funclib.c:4849
+#: src/funclib.c:4750
 msgid ""
 "Use the Miller-Rabin primality test on n with enough bases that assuming the "
 "Generalized Reimann Hypothesis the result is deterministic"
@@ -1248,23 +1202,23 @@ msgstr ""
 "ｎ上で素数性判定法 (Miller-Rabin テスト) を使う (結果が決定的である一般化 "
 "Reimann Hypothesis であると仮定するに十分な基数を使って)"
 
-#: src/funclib.c:4850
+#: src/funclib.c:4751
 msgid "Return factorization of a number as a matrix"
 msgstr "数値の階乗を行列で返す"
 
-#: src/funclib.c:4852
+#: src/funclib.c:4753
 msgid "Returns the maximum of arguments or matrix"
 msgstr "引数または行列の最大値を返す"
 
-#: src/funclib.c:4855
+#: src/funclib.c:4756
 msgid "Returns the minimum of arguments or matrix"
 msgstr "引数または行列の最小値を返す"
 
-#: src/funclib.c:4859
+#: src/funclib.c:4760
 msgid "Calculate the Jacobi symbol (a/b) (b should be odd)"
 msgstr "ヤコビ記号 (a/b) を計算する (b は必ず奇数にすること)"
 
-#: src/funclib.c:4861
+#: src/funclib.c:4762
 msgid ""
 "Calculate the Jacobi symbol (a/b) with the Kronecker extension (a/2)=(2/a) "
 "when a odd, or (a/2)=0 when a even"
@@ -1272,55 +1226,55 @@ msgstr ""
 "ヤコビ記号 (a/b) をクロネッカー展開で計算する (奇数の場合は (a/2)=(2/a)、偶数"
 "の場合は (a/2)=0)"
 
-#: src/funclib.c:4863
+#: src/funclib.c:4764
 msgid "Calculate the Legendre symbol (a/p)"
 msgstr "ルジャンドル記号 (a/p) を計算する"
 
-#: src/funclib.c:4866
+#: src/funclib.c:4767
 msgid "Get the real part of a complex number"
 msgstr "複素数の実数部を返す"
 
-#: src/funclib.c:4869
+#: src/funclib.c:4770
 msgid "Get the imaginary part of a complex number"
 msgstr "複素数の虚数部を返す"
 
-#: src/funclib.c:4873
+#: src/funclib.c:4774
 msgid "Make an identity matrix of a given size"
 msgstr "指定したサイズの行列とみなす"
 
-#: src/funclib.c:4876
+#: src/funclib.c:4777
 msgid "Make an matrix of all zeros (or a row vector)"
 msgstr "全ての要素 (または行ベクトル) が 0 の行列を生成する"
 
-#: src/funclib.c:4878
+#: src/funclib.c:4779
 msgid "Make an matrix of all ones (or a row vector)"
 msgstr "全ての要素 (または行ベクトル) が 1 の行列を生成する"
 
-#: src/funclib.c:4881
+#: src/funclib.c:4782
 msgid "Get the number of rows of a matrix"
 msgstr "行列の行数を取得する"
 
-#: src/funclib.c:4882
+#: src/funclib.c:4783
 msgid "Get the number of columns of a matrix"
 msgstr "行列の列数を取得する"
 
-#: src/funclib.c:4883
+#: src/funclib.c:4784
 msgid "Is a matrix square"
 msgstr "正方行列かどうかチェックする"
 
-#: src/funclib.c:4884
+#: src/funclib.c:4785
 msgid "Get the number of elements of a matrix"
 msgstr "行列の要素数を取得する"
 
-#: src/funclib.c:4886
+#: src/funclib.c:4787
 msgid "Get the row echelon form of a matrix"
 msgstr "行列の列に対する Echelon Form (階層) を取得する"
 
-#: src/funclib.c:4890
+#: src/funclib.c:4791
 msgid "Get the reduced row echelon form of a matrix"
 msgstr "行列の列に対する Reduced Echelon Form を取得する"
 
-#: src/funclib.c:4894
+#: src/funclib.c:4795
 msgid ""
 "Solve linear system Mx=V, return solution V if there is a unique solution, "
 "null otherwise.  Extra two reference parameters can optionally be used to "
@@ -1330,155 +1284,155 @@ msgstr ""
 "それ以外は NULL を返す。二つの参照パラメータは追加で Reduced M と V を取得す"
 "る際に使用する)"
 
-#: src/funclib.c:4897
+#: src/funclib.c:4798
 msgid "Get the determinant of a matrix"
 msgstr "行列の行列式を取得する"
 
-#: src/funclib.c:4900
+#: src/funclib.c:4801
 msgid "Make new matrix of given size from old one"
 msgstr "古い行列から指定したサイズの行列を生成する"
 
-#: src/funclib.c:4901
+#: src/funclib.c:4802
 msgid "Return the index complement of a vector of indexes"
 msgstr "添え字のベクトルを補足する添え字を返す"
 
-#: src/funclib.c:4903
+#: src/funclib.c:4804
 msgid "Check if a matrix is a matrix of numbers"
 msgstr "行列が numbers の行列かどうかチェックする"
 
-#: src/funclib.c:4904
+#: src/funclib.c:4805
 msgid "Check if a matrix is an integer (non-complex) matrix"
 msgstr "行列が整数型行列であるかチェックする (複合行列は除く)"
 
-#: src/funclib.c:4905
+#: src/funclib.c:4806
 msgid "Check if a matrix is a rational (non-complex) matrix"
 msgstr "行列が有理数の行列であるかチェックする (複合行列は除く)"
 
-#: src/funclib.c:4906
+#: src/funclib.c:4807
 msgid "Check if a matrix is a real (non-complex) matrix"
 msgstr "行列が実数の行列であるかチェックする (複合行列は除く)"
 
-#: src/funclib.c:4908
+#: src/funclib.c:4809
 msgid "Check if argument is a null"
 msgstr "引数が NULL であるかチェックする"
 
-#: src/funclib.c:4909
+#: src/funclib.c:4810
 msgid "Check if argument is a number"
 msgstr "引数が数値であるかチェックする"
 
-#: src/funclib.c:4910
+#: src/funclib.c:4811
 msgid "Check if argument is a boolean (and not a number)"
 msgstr "引数が論理値 (でかつ数値ではない) であるかチェックする"
 
-#: src/funclib.c:4911
+#: src/funclib.c:4812
 msgid "Check if argument is a text string"
 msgstr "引数が文字列であるかチェックする"
 
-#: src/funclib.c:4912
+#: src/funclib.c:4813
 msgid "Check if argument is a matrix"
 msgstr "引数が行列であるかチェックする"
 
-#: src/funclib.c:4913
+#: src/funclib.c:4814
 msgid "Check if argument is a function"
 msgstr "引数が関数であるかチェックする"
 
-#: src/funclib.c:4914
+#: src/funclib.c:4815
 msgid "Check if argument is a function reference"
 msgstr "引数が関数の参照であるかチェックする"
 
-#: src/funclib.c:4916
+#: src/funclib.c:4817
 msgid "Check if argument is a complex (non-real) number"
 msgstr "引数が複素数であるかチェックする (非実数は除く)"
 
-#: src/funclib.c:4917
+#: src/funclib.c:4818
 msgid "Check if argument is a real number"
 msgstr "引数が実数値であるかチェックする"
 
-#: src/funclib.c:4918
+#: src/funclib.c:4819
 msgid "Check if argument is an integer (non-complex)"
 msgstr "引数が整数値であるかチェックする (複素数は除く)"
 
-#: src/funclib.c:4919
+#: src/funclib.c:4820
 msgid "Check if argument is a positive real integer"
 msgstr "引数が正の実整数値であるかチェックする"
 
-#: src/funclib.c:4921
+#: src/funclib.c:4822
 #, fuzzy
 msgid "Check if argument is a non-negative real integer"
 msgstr "引数が正の実整数値であるかチェックする"
 
-#: src/funclib.c:4922
+#: src/funclib.c:4823
 msgid "Check if argument is a possibly complex integer"
 msgstr "引数が複素整数であるかチェックする"
 
-#: src/funclib.c:4924
+#: src/funclib.c:4825
 msgid "Check if argument is a rational number (non-complex)"
 msgstr "引数が有理数であるかチェックする"
 
-#: src/funclib.c:4925
+#: src/funclib.c:4826
 msgid "Check if argument is a possibly complex rational number"
 msgstr "引数が複素型の有理数であるかチェックする"
 
-#: src/funclib.c:4926
+#: src/funclib.c:4827
 msgid "Check if argument is a floating point number (non-complex)"
 msgstr "引数が浮動小数点型の数値であるかチェックする (複素数は除く)"
 
-#: src/funclib.c:4928
+#: src/funclib.c:4829
 msgid "Add two polynomials (vectors)"
 msgstr "二つの多項式 (ベクトル) を加算する"
 
-#: src/funclib.c:4929
+#: src/funclib.c:4830
 msgid "Subtract two polynomials (as vectors)"
 msgstr "二つの多項式 (ベクトル) を減算する"
 
-#: src/funclib.c:4930
+#: src/funclib.c:4831
 msgid "Multiply two polynomials (as vectors)"
 msgstr "二つの多項式 (ベクトル) を乗算する"
 
-#: src/funclib.c:4931
+#: src/funclib.c:4832
 msgid "Take polynomial (as vector) derivative"
 msgstr "多項式の派生をベクトルとして受け取る"
 
-#: src/funclib.c:4932
+#: src/funclib.c:4833
 msgid "Take second polynomial (as vector) derivative"
 msgstr "二番目の多項式の派生をベクトルとして受け取る"
 
-#: src/funclib.c:4933
+#: src/funclib.c:4834
 msgid "Trim zeros from a polynomial (as vector)"
 msgstr "多項式から (ベクトルとして) 0 を取り除く"
 
-#: src/funclib.c:4934
+#: src/funclib.c:4835
 msgid "Check if a vector is usable as a polynomial"
 msgstr "ベクトルが多項式として利用できるかどうかチェックする"
 
-#: src/funclib.c:4935
+#: src/funclib.c:4836
 msgid "Make string out of a polynomial (as vector)"
 msgstr "文字列を多項式の外に出す"
 
-#: src/funclib.c:4936
+#: src/funclib.c:4837
 msgid "Make function out of a polynomial (as vector)"
 msgstr "関数を多項式の外に出す"
 
-#: src/funclib.c:4938
+#: src/funclib.c:4839
 msgid "Get all combinations of k numbers from 1 to n as a vector of vectors"
 msgstr ""
 "ベクトルのベクトルとして、１〜ｎまでの数値ｋ個に対する全ての組み合わせを取得"
 "する"
 
-#: src/funclib.c:4939
+#: src/funclib.c:4840
 msgid "Get all permutations of k numbers from 1 to n as a vector of vectors"
 msgstr ""
 "ベクトルのベクトルとして、１〜ｎまでの数値ｋ個に対する全ての順列を取得する"
 
-#: src/funclib.c:4941
+#: src/funclib.c:4842
 msgid "Convert a string to a vector of ASCII values"
 msgstr "文字列を ASCII 値のベクトルに変換する"
 
-#: src/funclib.c:4942
+#: src/funclib.c:4843
 msgid "Convert a vector of ASCII values to a string"
 msgstr "ASCII 値のベクトルを文字列に変換する"
 
-#: src/funclib.c:4944
+#: src/funclib.c:4845
 msgid ""
 "Convert a string to a vector of 0-based alphabet values (positions in the "
 "alphabet string), -1's for unknown letters"
@@ -1486,7 +1440,7 @@ msgstr ""
 "文字列を 0 を基底としたアルファベット値 (アルファベットの文字の位置) のベクト"
 "ルに変換する (-1 は不明な文字)"
 
-#: src/funclib.c:4945
+#: src/funclib.c:4846
 msgid ""
 "Convert a vector of 0-based alphabet values (positions in the alphabet "
 "string) to a string"
@@ -1494,26 +1448,26 @@ msgstr ""
 "0 を基底としたアルファベット値 (アルファベットの文字の位置) のベクトルを文字"
 "列に変換する"
 
-#: src/funclib.c:4947
+#: src/funclib.c:4848
 msgid "Protect a variable from being modified"
 msgstr "変数を修正できないように保護する"
 
-#: src/funclib.c:4948
+#: src/funclib.c:4849
 msgid "Unprotect a variable from being modified"
 msgstr "修正できない変数の保護を解除する"
 
-#: src/funclib.c:4949
+#: src/funclib.c:4850
 msgid ""
 "Set flags for a function, currently \"PropagateMod\" and \"NoModuloArguments"
 "\""
 msgstr ""
 "関数にフラグをセットする (現在は \"PropagateMod\" と \"NoModuloArguments\")"
 
-#: src/funclib.c:4950
+#: src/funclib.c:4851
 msgid "Get current modulo from the context outside the function"
 msgstr "関数の外にあるコンテキストから現在のモジュロを取得する"
 
-#: src/funclib.c:4952
+#: src/funclib.c:4853
 msgid ""
 "Integration of f by Composite Simpson's Rule on the interval [a,b] with n "
 "subintervals with error of max(f'''')*h^4*(b-a)/180, note that n should be "
@@ -1530,14 +1484,24 @@ msgstr "%d 行: %s\n"
 msgid "Too many errors! (%d followed)\n"
 msgstr "エラーが多すぎます！ (%d 個)\n"
 
-#: src/genius.c:262
+#: src/genius.c:223 src/genius.c:230
+#, fuzzy, c-format
+msgid "%s should be between %d and %d, using %d"
+msgstr "%s: 引数は %d と %d の間にして下さい"
+
+#: src/genius.c:249
+#, fuzzy, c-format
+msgid "%s should be greater then or equal to %d, using %d"
+msgstr "%s: 引数は 0 以上にして下さい"
+
+#: src/genius.c:277
 #, fuzzy, c-format
 msgid ""
 "Genius %s\n"
 "%s%s\n"
 msgstr "Genius %s"
 
-#: src/genius.c:273
+#: src/genius.c:288
 #, fuzzy, c-format
 msgid ""
 "Genius %s usage:\n"
@@ -1546,7 +1510,7 @@ msgid ""
 "\n"
 "\t--help            \tPrint this help\n"
 "\t--version         \tPrint version number\n"
-"\t--precision=num   \tFloating point precision [256]\n"
+"\t--precision=num   \tFloating point precision [128]\n"
 "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
 "\t--[no]floatresult \tAll results as floats [OFF]\n"
 "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
@@ -1580,7 +1544,7 @@ msgstr ""
 "\t                  \t表示数を少なくする [OFF]\n"
 "\n"
 
-#: src/genius.c:321
+#: src/genius.c:336
 #, c-format
 msgid ""
 "Genius %s\n"
@@ -1597,7 +1561,7 @@ msgstr ""
 "ヘルプについては 'manual' または 'help' を入力して下さい。%s\n"
 "\n"
 
-#: src/genius.c:376 src/gnome-genius.c:3106
+#: src/genius.c:391 src/gnome-genius.c:3155
 msgid ""
 "The only thing that interferes with my learning is my education.  -- Albert "
 "Einstein"
@@ -1605,7 +1569,7 @@ msgstr ""
 "The only thing that interferes with my learning is my education.  -- A.アイン"
 "シュタイン"
 
-#: src/genius.c:397 src/genius.c:457
+#: src/genius.c:412 src/genius.c:472
 msgid "Can't open file"
 msgstr "ファイルを開けません"
 
@@ -1645,163 +1609,163 @@ msgstr "スクリプト"
 msgid "String"
 msgstr "文字列"
 
-#: src/gnome-genius.c:204
+#: src/gnome-genius.c:205
 msgid "_New Program"
 msgstr "新しいプログラム(_N)"
 
-#: src/gnome-genius.c:204 src/gnome-genius.c:301
+#: src/gnome-genius.c:205 src/gnome-genius.c:302
 msgid "Create new program tab"
 msgstr "新しいプログラム用のタブを開きます"
 
-#: src/gnome-genius.c:211
+#: src/gnome-genius.c:212
 msgid "_Reload from Disk"
 msgstr "再読み込み(_R)"
 
-#: src/gnome-genius.c:211
+#: src/gnome-genius.c:212
 msgid "Reload the selected program from disk"
 msgstr "選択したプログラムをディスクから再度読み込みます"
 
-#: src/gnome-genius.c:215
+#: src/gnome-genius.c:216
 msgid "_Load and Run..."
 msgstr "読み込んで実行(_L)..."
 
-#: src/gnome-genius.c:215
+#: src/gnome-genius.c:216
 msgid "Load and execute a file in genius"
 msgstr "Genius 内でファイルを読み込んで実行します"
 
-#: src/gnome-genius.c:228
+#: src/gnome-genius.c:229
 msgid "Copy Answer As Plain _Text"
 msgstr "解を通常のテキストでコピー(_T)"
 
-#: src/gnome-genius.c:229
+#: src/gnome-genius.c:230
 msgid "Copy last answer into the clipboard in plain text"
 msgstr "最後の計算結果を通常のテキスト形式でクリップボードにコピーします"
 
-#: src/gnome-genius.c:232
+#: src/gnome-genius.c:233
 msgid "Copy Answer As _LaTeX"
 msgstr "解を LaTeX でコピー(_L)"
 
-#: src/gnome-genius.c:233
+#: src/gnome-genius.c:234
 msgid "Copy last answer into the clipboard as LaTeX"
 msgstr "最後の計算結果を LaTex 形式でクリップボードにコピーします"
 
-#: src/gnome-genius.c:236
+#: src/gnome-genius.c:237
 msgid "Copy Answer As _MathML"
 msgstr "解を MathML でコピー(_M)"
 
-#: src/gnome-genius.c:237
+#: src/gnome-genius.c:238
 msgid "Copy last answer into the clipboard as MathML"
 msgstr "最後の計算結果を MathML 形式でクリップボードにコピーします"
 
-#: src/gnome-genius.c:240
+#: src/gnome-genius.c:241
 msgid "Copy Answer As T_roff"
 msgstr "解を Troff でコピー(_R)"
 
-#: src/gnome-genius.c:241
+#: src/gnome-genius.c:242
 msgid "Copy last answer into the clipboard as Troff eqn"
 msgstr "最後の計算結果を Troff eqn 形式でクリップボードにコピーします"
 
-#: src/gnome-genius.c:254
+#: src/gnome-genius.c:255
 msgid "_Run"
 msgstr "実行(_R)"
 
-#: src/gnome-genius.c:254 src/gnome-genius.c:300
+#: src/gnome-genius.c:255 src/gnome-genius.c:301
 msgid "Run current program"
 msgstr "現在のプログラムを実行します"
 
-#: src/gnome-genius.c:255
+#: src/gnome-genius.c:256
 msgid "_Interrupt"
 msgstr "中断(_I)"
 
-#: src/gnome-genius.c:255 src/gnome-genius.c:298
+#: src/gnome-genius.c:256 src/gnome-genius.c:299
 msgid "Interrupt current calculation"
 msgstr "現在の計算に割り込みます"
 
-#: src/gnome-genius.c:257 src/graphing.c:2843
+#: src/gnome-genius.c:258 src/graphing.c:2879
 msgid "_Plot"
 msgstr "プロット(_P)"
 
-#: src/gnome-genius.c:257 src/gnome-genius.c:303
+#: src/gnome-genius.c:258 src/gnome-genius.c:304
 msgid "Plot a function"
 msgstr "関数の結果をグラフ描画します"
 
-#: src/gnome-genius.c:263
+#: src/gnome-genius.c:264
 #, fuzzy
 msgid "_Help on Function"
 msgstr "  help 関数の名前\n"
 
-#: src/gnome-genius.c:264
+#: src/gnome-genius.c:265
 #, fuzzy
 msgid "Help on a function or a command"
 msgstr "ヘルプ (または、関数/コマンドのヘルプ) を出力する"
 
-#: src/gnome-genius.c:267
+#: src/gnome-genius.c:268
 msgid "_Warranty"
 msgstr "保証事項(_W)"
 
-#: src/gnome-genius.c:268
+#: src/gnome-genius.c:269
 msgid "Display warranty information"
 msgstr "保証事項についての情報を表示します"
 
-#: src/gnome-genius.c:286
+#: src/gnome-genius.c:287
 msgid "_Calculator"
 msgstr "計算機(_C)"
 
-#: src/gnome-genius.c:288
+#: src/gnome-genius.c:289
 msgid "P_lugins"
 msgstr "プラグイン(_L)"
 
-#: src/gnome-genius.c:290
+#: src/gnome-genius.c:291
 msgid "_Programs"
 msgstr "プログラム(_P)"
 
-#: src/gnome-genius.c:298
+#: src/gnome-genius.c:299
 msgid "Interrupt"
 msgstr "中断"
 
-#: src/gnome-genius.c:300
+#: src/gnome-genius.c:301
 msgid "Run"
 msgstr "実行"
 
-#: src/gnome-genius.c:301
+#: src/gnome-genius.c:302
 msgid "New"
 msgstr ""
 
-#: src/gnome-genius.c:302
+#: src/gnome-genius.c:303
 msgid "Open"
 msgstr "開く"
 
-#: src/gnome-genius.c:302
+#: src/gnome-genius.c:303
 msgid "Open a GEL file for running"
 msgstr "実行する GEL ファイルを開きます"
 
-#: src/gnome-genius.c:303 src/graphing.c:1225
+#: src/gnome-genius.c:304 src/graphing.c:1254
 msgid "Plot"
 msgstr "プロット"
 
-#: src/gnome-genius.c:304
+#: src/gnome-genius.c:305
 msgid "Exit"
 msgstr "終了"
 
-#: src/gnome-genius.c:304
+#: src/gnome-genius.c:305
 msgid "Exit genius"
 msgstr "Genius を終了します"
 
-#: src/gnome-genius.c:388
+#: src/gnome-genius.c:389
 #, fuzzy
 msgid "Help on Function"
 msgstr "  help 関数の名前\n"
 
-#: src/gnome-genius.c:399
+#: src/gnome-genius.c:400
 msgid "Function or command name:"
 msgstr ""
 
-#: src/gnome-genius.c:432
+#: src/gnome-genius.c:433
 #, c-format
 msgid "<b>Help on %s not found</b>"
 msgstr ""
 
-#: src/gnome-genius.c:436
+#: src/gnome-genius.c:437
 #, c-format
 msgid ""
 "<b>Help on %s not found</b>\n"
@@ -1809,15 +1773,15 @@ msgid ""
 "Perhaps you meant %s."
 msgstr ""
 
-#: src/gnome-genius.c:481
+#: src/gnome-genius.c:482
 msgid "Error"
 msgstr "エラー"
 
-#: src/gnome-genius.c:481
+#: src/gnome-genius.c:482
 msgid "Information"
 msgstr "情報"
 
-#: src/gnome-genius.c:536
+#: src/gnome-genius.c:537
 #, c-format
 msgid ""
 "\n"
@@ -1826,7 +1790,7 @@ msgstr ""
 "\n"
 "エラーが多すぎます！ (%d 個)"
 
-#: src/gnome-genius.c:546
+#: src/gnome-genius.c:547
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
 msgstr "\\e[01;31mエラーが多すぎます！ (%d 個)\\e[0m\n"
@@ -1835,17 +1799,17 @@ msgstr "\\e[01;31mエラーが多すぎます！ (%d 個)\\e[0m\n"
 #. * which will give them credit in the About box.
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
-#: src/gnome-genius.c:697
+#: src/gnome-genius.c:698
 msgid "translator-credits"
 msgstr ""
 "相花 毅 <aihana@gnome.gr.jp>\n"
 "日本GNOMEユーザー会 <http://www.gnome.gr.jp>"
 
-#: src/gnome-genius.c:716
+#: src/gnome-genius.c:717
 msgid "About Genius"
 msgstr "Genius"
 
-#: src/gnome-genius.c:719
+#: src/gnome-genius.c:720
 msgid ""
 "The Gnome calculator style edition of the genius calculator.  For license/"
 "warranty details, type 'warranty' into the console."
@@ -1853,7 +1817,7 @@ msgstr ""
 "Genius 計算機の GNOME ラッパーです。ライセンス/保証事項の詳細についてご覧にな"
 "る場合は、コンソール内で 'warranty' と入力してみて下さい。"
 
-#: src/gnome-genius.c:881
+#: src/gnome-genius.c:889
 msgid ""
 "Genius is executing something, and furthermore there are unsaved programs.\n"
 "Are you sure you wish to quit?"
@@ -1861,68 +1825,68 @@ msgstr ""
 "Genius で何か実行中で、かつ保存していないプログラムが存在します。\n"
 "本当に終了してもよろしいですか？"
 
-#: src/gnome-genius.c:889
+#: src/gnome-genius.c:897
 msgid "There are unsaved programs, are you sure you wish to quit?"
 msgstr ""
 "保存していないプログラムが存在しますが、本当に終了してもよろしいですか？"
 
-#: src/gnome-genius.c:896
+#: src/gnome-genius.c:904
 msgid "Genius is executing something, are you sure you wish to quit?"
 msgstr "Genius で何か実行中ですが、本当に終了してもよろしいですか？"
 
-#: src/gnome-genius.c:903
+#: src/gnome-genius.c:911
 msgid "Are you sure you wish to quit?"
 msgstr "本当に終了してもよろしいですか？"
 
-#: src/gnome-genius.c:1006
+#: src/gnome-genius.c:1018
 msgid "Genius Setup"
 msgstr "Genius の設定"
 
-#: src/gnome-genius.c:1023
+#: src/gnome-genius.c:1035
 msgid "Output"
 msgstr "出力"
 
-#: src/gnome-genius.c:1026
+#: src/gnome-genius.c:1038
 msgid "Number/Expression output options"
 msgstr "数値/式の出力オプション"
 
-#: src/gnome-genius.c:1036
+#: src/gnome-genius.c:1048
 msgid "Maximum digits to output (0=unlimited)"
 msgstr "出力する最大桁数 (0=制限なし)"
 
-#: src/gnome-genius.c:1056
+#: src/gnome-genius.c:1068
 msgid "Results as floats"
 msgstr "浮動小数点型で出力する"
 
-#: src/gnome-genius.c:1064
+#: src/gnome-genius.c:1076
 msgid "Floats in scientific notation"
 msgstr "科学記号付きの浮動小数点型で出力する"
 
-#: src/gnome-genius.c:1072
+#: src/gnome-genius.c:1084
 msgid "Always print full expressions"
 msgstr "常に全ての式を出力する"
 
-#: src/gnome-genius.c:1081
+#: src/gnome-genius.c:1093
 msgid "Error/Info output options"
 msgstr "エラー/その他の情報の出力オプション"
 
-#: src/gnome-genius.c:1089
+#: src/gnome-genius.c:1101
 msgid "Display errors in a dialog"
 msgstr "エラーをダイアログの中に表示する"
 
-#: src/gnome-genius.c:1097
+#: src/gnome-genius.c:1109
 msgid "Display information messages in a dialog"
 msgstr "その他の情報をダイアログの中に表示する"
 
-#: src/gnome-genius.c:1108
+#: src/gnome-genius.c:1120
 msgid "Maximum errors to display (0=unlimited)"
 msgstr "表示するエラー数の最大値 (0=制限なし)"
 
-#: src/gnome-genius.c:1132
+#: src/gnome-genius.c:1144
 msgid "Precision"
 msgstr "精度"
 
-#: src/gnome-genius.c:1142
+#: src/gnome-genius.c:1154
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
@@ -1932,31 +1896,35 @@ msgstr ""
 "直ぐに反映されずに、新規に計算した数値や変数に\n"
 "反映されるかもしれません。"
 
-#: src/gnome-genius.c:1151
+#: src/gnome-genius.c:1163
 msgid "Floating point precision (bits)"
 msgstr "浮動小数点型の精度 (ビット)"
 
-#: src/gnome-genius.c:1175
+#: src/gnome-genius.c:1187
 msgid "Terminal"
 msgstr "コンソール"
 
-#: src/gnome-genius.c:1178
+#: src/gnome-genius.c:1190
 msgid "Terminal options"
 msgstr "コンソールのオプション"
 
-#: src/gnome-genius.c:1187
+#: src/gnome-genius.c:1199
 msgid "Scrollback lines"
 msgstr "スクロールバックする行数"
 
-#: src/gnome-genius.c:1210
+#: src/gnome-genius.c:1222
 msgid "Font:"
 msgstr "フォント:"
 
-#: src/gnome-genius.c:1225
+#: src/gnome-genius.c:1237
 msgid "Black on white"
 msgstr "白地に黒字で描画する"
 
-#: src/gnome-genius.c:1255
+#: src/gnome-genius.c:1245
+msgid "Blinking cursor"
+msgstr ""
+
+#: src/gnome-genius.c:1275
 msgid ""
 "<b>Genius is currently executing something.</b>\n"
 "\n"
@@ -1966,57 +1934,57 @@ msgstr ""
 "\n"
 "後で再度トライするか、現在の計算を中断して下さい。"
 
-#: src/gnome-genius.c:1304
+#: src/gnome-genius.c:1324
 msgid "GEL files"
 msgstr "GEL ファイル"
 
-#: src/gnome-genius.c:1309 src/graphing.c:855
+#: src/gnome-genius.c:1329 src/graphing.c:881
 msgid "All files"
 msgstr "全てのファイル"
 
-#: src/gnome-genius.c:1343 src/gnome-genius.c:1967
+#: src/gnome-genius.c:1363 src/gnome-genius.c:1987
 msgid "Cannot open file!"
 msgstr "ファイルを開けません！"
 
-#: src/gnome-genius.c:1372 src/gnome-genius.c:1390
+#: src/gnome-genius.c:1392 src/gnome-genius.c:1410
 msgid "Load and Run"
 msgstr "読み込んで実行"
 
-#: src/gnome-genius.c:1376
+#: src/gnome-genius.c:1396
 msgid "_Load"
 msgstr "読み込む(_L)"
 
-#: src/gnome-genius.c:1802
+#: src/gnome-genius.c:1822
 msgid "Cannot open file"
 msgstr "ファイルを開けません"
 
-#: src/gnome-genius.c:1834 src/gnome-genius.c:2779
+#: src/gnome-genius.c:1854 src/gnome-genius.c:2825
 #, c-format
 msgid "Line: %d"
 msgstr "%d 行目"
 
 #. the file name will have an underscore
-#: src/gnome-genius.c:1905
+#: src/gnome-genius.c:1925
 #, c-format
 msgid "Program_%d.gel"
 msgstr "Program_%d.gel"
 
-#: src/gnome-genius.c:1906
+#: src/gnome-genius.c:1926
 #, c-format
 msgid "Program %d"
 msgstr "プログラム %d"
 
-#: src/gnome-genius.c:1919
+#: src/gnome-genius.c:1939
 #, c-format
 msgid "Cannot open %s"
 msgstr "%s を開けません"
 
-#: src/gnome-genius.c:1994 src/gnome-genius.c:2013
+#: src/gnome-genius.c:2014 src/gnome-genius.c:2033
 msgid "Open..."
 msgstr "開く..."
 
 #. new fname
-#: src/gnome-genius.c:2088 src/gnome-genius.c:2143
+#: src/gnome-genius.c:2108 src/gnome-genius.c:2163
 #, c-format
 msgid ""
 "<b>Cannot save file</b>\n"
@@ -2025,15 +1993,15 @@ msgstr ""
 "<b>ファイルを保存できません</b>\n"
 "詳細: %s"
 
-#: src/gnome-genius.c:2137 src/graphing.c:614 src/graphing.c:741
+#: src/gnome-genius.c:2157 src/graphing.c:640 src/graphing.c:767
 msgid "File already exists.  Overwrite it?"
 msgstr "ファイルが既に存在します。上書きしますか？"
 
-#: src/gnome-genius.c:2194 src/gnome-genius.c:2216
+#: src/gnome-genius.c:2214 src/gnome-genius.c:2236
 msgid "Save As..."
 msgstr "別名で保存..."
 
-#: src/gnome-genius.c:2290
+#: src/gnome-genius.c:2310
 msgid ""
 "<b>No program selected.</b>\n"
 "\n"
@@ -2043,16 +2011,16 @@ msgstr ""
 "\n"
 "新しいプログラムを作成するか、既存のタブの中で選択して下さい。"
 
-#: src/gnome-genius.c:2387
+#: src/gnome-genius.c:2407
 #, c-format
 msgid "Genius %s"
 msgstr "Genius %s"
 
-#: src/gnome-genius.c:2573
+#: src/gnome-genius.c:2619
 msgid "Can't execute genius-readline-helper-fifo!\n"
 msgstr "'genius-readline-helper-fifo' を実行できません！\n"
 
-#: src/gnome-genius.c:2795
+#: src/gnome-genius.c:2841
 msgid ""
 "\n"
 "Note: Compiled without GtkSourceView (better source editor)"
@@ -2060,11 +2028,11 @@ msgstr ""
 "\n"
 "注意: GtkSourceView (便利なソース・エディタ) 無しでコンパイルされています"
 
-#: src/gnome-genius.c:2994
+#: src/gnome-genius.c:3040
 msgid "Console"
 msgstr "コンソール"
 
-#: src/gnome-genius.c:3039
+#: src/gnome-genius.c:3088
 #, c-format
 msgid ""
 "%sGenius %s%s\n"
@@ -2089,147 +2057,152 @@ msgstr "Genius 数学ツール"
 msgid "Genius Mathematical Tool and Calculator"
 msgstr "Genius 式の数学ツールと計算機を提供します"
 
-#: src/graphing.c:285
+#: src/graphing.c:296
 msgid "Rotate"
 msgstr "回転"
 
-#: src/graphing.c:304
+#: src/graphing.c:315
 msgid "Rotate X: "
 msgstr "X-軸に対する回転: "
 
-#: src/graphing.c:329
+#: src/graphing.c:340
 msgid "Rotate Y: "
 msgstr "Y-軸に対する回転: "
 
-#: src/graphing.c:354
+#: src/graphing.c:365
 msgid "Rotate Z: "
 msgstr "Z-軸に対する回転: "
 
-#: src/graphing.c:448
+#: src/graphing.c:474
 msgid "Print"
 msgstr "印刷"
 
-#: src/graphing.c:465
+#: src/graphing.c:491
 msgid "Print command: "
 msgstr "印刷コマンド: "
 
-#: src/graphing.c:492
+#: src/graphing.c:518
 msgid "Cannot open temporary file, cannot print."
 msgstr "作業用ファイルを開けないので、印刷できません。"
 
-#: src/graphing.c:521
+#: src/graphing.c:547
 msgid "Printing failed"
 msgstr "印刷に失敗しました"
 
-#: src/graphing.c:693 src/graphing.c:760 src/graphing.c:777
+#: src/graphing.c:719 src/graphing.c:786 src/graphing.c:803
 msgid "Export failed"
 msgstr "エキスポートに失敗しました"
 
-#: src/graphing.c:820
+#: src/graphing.c:846
 msgid "Export encapsulated postscript"
 msgstr "Encapsulated PostScript (EPS) へのエキスポート"
 
-#: src/graphing.c:822
+#: src/graphing.c:848
 msgid "Export postscript"
 msgstr "ポストスクリプトへのエキスポート"
 
-#: src/graphing.c:824
+#: src/graphing.c:850
 msgid "Export PNG"
 msgstr "PNG へのエキスポート"
 
-#: src/graphing.c:841
+#: src/graphing.c:867
 msgid "EPS files"
 msgstr "EPS ファイル"
 
-#: src/graphing.c:845
+#: src/graphing.c:871
 msgid "PS files"
 msgstr "PS ファイル"
 
-#: src/graphing.c:849
+#: src/graphing.c:875
 msgid "PNG files"
 msgstr "PNG ファイル"
 
-#: src/graphing.c:1247
+#: src/graphing.c:1280
 msgid "_Graph"
 msgstr "グラフ(_G)"
 
-#: src/graphing.c:1251
+#: src/graphing.c:1284
 msgid "_Print..."
 msgstr "印刷(_P)..."
 
-#: src/graphing.c:1257
+#: src/graphing.c:1290
 msgid "_Export postscript..."
 msgstr "ポストスクリプトへエキスポート(_E)..."
 
-#: src/graphing.c:1263
+#: src/graphing.c:1296
 msgid "E_xport encapsulated postscript..."
 msgstr "EPS へエキスポート(_X)..."
 
-#: src/graphing.c:1269
+#: src/graphing.c:1302
 msgid "_Export PNG..."
 msgstr "PNG へエキスポート(_E)..."
 
-#: src/graphing.c:1277
+#: src/graphing.c:1310
 msgid "_Zoom"
 msgstr "ズーム(_Z)"
 
-#: src/graphing.c:1281
+#: src/graphing.c:1314
 msgid "Zoom _out"
 msgstr "縮小(_O)"
 
-#: src/graphing.c:1287
+#: src/graphing.c:1320
 msgid "Zoom _in"
 msgstr "拡大(_I)"
 
-#: src/graphing.c:1293
+#: src/graphing.c:1326
 msgid "_Fit dependent axis"
 msgstr "依存する軸に合わせる(_F)"
 
-#: src/graphing.c:1301
+#: src/graphing.c:1334
 msgid "_View"
 msgstr "表示(_V)"
 
-#: src/graphing.c:1306
+#: src/graphing.c:1339
 msgid "_Reset angles"
 msgstr "角度のリセット(_R)"
 
-#: src/graphing.c:1311
+#: src/graphing.c:1344
 msgid "_Top view"
 msgstr "真上からの表示(_T)"
 
-#: src/graphing.c:1316
+#: src/graphing.c:1349
 msgid "R_otate axis..."
 msgstr "軸の回転(_O)..."
 
-#: src/graphing.c:1844
+#: src/graphing.c:1878
 #, c-format
 msgid "Function #%d"
 msgstr "関数 #%d"
 
-#: src/graphing.c:1866
+#: src/graphing.c:1887
+#, c-format
+msgid "%s: argument number %d not a number"
+msgstr "%s: %d 番目の引数が数値ではありません"
+
+#: src/graphing.c:1900
 msgid "Graph limits not given as a 4-vector"
 msgstr "グラフの限界を４つのベクトルで指定して下さい"
 
-#: src/graphing.c:1872 src/graphing.c:1878 src/graphing.c:1884
-#: src/graphing.c:1890 src/graphing.c:1949 src/graphing.c:1955
-#: src/graphing.c:1961 src/graphing.c:1967 src/graphing.c:1973
-#: src/graphing.c:1979
+#: src/graphing.c:1906 src/graphing.c:1912 src/graphing.c:1918
+#: src/graphing.c:1924 src/graphing.c:1983 src/graphing.c:1989
+#: src/graphing.c:1995 src/graphing.c:2001 src/graphing.c:2007
+#: src/graphing.c:2013
 msgid "Graph limits not given as numbers"
 msgstr "グラフの限界を数値で指定して下さい"
 
-#: src/graphing.c:1943
+#: src/graphing.c:1977
 msgid "Graph limits not given as a 6-vector"
 msgstr "グラフの限界を６つのベクトルで指定して下さい"
 
-#: src/graphing.c:2252
+#: src/graphing.c:2288
 msgid "to:"
 msgstr "〜"
 
-#: src/graphing.c:2282
+#: src/graphing.c:2318
 msgid "Functions / Expressions"
 msgstr "関数 / 式"
 
-#: src/graphing.c:2287
+#: src/graphing.c:2323
 msgid ""
 "Type in function names or expressions involving the x variable in the boxes "
 "below to graph them"
@@ -2237,29 +2210,29 @@ msgstr ""
 "↓のボックスに、グラフにする関数や式を変数 x などを含めた形式で入力して下さ"
 "い。"
 
-#: src/graphing.c:2310 src/graphing.c:2365
+#: src/graphing.c:2346 src/graphing.c:2401
 msgid "Plot Window"
 msgstr "プロット・ウィンドウ"
 
 #.
 #. * X range
 #.
-#: src/graphing.c:2319 src/graphing.c:2374
+#: src/graphing.c:2355 src/graphing.c:2410
 msgid "X from:"
 msgstr "X-軸方向: "
 
 #.
 #. * Y range
 #.
-#: src/graphing.c:2325 src/graphing.c:2380
+#: src/graphing.c:2361 src/graphing.c:2416
 msgid "Y from:"
 msgstr "Y-軸方向: "
 
-#: src/graphing.c:2340
+#: src/graphing.c:2376
 msgid "Function / Expression"
 msgstr "関数 / 式"
 
-#: src/graphing.c:2345
+#: src/graphing.c:2381
 msgid ""
 "Type a function name or an expression involving the x and y variables (or "
 "the z variable which will be z=x+iy) in the boxes below to graph them.  "
@@ -2272,74 +2245,111 @@ msgstr ""
 #.
 #. * Z range
 #.
-#: src/graphing.c:2386
+#: src/graphing.c:2422
 msgid "Z from:"
 msgstr "Z-軸方向: "
 
-#: src/graphing.c:2399
+#: src/graphing.c:2435
 msgid "Function _line plot"
 msgstr "折れ線グラフ(_L)"
 
-#: src/graphing.c:2403
+#: src/graphing.c:2439
 msgid "_Surface plot"
 msgstr "サーフェス描画(_S)"
 
-#: src/graphing.c:2602 src/graphing.c:2735
+#: src/graphing.c:2638 src/graphing.c:2771
 msgid "No functions to plot or no functions could be parsed"
 msgstr "グラフにする関数が存在しないか、または関数を解析できませんでした"
 
-#: src/graphing.c:2633 src/graphing.c:2758
+#: src/graphing.c:2669 src/graphing.c:2794
 msgid "Invalid X range"
 msgstr "X-軸方向の範囲が間違っています"
 
-#: src/graphing.c:2638 src/graphing.c:2763
+#: src/graphing.c:2674 src/graphing.c:2799
 msgid "Invalid Y range"
 msgstr "Y-軸方向の範囲が間違っています"
 
-#: src/graphing.c:2643
+#: src/graphing.c:2679
 msgid "Invalid Z range"
 msgstr "Z-軸方向の範囲が間違っています"
 
-#: src/graphing.c:2838
+#: src/graphing.c:2874
 msgid "Create Plot"
 msgstr "グラフの作成"
 
-#: src/graphing.c:2878 src/graphing.c:3023
+#: src/graphing.c:2914 src/graphing.c:3059
 #, c-format
 msgid "%s: argument not a function"
 msgstr "%s: 引数が関数ではありません"
 
-#: src/graphing.c:2888
+#: src/graphing.c:2924
 #, c-format
 msgid "%s: only one function supported"
 msgstr "%s: サポートしている関数が一つしかありません"
 
-#: src/graphing.c:2955 src/graphing.c:3074
+#: src/graphing.c:2991 src/graphing.c:3110
 #, c-format
 msgid "%s: invalid X range"
 msgstr "%s: X-軸方向の範囲が間違っています"
 
-#: src/graphing.c:2960 src/graphing.c:3079
+#: src/graphing.c:2996 src/graphing.c:3115
 #, c-format
 msgid "%s: invalid Y range"
 msgstr "%s: Y-軸方向の範囲が間違っています"
 
-#: src/graphing.c:2965
+#: src/graphing.c:3001
 #, c-format
 msgid "%s: invalid Z range"
 msgstr "%s: Z-軸方向の範囲が間違っています"
 
-#: src/graphing.c:3018
+#: src/graphing.c:3054
 #, c-format
 msgid "%s: only up to 10 functions supported"
 msgstr "%s: サポートしている関数が 10個以上しかありません"
 
-#: src/graphing.c:3166
+#: src/graphing.c:3184 src/graphing.c:3232
+#, c-format
+msgid ""
+"%s: Line should be given as a real, n by 2 matrix with columns for x and y, "
+"n>=2"
+msgstr ""
+
+#: src/graphing.c:3271
+#, fuzzy, c-format
+msgid "%s: Wrong number of arguments"
+msgstr "%s: 引数が多すぎます"
+
+#: src/graphing.c:3310
+#, c-format
+msgid "%s: No color specified"
+msgstr ""
+
+#: src/graphing.c:3322
+#, fuzzy, c-format
+msgid "%s: Color must be a string"
+msgstr "%s: フラグ引数は文字列にして下さい"
+
+#: src/graphing.c:3331
+#, c-format
+msgid "%s: No thicnkess specified"
+msgstr ""
+
+#: src/graphing.c:3347
+#, c-format
+msgid "%s: Unknown style"
+msgstr ""
+
+#: src/graphing.c:3354
+#, c-format
+msgid "%s: Bad parameter"
+msgstr ""
+
+#: src/graphing.c:3432
 msgid "Plotting"
 msgstr "グラフの作成"
 
-#. bogus value
-#: src/graphing.c:3198
+#. internal
+#: src/graphing.c:3434
 msgid ""
 "Plot a function with a line.  First come the functions (up to 10) then "
 "optionally limits as x1,x2,y1,y2"
@@ -2347,7 +2357,7 @@ msgstr ""
 "関数の結果を折れ線グラフで描画する (同時に描画する関数の数は 10個まで、変数"
 "は x1,x2,y1,y2 しか使えません)"
 
-#: src/graphing.c:3199
+#: src/graphing.c:3435
 msgid ""
 "Plot a surface function which takes either two arguments or a complex "
 "number.  First comes the function then optionally limits as x1,x2,y1,y2,z1,z2"
@@ -2355,12 +2365,22 @@ msgstr ""
 "二つの引数または複素数のどちらかを受け取る関数のサーフィスを描画する (同時に"
 "描画する関数の数は 1個だけ、変数は x1,x2,y1,y2,z1,z2 しか使えません)"
 
-#: src/graphing.c:3201
+#: src/graphing.c:3437
+msgid "Show the line plot window and clear out functions"
+msgstr ""
+
+#: src/graphing.c:3438
+msgid ""
+"Draw a line from x1,y1 to x2,y2.  x1,y1,x2,y2 can be replaced by a n by 2 "
+"matrix for a longer line"
+msgstr ""
+
+#: src/graphing.c:3440
 msgid "Line plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"
 msgstr ""
 "４つのベクトル [x1,x2,y1,y2] で制限された折れ線グラフ用のプロット・ウィンドウ"
 
-#: src/graphing.c:3202
+#: src/graphing.c:3441
 msgid ""
 "Surface plotting window (limits) as a 6-vector of the form [x1,x2,y1,y2,z1,"
 "z2]"
@@ -2372,176 +2392,176 @@ msgstr ""
 msgid "Determinant of a non-square matrix is undefined"
 msgstr "正方行列ではない行列式を定義して下さい"
 
-#: src/mpwrap.c:477
+#: src/mpwrap.c:522
 msgid "Integer exponent too large to compute"
 msgstr "計算する整数型の指数が大きすぎます！"
 
-#: src/mpwrap.c:1291
+#: src/mpwrap.c:1374
 msgid "Can't do modulo of floats or rationals!"
 msgstr "浮動小数点型または有理数のモジュロ演算は行えません！"
 
-#: src/mpwrap.c:1308
+#: src/mpwrap.c:1388
 msgid "Can't do GCD of floats or rationals!"
 msgstr "浮動小数点または有理数の G.C.D は取得できません！"
 
-#: src/mpwrap.c:1334
+#: src/mpwrap.c:1415
 msgid "Can't modulo invert non integers!"
 msgstr "整数型ではない数値に対する逆モジュロ演算は行えません！"
 
-#: src/mpwrap.c:1355
+#: src/mpwrap.c:1436
 msgid "Can't get jacobi symbols of floats or rationals!"
 msgstr "浮動小数点または有理数のヤコビ記号を取得できません！"
 
-#: src/mpwrap.c:1374
+#: src/mpwrap.c:1455
 msgid "Can't get legendre symbols of floats or rationals!"
 msgstr "浮動小数点または有理数のルジャンドル記号を取得できません！"
 
-#: src/mpwrap.c:1393
+#: src/mpwrap.c:1474
 msgid ""
 "Can't get jacobi symbol with Kronecker extension of floats or rationals!"
 msgstr ""
 "浮動小数点または有理数に対するクロネッカー展開を使ったヤコビ記号を取得できま"
 "せん！"
 
-#: src/mpwrap.c:1402
+#: src/mpwrap.c:1483
 msgid "Lucas must get an integer argument!"
 msgstr "Lucas 素数は整数型の引数で取得して下さい！"
 
-#: src/mpwrap.c:1408
+#: src/mpwrap.c:1489
 msgid "Number too large to compute lucas number!"
 msgstr "Lucas 素数を計算する数値が大きすぎます！"
 
-#: src/mpwrap.c:1413
+#: src/mpwrap.c:1494
 msgid "No such thing as negative lucas numbers!"
 msgstr "負の Lucas 素数は存在しません！"
 
-#: src/mpwrap.c:1428
+#: src/mpwrap.c:1509
 msgid "Cannot get next prime after non-integer!"
 msgstr "非整数の後ろにある次の素数を取得できません！"
 
-#: src/mpwrap.c:1448 src/mpwrap.c:1461 src/mpwrap.c:1474 src/mpwrap.c:1487
+#: src/mpwrap.c:1529 src/mpwrap.c:1542 src/mpwrap.c:1555 src/mpwrap.c:1568
 #, c-format
 msgid "%s: can't work on non-integers!"
 msgstr "%s: 非整数型では動作しません！"
 
-#: src/mpwrap.c:1529 src/mpwrap.c:1569
+#: src/mpwrap.c:1610 src/mpwrap.c:1650
 msgid "Can't do factorials of rationals or floats!"
 msgstr "Rational 型または浮動小数点型の階乗は計算できません！"
 
-#: src/mpwrap.c:1535 src/mpwrap.c:1575
+#: src/mpwrap.c:1616 src/mpwrap.c:1656
 msgid "Number too large to compute factorial!"
 msgstr "階乗を計算する数値が大きすぎます！"
 
-#: src/mpwrap.c:1540 src/mpwrap.c:1580
+#: src/mpwrap.c:1621 src/mpwrap.c:1661
 msgid "Can't do factorials of negative numbers!"
 msgstr "負の数値の階乗は計算できません！"
 
-#: src/mpwrap.c:1901 src/mpwrap.c:1969 src/mpwrap.c:3832 src/mpwrap.c:3849
+#: src/mpwrap.c:1989 src/mpwrap.c:2057 src/mpwrap.c:4032 src/mpwrap.c:4053
 #, c-format
 msgid "%s: Bad types for mod power"
 msgstr "%s: mod power の型がおかしいです"
 
-#: src/mpwrap.c:1938
+#: src/mpwrap.c:2026
 #, c-format
 msgid "Can't invert %s modulo %s in %s"
 msgstr "%s modulo %s in %s を反転できません"
 
-#: src/mpwrap.c:2246
+#: src/mpwrap.c:2310
 msgid "Can't make random integer from a non-integer"
 msgstr "非整数型から整数値の乱数は生成できません"
 
-#: src/mpwrap.c:2251
+#: src/mpwrap.c:2315
 msgid "Range for random integer must be positive"
 msgstr "乱数の範囲は正の整数値にして下さい"
 
-#: src/mpwrap.c:2443 src/mpwrap.c:2469
+#: src/mpwrap.c:2500 src/mpwrap.c:2528
 msgid "Can't get numerator of floating types"
 msgstr "浮動小数点型の分子を取得できません"
 
-#: src/mpwrap.c:3213 src/mpwrap.c:4433 src/mpwrap.c:4445
+#: src/mpwrap.c:3296 src/mpwrap.c:4710 src/mpwrap.c:4722
 msgid "Can't compare complex numbers"
 msgstr "複素数の比較はできません"
 
-#: src/mpwrap.c:3578
+#: src/mpwrap.c:3738
 msgid "Can't modulo complex numbers"
 msgstr "複素数のモジュロ演算は行えません！"
 
-#: src/mpwrap.c:3597
+#: src/mpwrap.c:3761
 #, c-format
 msgid "Inverse of %s modulo %s not found!"
 msgstr "Inverse of %s modulo %s が見つかりません！"
 
-#: src/mpwrap.c:3606
+#: src/mpwrap.c:3770
 msgid "Can't do modulo invert on complex numbers"
 msgstr "複素数乗で modulo invert は計算できません"
 
-#: src/mpwrap.c:3619
+#: src/mpwrap.c:3787
 msgid "Can't GCD complex numbers"
 msgstr "複素数の G.C.D は取得できません"
 
-#: src/mpwrap.c:3642
+#: src/mpwrap.c:3816
 msgid "Can't LCM complex numbers"
 msgstr "複素数の L.C.M は取得できません"
 
-#: src/mpwrap.c:3655
+#: src/mpwrap.c:3833
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr "複素数のヤコビ記号を取得できません"
 
-#: src/mpwrap.c:3667
+#: src/mpwrap.c:3849
 msgid "Can't get legendre symbols complex numbers"
 msgstr "複素数のルジャンドル記号を取得できません"
 
-#: src/mpwrap.c:3679
+#: src/mpwrap.c:3865
 msgid "Can't get jacobi symbol with Kronecker extension for complex numbers"
 msgstr "複素数に対するクロネッカー展開を使ったヤコビ記号を取得できません！"
 
-#: src/mpwrap.c:3691
+#: src/mpwrap.c:3881
 msgid "Can't get lucas number for complex numbers"
 msgstr "複素数の Lucas 素数を取得できません"
 
-#: src/mpwrap.c:3703
+#: src/mpwrap.c:3897
 msgid "Can't get next prime for complex numbers"
 msgstr "複素数の次の素数を取得できません"
 
-#: src/mpwrap.c:3713 src/mpwrap.c:3725 src/mpwrap.c:3737 src/mpwrap.c:3749
+#: src/mpwrap.c:3907 src/mpwrap.c:3919 src/mpwrap.c:3931 src/mpwrap.c:3943
 #, c-format
 msgid "%s: can't work on complex numbers"
 msgstr "%s: 複素数上では動作しません"
 
-#: src/mpwrap.c:3923 src/mpwrap.c:3994 src/mpwrap.c:4052
+#: src/mpwrap.c:4142 src/mpwrap.c:4220 src/mpwrap.c:4285
 #, c-format
 msgid "%s: can't take logarithm of 0"
 msgstr "%s: 底が０の対数を受け取れません"
 
-#: src/mpwrap.c:4362
+#: src/mpwrap.c:4637
 msgid "Can't make random integer out of a complex number"
 msgstr "複素数を越えた整数型の乱数を生成できません"
 
-#: src/mpwrap.c:4483 src/mpwrap.c:4496
+#: src/mpwrap.c:4764 src/mpwrap.c:4781
 msgid "Can't make factorials of complex numbers"
 msgstr "複素数の階乗を計算できません"
 
-#: src/mpwrap.c:4779 src/mpwrap.c:4801 src/mpwrap.c:4823
+#: src/mpwrap.c:5060 src/mpwrap.c:5082 src/mpwrap.c:5104
 msgid "Can't determine type of a complex number"
 msgstr "複素数の型を取得できません"
 
-#: src/mpwrap.c:4915 src/mpwrap.c:4938
+#: src/mpwrap.c:5196 src/mpwrap.c:5219
 msgid "Can't convert complex number into integer"
 msgstr "複素数から整数値へ変換できません"
 
-#: src/mpwrap.c:4921
+#: src/mpwrap.c:5202
 msgid "Can't convert real number to integer"
 msgstr "実数から整数値へ変換できません"
 
-#: src/mpwrap.c:4925
+#: src/mpwrap.c:5206
 msgid "Integer too large for this operation"
 msgstr "この計算に対する整数型の値が大きすぎます"
 
-#: src/mpwrap.c:4947
+#: src/mpwrap.c:5228
 msgid "Can't convert real number to double"
 msgstr "実数を倍精度型実数へ変換できません"
 
-#: src/mpwrap.c:4953
+#: src/mpwrap.c:5234
 msgid "Number too large for this operation"
 msgstr "この計算に対する値が大きすぎます"
 
@@ -3655,31 +3675,62 @@ msgstr ""
 
 #: lib/library-strings.c:228
 msgid ""
+"Run newton's method on a polynomial to attempt to find a root, returns after "
+"two successive values are within epsilon or after maxn tries (then returns "
+"null)"
+msgstr ""
+
+#: lib/library-strings.c:229
+msgid ""
 "Returns a set theoretic intersection of X and Y (X and Y are vectors "
 "pretending to be sets)"
 msgstr ""
 
-#: lib/library-strings.c:229
+#: lib/library-strings.c:230
 msgid ""
 "Returns true if the element x is in the set X (where X is a vector "
 "pretending to be a set)"
 msgstr ""
 
-#: lib/library-strings.c:230
+#: lib/library-strings.c:231
 msgid "Returns a set where every element of X appears only once"
 msgstr ""
 
-#: lib/library-strings.c:231
+#: lib/library-strings.c:232
 msgid ""
 "Returns a set theoretic difference X-Y (X and Y are vectors pretending to be "
 "sets)"
 msgstr ""
 
-#: lib/library-strings.c:232
+#: lib/library-strings.c:233
 msgid ""
 "Returns a set theoretic union of X and Y (X and Y are vectors pretending to "
 "be sets)"
 msgstr ""
+
+#~ msgid "%s: argument number %d not an integer"
+#~ msgstr "%s: %d 番目の引数が数値ではありません"
+
+#~ msgid "%s: argument number %d not an integer or a matrix"
+#~ msgstr "%s: %d 番目の引数が整数値でも行列でもありません"
+
+#~ msgid "%s: argument number %d not a positive integer"
+#~ msgstr "%s: %d 番目の引数が正の整数値ではありません"
+
+#~ msgid "%s: argument number %d not a boolean"
+#~ msgstr "%s: %d 番目の引数が論理値ではありません"
+
+#~ msgid "%s: argument number %d not a real number"
+#~ msgstr "%s: %d 番目の引数が実数ではありません"
+
+#~ msgid "%s: argument number %d not a matrix"
+#~ msgstr "%s: %d 番目の引数が行列ではありません"
+
+#~ msgid "%s: argument number %d not a value only matrix"
+#~ msgstr "%s: argument number %d not a value only matrix"
+
+#~ msgid "%s: argument number %d not a string"
+#~ msgstr "%s: %d 番目の引数が文字列ではありません"
 
 #~ msgid "Euler's Constant gamma good up to about precision of 9516 digits"
 #~ msgstr "オイラーの定数を表す (有効桁数は約 9516 桁以上)"

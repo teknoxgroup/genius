@@ -1704,7 +1704,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.7.2
+VERSION=0.7.3
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { { echo "$as_me:$LINENO: error: source directory already configured; run \"make distclean\" there first" >&5
@@ -21732,9 +21732,9 @@ else
 fi
 else
 	GOT_MPFR="no"
-	echo "$as_me:$LINENO: checking for mpfr_cmd_d in -lmpfr" >&5
-echo $ECHO_N "checking for mpfr_cmd_d in -lmpfr... $ECHO_C" >&6
-if test "${ac_cv_lib_mpfr_mpfr_cmd_d+set}" = set; then
+	echo "$as_me:$LINENO: checking for mpfr_cmp_d in -lmpfr" >&5
+echo $ECHO_N "checking for mpfr_cmp_d in -lmpfr... $ECHO_C" >&6
+if test "${ac_cv_lib_mpfr_mpfr_cmp_d+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -21752,11 +21752,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char mpfr_cmd_d ();
+char mpfr_cmp_d ();
 int
 main ()
 {
-mpfr_cmd_d ();
+mpfr_cmp_d ();
   ;
   return 0;
 }
@@ -21783,20 +21783,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_mpfr_mpfr_cmd_d=yes
+  ac_cv_lib_mpfr_mpfr_cmp_d=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_mpfr_mpfr_cmd_d=no
+ac_cv_lib_mpfr_mpfr_cmp_d=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_mpfr_mpfr_cmd_d" >&5
-echo "${ECHO_T}$ac_cv_lib_mpfr_mpfr_cmd_d" >&6
-if test $ac_cv_lib_mpfr_mpfr_cmd_d = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_mpfr_mpfr_cmp_d" >&5
+echo "${ECHO_T}$ac_cv_lib_mpfr_mpfr_cmp_d" >&6
+if test $ac_cv_lib_mpfr_mpfr_cmp_d = yes; then
   GOT_MPFR="yes"
 else
   GOT_MPFR="no"

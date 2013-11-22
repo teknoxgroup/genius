@@ -174,6 +174,12 @@ EXTRA_DIST =  	genius.spec 	genius.spec.in 	genius.xml 	genius.mime 	genius.keys
 DISTCLEANFILES =  	intltool-extract		intltool-merge			intltool-update
 
 
+# This doesn't add the graphing functions
+#genius-function-list.txt: src/genius
+#	LANG=C src/genius --version > genius-function-list.txt
+#	echo "------------------------------------------" >> genius-function-list.txt
+#	echo help | src/genius >> genius-function-list.txt
+
 distuninstallcheck_listfiles = find . -type f -print | grep -v '^\./var/scrollkeeper' | grep -v 'omf' | grep -v 'figures'
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -530,11 +536,6 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 install-data-hook: 
 	-update-mime-database "$(DESTDIR)${datadir}/mime"
-
-genius-function-list.txt: src/genius
-	src/genius --version > genius-function-list.txt
-	echo "------------------------------------------" >> genius-function-list.txt
-	echo help | src/genius >> genius-function-list.txt
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

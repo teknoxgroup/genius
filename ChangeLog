@@ -1,3 +1,107 @@
+Thu Mar 24 10:17:35 2005  George Lebl <jirka@5z.com>
+
+	* Release 0.7.3
+
+	* help/C/gel-function-list.xml: fix xml errors
+
+Thu Mar 24 10:14:38 2005  George Lebl <jirka@5z.com>
+
+	* help/C/*.xml: update, add the graphing functions and add lots more
+	  references to planetmath and mathworld also document wait and
+	  NewtonsMethodPoly
+
+	* configure.in: raise version
+
+	* src/*.[ch]: update copyright notices
+
+Thu Mar 24 08:31:36 2005  George Lebl <jirka@5z.com>
+
+	* mpfr/*: Update to mpfr 2.1.1 to use a nice released version rather
+	  then CVS
+
+Wed Mar 23 10:56:37 2005  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.[ch]: add blinking cursor selection
+
+	* lib/functions/complex_numbers.gel: added and commented out a bad
+	  implementation of zeta and gamma functions, must do this properly
+	  at some point
+
+Mon Mar 21 15:42:06 2005  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: some allocation fixes, the float formatting is
+	  incredibly evil!
+
+Mon Mar 21 14:48:28 2005  George Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c: set default precision to 128
+	  bits, it's faster and most people don't need more.  Also save the
+	  precision in config.  Further sanitize things from the command line
+	  and the config, to avoid using bogus values.
+
+Mon Mar 21 11:18:57 2005  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: move the whole gmp structures into the MpwRealNum
+	  struct to avoid another pointer.  Further avoid initializing a new
+	  number just to throw it away if possible and be smarter with
+	  initialization types.  Fix some leaks and errors.
+
+Fri Mar 18 18:03:30 2005  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.ch: fixup memory usage by whacking the duplicate
+	  pointers in the real number structure.
+
+	* src/eval.c: fix leaks on elt by elt matrix operations
+
+Fri Mar 18 11:48:14 2005  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: whack the unneeded type field from mpw_t to save
+	  a byte per number and probably make alignment nicer and all that.
+
+Fri Mar 18 11:11:07 2005  George Lebl <jirka@5z.com>
+
+	* src/graphing.c, src/funclib.[ch]: Allow drawing longer lines with
+	  LinePlotDrawLine by passing in a matrix of points.
+
+Tue Feb 08 18:18:18 2005  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: deal with closing of the graph window when we're
+	  in the middle of plotting without crashing
+
+Thu Jan 06 13:28:12 2005  George Lebl <jirka@5z.com>
+
+	* lib/functions/elementary.gel: add NewtonsMethodPoly
+
+Thu Jan 06 10:06:10 2005  George Lebl <jirka@5z.com>
+
+	* src/graphing.c, src/funclib.[ch], src/Makefile.am,
+	  src/funclibhelper.cP: make some functions/macros sharable by
+	  either making them extern or putting them inside a includable
+	  file
+
+	* src/graphing.c: make LinePlotWindow parameter behave correctly with
+	  respect to the new drawing routines and read color and thickness
+	  style from the argument list of LinePlotDrawLine
+
+	* src/funclib.c: add 'wait' function
+
+	* src/gnome-genius.h, src/calc.h: move the interrupted extern
+	  declaration
+
+Tue Jan 04 18:21:36 2005  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: add LinePlotClear and LinePlotDrawLine, but these
+	  are subject to change of course
+
+Tue Jan 04 10:57:18 2005  George Lebl <jirka@5z.com>
+
+	* configure.in: use an existing mpfr function to check for the
+	  library, DUH!
+
+	* src/genius.c: include term.h AFTER everything since that happens to
+	  redefine the word 'tab' for it's own very evil purposes on some
+	  systems (some ncurses version or some such)
+
 Thu Dec 23 11:03:27 2004  George Lebl <jirka@5z.com>
 
 	* Release 0.7.2

@@ -1,6 +1,6 @@
-/* mpfr_get_exp - get the exponent of a floating-point number
+/* Save/restore the minimum and maximum exponents.
 
-Copyright 2002, 2003, 2004 Free Software Foundation.
+Copyright 2001, 2002, 2004 Free Software Foundation, Inc.
 
 This file is part of the MPFR Library.
 
@@ -19,11 +19,38 @@ along with the MPFR Library; see the file COPYING.LIB.  If not, write to
 the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
 MA 02111-1307, USA. */
 
+
 #include "mpfr-impl.h"
 
-mp_exp_t
-mpfr_get_exp (mpfr_srcptr x)
+static unsigned int saved_flags;
+static mp_exp_t saved_emin;
+static mp_exp_t saved_emax;
+static unsigned int save_ctr = 0;
+
+void
+mpfr_save_emin_emax (void)
 {
-  MPFR_ASSERTN(MPFR_IS_PURE_FP(x));
-  return MPFR_EXP(x);  /* do not use MPFR_GET_EXP of course... */
+  if (MPFR_LIKELY(save_ctr++ == 0))
+    {
+      saved_flags  = __gmpfr_flags;
+      saved_emin   = __gmpfr_emin;
+      saved_emax   = __gmpfr_emax;
+      __gmpfr_emin = MPFR_EMIN_MIN;
+      __gmpfr_emax = MPFR_EMAX_MAX;
+    }
+  else
+    {
+      MPFR_ASSERTN (save_ctr != 0);
+    }
+}
+
+void
+mpfr_restore_emin_emax (void)
+{
+  if (MPFR_LIKELY(--save_ctr == 0))
+    {
+      __gmpfr_flags |= saved_flags;
+      __gmpfr_emin   = saved_emin;
+      __gmpfr_emax   = saved_emax;
+    }
 }

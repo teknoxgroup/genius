@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 2003-2004 Jiri (George) Lebl
+ * Copyright (C) 2003-2005 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -42,6 +42,7 @@
 #include "plugin.h"
 #include "geloutput.h"
 #include "mpwrap.h"
+#include "matop.h"
 
 #include "gnome-genius.h"
 
@@ -140,6 +141,7 @@ static GelETree *plot_arg2 = NULL;
 static GelETree *plot_arg3 = NULL;
 
 static int plot_in_progress = 0;
+static gboolean whack_window_after_plot = FALSE;
 
 static void plot_axis (void);
 
@@ -158,6 +160,8 @@ static void plot_surface_functions (void);
 #define PROPORTION_OFFSET 0.075
 #define PROPORTION3D_OFFSET 0.1
 
+#include "funclibhelper.cP"
+
 enum {
 	RESPONSE_STOP = 1,
 	RESPONSE_PLOT
@@ -167,6 +171,13 @@ static void
 plot_window_setup (void)
 {
 	if (graph_window != NULL) {
+		if (plot_in_progress == 0 &&
+		    whack_window_after_plot) {
+			gtk_widget_destroy (graph_window);
+			whack_window_after_plot = FALSE;
+			return;
+		}
+
 		if (plot_in_progress)
 			genius_setup_window_cursor (plot_canvas, GDK_WATCH);
 		else
@@ -409,15 +420,30 @@ top_view_cb (GtkWidget *button, gpointer data)
 	}
 }
 
+static gboolean
+dialog_delete_event (GtkWidget *w, gpointer data)
+{
+	if (plot_in_progress > 0) {
+		interrupted = TRUE;
+		whack_window_after_plot = TRUE;
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
 
 static void
 dialog_response (GtkWidget *w, int response, gpointer data)
 {
 	if (response == GTK_RESPONSE_CLOSE ||
 	    response == GTK_RESPONSE_DELETE_EVENT) {
-		if (plot_in_progress > 0)
+		if (plot_in_progress > 0) {
 			interrupted = TRUE;
-		gtk_widget_destroy (graph_window);
+			whack_window_after_plot = TRUE;
+		} else {
+			gtk_widget_destroy (graph_window);
+		}
 	} else if (response == RESPONSE_STOP && plot_in_progress > 0) {
 		interrupted = TRUE;
 	}
@@ -1215,6 +1241,9 @@ ensure_window (void)
 {
 	GtkWidget *menu, *menubar, *item;
 
+	/* ensure we don't whack things, just paranoia */
+	whack_window_after_plot = FALSE;
+
 	if (graph_window != NULL) {
 		/* FIXME: present is evil in that it takes focus away */
 		gtk_widget_show (graph_window);
@@ -1234,6 +1263,10 @@ ensure_window (void)
 			  "destroy",
 			  G_CALLBACK (gtk_widget_destroyed),
 			  &graph_window);
+	g_signal_connect (G_OBJECT (graph_window),
+			  "delete_event",
+			  G_CALLBACK (dialog_delete_event),
+			  NULL);
 	g_signal_connect (G_OBJECT (graph_window),
 			  "response",
 			  G_CALLBACK (dialog_response),
@@ -1478,9 +1511,10 @@ plot_axis (void)
 		 */
 	}
 
-	gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
-	if (plot_canvas != NULL)
+	if (plot_canvas != NULL) {
+		gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+	}
 
 	plot_in_progress --;
 	plot_window_setup ();
@@ -1847,10 +1881,10 @@ label_func (int i, GelEFunc *func, char *name)
 	return text;
 }
 
-#define GET_DOUBLE(var,argnum) \
+#define GET_DOUBLE(var,argnum,func) \
 	{ \
 	if (a[argnum]->type != VALUE_NODE) { \
-		gel_errorout (_("%s: argument number %d not a number"), "LinePlot", argnum+1); \
+		gel_errorout (_("%s: argument number %d not a number"), func, argnum+1); \
 		return NULL; \
 	} \
 	var = mpw_get_double (a[argnum]->val.value); \
@@ -2108,10 +2142,11 @@ plot_functions (void)
 		g_free (label);
 	}
 
-	gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 	/* could be whacked by closing the window or some such */
-	if (plot_canvas != NULL)
+	if (plot_canvas != NULL) {
+		gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+	}
 
 	plot_in_progress --;
 	plot_window_setup ();
@@ -2201,10 +2236,11 @@ plot_surface_functions (void)
 	gtk_plot3d_autoscale (GTK_PLOT3D (surface_plot));
 	*/
 
-	gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 	/* could be whacked by closing the window or some such */
-	if (plot_canvas != NULL)
+	if (plot_canvas != NULL) {
+		gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+	}
 
 	plot_in_progress --;
 	plot_window_setup ();
@@ -2903,22 +2939,22 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 				goto whack_copied_funcs;
 			i++;
 		} else {
-			GET_DOUBLE(x1,i);
+			GET_DOUBLE(x1, i, "SurfacePlot");
 			i++;
 			if (a[i] != NULL) {
-				GET_DOUBLE(x2,i);
+				GET_DOUBLE(x2, i, "SurfacePlot");
 				i++;
 				if (a[i] != NULL) {
-					GET_DOUBLE(y1,i);
+					GET_DOUBLE(y1, i, "SurfacePlot");
 					i++;
 					if (a[i] != NULL) {
-						GET_DOUBLE(y2,i);
+						GET_DOUBLE(y2, i, "SurfacePlot");
 						i++;
 						if (a[i] != NULL) {
-							GET_DOUBLE(z1,i);
+							GET_DOUBLE(z1, i, "SurfacePlot");
 							i++;
 							if (a[i] != NULL) {
-								GET_DOUBLE(z2,i);
+								GET_DOUBLE(z2, i, "SurfacePlot");
 								i++;
 							}
 						}
@@ -3036,16 +3072,16 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 				goto whack_copied_funcs;
 			i++;
 		} else {
-			GET_DOUBLE(x1,i);
+			GET_DOUBLE(x1, i, "LinePlot");
 			i++;
 			if (a[i] != NULL) {
-				GET_DOUBLE(x2,i);
+				GET_DOUBLE(x2, i, "LinePlot");
 				i++;
 				if (a[i] != NULL) {
-					GET_DOUBLE(y1,i);
+					GET_DOUBLE(y1, i, "LinePlot");
 					i++;
 					if (a[i] != NULL) {
-						GET_DOUBLE(y2,i);
+						GET_DOUBLE(y2, i, "LinePlot");
 						i++;
 					}
 				}
@@ -3114,16 +3150,246 @@ whack_copied_funcs:
 }
 
 static GelETree *
+LinePlotClear_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int i;
+
+	for (i = 0; i < MAXFUNC && plot_func[i] != NULL; i++) {
+		d_freefunc (plot_func[i]);
+		plot_func[i] = NULL;
+		g_free (plot_func_name[i]);
+		plot_func_name[i] = NULL;
+	}
+
+	/* This will just clear the window */
+	plot_functions ();
+
+	if (interrupted)
+		return NULL;
+	else
+		return gel_makenum_null ();
+}
+
+static gboolean
+get_line_numbers (GelETree *a, double **x, double **y, int *len)
+{
+	int i;
+	GelMatrixW *m;
+
+	g_return_val_if_fail (a->type == MATRIX_NODE, FALSE);
+
+	m = a->mat.matrix;
+
+	if ( ! gel_is_matrix_value_only_real (m)) {
+		gel_errorout (_("%s: Line should be given as a real, n by 2 matrix "
+				"with columns for x and y, n>=2"),
+			      "LinePlotDrawLine");
+		return FALSE;
+	}
+
+	if (gel_matrixw_width (m) == 2 &&
+	    gel_matrixw_height (m) >= 2) {
+		*len = gel_matrixw_height (m);
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			GelETree *t = gel_matrixw_index (m, 0, i);
+			(*x)[i] = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 1, i);
+			(*y)[i] = mpw_get_double (t->val.value);
+		}
+	} else if (gel_matrixw_width (m) == 1 &&
+		   gel_matrixw_height (m) % 2 == 0 &&
+		   gel_matrixw_height (m) >= 4) {
+		*len = gel_matrixw_height (m) / 2;
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			GelETree *t = gel_matrixw_index (m, 0, 2*i);
+			(*x)[i] = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 0, (2*i) + 1);
+			(*y)[i] = mpw_get_double (t->val.value);
+		}
+	} else if (gel_matrixw_height (m) == 1 &&
+		   gel_matrixw_width (m) % 2 == 0 &&
+		   gel_matrixw_width (m) >= 4) {
+		*len = gel_matrixw_width (m) / 2;
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			GelETree *t = gel_matrixw_index (m, 2*i, 0);
+			(*x)[i] = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, (2*i) + 1, 0);
+			(*y)[i] = mpw_get_double (t->val.value);
+		}
+	} else {
+		gel_errorout (_("%s: Line should be given as a real, n by 2 matrix "
+				"with columns for x and y, n>=2"),
+			      "LinePlotDrawLine");
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+
+static GelETree *
+LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int len;
+	int nextarg;
+	double *x, *y, *dx, *dy;
+	GdkColor color;
+	int thickness;
+	GtkPlotData *data;
+	int i;
+
+	ensure_window ();
+
+	if (plot_mode != MODE_LINEPLOT) {
+		plot_mode = MODE_LINEPLOT;
+		clear_graph ();
+	}
+	if (line_plot == NULL) {
+		add_line_plot ();
+		plot_setup_axis ();
+	}
+
+	if (a[0]->type == MATRIX_NODE) {
+		if ( ! get_line_numbers (a[0], &x, &y, &len))
+			return FALSE;
+		nextarg = 1;
+	} else {
+		double x1, y1, x2, y2;
+		if G_UNLIKELY (gel_count_arguments (a) < 4) {
+			gel_errorout (_("%s: Wrong number of arguments"),
+				      "LinePlotDrawLine");
+			return NULL;
+		}
+		GET_DOUBLE(x1, 0, "LinePlotDrawLine");
+		GET_DOUBLE(y1, 1, "LinePlotDrawLine");
+		GET_DOUBLE(x2, 2, "LinePlotDrawLine");
+		GET_DOUBLE(y2, 3, "LinePlotDrawLine");
+		len = 2;
+		x = g_new (double, 2);
+		x[0] = x1;
+		x[1] = x2;
+		y = g_new (double, 2);
+		y[0] = y1;
+		y[1] = y2;
+		nextarg = 4;
+	}
+
+	gdk_color_parse ("black", &color);
+	thickness = 2;
+
+	for (i = nextarg; a[i] != NULL; i++) {
+		if G_LIKELY (a[i]->type == STRING_NODE ||
+			     a[i]->type == IDENTIFIER_NODE) {
+			GelToken *id;
+			static GelToken *colorid = NULL;
+			static GelToken *thicknessid = NULL;
+
+			if (colorid == NULL) {
+				colorid = d_intern ("color");
+				thicknessid = d_intern ("thickness");
+			}
+
+			if (a[i]->type == STRING_NODE)
+				id = d_intern (a[i]->str.str);
+			else
+				id = a[i]->id.id;
+			if (id == colorid) {
+				if G_UNLIKELY (a[i+1] == NULL)  {
+					gel_errorout (_("%s: No color specified"),
+						      "LinePlotDrawLine");
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				/* FIXME: helper routine for getting color */
+				if (a[i+1]->type == STRING_NODE) {
+					gdk_color_parse (a[i+1]->str.str, &color);
+				} else if (a[i+1]->type == IDENTIFIER_NODE) {
+					gdk_color_parse (a[i+1]->id.id->token, &color);
+				} else {
+					gel_errorout (_("%s: Color must be a string"),
+						      "LinePlotDrawLine");
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				i++;
+			} else if (id == thicknessid) {
+				if G_UNLIKELY (a[i+1] == NULL)  {
+					gel_errorout (_("%s: No thicnkess specified"),
+						      "LinePlotDrawLine");
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				if G_UNLIKELY ( ! check_argument_positive_integer (a, i+1,
+										   "LinePlotDrawLine")) {
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				thickness = gel_get_nonnegative_integer (a[i+1]->val.value,
+									 "LinePlotDrawLine");
+				i++;
+			} else {
+				gel_errorout (_("%s: Unknown style"), "LinePlotDrawLine");
+				g_free (x);
+				g_free (y);
+				return NULL;
+			}
+			
+		} else {
+			gel_errorout (_("%s: Bad parameter"), "LinePlotDrawLine");
+			g_free (x);
+			g_free (y);
+			return NULL;
+		}
+	}
+
+	data = GTK_PLOT_DATA (gtk_plot_data_new ());
+	dx = g_new0 (double, len);
+	dy = g_new0 (double, len);
+	gtk_plot_data_set_points (data, x, y, dx, dy, len);
+	gtk_plot_add_data (GTK_PLOT (line_plot), data);
+	gtk_plot_data_hide_legend (data);
+
+	gdk_color_alloc (gdk_colormap_get_system (), &color); 
+
+	gtk_plot_data_set_line_attributes (data,
+					   GTK_PLOT_LINE_SOLID,
+					   0, 0, thickness, &color);
+
+	gtk_widget_show (GTK_WIDGET (data));
+
+	gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+	gtk_plot_canvas_refresh (GTK_PLOT_CANVAS (plot_canvas));
+
+	return gel_makenum_null ();
+}
+
+static GelETree *
 set_LinePlotWindow (GelETree * a)
 {
 	double x1, x2, y1, y2;
 	if ( ! get_limits_from_matrix (a, &x1, &x2, &y1, &y2))
 		return NULL;
 
-	defx1 = x1;
-	defx2 = x2;
-	defy1 = y1;
-	defy2 = y2;
+	plotx1 = defx1 = x1;
+	plotx2 = defx2 = x2;
+	ploty1 = defy1 = y1;
+	ploty2 = defy2 = y2;
 
 	return make_matrix_from_limits ();
 }
@@ -3165,38 +3431,11 @@ gel_add_graph_functions (void)
 
 	new_category ("plotting", N_("Plotting"), TRUE /* internal */);
 
-	/* FIXME: add more help fields */
-#define FUNC(name,args,argn,category,desc) \
-	f = d_addfunc (d_makebifunc (d_intern ( #name ), name ## _op, args)); \
-	d_add_named_args (f, argn); \
-	add_category ( #name , category); \
-	add_description ( #name , desc);
-#define VFUNC(name,args,argn,category,desc) \
-	f = d_addfunc (d_makebifunc (d_intern ( #name ), name ## _op, args)); \
-	d_add_named_args (f, argn); \
-	f->vararg = TRUE; \
-	add_category ( #name , category); \
-	add_description ( #name , desc);
-#define ALIAS(name,args,aliasfor) \
-	d_addfunc (d_makebifunc (d_intern ( #name ), aliasfor ## _op, args)); \
-	add_alias ( #aliasfor , #name );
-#define VALIAS(name,args,aliasfor) \
-	f = d_addfunc (d_makebifunc (d_intern ( #name ), aliasfor ## _op, args)); \
-	f->vararg = TRUE; \
-	add_alias ( #aliasfor , #name );
-#define PARAMETER(name,desc) \
-	id = d_intern ( #name ); \
-	id->parameter = 1; \
-	id->built_in_parameter = 1; \
-	id->data1 = set_ ## name; \
-	id->data2 = get_ ## name; \
-	add_category ( #name , "parameters"); \
-	add_description ( #name , desc); \
-	/* bogus value */ \
-	d_addfunc_global (d_makevfunc (id, gel_makenum_null()));
+	VFUNC (LinePlot, 2, "func,args", "plotting", N_("Plot a function with a line.  First come the functions (up to 10) then optionally limits as x1,x2,y1,y2"));
+	VFUNC (SurfacePlot, 2, "func,args", "plotting", N_("Plot a surface function which takes either two arguments or a complex number.  First comes the function then optionally limits as x1,x2,y1,y2,z1,z2"));
 
-	VFUNC (LinePlot, 2, "", "plotting", N_("Plot a function with a line.  First come the functions (up to 10) then optionally limits as x1,x2,y1,y2"));
-	VFUNC (SurfacePlot, 2, "", "plotting", N_("Plot a surface function which takes either two arguments or a complex number.  First comes the function then optionally limits as x1,x2,y1,y2,z1,z2"));
+	FUNC (LinePlotClear, 0, "", "plotting", N_("Show the line plot window and clear out functions"));
+	VFUNC (LinePlotDrawLine, 2, "x1,y1,x2,y2,args", "plotting", N_("Draw a line from x1,y1 to x2,y2.  x1,y1,x2,y2 can be replaced by a n by 2 matrix for a longer line"));
 
 	PARAMETER (LinePlotWindow, N_("Line plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"));
 	PARAMETER (SurfacePlotWindow, N_("Surface plotting window (limits) as a 6-vector of the form [x1,x2,y1,y2,z1,z2]"));

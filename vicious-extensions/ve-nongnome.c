@@ -131,7 +131,7 @@ unalias_lang (char *lang)
         {
           static gboolean said_before = FALSE;
 	  if (!said_before)
-            g_warning (_("Too many alias levels for a locale, "
+            g_warning (_("Too many alias levels for a locale; "
 			 "may indicate a loop"));
 	  said_before = TRUE;
 	  return lang;

@@ -73,6 +73,7 @@ MPFR_LIBM = @MPFR_LIBM@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 RANLIB = @RANLIB@
+TESTS_ASM_OBJECTS = @TESTS_ASM_OBJECTS@
 VERSION = @VERSION@
 
 AUTOMAKE_OPTIONS = gnu
@@ -84,7 +85,7 @@ noinst_HEADERS = mpfr.h mpf2mpfr.h
 
 noinst_LIBRARIES = libmpfr.a
 
-libmpfr_a_SOURCES = mpfr.h mpf2mpfr.h mpfr-gmp.h mpfr-impl.h mpfr-longlong.h mpfr-test.h log_b2.h exceptions.c extract.c uceil_exp2.c uceil_log2.c ufloor_log2.c add.c add1.c add_one_ulp.c add_ui.c agm.c clear.c cmp.c cmp_abs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c div_2ui.c div.c div_ui.c dump.c eq.c exp10.c exp2.c exp3.c exp.c frac.c get_d.c get_exp.c get_str.c init.c inp_str.c isinteger.c isinf.c isnan.c isnum.c const_log2.c log.c mul_2exp.c mul_2si.c mul_2ui.c mul.c mul_ui.c neg.c next.c out_str.c const_pi.c pow.c pow_si.c pow_ui.c print_raw.c print_rnd_mode.c random2.c random.c reldiff.c round_prec.c set.c setmax.c setmin.c set_d.c set_dfl_prec.c set_exp.c set_rnd.c set_f.c set_prc_raw.c set_prec.c set_q.c set_si.c set_str.c set_str_raw.c set_ui.c set_z.c sqrt.c sqrt_ui.c sub.c sub1.c sub_one_ulp.c sub_ui.c rint.c ui_div.c ui_sub.c urandomb.c get_z_exp.c swap.c  factorial.c cosh.c sinh.c tanh.c acosh.c asinh.c atanh.c atan.c cmp2.c exp_2.c asin.c const_euler.c cos.c sin.c tan.c fma.c hypot.c log1p.c expm1.c log2.c log10.c ui_pow.c ui_pow_ui.c minmax.c dim.c copysign.c gmp_op.c init2.c acos.c sin_cos.c set_nan.c set_inf.c powerof2.c gamma.c set_ld.c get_ld.c cbrt.c volatile.c fits_s.h fits_sshort.c fits_sint.c fits_slong.c fits_u.h fits_ushort.c fits_uint.c fits_ulong.c fits_uintmax.c fits_intmax.c get_si.c get_ui.c zeta.c cmp_d.c erf.c inits.c inits2.c clears.c sgn.c check.c sub1sp.c version.c mpn_exp.c mpfr-gmp.c mp_clz_tab.c sum.c add1sp.c free_cache.c si_op.c cmp_ld.c set_ui_2exp.c set_si_2exp.c set_uj.c set_sj.c get_sj.c get_uj.c get_z.c iszero.c cache.c sqr.c int_ceil_log2.c isqrt.c strtofr.c
+libmpfr_a_SOURCES = mpfr.h mpf2mpfr.h mpfr-gmp.h mpfr-impl.h mpfr-longlong.h mpfr-test.h log_b2.h exceptions.c save_expo.c extract.c uceil_exp2.c uceil_log2.c ufloor_log2.c add.c add1.c add_one_ulp.c add_ui.c agm.c clear.c cmp.c cmp_abs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c div_2ui.c div.c div_ui.c dump.c eq.c exp10.c exp2.c exp3.c exp.c frac.c get_d.c get_exp.c get_str.c init.c inp_str.c isinteger.c isinf.c isnan.c isnum.c const_log2.c log.c mul_2exp.c mul_2si.c mul_2ui.c mul.c mul_ui.c neg.c next.c out_str.c const_pi.c pow.c pow_si.c pow_ui.c print_raw.c print_rnd_mode.c random2.c random.c reldiff.c round_prec.c set.c setmax.c setmin.c set_d.c set_dfl_prec.c set_exp.c set_rnd.c set_f.c set_prc_raw.c set_prec.c set_q.c set_si.c set_str.c set_str_raw.c set_ui.c set_z.c sqrt.c sqrt_ui.c sub.c sub1.c sub_one_ulp.c sub_ui.c rint.c ui_div.c ui_sub.c urandomb.c get_z_exp.c swap.c  factorial.c cosh.c sinh.c tanh.c acosh.c asinh.c atanh.c atan.c cmp2.c exp_2.c asin.c const_euler.c cos.c sin.c tan.c fma.c hypot.c log1p.c expm1.c log2.c log10.c ui_pow.c ui_pow_ui.c minmax.c dim.c copysign.c gmp_op.c init2.c acos.c sin_cos.c set_nan.c set_inf.c powerof2.c gamma.c set_ld.c get_ld.c cbrt.c volatile.c fits_s.h fits_sshort.c fits_sint.c fits_slong.c fits_u.h fits_ushort.c fits_uint.c fits_ulong.c fits_uintmax.c fits_intmax.c get_si.c get_ui.c zeta.c cmp_d.c erf.c inits.c inits2.c clears.c sgn.c check.c sub1sp.c version.c mpn_exp.c mpfr-gmp.c mp_clz_tab.c sum.c add1sp.c free_cache.c si_op.c cmp_ld.c set_ui_2exp.c set_si_2exp.c set_uj.c set_sj.c get_sj.c get_uj.c get_z.c iszero.c cache.c sqr.c int_ceil_log2.c isqrt.c strtofr.c
 
 libmpfr_a_LIBADD = @LIBOBJS@
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -97,46 +98,47 @@ DEFS = @DEFS@ -I. -I$(srcdir)
 CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 libmpfr_a_DEPENDENCIES =  @LIBOBJS@
-libmpfr_a_OBJECTS =  exceptions.$(OBJEXT) extract.$(OBJEXT) \
-uceil_exp2.$(OBJEXT) uceil_log2.$(OBJEXT) ufloor_log2.$(OBJEXT) \
-add.$(OBJEXT) add1.$(OBJEXT) add_one_ulp.$(OBJEXT) add_ui.$(OBJEXT) \
-agm.$(OBJEXT) clear.$(OBJEXT) cmp.$(OBJEXT) cmp_abs.$(OBJEXT) \
-cmp_si.$(OBJEXT) cmp_ui.$(OBJEXT) comparisons.$(OBJEXT) \
-div_2exp.$(OBJEXT) div_2si.$(OBJEXT) div_2ui.$(OBJEXT) div.$(OBJEXT) \
-div_ui.$(OBJEXT) dump.$(OBJEXT) eq.$(OBJEXT) exp10.$(OBJEXT) \
-exp2.$(OBJEXT) exp3.$(OBJEXT) exp.$(OBJEXT) frac.$(OBJEXT) \
-get_d.$(OBJEXT) get_exp.$(OBJEXT) get_str.$(OBJEXT) init.$(OBJEXT) \
-inp_str.$(OBJEXT) isinteger.$(OBJEXT) isinf.$(OBJEXT) isnan.$(OBJEXT) \
-isnum.$(OBJEXT) const_log2.$(OBJEXT) log.$(OBJEXT) mul_2exp.$(OBJEXT) \
-mul_2si.$(OBJEXT) mul_2ui.$(OBJEXT) mul.$(OBJEXT) mul_ui.$(OBJEXT) \
-neg.$(OBJEXT) next.$(OBJEXT) out_str.$(OBJEXT) const_pi.$(OBJEXT) \
-pow.$(OBJEXT) pow_si.$(OBJEXT) pow_ui.$(OBJEXT) print_raw.$(OBJEXT) \
-print_rnd_mode.$(OBJEXT) random2.$(OBJEXT) random.$(OBJEXT) \
-reldiff.$(OBJEXT) round_prec.$(OBJEXT) set.$(OBJEXT) setmax.$(OBJEXT) \
-setmin.$(OBJEXT) set_d.$(OBJEXT) set_dfl_prec.$(OBJEXT) \
-set_exp.$(OBJEXT) set_rnd.$(OBJEXT) set_f.$(OBJEXT) \
-set_prc_raw.$(OBJEXT) set_prec.$(OBJEXT) set_q.$(OBJEXT) \
-set_si.$(OBJEXT) set_str.$(OBJEXT) set_str_raw.$(OBJEXT) \
-set_ui.$(OBJEXT) set_z.$(OBJEXT) sqrt.$(OBJEXT) sqrt_ui.$(OBJEXT) \
-sub.$(OBJEXT) sub1.$(OBJEXT) sub_one_ulp.$(OBJEXT) sub_ui.$(OBJEXT) \
-rint.$(OBJEXT) ui_div.$(OBJEXT) ui_sub.$(OBJEXT) urandomb.$(OBJEXT) \
-get_z_exp.$(OBJEXT) swap.$(OBJEXT) factorial.$(OBJEXT) cosh.$(OBJEXT) \
-sinh.$(OBJEXT) tanh.$(OBJEXT) acosh.$(OBJEXT) asinh.$(OBJEXT) \
-atanh.$(OBJEXT) atan.$(OBJEXT) cmp2.$(OBJEXT) exp_2.$(OBJEXT) \
-asin.$(OBJEXT) const_euler.$(OBJEXT) cos.$(OBJEXT) sin.$(OBJEXT) \
-tan.$(OBJEXT) fma.$(OBJEXT) hypot.$(OBJEXT) log1p.$(OBJEXT) \
-expm1.$(OBJEXT) log2.$(OBJEXT) log10.$(OBJEXT) ui_pow.$(OBJEXT) \
-ui_pow_ui.$(OBJEXT) minmax.$(OBJEXT) dim.$(OBJEXT) copysign.$(OBJEXT) \
-gmp_op.$(OBJEXT) init2.$(OBJEXT) acos.$(OBJEXT) sin_cos.$(OBJEXT) \
-set_nan.$(OBJEXT) set_inf.$(OBJEXT) powerof2.$(OBJEXT) gamma.$(OBJEXT) \
-set_ld.$(OBJEXT) get_ld.$(OBJEXT) cbrt.$(OBJEXT) volatile.$(OBJEXT) \
-fits_sshort.$(OBJEXT) fits_sint.$(OBJEXT) fits_slong.$(OBJEXT) \
-fits_ushort.$(OBJEXT) fits_uint.$(OBJEXT) fits_ulong.$(OBJEXT) \
-fits_uintmax.$(OBJEXT) fits_intmax.$(OBJEXT) get_si.$(OBJEXT) \
-get_ui.$(OBJEXT) zeta.$(OBJEXT) cmp_d.$(OBJEXT) erf.$(OBJEXT) \
-inits.$(OBJEXT) inits2.$(OBJEXT) clears.$(OBJEXT) sgn.$(OBJEXT) \
-check.$(OBJEXT) sub1sp.$(OBJEXT) version.$(OBJEXT) mpn_exp.$(OBJEXT) \
-mpfr-gmp.$(OBJEXT) mp_clz_tab.$(OBJEXT) sum.$(OBJEXT) add1sp.$(OBJEXT) \
+libmpfr_a_OBJECTS =  exceptions.$(OBJEXT) save_expo.$(OBJEXT) \
+extract.$(OBJEXT) uceil_exp2.$(OBJEXT) uceil_log2.$(OBJEXT) \
+ufloor_log2.$(OBJEXT) add.$(OBJEXT) add1.$(OBJEXT) \
+add_one_ulp.$(OBJEXT) add_ui.$(OBJEXT) agm.$(OBJEXT) clear.$(OBJEXT) \
+cmp.$(OBJEXT) cmp_abs.$(OBJEXT) cmp_si.$(OBJEXT) cmp_ui.$(OBJEXT) \
+comparisons.$(OBJEXT) div_2exp.$(OBJEXT) div_2si.$(OBJEXT) \
+div_2ui.$(OBJEXT) div.$(OBJEXT) div_ui.$(OBJEXT) dump.$(OBJEXT) \
+eq.$(OBJEXT) exp10.$(OBJEXT) exp2.$(OBJEXT) exp3.$(OBJEXT) \
+exp.$(OBJEXT) frac.$(OBJEXT) get_d.$(OBJEXT) get_exp.$(OBJEXT) \
+get_str.$(OBJEXT) init.$(OBJEXT) inp_str.$(OBJEXT) isinteger.$(OBJEXT) \
+isinf.$(OBJEXT) isnan.$(OBJEXT) isnum.$(OBJEXT) const_log2.$(OBJEXT) \
+log.$(OBJEXT) mul_2exp.$(OBJEXT) mul_2si.$(OBJEXT) mul_2ui.$(OBJEXT) \
+mul.$(OBJEXT) mul_ui.$(OBJEXT) neg.$(OBJEXT) next.$(OBJEXT) \
+out_str.$(OBJEXT) const_pi.$(OBJEXT) pow.$(OBJEXT) pow_si.$(OBJEXT) \
+pow_ui.$(OBJEXT) print_raw.$(OBJEXT) print_rnd_mode.$(OBJEXT) \
+random2.$(OBJEXT) random.$(OBJEXT) reldiff.$(OBJEXT) \
+round_prec.$(OBJEXT) set.$(OBJEXT) setmax.$(OBJEXT) setmin.$(OBJEXT) \
+set_d.$(OBJEXT) set_dfl_prec.$(OBJEXT) set_exp.$(OBJEXT) \
+set_rnd.$(OBJEXT) set_f.$(OBJEXT) set_prc_raw.$(OBJEXT) \
+set_prec.$(OBJEXT) set_q.$(OBJEXT) set_si.$(OBJEXT) set_str.$(OBJEXT) \
+set_str_raw.$(OBJEXT) set_ui.$(OBJEXT) set_z.$(OBJEXT) sqrt.$(OBJEXT) \
+sqrt_ui.$(OBJEXT) sub.$(OBJEXT) sub1.$(OBJEXT) sub_one_ulp.$(OBJEXT) \
+sub_ui.$(OBJEXT) rint.$(OBJEXT) ui_div.$(OBJEXT) ui_sub.$(OBJEXT) \
+urandomb.$(OBJEXT) get_z_exp.$(OBJEXT) swap.$(OBJEXT) \
+factorial.$(OBJEXT) cosh.$(OBJEXT) sinh.$(OBJEXT) tanh.$(OBJEXT) \
+acosh.$(OBJEXT) asinh.$(OBJEXT) atanh.$(OBJEXT) atan.$(OBJEXT) \
+cmp2.$(OBJEXT) exp_2.$(OBJEXT) asin.$(OBJEXT) const_euler.$(OBJEXT) \
+cos.$(OBJEXT) sin.$(OBJEXT) tan.$(OBJEXT) fma.$(OBJEXT) hypot.$(OBJEXT) \
+log1p.$(OBJEXT) expm1.$(OBJEXT) log2.$(OBJEXT) log10.$(OBJEXT) \
+ui_pow.$(OBJEXT) ui_pow_ui.$(OBJEXT) minmax.$(OBJEXT) dim.$(OBJEXT) \
+copysign.$(OBJEXT) gmp_op.$(OBJEXT) init2.$(OBJEXT) acos.$(OBJEXT) \
+sin_cos.$(OBJEXT) set_nan.$(OBJEXT) set_inf.$(OBJEXT) \
+powerof2.$(OBJEXT) gamma.$(OBJEXT) set_ld.$(OBJEXT) get_ld.$(OBJEXT) \
+cbrt.$(OBJEXT) volatile.$(OBJEXT) fits_sshort.$(OBJEXT) \
+fits_sint.$(OBJEXT) fits_slong.$(OBJEXT) fits_ushort.$(OBJEXT) \
+fits_uint.$(OBJEXT) fits_ulong.$(OBJEXT) fits_uintmax.$(OBJEXT) \
+fits_intmax.$(OBJEXT) get_si.$(OBJEXT) get_ui.$(OBJEXT) zeta.$(OBJEXT) \
+cmp_d.$(OBJEXT) erf.$(OBJEXT) inits.$(OBJEXT) inits2.$(OBJEXT) \
+clears.$(OBJEXT) sgn.$(OBJEXT) check.$(OBJEXT) sub1sp.$(OBJEXT) \
+version.$(OBJEXT) mpn_exp.$(OBJEXT) mpfr-gmp.$(OBJEXT) \
+mp_clz_tab.$(OBJEXT) sum.$(OBJEXT) add1sp.$(OBJEXT) \
 free_cache.$(OBJEXT) si_op.$(OBJEXT) cmp_ld.$(OBJEXT) \
 set_ui_2exp.$(OBJEXT) set_si_2exp.$(OBJEXT) set_uj.$(OBJEXT) \
 set_sj.$(OBJEXT) get_sj.$(OBJEXT) get_uj.$(OBJEXT) get_z.$(OBJEXT) \
@@ -366,7 +368,7 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 acos.o: acos.c mpfr-impl.h mpfr.h mpfr-gmp.h
-acosh.o: acosh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+acosh.o: acosh.c mpfr-impl.h mpfr.h mpfr-gmp.h
 add.o: add.c mpfr-impl.h mpfr.h mpfr-gmp.h
 add1.o: add1.c mpfr-impl.h mpfr.h mpfr-gmp.h
 add1sp.o: add1sp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
@@ -374,9 +376,9 @@ add_one_ulp.o: add_one_ulp.c mpfr-impl.h mpfr.h mpfr-gmp.h
 add_ui.o: add_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 agm.o: agm.c mpfr-impl.h mpfr.h mpfr-gmp.h
 asin.o: asin.c mpfr-impl.h mpfr.h mpfr-gmp.h
-asinh.o: asinh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-atan.o: atan.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-atanh.o: atanh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+asinh.o: asinh.c mpfr-impl.h mpfr.h mpfr-gmp.h
+atan.o: atan.c mpfr-impl.h mpfr.h mpfr-gmp.h generic.c
+atanh.o: atanh.c mpfr-impl.h mpfr.h mpfr-gmp.h
 cache.o: cache.c mpfr-impl.h mpfr.h mpfr-gmp.h
 cbrt.o: cbrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
 check.o: check.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -398,7 +400,7 @@ const_pi.o: const_pi.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h \
 	generic.c
 copysign.o: copysign.c mpfr-impl.h mpfr.h mpfr-gmp.h
 cos.o: cos.c mpfr-impl.h mpfr.h mpfr-gmp.h
-cosh.o: cosh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+cosh.o: cosh.c mpfr-impl.h mpfr.h mpfr-gmp.h
 dim.o: dim.c mpfr-impl.h mpfr.h mpfr-gmp.h
 div.o: div.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 div_2exp.o: div_2exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -407,16 +409,16 @@ div_2ui.o: div_2ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
 div_ui.o: div_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 dump.o: dump.c mpfr-impl.h mpfr.h mpfr-gmp.h
 eq.o: eq.c mpfr-impl.h mpfr.h mpfr-gmp.h
-erf.o: erf.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+erf.o: erf.c mpfr-impl.h mpfr.h mpfr-gmp.h
 exceptions.o: exceptions.c mpfr-impl.h mpfr.h mpfr-gmp.h
 exp.o: exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
 exp10.o: exp10.c mpfr-impl.h mpfr.h mpfr-gmp.h
-exp2.o: exp2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-exp3.o: exp3.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+exp2.o: exp2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+exp3.o: exp3.c mpfr-impl.h mpfr.h mpfr-gmp.h
 exp_2.o: exp_2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-expm1.o: expm1.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+expm1.o: expm1.c mpfr-impl.h mpfr.h mpfr-gmp.h
 extract.o: extract.c mpfr-impl.h mpfr.h mpfr-gmp.h
-factorial.o: factorial.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+factorial.o: factorial.c mpfr-impl.h mpfr.h mpfr-gmp.h
 fits_intmax.o: fits_intmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
 fits_sint.o: fits_sint.c fits_s.h mpfr-impl.h mpfr.h mpfr-gmp.h
 fits_slong.o: fits_slong.c fits_s.h mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -428,7 +430,7 @@ fits_ushort.o: fits_ushort.c fits_u.h mpfr-impl.h mpfr.h mpfr-gmp.h
 fma.o: fma.c mpfr-impl.h mpfr.h mpfr-gmp.h
 frac.o: frac.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 free_cache.o: free_cache.c mpfr-impl.h mpfr.h mpfr-gmp.h
-gamma.o: gamma.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+gamma.o: gamma.c mpfr-impl.h mpfr.h mpfr-gmp.h
 get_d.o: get_d.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 get_exp.o: get_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
 get_ld.o: get_ld.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -440,7 +442,7 @@ get_uj.o: get_uj.c mpfr-impl.h mpfr.h mpfr-gmp.h
 get_z.o: get_z.c mpfr-impl.h mpfr.h mpfr-gmp.h
 get_z_exp.o: get_z_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 gmp_op.o: gmp_op.c mpfr-impl.h mpfr.h mpfr-gmp.h
-hypot.o: hypot.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+hypot.o: hypot.c mpfr-impl.h mpfr.h mpfr-gmp.h
 init.o: init.c mpfr-impl.h mpfr.h mpfr-gmp.h
 init2.o: init2.c mpfr-impl.h mpfr.h mpfr-gmp.h
 inits.o: inits.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -455,9 +457,9 @@ isnum.o: isnum.c mpfr-impl.h mpfr.h mpfr-gmp.h
 isqrt.o: isqrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
 iszero.o: iszero.c mpfr-impl.h mpfr.h mpfr-gmp.h
 log.o: log.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-log10.o: log10.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-log1p.o: log1p.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-log2.o: log2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+log10.o: log10.c mpfr-impl.h mpfr.h mpfr-gmp.h
+log1p.o: log1p.c mpfr-impl.h mpfr.h mpfr-gmp.h
+log2.o: log2.c mpfr-impl.h mpfr.h mpfr-gmp.h
 minmax.o: minmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
 mp_clz_tab.o: mp_clz_tab.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 mpfr-gmp.o: mpfr-gmp.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -471,7 +473,7 @@ neg.o: neg.c mpfr-impl.h mpfr.h mpfr-gmp.h
 next.o: next.c mpfr-impl.h mpfr.h mpfr-gmp.h
 out_str.o: out_str.c mpfr-impl.h mpfr.h mpfr-gmp.h
 pow.o: pow.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-pow_si.o: pow_si.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+pow_si.o: pow_si.c mpfr-impl.h mpfr.h mpfr-gmp.h
 pow_ui.o: pow_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
 powerof2.o: powerof2.c mpfr-impl.h mpfr.h mpfr-gmp.h
 print_raw.o: print_raw.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -509,9 +511,9 @@ setmax.o: setmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
 setmin.o: setmin.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sgn.o: sgn.c mpfr-impl.h mpfr.h mpfr-gmp.h
 si_op.o: si_op.c mpfr-impl.h mpfr.h mpfr-gmp.h
-sin.o: sin.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-sin_cos.o: sin_cos.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-sinh.o: sinh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sin.o: sin.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sin_cos.o: sin_cos.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sinh.o: sinh.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sqr.o: sqr.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sqrt.o: sqrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sqrt_ui.o: sqrt_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
@@ -521,10 +523,10 @@ sub1.o: sub1.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sub1sp.o: sub1sp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
 sub_one_ulp.o: sub_one_ulp.c mpfr-impl.h mpfr.h mpfr-gmp.h
 sub_ui.o: sub_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-sum.o: sum.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sum.o: sum.c mpfr-impl.h mpfr.h mpfr-gmp.h
 swap.o: swap.c mpfr-impl.h mpfr.h mpfr-gmp.h
-tan.o: tan.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
-tanh.o: tanh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+tan.o: tan.c mpfr-impl.h mpfr.h mpfr-gmp.h
+tanh.o: tanh.c mpfr-impl.h mpfr.h mpfr-gmp.h
 uceil_exp2.o: uceil_exp2.c mpfr-impl.h mpfr.h mpfr-gmp.h
 uceil_log2.o: uceil_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h
 ufloor_log2.o: ufloor_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h
@@ -614,6 +616,12 @@ uninstall-am uninstall all-redirect all-am all installdirs-am \
 installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
+
+#info_TEXINFOS = mpfr.texi
+#
+#mpfr_TEXINFOS = fdl.texi
+#
+#MAKEINFOFLAGS = --enable-encoding
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

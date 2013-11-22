@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 2004 George Lebl
+ * Copyright (C) 2004-2005 George Lebl
  *
  * Author: George Lebl
  *
@@ -25,6 +25,7 @@
 typedef struct {
 	gboolean error_box;
 	gboolean info_box;
+	gboolean blinking_cursor;
 	int scrollback;
 	char *font;
 	gboolean black_on_white;
@@ -32,7 +33,6 @@ typedef struct {
 
 extern GeniusSetup genius_setup;
 extern GtkWidget *genius_window;
-extern gboolean interrupted;
 extern GHashTable *uncompiled;
 extern calcstate_t calcstate;
 

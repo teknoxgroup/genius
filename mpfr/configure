@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os MPFR_LIBM CPP EGREP LIBOBJS AWK ALLOCA INCLUDES LDADD LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT RANLIB ac_ct_RANLIB build build_cpu build_vendor build_os host host_cpu host_vendor host_os MPFR_LIBM TESTS_ASM_OBJECTS CPP EGREP LIBOBJS AWK ALLOCA INCLUDES LDADD LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2817,7 +2817,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
  GCC=
- CFLAGS="-fp_port -mp -wd1572 -wd265 -wd186 -wd239 $CFLAGS"
+ CFLAGS="-pc64 -fp_port -mp -wd1572 -wd265 -wd186 -wd239 $CFLAGS"
 
 else
   echo "$as_me: failed program was:" >&5
@@ -4021,6 +4021,27 @@ done
 
 
 
+
+# CPU-dependent objects for the test programs
+case $host in
+  i?86*-*-* | k[5-8]*-*-* | pentium*-*-* | athlon-*-*)
+    TESTS_ASM_OBJECTS=x86.$OBJEXT
+
+
+cat >>confdefs.h <<\_ACEOF
+#define MPFR_HAVE_TESTS_x86 1
+_ACEOF
+
+    ;;
+  amd64-*-*)
+    TESTS_ASM_OBJECTS=amd64.$OBJEXT
+
+    cat >>confdefs.h <<\_ACEOF
+#define MPFR_HAVE_TESTS_x86 1
+_ACEOF
+
+    ;;
+esac
 
 
 
@@ -6802,8 +6823,8 @@ sed 's/^/| /' conftest.$ac_ext >&5
 ( exit $ac_status )
 echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
-    { { echo "$as_me:$LINENO: error: 'gmp.h' and 'libgmp' have different versions! you have to properly reinstall GMP." >&5
-echo "$as_me: error: 'gmp.h' and 'libgmp' have different versions! you have to properly reinstall GMP." >&2;}
+    { { echo "$as_me:$LINENO: error: 'gmp.h' and 'libgmp' have different versions, or (on some platforms) libgmp couldn't be found! You have to properly reinstall GMP." >&5
+echo "$as_me: error: 'gmp.h' and 'libgmp' have different versions, or (on some platforms) libgmp couldn't be found! You have to properly reinstall GMP." >&2;}
    { (exit 1); exit 1; }; }
 fi
 rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
@@ -7480,6 +7501,7 @@ s,@host_cpu@,$host_cpu,;t t
 s,@host_vendor@,$host_vendor,;t t
 s,@host_os@,$host_os,;t t
 s,@MPFR_LIBM@,$MPFR_LIBM,;t t
+s,@TESTS_ASM_OBJECTS@,$TESTS_ASM_OBJECTS,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
