@@ -28,13 +28,28 @@
 #include <gmp.h>
 #endif
 
-#define MPW_NATIVEINT	1
-#define MPW_INTEGER	2
-#define MPW_RATIONAL	3
-#define MPW_FLOAT	4
+/* FIXME: we may need the same as above */
+#ifdef HAVE_MPFR
+#include <mpfr.h>
+#include <mpf2mpfr.h>
 
-#define MPW_REAL	1
-#define MPW_COMPLEX	2
+/* FIXME: ugly hack to get pi_mpf and the structs to work */
+#define mpf_ptr mpfr_ptr
+#define __mpf_struct __mpfr_struct
+#endif
+
+
+enum {
+	MPW_NATIVEINT = 1,
+	MPW_INTEGER,
+	MPW_RATIONAL,
+	MPW_FLOAT
+};
+
+enum {
+	MPW_REAL = 1,
+	MPW_COMPLEX
+};
 
 /*number structures, this is where low level stuff is stored so it will be
   different for each lib, members should never be directly accessed!*/
@@ -166,6 +181,8 @@ gboolean mpw_perfect_power(mpw_ptr op);
 
 void mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e);
+void mpw_powm(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2, mpw_ptr mod);
+void mpw_powm_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e, mpw_ptr mod);
 void mpw_sqrt(mpw_ptr rop,mpw_ptr op);
 
 void mpw_exp(mpw_ptr rop,mpw_ptr op);
@@ -204,22 +221,34 @@ void mpw_make_float(mpw_ptr rop);
 void mpw_init_mp(void);
 
 /*get a string (g_malloc'ed) with the number in it*/
-char * mpw_getstring(mpw_ptr num,int max_digits,int scientific_notation,
-	int results_as_floats,int mixed_fractions, int integer_output_base);
+char * mpw_getstring (mpw_ptr num,
+		      int max_digits,
+		      gboolean scientific_notation,
+		      gboolean results_as_floats,
+		      gboolean mixed_fractions,
+		      /* FIXME: solve dependency, this is defined in calc.h */
+		      /* GelOutputStyle */int style,
+		      int integer_output_base,
+		      gboolean add_parenths);
 
 void mpw_set_str_float(mpw_ptr rop,const char *s,int base);
 
 /*reads only the imaginary part (use add for real part)*/
 void mpw_set_str_complex(mpw_ptr rop,const char *s,int base);
+void mpw_set_str_complex_int(mpw_ptr rop,const char *s,int base);
 
 void mpw_set_str_int(mpw_ptr rop,const char *s,int base);
 
 void mpw_set_str (mpw_ptr rop, const char *s, int base);
 
-int mpw_is_complex(mpw_ptr op);
-int mpw_is_integer(mpw_ptr op);
-int mpw_is_rational(mpw_ptr op);
-int mpw_is_float(mpw_ptr op);
+gboolean mpw_is_complex(mpw_ptr op);
+gboolean mpw_is_integer(mpw_ptr op);
+gboolean mpw_is_complex_integer(mpw_ptr op);
+gboolean mpw_is_rational(mpw_ptr op);
+gboolean mpw_is_rational_or_integer(mpw_ptr op);
+gboolean mpw_is_complex_rational_or_integer(mpw_ptr op);
+gboolean mpw_is_float(mpw_ptr op);
+gboolean mpw_is_complex_float(mpw_ptr op);
 
 void mpw_im(mpw_ptr rop, mpw_ptr op);
 void mpw_re(mpw_ptr rop, mpw_ptr op);
@@ -231,6 +260,8 @@ void mpw_trunc(mpw_ptr rop, mpw_ptr op);
 
 /*try to get a long number representation of the number*/
 long mpw_get_long(mpw_ptr op);
+/*try to get a double representation of the number*/
+double mpw_get_double(mpw_ptr op);
 
 void mpw_denominator(mpw_ptr rop, mpw_ptr op);
 void mpw_numerator(mpw_ptr rop, mpw_ptr op);

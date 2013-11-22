@@ -69,11 +69,14 @@ gnome_genius_SOURCES = 	\
 	utype.h		\
 	extra.h		\
 	geloutput.c	\
-	geloutput.h
+	geloutput.h	\
+	graphing.h	\
+	graphing.c
 
 gnome_genius_LDADD = \
 	-lm					\
 	@GMP_LIB@				\
+	@MPFR_LIB@				\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
 	@READLINE_LIB@				\
@@ -137,6 +140,7 @@ genius_SOURCES = 	\
 genius_LDADD = \
 	-lm					\
 	@GMP_LIB@				\
+	@MPFR_LIB@				\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
 	@READLINE_LIB@				\

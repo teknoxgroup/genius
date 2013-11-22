@@ -45,6 +45,10 @@
 #define EDEBUG(x) ;
 #endif
 
+/* Note: this won't be completely mem-debug friendly,
+ * only free_trees are for now ignored with this */
+/* #define MEM_DEBUG_FRIENDLY 1*/
+
 extern calcstate_t calcstate;
 
 GelETree *free_trees = NULL;
@@ -267,6 +271,17 @@ gel_makenum_si(long num)
 }
 
 GelETree *
+gel_makenum_d (double num)
+{
+	GelETree *n;
+	GET_NEW_NODE (n);
+	n->type = VALUE_NODE;
+	mpw_init (n->val.value);
+	mpw_set_d (n->val.value, num);
+	return n;
+}
+
+GelETree *
 gel_makenum(mpw_t num)
 {
 	GelETree *n;
@@ -327,7 +342,6 @@ gel_makenum_use_from(GelETree *n, mpw_t num)
 static inline void
 freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
 {
-
 	if(!n)
 		return;
 	switch(n->type) {
@@ -391,15 +405,20 @@ freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
 	default: break;
 	}
 	if(kill) {
+#ifdef MEM_DEBUG_FRIENDLY
+		g_free (n);
+#else
 		/*put onto the free list*/
 		n->any.next = free_trees;
 		free_trees = n;
+#endif
 	}
 }
 
 void
 gel_freetree(GelETree *n)
 {
+	/*printf ("freeing: %p\n", n);*/
 	freetree_full(n,TRUE,TRUE);
 }
 
@@ -526,10 +545,17 @@ replacenode(GelETree *to, GelETree *from)
 	GelETree *next = to->any.next;
 	freetree_full(to,TRUE,FALSE);
 	memcpy(to,from,sizeof(GelETree));
+
+#ifdef MEM_DEBUG_FRIENDLY
+	g_free (from);
+#else
 	/*put onto the free list*/
 	from->any.next = free_trees;
 	free_trees = from;
+#endif
 	to->any.next = next;
+
+	/*printf ("replaced from: %p\n", from);*/
 }
 static inline void
 copyreplacenode(GelETree *to, GelETree *from)
@@ -618,12 +644,15 @@ makeoperator(int oper, GSList **stack)
 	return n;
 }
 
+/* kind of a hack */
+static GelETree the_null = {NULL_NODE};
+
 /*need_colwise will return if we need column wise expansion*/
 static int
 expand_row (GelMatrix *dest, GelMatrixW *src, int di, int si, gboolean *need_colwise)
 {
 	int i;
-	int height = 1;
+	int height = 0;
 	int roww;
 	
 	roww = 0;
@@ -634,9 +663,20 @@ expand_row (GelMatrix *dest, GelMatrixW *src, int di, int si, gboolean *need_col
 
 	for(i=0;i<roww;i++) {
 		GelETree *et = gel_matrixw_set_index(src,i,si);
-		if(et && et->type == MATRIX_NODE &&
-		   gel_matrixw_height(et->mat.matrix)>height)
+		if (et == NULL ||
+		    (et->type != NULL_NODE &&
+		     et->type != MATRIX_NODE)) {
+			if (height == 0)
+				height = 1;
+		} else if (et != NULL &&
+			   et->type == MATRIX_NODE &&
+			   gel_matrixw_height(et->mat.matrix)>height) {
 			height = gel_matrixw_height(et->mat.matrix);
+		}
+	}
+
+	if (height == 0) {
+		return 0;
 	}
 	
 	gel_matrix_set_at_least_size(dest,1,di+height);
@@ -650,6 +690,12 @@ expand_row (GelMatrix *dest, GelMatrixW *src, int di, int si, gboolean *need_col
 		if(!et) {
 			for(x=0;x<height;x++)
 				gel_matrix_index(dest,i,di+x) = NULL;
+		/*null node*/
+		} else if (et->type == NULL_NODE) {
+			*need_colwise = TRUE;
+			gel_matrix_index(dest,i,di) = et;
+			for(x=1;x<height;x++)
+				gel_matrix_index(dest,i,di+x) = &the_null;
 		/*non-matrix node*/
 		} else if(et->type!=MATRIX_NODE) {
 			gel_matrix_index(dest,i,di) = et;
@@ -724,6 +770,13 @@ expand_col (GelMatrix *dest, GelMatrix *src, int si, int di, int w)
 			int x;
 			for (x = 0; x < w; x++)
 				gel_matrix_index (dest, di+x, i) = NULL;
+		} else if (et->type == NULL_NODE) {
+			/* Also here we just replace NULL_NODE's with 0's */
+			int x;
+			if (et != &the_null)
+				gel_freetree (et);
+			for (x = 0; x < w; x++)
+				gel_matrix_index (dest, di+x, i) = NULL;
 		} else if (et->type != MATRIX_ROW_NODE) {
 			int x;
 			gel_matrix_index (dest, di, i) = et;
@@ -768,22 +821,31 @@ expand_col (GelMatrix *dest, GelMatrix *src, int si, int di, int w)
 }
 
 static int
-get_cols (GelMatrix *m, int *colwidths)
+get_cols (GelMatrix *m, int *colwidths, gboolean *just_denull)
 {
 	int i,j;
 	int maxcol;
 	int cols = 0;
 
+	*just_denull = TRUE;
+
 	for (i = 0; i < m->width; i++) {
-		maxcol = 1;
+		maxcol = 0;
 		for (j = 0; j < m->height; j++) {
 			GelETree *et = gel_matrix_index (m, i, j);
 			if (et == NULL ||
-			    et->type != MATRIX_ROW_NODE)
-				continue;
-			if (et->row.nargs > maxcol)
-				maxcol = et->row.nargs;
+			    (et->type != MATRIX_ROW_NODE &&
+			     et->type != NULL_NODE)) {
+				if (maxcol == 0)
+					maxcol = 1;
+			} else if (et->type != NULL_NODE) {
+				/* Must be MATRIX_ROW_NODE then */
+				if (et->row.nargs > maxcol)
+					maxcol = et->row.nargs;
+			}
 		}
+		if (maxcol != 1)
+			*just_denull = FALSE;
 		colwidths[i] = maxcol;
 		cols += maxcol;
 	}
@@ -798,7 +860,9 @@ mat_need_expand (GelMatrixW *m)
 	for (i = 0; i < gel_matrixw_width (m); i++) {
 		for (j = 0; j < gel_matrixw_height (m); j++) {
 			GelETree *et = gel_matrixw_set_index (m, i, j);
-			if (et != NULL && et->type == MATRIX_NODE)
+			if (et != NULL &&
+			    (et->type == MATRIX_NODE ||
+			     et->type == NULL_NODE))
 				return TRUE;
 		}
 	}
@@ -818,6 +882,10 @@ gel_expandmatrix (GelETree *n)
 	gboolean need_colwise = FALSE;
 	GelMatrixW *nm;
 	int h,w;
+
+	/* An empty matrix really */
+	if (n->type == NULL_NODE)
+		return;
 
 	nm = n->mat.matrix;
 
@@ -840,6 +908,11 @@ gel_expandmatrix (GelETree *n)
 			}
 			replacenode (n, t);
 			return;
+		} else if (t != NULL &&
+			   t->type == NULL_NODE) {
+			freetree_full (n, TRUE, FALSE);
+			n->type = NULL_NODE;
+			return;
 		}
 	}
 
@@ -856,19 +929,64 @@ gel_expandmatrix (GelETree *n)
 		k += w;
 	}
 
+	if (k == 0) {
+		gel_matrix_free (m);
+		freetree_full (n, TRUE, FALSE);
+		n->type = NULL_NODE;
+		return;
+	}
+
+	/* If we whacked some rows completely shorten
+	 * the matrix */
+	if (k < h)
+		gel_matrix_set_size (m, w, k, TRUE /* padding */);
+
 	if (need_colwise) {
-		int ii;
-		GelMatrix *tm = gel_matrix_new ();
+		gboolean just_denull;
 		int *colwidths = g_new (int, m->width);
 
-		cols = get_cols (m, colwidths);
-		gel_matrix_set_size (tm,cols,m->height, TRUE /* padding */);
-		for (i = 0, ii = 0; i < m->width; ii += colwidths[i], i++)
-			expand_col (tm, m, i, ii, colwidths[i]);
-		gel_matrix_free (m);
-		m = tm;
+		cols = get_cols (m, colwidths, &just_denull);
 
-		g_free (colwidths);
+		/* empty matrix, return null */
+		if (cols == 0) {
+			gel_matrix_free (m);
+			g_free (colwidths);
+			freetree_full (n, TRUE, FALSE);
+			n->type = NULL_NODE;
+			return;
+		}
+
+		if (just_denull) {
+			int j;
+			for (i = 0; i < m->width; i++) {
+				for (j = 0; j < m->height; j++) {
+					GelETree *et
+						= gel_matrix_index (m, i, j);
+					if (et != NULL &&
+					    et->type == NULL_NODE) {
+						if (et != &the_null)
+							gel_freetree (et);
+						gel_matrix_index (m, i, j)
+							= NULL;
+					}
+				}
+			}
+		} else {
+			int ii;
+			GelMatrix *tm;
+
+			tm = gel_matrix_new ();
+
+			gel_matrix_set_size (tm,cols,m->height, TRUE /* padding */);
+			for (i = 0, ii = 0; i < m->width; ii += colwidths[i], i++) {
+				if (colwidths[i] > 0)
+					expand_col (tm, m, i, ii, colwidths[i]);
+			}
+			gel_matrix_free (m);
+			m = tm;
+
+			g_free (colwidths);
+		}
 	}
 
 	freetree_full (n, TRUE, FALSE);
@@ -1179,6 +1297,7 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 	
 	if(rr->type == VALUE_NODE &&
 	   ll->type == VALUE_NODE) {
+		gboolean skipmod = FALSE;
 		mpw_init(res);
 		switch(oper) {
 		case E_PLUS:
@@ -1205,11 +1324,17 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 			break;
 		case E_EXP:
 		case E_ELTEXP:
-			mpw_pow (res, ll->val.value, rr->val.value);
+			if (ctx->modulo != NULL) {
+				mpw_powm (res, ll->val.value, rr->val.value,
+					  ctx->modulo);
+				skipmod = TRUE;
+			} else {
+				mpw_pow (res, ll->val.value, rr->val.value);
+			}
 			break;
 		default: g_assert_not_reached();
 		}
-		if (ctx->modulo != NULL) {
+		if (!skipmod && ctx->modulo != NULL) {
 			if ( ! mod_integer_rational (res, ctx->modulo)) {
 				error_num = NUMERICAL_MPW_ERROR;
 			}
@@ -1899,7 +2024,27 @@ PRIM_NUM_FUNC_2(numerical_mul,mpw_mul)
 PRIM_NUM_FUNC_2(numerical_div,mpw_div)
 PRIM_NUM_FUNC_2(numerical_mod,mpw_mod)
 PRIM_NUM_FUNC_2(numerical_back_div,my_mpw_back_div)
-PRIM_NUM_FUNC_2(numerical_pow,mpw_pow)
+
+static int
+numerical_pow (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	mpw_t res;
+
+	mpw_init(res);
+	if (ctx->modulo != NULL)
+		mpw_powm (res, l->val.value, r->val.value, ctx->modulo);
+	else
+		mpw_pow (res, l->val.value, r->val.value);
+	if (error_num == NUMERICAL_MPW_ERROR) {
+		mpw_clear (res);
+		error_num = NO_ERROR;
+		return TRUE;
+	}
+
+	freetree_full (n, TRUE, FALSE);
+	gel_makenum_use_from (n, res);
+	return TRUE;
+}
 	
 #define EMPTY_PRIM {{{{0}}}}
 
@@ -2138,6 +2283,13 @@ evl_free(GelEvalLoop *evl)
 	free_evl = evl;
 }
 
+static void
+evl_free_with_cond(GelEvalLoop *evl)
+{
+	gel_freetree(evl->condition);
+	evl_free (evl);
+}
+
 static inline GelEvalFor *
 evf_new (GelEvalForType type,
 	 mpw_ptr x, mpw_ptr to, mpw_ptr by, int init_cmp,
@@ -2207,7 +2359,8 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 		freetree_full(n,TRUE,FALSE);
 
 		n->type = FUNCTION_NODE;
-		n->func.func = d_makeufunc (NULL,
+		/* FIXME: are we ok with passing the token as well? */
+		n->func.func = d_makeufunc (f->id /* FIXME: does this need to be NULL */,
 					    copynode (f->data.user),
 					    g_slist_copy (f->named_args),
 					    f->nargs,
@@ -2224,7 +2377,8 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 		if(f->nargs != 0) {
 			freetree_full(n,TRUE,FALSE);
 			n->type = FUNCTION_NODE;
-			n->func.func = d_makerealfunc(f,NULL,FALSE);
+			/* FIXME: are we ok with passing the token (f->id) as well? */
+			n->func.func = d_makerealfunc(f,f->id,FALSE);
 			n->func.func->context = -1;
 			n->func.func->vararg = f->vararg;
 			/* FIXME: no need for extra_dict right? */
@@ -2714,6 +2868,7 @@ iter_pop_stack(GelCtx *ctx)
 					} else {
 						replacenode (n, evl->body);
 					}
+					gel_freetree (evl->condition);
 					evl_free (evl);
 					GE_BLIND_POP_STACK (ctx);
 					break;
@@ -3226,6 +3381,7 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 		/*the next to be evaluated is the body*/
 		ctx->post = FALSE;
 		ctx->current = copynode(f->data.user);
+		/*printf("copying: %p\n", ctx->current);*/
 
 		GE_PUSH_STACK(ctx,ctx->current,GE_FUNCCALL);
 
@@ -3629,7 +3785,7 @@ iter_continue_break_op(GelCtx *ctx, gboolean cont)
 			iter_pop_stack(ctx);
 			return;
 		case GE_LOOP_LOOP:
-			LOOP_BREAK_CONT (GelEvalLoop, evl_free, GE_LOOP_LOOP);
+			LOOP_BREAK_CONT (GelEvalLoop, evl_free_with_cond, GE_LOOP_LOOP);
 		case GE_FOR:
 			LOOP_BREAK_CONT (GelEvalFor, evf_free, GE_FOR);
 		case GE_FORIN:
@@ -3927,7 +4083,8 @@ iter_equalsop(GelETree *n)
 		}
 		if (l->id.id->parameter) {
 			GelETree *ret = set_parameter (l->id.id, r);
-			replacenode (n, ret);
+			if (ret != NULL)
+				replacenode (n, ret);
 			return;
 		} else if(r->type == FUNCTION_NODE) {
 			d_addfunc(d_makerealfunc(r->func.func,l->id.id,FALSE));
@@ -5394,6 +5551,66 @@ replace_equals (GelETree *n, gboolean in_expression)
 	}
 }
 
+/* Fixup number negation */
+void
+fixup_num_neg (GelETree *n)
+{
+	if (n == NULL)
+		return;
+
+	if (n->type == SPACER_NODE) {
+		fixup_num_neg (n->sp.arg);
+	} else if(n->type == OPERATOR_NODE) {
+		/* replace -1^2 with something like (-1)^2, only
+		 * for numbers.  If you typed parenthesis as in
+		 * -(1)^2, there would be a spacer node present
+		 * so the below would not happen */
+		if (n->op.oper == E_NEG &&
+		    n->op.args->type == OPERATOR_NODE &&
+		    (n->op.args->op.oper == E_EXP ||
+		     n->op.args->op.oper == E_ELTEXP) &&
+		    n->op.args->op.args->type == VALUE_NODE) {
+			GelETree *t = n->op.args;
+			n->op.args = NULL;
+			replacenode (n, t);
+			mpw_neg (n->op.args->val.value,
+				 n->op.args->val.value);
+			fixup_num_neg (n->op.args->any.next);
+		} else {
+			GelETree *args = n->op.args;
+			while (args != NULL) {
+				fixup_num_neg (args);
+				args = args->any.next;
+			}
+		}
+	} else if (n->type == MATRIX_NODE &&
+		   n->mat.matrix != NULL) {
+		int i,j;
+		int w,h;
+		w = gel_matrixw_width (n->mat.matrix);
+		h = gel_matrixw_height (n->mat.matrix);
+		gel_matrixw_make_private (n->mat.matrix);
+		for (i = 0; i < w; i++) {
+			for(j = 0; j < h; j++) {
+				GelETree *t = gel_matrixw_set_index
+					(n->mat.matrix, i, j);
+				if (t != NULL)
+					fixup_num_neg (t);
+			}
+		}
+	} else if (n->type == SET_NODE ) {
+		GelETree *ali;
+		for(ali = n->set.items; ali != NULL; ali = ali->any.next)
+			fixup_num_neg (ali);
+	} else if (n->type == FUNCTION_NODE &&
+		   (n->func.func->type == GEL_USER_FUNC ||
+		    n->func.func->type == GEL_VARIABLE_FUNC) &&
+		   n->func.func->data.user != NULL) {
+		fixup_num_neg (n->func.func->data.user);
+	}
+}
+
+
 /*this means that it will precalc even complex and float
   numbers*/
 static void
@@ -5477,6 +5694,7 @@ try_to_precalc_op(GelETree *n)
 	case E_DIV: op_precalc_2(n,mpw_div); return;
 	case E_ELTDIV: op_precalc_2(n,mpw_div); return;
 	case E_MOD: op_precalc_2(n,mpw_mod); return;
+	/* FIXME: this could be time consuming, somehow catch that */
 	case E_EXP: op_precalc_2(n,mpw_pow); return;
 	case E_ELTEXP: op_precalc_2(n,mpw_pow); return;
 	default: return;

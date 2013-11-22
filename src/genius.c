@@ -49,6 +49,7 @@
 #endif
 
 #include "calc.h"
+#include "eval.h"
 #include "util.h"
 #include "dict.h"
 #include "inter.h"
@@ -149,6 +150,7 @@ set_state(calcstate_t state)
 
 	if (state.full_expressions ||
 	    state.output_style == GEL_OUTPUT_LATEX ||
+	    state.output_style == GEL_OUTPUT_MATHML ||
 	    state.output_style == GEL_OUTPUT_TROFF)
 		gel_output_set_length_limit (main_out, FALSE);
 	else
@@ -170,6 +172,18 @@ nop (void)
 	usleep(10000);
 	return 0;
 }
+
+static const char *
+get_version_details (void)
+{
+#ifndef HAVE_MPFR
+	return _("\nNote: Compiled without MPFR (some operations may be slow) "
+		 "see www.mpfr.org");
+#else
+	return "";
+#endif
+}
+
 
 int
 main(int argc, char *argv[])
@@ -282,9 +296,10 @@ main(int argc, char *argv[])
 			 "%s\n"
 			 "This is free software with ABSOLUTELY NO WARRANTY.\n"
 			 "For license details type `warranty'.\n"
-			 "For help type 'manual' or 'help'.\n\n"),
+			 "For help type 'manual' or 'help'.%s\n\n"),
 		       VERSION,
-		       COPYRIGHT_STRING);
+		       COPYRIGHT_STRING,
+		       get_version_details ());
 		be_quiet = FALSE;
 	}
 
@@ -328,6 +343,14 @@ main(int argc, char *argv[])
 		g_free(file);
 
 		gel_load_file (NULL, "geniusinit.gel", FALSE);
+
+		/* Add a default last answer */
+		d_addfunc (d_makevfunc (d_intern ("Ans"),
+					gel_makenum_string
+					(_("The only thing that "
+					   "interferes with my "
+					   "learning is my education.  "
+					   "-- Albert Einstein"))));
 
 		/*
 		 * Restore plugins

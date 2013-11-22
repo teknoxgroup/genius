@@ -511,6 +511,40 @@ gel_get_file_info (char **file, int *line)
 }
 
 static void
+append_anal_binaryoper(GelOutput *gelo, char *p, GelETree *n)
+{
+	gboolean extra_param1 = FALSE;
+	gboolean extra_param2 = FALSE;
+	GelETree *l,*r;
+	GET_LR(n,l,r);
+	if (l->type == VALUE_NODE &&
+	    (mpw_is_complex (l->val.value) ||
+	     mpw_sgn (l->val.value) < 0 ||
+	     mpw_is_rational (l->val.value)))
+		extra_param1 = TRUE;
+	if (r->type == VALUE_NODE &&
+	    (mpw_is_complex (r->val.value) ||
+	     mpw_sgn (r->val.value) < 0 ||
+	     mpw_is_rational (r->val.value)))
+		extra_param2 = TRUE;
+	if (extra_param1)
+		gel_output_string(gelo, "((");
+	else
+		gel_output_string(gelo, "(");
+	print_etree(gelo, l, FALSE);
+	if (extra_param1)
+		gel_output_string(gelo, ")");
+	gel_output_string(gelo, p);
+	if (extra_param2)
+		gel_output_string(gelo, "(");
+	print_etree(gelo, r, FALSE);
+	if (extra_param2)
+		gel_output_string(gelo, "))");
+	else
+		gel_output_string(gelo, ")");
+}
+
+static void
 append_binaryoper(GelOutput *gelo, char *p, GelETree *n)
 {
 	GelETree *l,*r;
@@ -601,19 +635,37 @@ appendoper(GelOutput *gelo, GelETree *n)
 		case E_NEG:
 			append_unaryoper(gelo,"-",n); break;
 		case E_EXP:
-			append_binaryoper(gelo,"^",n); break;
+			append_anal_binaryoper(gelo,"^",n); break;
 		case E_ELTEXP:
-			append_binaryoper(gelo,".^",n); break;
+			append_anal_binaryoper(gelo,".^",n); break;
 		case E_FACT:
 			GET_L(n,l);
 			gel_output_string(gelo, "(");
-			print_etree(gelo, l, FALSE);
+			if (l->type == VALUE_NODE &&
+			    (mpw_is_complex (l->val.value) ||
+			     mpw_sgn (l->val.value) < 0 ||
+			     mpw_is_rational (l->val.value))) {
+				gel_output_string(gelo, "(");
+				print_etree(gelo, l, FALSE);
+				gel_output_string(gelo, ")");
+			} else {
+				print_etree(gelo, l, FALSE);
+			}
 			gel_output_string(gelo, "!)");
 			break;
 		case E_DBLFACT:
 			GET_L(n,l);
 			gel_output_string(gelo, "(");
-			print_etree(gelo, l, FALSE);
+			if (l->type == VALUE_NODE &&
+			    (mpw_is_complex (l->val.value) ||
+			     mpw_sgn (l->val.value) < 0 ||
+			     mpw_is_rational (l->val.value))) {
+				gel_output_string(gelo, "(");
+				print_etree(gelo, l, FALSE);
+				gel_output_string(gelo, ")");
+			} else {
+				print_etree(gelo, l, FALSE);
+			}
 			gel_output_string(gelo, "!!)");
 			break;
 
@@ -1032,6 +1084,37 @@ appendmatrix_latex (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 }
 
 static void
+appendmatrix_mathml (GelOutput *gelo, GelMatrixW *m, gboolean nice)
+{
+	/* FIXME: This produces content MathML with all expressions marked
+	 * as content numbers, that is wrong */
+	int i, j;
+	if (nice)
+		gel_output_string (gelo, "\n<matrix>\n");
+	else
+		gel_output_string (gelo, "<matrix>");
+	
+	for (j = 0; j < gel_matrixw_height (m); j++) {
+		if (nice)
+			gel_output_string (gelo, " ");
+		gel_output_string (gelo, "<matrixrow>");
+		print_etree (gelo, gel_matrixw_index (m, 0, j), FALSE);
+		for(i = 1; i < gel_matrixw_width (m); i++) {
+			//gel_output_string (gelo, "</cn><cn>");
+			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+		}
+		gel_output_string (gelo, "</matrixrow>");
+		if (nice)
+			gel_output_string (gelo, "\n");
+	}
+	
+	if (nice)
+		gel_output_string (gelo, "</matrix>");
+	else
+		gel_output_string (gelo, "</matrix>");
+}
+
+static void
 appendmatrix (GelOutput *gelo, GelMatrixW *m)
 {
 	int i,j;
@@ -1041,6 +1124,9 @@ appendmatrix (GelOutput *gelo, GelMatrixW *m)
 		return;
 	} else if (calcstate.output_style == GEL_OUTPUT_LATEX) {
 		appendmatrix_latex (gelo, m, FALSE /* nice */);
+		return;
+	} else if (calcstate.output_style == GEL_OUTPUT_MATHML) {
+		appendmatrix_mathml (gelo, m, FALSE /* nice */);
 		return;
 	}
 
@@ -1099,7 +1185,9 @@ appendpolynomial (GelOutput *gelo, GelETree *n)
 					   calcstate.scientific_notation,
 					   calcstate.results_as_floats,
 					   calcstate.mixed_fractions,
-					   calcstate.integer_output_base);
+					   calcstate.output_style,
+					   calcstate.integer_output_base,
+					   TRUE /* add parenths */);
 			gel_output_string (gelo, p);
 			g_free (p);
 
@@ -1152,6 +1240,13 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 
 	gel_output_push_nonotify (gelo);
 
+	/* all non-value nodes printed as <ci></ci> and
+	 * value nodes as <cn></cn> */
+	if (calcstate.output_style == GEL_OUTPUT_MATHML &&
+	    n->type != VALUE_NODE)
+		gel_output_string (gelo, "<ci>");
+
+
 	switch(n->type) {
 	case NULL_NODE:
 		gel_output_string (gelo, "(null)");
@@ -1161,17 +1256,27 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 				calcstate.scientific_notation,
 				calcstate.results_as_floats,
 				calcstate.mixed_fractions,
-				calcstate.integer_output_base);
+				calcstate.output_style,
+				calcstate.integer_output_base,
+				! toplevel /* add parenths */);
+#if 0
+		/* should we print the full number at toplevel ...??? no,
+		 * I don't think so .... */
 		/*if at toplevel, then always print the full number*/
 		if(toplevel)
 			gel_output_full_string(gelo,p);
-		else
-			gel_output_string(gelo,p);
+#endif
+		if (calcstate.output_style == GEL_OUTPUT_MATHML)
+			gel_output_string (gelo, "<cn>");
+		gel_output_string(gelo,p);
+		if (calcstate.output_style == GEL_OUTPUT_MATHML)
+			gel_output_string (gelo, "</cn>");
 		g_free(p);
 		break;
 	case MATRIX_NODE:
 		if (calcstate.output_style != GEL_OUTPUT_TROFF &&
 		    calcstate.output_style != GEL_OUTPUT_LATEX &&
+		    calcstate.output_style != GEL_OUTPUT_MATHML &&
 		    n->mat.quoted)
 			gel_output_string (gelo, "`");
 		appendmatrix (gelo, n->mat.matrix);
@@ -1245,6 +1350,12 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 		gel_output_string(gelo,"(?)");
 	       break;
 	}
+	/* all non-value nodes printed as <ci></ci> and
+	 * value nodes as <cn></cn> */
+	if (calcstate.output_style == GEL_OUTPUT_MATHML &&
+	    n->type != VALUE_NODE)
+		gel_output_string (gelo, "</ci>");
+
 	gel_output_pop_nonotify (gelo);
 }
 
@@ -1263,6 +1374,12 @@ pretty_print_etree(GelOutput *gelo, GelETree *n)
 			return;
 		} else if (calcstate.output_style == GEL_OUTPUT_LATEX) {
 			appendmatrix_latex (gelo, n->mat.matrix, TRUE /* nice */);
+			gel_output_pop_nonotify (gelo);
+			return;
+		} else if (calcstate.output_style == GEL_OUTPUT_MATHML) {
+			gel_output_string (gelo, "\n<math>");
+			appendmatrix_mathml (gelo, n->mat.matrix, TRUE /* nice */);
+			gel_output_string (gelo, "\n</math>");
 			gel_output_pop_nonotify (gelo);
 			return;
 		}
@@ -1287,7 +1404,12 @@ pretty_print_etree(GelOutput *gelo, GelETree *n)
 		}
 		gel_output_string(gelo, "]");
 	} else {
-		print_etree (gelo, n, FALSE);
+		if (calcstate.output_style == GEL_OUTPUT_MATHML)
+			gel_output_string (gelo, "\n<math>\n ");
+		print_etree (gelo, n, TRUE);
+		if (calcstate.output_style == GEL_OUTPUT_MATHML)
+			gel_output_string (gelo, "\n</math>");
+
 	}
 	gel_output_pop_nonotify (gelo);
 }
@@ -1484,14 +1606,21 @@ gel_compile_all_user_funcs(FILE *outfile)
 static void
 load_compiled_fp(const char *file, FILE *fp)
 {
-	char buf[8192];
+	char *buf;
+	int buf_size = 4096;
+	gboolean break_on_next = FALSE;
 	GelEFunc *last_func = NULL;
 
-	if(!fgets(buf,sizeof(buf),fp))
+	buf = g_new(char, buf_size);
+
+	if(!fgets(buf,buf_size,fp)) {
+		g_free (buf);
 		return;
+	}
 	if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
-		g_snprintf(buf,sizeof(buf),_("File '%s' is a wrong version of GEL"),file);
+		g_snprintf(buf,buf_size,_("File '%s' is a wrong version of GEL"),file);
 		(*errorout)(buf);
+		g_free (buf);
 		return;
 	}
 
@@ -1507,7 +1636,7 @@ load_compiled_fp(const char *file, FILE *fp)
 	  sure*/
 	g_assert(calcstate.float_prec>0);
 
-	while(fgets(buf,sizeof(buf),fp)) {
+	while( ! break_on_next && fgets(buf,buf_size,fp)) {
 		char *p;
 		char *b2;
 		GelToken *tok;
@@ -1519,8 +1648,21 @@ load_compiled_fp(const char *file, FILE *fp)
 
 		gel_incr_file_info();
 
-		p=strchr(buf,'\n');
-		if(p) *p='\0';
+		for(;;) {
+			int len;
+			p = strchr (buf,'\n');
+			if (p != NULL) {
+				*p = '\0';
+				break;
+			}
+			buf_size *= 2;
+			len = strlen (buf);
+			buf = g_realloc (buf, buf_size);
+			if (fgets (buf+len, buf_size-len, fp) == NULL) {
+				break_on_next = TRUE;
+				break;
+			}
+		}
 
 		p = strtok(buf,";");
 		if(!p) {
@@ -1728,6 +1870,7 @@ load_compiled_fp(const char *file, FILE *fp)
 continue_reading:	;
 	}
 	fclose(fp);
+	g_free (buf);
 }
 
 void
@@ -2531,6 +2674,7 @@ gel_parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean tes
 		return NULL;
 	}
 	replace_equals (evalstack->data, FALSE /* in_expression */);
+	fixup_num_neg (evalstack->data);
 	evalstack->data = gather_comparisons (evalstack->data);
 	try_to_do_precalc (evalstack->data);
 	

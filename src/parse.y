@@ -70,7 +70,7 @@ void yyerror(char *);
 
 %token WHILE UNTIL FOR SUM PROD DO IF THEN ELSE TO BY IN
 
-%token AT
+%token AT MAKEIMAGPARENTH
 
 %token SEPAR NEXTROW EQUALS
 
@@ -103,16 +103,16 @@ void yyerror(char *);
 %nonassoc CMP_CMP
 %right EQ_CMP NE_CMP LT_CMP GT_CMP LE_CMP GE_CMP
 
+%right ':'
+
 %left '+' '-'
 %left '*' ELTELTMUL '/' ELTELTDIV '\\' ELTELTBACKDIV '%' ELTELTMOD
 
 %right '\'' TRANSPOSE
 
-%right ':'
-
-%right '!' DOUBLEFACT
-%right '^' ELTELTEXP
 %right UMINUS UPLUS
+%right '^' ELTELTEXP
+%right '!' DOUBLEFACT
 
 %left AT
 
@@ -139,6 +139,13 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	'(' expr SEPAR ')'	{ gp_push_null(); PUSH_ACT(E_SEPAR);
 					  gp_push_spacer(); }
 	|	'(' expr ')'		{ gp_push_spacer(); }
+	|	'(' expr MAKEIMAGPARENTH { mpw_t i;
+					  mpw_init (i);
+					  mpw_i (i);
+					  gp_push_spacer();
+					  stack_push(&evalstack,
+						     gel_makenum_use(i));
+					  PUSH_ACT(E_MUL); }
 	|	expr EQUALS expr	{ PUSH_ACT(E_EQUALS); }
 	|	'|' expr '|'		{ PUSH_ACT(E_ABS); }
 	|	expr '+' expr		{ PUSH_ACT(E_PLUS); }
@@ -185,10 +192,14 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 				}
 					}
 	
+	|	expr AT ':' ')'		{ /* FIXME: do nothing?, this is just a 
+					     get all */ }
 	|	expr AT expr ')'	{ PUSH_ACT(E_GET_VELEMENT); }
 	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
 	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
+	|	expr AT expr ',' ':' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
 	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COL_REGION); }
+	|	expr AT ':' ',' expr ')'	{ PUSH_ACT(E_GET_COL_REGION); }
 	|	'[' matrixrows ']'	{ if(!gp_push_matrix(FALSE)) {SYNTAX_ERROR;} }
 	|	'`' '[' matrixrows ']'	{ if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;} }
 	/*This next rule DOESN'T work right, we need some sort of connection

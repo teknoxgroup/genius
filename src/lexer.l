@@ -331,6 +331,16 @@ null		{ DO_RET; return '.'; }
 			return yytext[0];
 		}
 
+[)][ \t]*i		{
+			parenth_depth--;
+			if (matrix_entry_stack != NULL)
+				matrix_entry_stack->data =
+					GINT_TO_POINTER
+					  (GPOINTER_TO_INT(matrix_entry_stack->data) - 1);
+			DO_RET;
+			return MAKEIMAGPARENTH;
+		}
+
 [)}]		{
 			parenth_depth--;
 			if (matrix_entry_stack != NULL)
@@ -347,17 +357,24 @@ null		{ DO_RET; return '.'; }
 				DO_RET;
 				return FUNCID;
 			}
-			
-[1-9][0-9]*[ ][1-9][0-9]*[/][1-9][0-9]*	{
+
+[1-9][0-9]*i?[ ][1-9][0-9]*i?[/][1-9][0-9]*i?	{
 			mpw_init(yylval.val);
 			mpw_set_str(yylval.val,yytext,10);
 			DO_RET;
 			return NUMBER;
 		}
 
+[0-9]+i		{
+			mpw_init(yylval.val);
+			mpw_set_str_complex_int(yylval.val,yytext,10);
+			DO_RET;
+			return NUMBER;
+		}
+			
+
 [0-9]*\.[0-9]+[eE@][-+]?[0-9]+i	|
 [0-9]+[eE@][-+]?[0-9]+i		|
-[0-9]+i				|
 [0-9]*\.[0-9]+i	{
 			char *s;
 			if(yytext[0] == '.')

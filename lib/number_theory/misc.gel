@@ -1,14 +1,20 @@
 # Miscellaneous number theory functions
 
-function IsOdd(n) = (n % 2);
-SetHelp("IsOdd","number_theory","Tests if an integer is odd");
-protect("IsOdd");
+function IsOdd(n) = (
+ if not IsValue(n) or not IsInteger(n) then
+ (
+  error("IsOdd: argument must be an integer");
+  bailout;
+ );
+ (n % 2)
+)
+SetHelp("IsOdd","number_theory","Tests if an integer is odd")
+protect("IsOdd")
 
-function IsEven(n) = not(IsOdd(n));
-SetHelp("IsEven","number_theory","Tests if an integer is even");
-protect("IsEven");
+function IsEven(n) = not IsOdd(n)
+SetHelp("IsEven","number_theory","Tests if an integer is even")
+protect("IsEven")
 
-# FIXME: This should be done internally perhaps
 function IsNthPower(n,k) =
  (
   if not IsRational (n) then
@@ -20,10 +26,7 @@ function IsNthPower(n,k) =
 	# We know this won't work
 	0
   else if IsInteger(n) then
-	(floor((n)^(1/k))^k==n)
-# FIXME: should add some ``analytic'' testing, i.e., if the
-# fractional part is non-zero (or more that precision?), it can't
-# be a square
+	IsInteger(n^(1/k))
 
   # Since rational numbers are in reduced form, by unique factorization it
   # suffices to check if the numerator and denominator are Nth powers
@@ -33,25 +36,8 @@ function IsNthPower(n,k) =
 SetHelp("IsNthPower","number_theory","Tests if a rational number is a perfect power");
 protect("IsNthPower");
 
-SetHelp("SymbolicSquareRoot","number_theory","If square root is integer, then return as integer, else standard square root. (note sqrt behaves the same way)");
-SymbolicSquareRoot = sqrt;
-protect("SymbolicSquareRoot");
-
-# FIXME: this is just a hack until we get a real symbolic mode
-function SymbolicNthRoot(n,k) =
- (
-  if IsRational(n) and k == 2 then
-	sqrt (n)
-  else if IsNthPower(n,k) then
-	return IntegerPart(n^(1/k))
-  else
-  	return n^(1/k);
- )
-SetHelp("SymbolicNthRoot","number_theory","If nth root is integer, then return as integer, else standard nth root.");
-protect("SymbolicNthRoot");
-
-function Divides(m,n) = not(n % m);
-SetHelp("Divides","number_theory","Checks divisibility");
+function Divides(m,n) = not n % m;
+SetHelp("Divides","number_theory","Checks divisibility (if m divides n)");
 protect("Divides");
 
 # Returns the highest power of p that divides n, where n is rational.
@@ -61,7 +47,7 @@ function PadicValuation(n,p) =
  (
   if IsRational(n) and not IsInteger(n) then
     return PadicValuation(Numerator(n))-PadicValuation(Denominator(n));
-  if not(IsInteger(n)) then
+  if not IsInteger(n) then
    (
     error("PadicValuation: argument must be rational or integer");
     bailout;
@@ -80,19 +66,24 @@ function PadicValuation(n,p) =
 SetHelp("PadicValuation","number_theory","Returns the padic valuation (number of trailing zeros in base p).");
 protect("PadicValuation");
 
-#FIXME: This should also be built-in to modular arithmatic,
-# though it is slightly more complicated
-# Computes a^b mod m
-function PowerMod(a,b,m) =
+function RemoveFactor(n,m) =
  (
-  n=1;
-  while (b != 0) do
+  if not IsInteger(n) or not IsInteger(m) then
    (
-    if IsOdd(b) then n=(n*a) % m;
-    b=floor(b/2);
-    a=(a*a) % m;
+    error("RemoveFactor: arguments must be integers");
+    bailout;
+   );
+  if (n==0) then return 0;
+
+  while Divides(m,n) do
+   (
+    n=n/m;
    );
   return n;
  )
-SetHelp("PowerMod","number_theory","Compute #1^#2 mod #3");
+SetHelp("RemoveFactor","number_theory","Removes all instances of the factor m from the number n");
+protect("RemoveFactor");
+
+function PowerMod(a,b,m) = a^b mod m
+SetHelp("PowerMod","number_theory","Compute a^b mod m");
 protect("PowerMod");

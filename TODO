@@ -3,6 +3,8 @@
 
 *	Add continued fraction type of a loop
 
+*	Check rational powers in mod mode to work correctly
+
 *	Check modular arithmetic to be correct (such as: "expr mod n"),
         that is, when do we mod is the question.
 
@@ -10,8 +12,9 @@
 
 *	Add extended gcd
 
-*	Make README into a simple document to show on help, probably html
-	and show in a browser.
+*	Perhaps latex and troff mode should not be used on error output,
+	only on toplevel.  Alternantively everything should be latex/troffized
+	I suppose.  I like the first alternative more though.
 
 *	Better yet help support, should be easy to document new functions
 

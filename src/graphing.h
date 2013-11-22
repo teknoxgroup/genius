@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) George Lebl
  *
  * Author: George Lebl
  *
@@ -19,18 +19,10 @@
  * USA.
  */
 
-#ifndef _COMPIL_H_
-#define _COMPIL_H_
+#ifndef GRAPHING_H_
+#define GRAPHING_H_
 
-#include "mpwrap.h"
+/* only doable in gui mode */
+void gel_add_graph_functions (void);
 
-/*declarations of structures*/
-#include "structs.h"
-
-char *gel_compile_tree (GelETree *t);
-GelETree *gel_decompile_tree (char *s);
-
-char * gel_encode_string (const char *s);
-char * gel_decode_string (const char *s);
-
-#endif
+#endif /* GRAPHING_H_ */

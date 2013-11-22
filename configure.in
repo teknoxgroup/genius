@@ -3,7 +3,7 @@ AC_INIT(src/calc.c)
 AC_PROG_INTLTOOL([0.21])
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.5.2)
+AM_INIT_AUTOMAKE(genius,0.5.3)
 AM_MAINTAINER_MODE
 
 GNOME_PLATFORM_GNOME_2
@@ -60,6 +60,13 @@ AC_CHECK_LIB(gmp, __gmpz_init_set,[GMP_LIB=-lgmp], [
 		AC_DEFINE(HAVE_GMP2_INCLUDE_DIR)],
 		AC_MSG_ERROR(GMP Library not found))])
 AC_SUBST(GMP_LIB)
+
+MPFR_LIB=""
+AC_CHECK_LIB(mpfr, mpfr_init,[
+	MPFR_LIB=-lmpfr
+	AC_DEFINE(HAVE_MPFR)], [
+	AC_MSG_WARN([*** MPFR Library not found ***])],"$GMP_LIB")
+AC_SUBST(MPFR_LIB)
 
 AC_PATH_PROG(GCONFTOOL, gconftool-2)
 dnl Specify the gconf configuration source,
@@ -161,11 +168,28 @@ lib/statistics/Makefile
 po/Makefile.in
 ])
 
+if test "x$MPFR_LIB" = x; then
+   GOT_MPFR="no"
+else
+   GOT_MPFR="yes"
+fi
+
 echo "
 Configuration:
 
 	Source code location:	  ${srcdir}
 	Compiler:		  ${CC} 
+	Using the MPFR library:   ${GOT_MPFR}
 
 	Extra Compiler Warnings:  ${EXTRA_WARNING_CFLAGS}
 "
+
+if test "x$MPFR_LIB" = x; then
+  echo " 
+WARNING:
+     You are compiling without the MPFR library and genius will then use
+     it's own implementations for things like exp, ln, pow, sin, and such
+     but these are very slow.  Please use a gmp library compiled with
+     --enable-mpfr, or get and compile the mpfr library from www.mpfr.org
+"
+fi

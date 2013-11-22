@@ -1,3 +1,268 @@
+Wed Mar 05 14:14:41 2003  George Lebl <jirka@5z.com>
+
+	* Release 0.5.3
+
+Wed Mar 05 14:13:03 2003  George Lebl <jirka@5z.com>
+
+	* src/eval.c, src/parseutil.c: when expanding matrices treat nulls
+	  as empty matrices to allow easy appending, prepending and all such
+	  stuff.
+
+	* src/calc.c: be anal on printing numbers with powers and factorials
+	  so that the output is genius parsable
+
+Sat Mar 01 10:03:32 2003  George Lebl <jirka@5z.com>
+
+	* src/funclib.c: on setting FloatPrecision actually break e and
+	  GoldenRatio caches to recalculate (reread) these
+
+Sat Mar 01 09:55:23 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: rational powers now use mpz_root to return an integer
+	  if possible.
+
+	* lib/number_theory/misc.gel: remove SymbolicNthRoot and do smarter
+	  IsNthRoot given the new usage of powers
+
+Fri Feb 28 13:32:46 2003  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: play with graph colors, make graph lines 1.5 thick,
+	  add a plot progress indicator
+
+	* src/mpwrap.c: fix conversions to int and rational from float
+
+	* doc/manual.txt: add a note about unitary minus
+
+Fri Feb 28 11:55:15 2003  George Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c: raise precision back to 256
+	  bits as mpfr is blazing fast on that as well.
+
+Fri Feb 28 11:11:56 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch], configure.in, src/Makefile.am:  If MPFR is present
+	  use it for functions like sin, cos, atan, pow, log, exp.  This
+	  increases speed of those operations by a LOT (simple test gave
+	  about 10 times the speedup).  Still you can use genius without
+	  mpfr, since it usually doesn't seem to be present in GMP packages
+	  since packagers tend to not add --enable-mpfr (I don't know why
+	  it's not the default).  In any case since mpfr is a static library
+	  so far I think builds that I make on my system will work for people
+	  with the standard GMP package from redhat.
+
+	* src/gnome-genius.c, src/genius.c: add a note in case MPFR isn't
+	  compiled in to the copyright string so that people know if they
+	  are running without it.
+
+Thu Feb 27 18:07:58 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c, src/lexer.l, src/parse.y, src/eval.[ch], src/calc.c:
+	  Make UMINUS bind less then factorials and powers and have factorials
+	  bind tighter then powers but then fixup the tree to make things
+	  like -1^k still come out as (-1)^k (but -a^k is -(a^k)).  One
+	  of those WYMIWYG things.
+
+	* src/graphing.c: fixup labels a bit
+
+	* src/calc.c: when printing a power be specific about how to parse
+	  any UMINUS
+
+Thu Feb 27 16:56:58 2003  George Lebl <jirka@5z.com>
+
+	* src/graphing.[ch], src/eval.[ch]: Copy the token into functions
+	  when we eval them to be able to identify them.  And label functions
+	  on the graph by their token or their body if it is less then 64
+	  characters long.  Also fix problems with too ofset plot window.
+	  The default plotwindow is now a parameter called LinePlotWindow.
+
+	* src/genius.c, src/gnome-genius.c: make default precision 128
+	  since it will make things faster.  Currently <anything>^float
+	  and exponentials and logs are utterly slow, even in lower
+	  precision.
+
+Thu Feb 27 10:17:08 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/graphing.c, src/inter.c: graph progressively
+	  to show how far we got.  Fix a long standing bug with getting an
+	  unusable prompt if interrupt is hit without anything running.
+
+Thu Feb 27 09:55:11 2003  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: make graph window a dialog, allow
+	  stopping/interrupting of the graph, run the event loop often.
+
+	* src/gnome-genius.c: don't allow executing code while somehting
+	  else is running (for manual, answer copying and such)
+
+Thu Feb 27 08:01:41 2003  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: allow graphing more then one function and fix
+	  an error with too high function values.
+
+Wed Feb 26 14:19:23 2003  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: plot every 2 pixels and optimize things a bit
+
+Wed Feb 26 13:53:38 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: add ability to get doubles
+
+	* src/graphing.[ch], src/gnome-genius.c, src/Makefile.am:  Add
+	  very very rudimentary graphing support with the LinePlot function.
+	  Doesn't make nice graphs but should be enough for
+	  "seeing how f : R -> R" looks.
+
+Wed Feb 26 10:06:11 2003  George Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c: Add Copy Answer As
+	  Plain/LaTeX/MathML/Troff menu items (to make the gui version at
+	  least somewhat more useful then the console version) and add
+	  a default answer to avoid errors on copy before anything has been
+	  entered.
+
+	* doc/manual.txt: update to add the mathml mode
+
+Wed Feb 26 09:27:24 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.c: improve a teeeny bit on the mathml mode.  Produces
+	  Content MathML but I can't get mozilla to render mathml for me
+	  properly so I can't test this.
+
+Tue Feb 25 10:27:47 2003  George Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c, src/calc.[ch], src/funclib.c:
+	  Add an experimental MathML output mode (for matrices only for now).
+	  Can't quite get it to work though.
+
+Mon Feb 24 15:58:47 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: add locale.h
+
+	* src/gnome-genius.c: allow quitting while calculations are running
+	  and add a "really want to quit dialog" to be replaced by "really
+	  want to quit without saving state" dialog at some point in future.
+
+	* src/eval.c: some leak hunting (still there are leaks)
+
+	* lib/number_theory/misc.gel: better help string for Divides
+ 
+	* lib/number_theory/primes.gel: make the MillerRabin config
+	  param 10 times larger for IsPrime, 10^-100 should be plenty
+	  small
+
+Fri Feb 21 14:05:10 2003  George Lebl <jirka@5z.com>
+
+	* src/funclib.c, src/mpwrap.[ch]: add IsGaussInteger,
+	  IsComplexRational and IsPositiveInteger, also rename g
+	  to Gravity
+
+	* lib/number_theory/primes.gel: Add MillerRabinTest and use it
+	  in IsPrime
+
+	* lib/number_theory/*.gel: simplify argument checking in bunch of
+	  places
+
+	* src/calc.c, src/compil.[ch]: When reading compiled file allow
+	  arbitrarily long record lines
+
+Thu Feb 20 00:56:49 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/factoring.gel: it's too late and I can't think
+	  and I commit things with syntax errors
+
+Thu Feb 20 00:23:57 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/factoring.gel: implement FermatFactorization,
+	  also use it as a last resort for the Factorize
+
+Wed Feb 19 14:13:22 2003  George Lebl <jirka@5z.com>
+
+	* src/funclib.c: better prime caching, cache up to 30000 primes,
+	  rename prime to Prime, add g, the gravity constant and add
+	  EulerConstant (or gamma) good for about 9k digits, doesn't
+	  calculate we have an actual representation in memory.
+
+	* lib/number_theory/*.gel: Add RemoveFactor, add some help
+	  strings remove SymbolicSquareRoot (sqrt does the job well)
+
+Wed Feb 19 09:54:03 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add Edit menu with Copy and Paste.
+
+	* src/mpwrap.c: minor fix for rational power, and do possibly 
+	  symbolic square root in case the denominator is 2, 4, 8 or 16
+	  (should do more perhaps)
+
+Sun Feb 16 11:06:50 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch], src/eval.c, lib/number_theory/misc.gel:
+	  use the powm function for power mod to make the modulo arithmetic
+	  actually more useful.  Also implement numerator and denominator
+	  for complex rational values.
+
+Sat Feb 15 17:31:52 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/factoring.gel: increase the Factorize maximum
+	  since we don't have any fun factoring algs so the trials is the
+	  only thing we do.  Plus it's relatively fast.
+
+Fri Feb 14 17:46:19 2003  George Lebl <jirka@5z.com>
+
+	* doc/manual.txt: update
+
+	* configure.in: raise version
+
+Fri Feb 14 17:27:02 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch], src/calc.c, src/parse.y, src/lexer.l: Better
+	  printing of complex numbers still, add mode for (<expr>)i which
+	  makes the expr imaginary (multiply by i really), and use this
+	  for printing imaginary mixed fractions to look better.  Also
+	  don't print parenthesis on toplevel complex numbers to look nicer
+	  and pretty print now does toplevel.  Also don't toplevel on
+	  printing a polynomial and when in toplevel mode don't
+	  print whole numbers since that's the whole point of FullExpressions
+
+	* src/eval.c: fix crash on setting parameters if there is an
+	  exception
+
+	* doc/manual.txt: update
+
+Fri Feb 14 16:10:30 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/*.gel: add MaximalPrimePowerFactors,
+	  PrimeFactors, fix Factors and add CombineFactorizations,
+	  also make a better implementation of EulerPhi using Factorize,
+	  which is a LOT faster then our previous braindead one.
+
+	* src/util.[ch]: fixup the my_realloc to just use g_realloc. and
+	  other minor cleanups
+
+	* src/mpwrap.[ch], src/lexer.l, calc.c, compil.c: rework printing of
+	  complex numbers, add latex/troff mode for fractions.  Allow
+	  rational/integer complex numbers.  Add fixmes for den/num
+	  functions for complex numbers.  For pure imaginary numbers just
+	  print the imaginary part without parentheses.
+
+	* src/geniustests.txt, src/geniustest.pl: add more tests, update
+	  for changes and printout error inputs if any at the end
+
+	* doc/manual.txt: update for the complex numbers
+
+	* src/parse.y: ':' now binds less then the standard arithmetic
+	  operators to fix stuff like foo@(2:a-1) to actually mean
+	  foo@(2:(a-1)) and not foo@((2:a)-1)
+
+Wed Feb 12 16:52:48 2003  George Lebl <jirka@5z.com>
+
+	* src/parser.y: allow more matlabish notation for getting whole
+	  rows and columns such as a@(3,:).  Still we do not support
+	  the form a@(3,5:) and such.  Should not be hard to add though.
+
+Mon Feb 10 09:23:28 2003  George Lebl <jirka@5z.com>
+
+	* genius.spec.in: damnit why did I forget libexec ...
+
 Mon Feb 10 08:57:04 2003  George Lebl <jirka@5z.com>
 
 	* Release 0.5.2

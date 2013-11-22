@@ -124,6 +124,7 @@ GelETree * gel_makenum(mpw_t num);
 GelETree * gel_makenum_use(mpw_t num); /*don't create a new number*/
 GelETree * gel_makenum_ui(unsigned long num);
 GelETree * gel_makenum_si(long num);
+GelETree * gel_makenum_d (double num);
 GelETree * gel_makenum_null(void);
 GelETree * gel_makenum_identifier (GelToken *id);
 GelETree * gel_makenum_string (const char *str);
@@ -162,8 +163,10 @@ int isnodetrue(GelETree *n, int *bad_node);
 GelETree * funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
 void gel_expandmatrix (GelETree *n);
 
+/* Functions to fixup the parsed tree */
 GelETree * gather_comparisons(GelETree *n);
 void replace_equals (GelETree *n, gboolean in_expression);
+void fixup_num_neg (GelETree *n);
 void try_to_do_precalc(GelETree *n);
 
 /* return a list of used local functions (copies of) */

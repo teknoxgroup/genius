@@ -1691,7 +1691,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.5.2
+VERSION=0.5.3
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { { echo "$as_me:$LINENO: error: source directory already configured; run \"make distclean\" there first" >&5
@@ -9327,6 +9327,77 @@ fi
 
 
 
+MPFR_LIB=""
+echo "$as_me:$LINENO: checking for mpfr_init in -lmpfr" >&5
+echo $ECHO_N "checking for mpfr_init in -lmpfr... $ECHO_C" >&6
+if test "${ac_cv_lib_mpfr_mpfr_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmpfr "$GMP_LIB" $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char mpfr_init ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+mpfr_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_mpfr_mpfr_init=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_mpfr_mpfr_init=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_mpfr_mpfr_init" >&5
+echo "${ECHO_T}$ac_cv_lib_mpfr_mpfr_init" >&6
+if test $ac_cv_lib_mpfr_mpfr_init = yes; then
+
+	MPFR_LIB=-lmpfr
+	cat >>confdefs.h <<\_ACEOF
+#define HAVE_MPFR 1
+_ACEOF
+
+else
+
+	{ echo "$as_me:$LINENO: WARNING: *** MPFR Library not found ***" >&5
+echo "$as_me: WARNING: *** MPFR Library not found ***" >&2;}
+fi
+
+
+
 # Extract the first word of "gconftool-2", so it can be a program name with args.
 set dummy gconftool-2; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -10394,6 +10465,7 @@ s,@GLIB_GENMARSHAL@,$GLIB_GENMARSHAL,;t t
 s,@TERMCAP_LIB@,$TERMCAP_LIB,;t t
 s,@READLINE_LIB@,$READLINE_LIB,;t t
 s,@GMP_LIB@,$GMP_LIB,;t t
+s,@MPFR_LIB@,$MPFR_LIB,;t t
 s,@GCONFTOOL@,$GCONFTOOL,;t t
 s,@GCONF_CONFIG_SOURCE@,$GCONF_CONFIG_SOURCE,;t t
 s,@INSTALL_GCONF_CONFIG_SOURCE@,$INSTALL_GCONF_CONFIG_SOURCE,;t t
@@ -10939,11 +11011,28 @@ if test "$no_create" != yes; then
 fi
 
 
+if test "x$MPFR_LIB" = x; then
+   GOT_MPFR="no"
+else
+   GOT_MPFR="yes"
+fi
+
 echo "
 Configuration:
 
 	Source code location:	  ${srcdir}
 	Compiler:		  ${CC}
+	Using the MPFR library:   ${GOT_MPFR}
 
 	Extra Compiler Warnings:  ${EXTRA_WARNING_CFLAGS}
 "
+
+if test "x$MPFR_LIB" = x; then
+  echo "
+WARNING:
+     You are compiling without the MPFR library and genius will then use
+     it's own implementations for things like exp, ln, pow, sin, and such
+     but these are very slow.  Please use a gmp library compiled with
+     --enable-mpfr, or get and compile the mpfr library from www.mpfr.org
+"
+fi

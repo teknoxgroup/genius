@@ -114,6 +114,7 @@ LN_S = @LN_S@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
+MPFR_LIB = @MPFR_LIB@
 MSGFMT = @MSGFMT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
@@ -153,10 +154,10 @@ bin_PROGRAMS = gnome-genius genius
 
 libexec_PROGRAMS = genius-readline-helper-fifo
 
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
 
 
-gnome_genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+gnome_genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helper.c
@@ -169,7 +170,7 @@ genius_readline_helper_fifo_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@
 genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
 
-genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			eval.h
@@ -213,7 +214,8 @@ gnome-genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) \
 mpwrap.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
 compil.$(OBJEXT) lexer.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) \
 plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
-genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT)
+genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT) \
+graphing.$(OBJEXT)
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
 genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
@@ -512,11 +514,14 @@ funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
 	funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
 geloutput.o: geloutput.c ../config.h structs.h mpwrap.h geloutput.h
 genius-readline-helper.o: genius-readline-helper.c
-genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
-	inter.h geloutput.h lexer.h plugin.h
+genius.o: genius.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
+	dict.h inter.h geloutput.h lexer.h plugin.h
 genius_lists.o: genius_lists.c
 gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
-	util.h dict.h geloutput.h plugin.h inter.h
+	util.h dict.h eval.h geloutput.h graphing.h plugin.h inter.h
+graphing.o: graphing.c ../config.h calc.h structs.h mpwrap.h eval.h \
+	util.h dict.h funclib.h matrixw.h matrix.h compil.h plugin.h \
+	geloutput.h graphing.h
 inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h plugin.h \
 	inter.h
 lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
