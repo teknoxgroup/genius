@@ -43,7 +43,7 @@ Matrix * matrix_new(void);
 /*set size of a matrix*/
 void matrix_set_size(Matrix *matrix, int width, int height);
 /*set the size of the matrix to be at least this*/
-void matrix_at_least_size(Matrix *matrix, int width, int height);
+void matrix_set_at_least_size(Matrix *matrix, int width, int height);
 
 /*set element*/
 void matrix_set_element(Matrix *matrix, int x, int y, gpointer data);

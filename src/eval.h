@@ -70,10 +70,13 @@ enum {
 	E_RETURN,
 	E_BAILOUT,
 	E_EXCEPTION,
+	E_CONTINUE,
+	E_BREAK,
 };
 
 /*functions for manipulating a tree*/
 ETree * makenum(mpw_t num);
+ETree * makenum_use(mpw_t num); /*don't create a new number*/
 ETree * makenum_ui(unsigned long num);
 ETree * makenum_si(long num);
 ETree * makenum_null(void);

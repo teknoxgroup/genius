@@ -306,6 +306,9 @@ freefunc(EFunc *n)
 	GList *li;
 	if(!n)
 		return;
+	g_assert(!n->id || g_list_find(n->id->refs,n)==NULL);
+	/*if(n->id)
+		n->id->refs = g_list_remove(n->id->refs,n);*/
 	if(n->type == USER_FUNC && n->data.user) 
 		freetree(n->data.user);
 	g_list_free(n->named_args);
@@ -314,13 +317,17 @@ freefunc(EFunc *n)
 	free_funcs = n;
 }
 
-/*replace old with stuff from new and free new*/
+/*replace old with stuff from new and free new,
+  new has to have the same id, also new->id should
+  not hold a reference to new*/
 void
 replacefunc(EFunc *old,EFunc *new)
 {
 	GList *li;
-	if(!old || !new)
-		return;
+
+	g_return_if_fail(old && new);
+	g_return_if_fail(old->id == new->id);
+
 	if(old->type == USER_FUNC && old->data.user) 
 		freetree(old->data.user);
 	g_list_free(old->named_args);
@@ -373,7 +380,7 @@ d_addcontext(void)
 	return TRUE;
 }
 
-/*gimme the last dictionary, (removes the items from the global hash too)*/
+/*gimme the last dictionary*/
 GList *
 d_popcontext(void)
 {

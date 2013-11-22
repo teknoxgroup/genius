@@ -140,3 +140,87 @@ stack_pop(GList **stack)
 	*stack = p;
 	return data;
 }
+
+char *
+unescape_string(char *s,char *end,char *nounescape)
+{
+	char *n;
+	char *p;
+	
+	g_return_val_if_fail(s!=NULL,NULL);
+	
+	n = p = g_new(char,strlen(s)+1);
+
+	while(*s && (!end || s<end)) {
+		if(*s == '\\' && *(s+1) && (!end || (s+1)<end)) {
+			switch(*(s+1)) {
+			case 'n': *(p++) = '\n'; break;
+			case 't': *(p++) = '\t'; break;
+			case 'b': *(p++) = '\b'; break;
+			case 'r': *(p++) = '\r'; break;
+			case 'a': *(p++) = '\a'; break;
+			default:
+				if(nounescape) {
+					if(strchr(nounescape,*(s+1)))
+						*(p++) = '\\';
+					*(p++) = *(s+1);
+				} else 
+					*(p++) = *(s+1);
+				break;
+			}
+			s+=2;
+		} else
+			*(p++)=*(s++);
+	}
+	*p = '\0';
+	return n;
+}
+
+/*escape also "'s and \'s*/
+char *
+escape_string(char *s)
+{
+	char *n;
+	char *p;
+	int i;
+	
+	g_return_val_if_fail(s!=NULL,NULL);
+	
+	for(i=0,p=s;*p;p++) {
+		switch(*p) {
+		case '\n':
+		case '\t':
+		case '\b':
+		case '\r':
+		case '\a':
+		case '"':
+		case '\\': i++; break;
+		default: ;
+		}
+	}
+	
+	n = p = g_new(char,strlen(s)+i+1);
+
+	while(*s) {
+		switch(*s) {
+		case '\n':
+			*(p++) = '\\'; *(p++) = 'n'; s++; break;
+		case '\t':
+			*(p++) = '\\'; *(p++) = 't'; s++; break;
+		case '\b':
+			*(p++) = '\\'; *(p++) = 'b'; s++; break;
+		case '\r':
+			*(p++) = '\\'; *(p++) = 'r'; s++; break;
+		case '\a':
+			*(p++) = '\\'; *(p++) = 'a'; s++; break;
+
+		case '"':
+		case '\\': 
+			*(p++) = '\\';
+		default: ; *(p++)=*(s++);
+			 break;
+		}
+	}
+	*p = '\0';
+	return n;
+}

@@ -48,6 +48,8 @@ extern int got_eof;
 GArray *primes = NULL;
 int numprimes = 0;
 
+extern ETree *free_trees;
+
 static ETree *
 warranty_op(ETree * * a, int *exception)
 {
@@ -184,8 +186,7 @@ sin_op(ETree * * a, int *exception)
 
 	mympw_sin(fr,fr);
 
-	n=makenum(fr);
-	mpw_clear(fr);
+	n=makenum_use(fr);
 	return n;
 }
 
@@ -223,8 +224,7 @@ cos_op(ETree * * a, int *exception)
 
 	mympw_cos(fr,fr);
 
-	n=makenum(fr);
-	mpw_clear(fr);
+	n=makenum_use(fr);
 	return n;
 }
 
@@ -267,8 +267,7 @@ tan_op(ETree * * a, int *exception)
 	mpw_div(fr,fr,fr2);
 	mpw_clear(fr2);
 
-	n=makenum(fr);
-	mpw_clear(fr);
+	n=makenum_use(fr);
 	return n;
 }
 
@@ -302,11 +301,18 @@ pi_op(ETree * * a, int *exception)
 	mpw_init(fr);
 	mympw_getpi(fr);
 
-	n=makenum(fr);
-	mpw_clear(fr);
+	n=makenum_use(fr);
 	return n;
 }
 
+static ETree *
+is_null_op(ETree * * a, int *exception)
+{
+	if(a[0]->type==NULL_NODE)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
 static ETree *
 is_value_op(ETree * * a, int *exception)
 {
@@ -330,6 +336,27 @@ is_matrix_op(ETree * * a, int *exception)
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
+}
+static ETree *
+is_function_op(ETree * * a, int *exception)
+{
+	if(a[0]->type==FUNCTION_NODE)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+static ETree *
+is_function_ref_op(ETree * * a, int *exception)
+{
+	if(a[0]->type==OPERATOR_NODE &&
+	   a[0]->data.oper == E_REFERENCE) {
+		ETree *arg = a[0]->args->data;
+		g_assert(arg);
+		if(arg->type==IDENTIFIER_NODE &&
+		   d_lookup_global(arg->data.id))
+			return makenum_ui(1);
+	}
+	return makenum_ui(0);
 }
 static ETree *
 is_complex_op(ETree * * a, int *exception)
@@ -404,15 +431,13 @@ trunc_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_trunc(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
+	n = makenum_use(fr);
 	return n;
 }
 static ETree *
 floor_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("floor: argument not a number"));
@@ -420,15 +445,12 @@ floor_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_floor(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 static ETree *
 ceil_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("ceil: argument not a number"));
@@ -436,15 +458,12 @@ ceil_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_ceil(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 static ETree *
 round_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("round: argument not a number"));
@@ -452,16 +471,13 @@ round_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_round(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 
 static ETree *
 Re_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("Re: argument not a number"));
@@ -469,16 +485,13 @@ Re_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_re(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 
 static ETree *
 Im_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("Im: argument not a number"));
@@ -486,16 +499,13 @@ Im_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_im(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 
 static ETree *
 sqrt_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("sqrt: argument not a number"));
@@ -503,16 +513,13 @@ sqrt_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_sqrt(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 
 static ETree *
 exp_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("exp: argument not a number"));
@@ -520,16 +527,13 @@ exp_op(ETree * * a, int *exception)
 	}
 	mpw_init(fr);
 	mpw_exp(fr,a[0]->data.value);
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
+	return makenum_use(fr);
 }
 
 static ETree *
 ln_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("ln: argument not a number"));
@@ -542,23 +546,7 @@ ln_op(ETree * * a, int *exception)
 		mpw_clear(fr);
 		return NULL;
 	}
-	n = makenum(fr);
-	mpw_clear(fr);
-	return n;
-}
-
-static ETree *
-is_null_op(ETree * * a, int *exception)
-{
-	mpw_t fr;
-	mpw_t pitmp;
-
-	ETree *n;
-
-	if(a[0]->type!=NULL_NODE)
-		return makenum_ui(0);
-	else
-		return makenum_ui(1);
+	return makenum_use(fr);
 }
 
 /*gcd function*/
@@ -566,8 +554,6 @@ static ETree *
 gcd_op(ETree * * a, int *exception)
 {
 	mpw_t tmp;
-
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE ||
 	   a[1]->type!=VALUE_NODE) {
@@ -585,9 +571,7 @@ gcd_op(ETree * * a, int *exception)
 		return NULL;
 	}
 
-	n=makenum(tmp);
-	mpw_clear(tmp);
-	return n;
+	return makenum_use(tmp);
 }
 
 /*lcm function*/
@@ -596,8 +580,6 @@ lcm_op(ETree * * a, int *exception)
 {
 	mpw_t tmp;
 	mpw_t prod;
-
-	ETree *n;
 
 	if(a[0]->type!=VALUE_NODE ||
 	   a[1]->type!=VALUE_NODE) {
@@ -621,9 +603,7 @@ lcm_op(ETree * * a, int *exception)
 	mpw_div(tmp,prod,tmp);
 	mpw_clear(prod);
 
-	n=makenum(tmp);
-	mpw_clear(tmp);
-	return n;
+	return makenum_use(tmp);
 }
 
 /*sin function*/
@@ -680,6 +660,27 @@ min_op(ETree * * a, int *exception)
 }
 
 static ETree *
+is_value_only_op(ETree * * a, int *exception)
+{
+	int i,j;
+	Matrix *m;
+	if(a[0]->type!=MATRIX_NODE) {
+		(*errorout)(_("is_value_only: argument not a matrix"));
+		return NULL;
+	}
+	m=a[0]->data.matrix;
+	
+	for(i=0;i<m->width;i++) {
+		for(j=0;j<m->height;j++) {
+			ETree *t = matrix_index(m,i,j);
+			if(t->type!=VALUE_NODE)
+				return makenum_ui(0);
+		}
+	}
+	return makenum_ui(1);
+}
+
+static ETree *
 I_op(ETree * * a, int *exception)
 {
 	ETree *n;
@@ -707,8 +708,10 @@ I_op(ETree * * a, int *exception)
 	}
 
 	/*make us a new empty node*/
-	n = makenum_null();
+	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
 	n->data.matrix = matrix_new();
 	matrix_set_size(n->data.matrix,size,size);
 	
@@ -718,6 +721,25 @@ I_op(ETree * * a, int *exception)
 				makenum_ui(i==j?1:0);
 
 	return n;
+}
+
+static ETree *
+rows_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=MATRIX_NODE) {
+		(*errorout)(_("rows: argument not a matrix"));
+		return NULL;
+	}
+	return makenum_ui(a[0]->data.matrix->height);
+}
+static ETree *
+columns_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=MATRIX_NODE) {
+		(*errorout)(_("columns: argument not a matrix"));
+		return NULL;
+	}
+	return makenum_ui(a[0]->data.matrix->width);
 }
 
 static int
@@ -793,6 +815,468 @@ prime_op(ETree * * a, int *exception)
 	return makenum_ui(g_array_index(primes,unsigned long,num-1));
 }
 
+static void
+poly_cut_zeros(Matrix *m)
+{
+	int i;
+	int cutoff;
+	for(i=m->width-1;i>=1;i--) {
+		ETree *t = matrix_index(m,i,0);
+	       	if(mpw_sgn(t->data.value)!=0)
+			break;
+	}
+	cutoff = i+1;
+	if(cutoff==m->width)
+		return;
+	for(i=cutoff;i<m->width;i++) {
+		ETree *t = matrix_index(m,i,0);
+		if(t) freetree(t);
+		matrix_index(m,i,0) = NULL;
+	}
+	matrix_set_size(m,cutoff,1);
+}
+
+static int
+check_poly(ETree * *a, int args, char *func, int complain)
+{
+	int i,j;
+
+	for(j=0;j<args;j++) {
+		if(a[j]->type!=MATRIX_NODE ||
+		   a[j]->data.matrix->height!=1) {
+			char buf[256];
+			if(!complain) return FALSE;
+			g_snprintf(buf,256,_("%s: arguments not horizontal vectors"),func);
+			(*errorout)(buf);
+			return FALSE;
+		}
+
+		for(i=0;i<a[j]->data.matrix->width;i++) {
+			ETree *t = matrix_index(a[j]->data.matrix,i,0);
+			if(t->type != VALUE_NODE) {
+				char buf[256];
+				if(!complain) return FALSE;
+				g_snprintf(buf,256,_("%s: arguments not numeric only vectors"),func);
+				(*errorout)(buf);
+				return FALSE;
+			}
+		}
+	}
+	return TRUE;
+}
+
+static ETree *
+addpoly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	long size;
+	int i;
+	
+	if(!check_poly(a,2,"addpoly",TRUE))
+		return NULL;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_new();
+	size = MAX(a[0]->data.matrix->width, a[1]->data.matrix->width);
+	matrix_set_size(n->data.matrix,size,1);
+	
+	for(i=0;i<size;i++) {
+		if(i<a[0]->data.matrix->width &&
+		   i<a[1]->data.matrix->width) {
+			ETree *l,*r;
+			mpw_t t;
+			mpw_init(t);
+			l = matrix_index(a[0]->data.matrix,i,0);
+			r = matrix_index(a[1]->data.matrix,i,0);
+			mpw_add(t,l->data.value,r->data.value);
+			matrix_index(n->data.matrix,i,0) = makenum_use(t);
+		} else if(i<a[0]->data.matrix->width) {
+			ETree *r;
+			r = matrix_index(a[0]->data.matrix,i,0);
+			matrix_index(n->data.matrix,i,0) = makenum(r->data.value);
+		} else /*if(i<a[1]->data.matrix->width)*/ {
+			ETree *r;
+			r = matrix_index(a[1]->data.matrix,i,0);
+			matrix_index(n->data.matrix,i,0) = makenum(r->data.value);
+		}
+
+	}
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+subpoly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	long size;
+	int i;
+	
+	if(!check_poly(a,2,"subpoly",TRUE))
+		return NULL;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_new();
+	size = MAX(a[0]->data.matrix->width, a[1]->data.matrix->width);
+	matrix_set_size(n->data.matrix,size,1);
+	
+	for(i=0;i<size;i++) {
+		if(i<a[0]->data.matrix->width &&
+		   i<a[1]->data.matrix->width) {
+			ETree *l,*r;
+			mpw_t t;
+			mpw_init(t);
+			l = matrix_index(a[0]->data.matrix,i,0);
+			r = matrix_index(a[1]->data.matrix,i,0);
+			mpw_sub(t,l->data.value,r->data.value);
+			matrix_index(n->data.matrix,i,0) = makenum_use(t);
+		} else if(i<a[0]->data.matrix->width) {
+			ETree *r;
+			r = matrix_index(a[0]->data.matrix,i,0);
+			matrix_index(n->data.matrix,i,0) = makenum(r->data.value);
+		} else /*if(i<a[1]->data.matrix->width)*/ {
+			ETree *nn,*r;
+			r = matrix_index(a[1]->data.matrix,i,0);
+			nn = makenum_ui(0);
+			mpw_neg(nn->data.value,r->data.value);
+			matrix_index(n->data.matrix,i,0) = nn;
+		}
+	}
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+mulpoly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	long size;
+	int i,j;
+	mpw_t accu;
+	Matrix *m1,*m2;
+	
+	if(!check_poly(a,2,"mulpoly",TRUE))
+		return NULL;
+	m1 = a[0]->data.matrix;
+	m2 = a[1]->data.matrix;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_new();
+	size = m1->width + m2->width;
+	matrix_set_size(n->data.matrix,size,1);
+	
+	for(i=0;i<size;i++)
+		matrix_index(n->data.matrix,i,0) = makenum_ui(0);
+	
+	mpw_init(accu);
+		
+	for(i=0;i<m1->width;i++) {
+		for(j=0;j<m2->width;j++) {
+			ETree *l,*r,*nn;
+			l = matrix_index(m1,i,0);
+			r = matrix_index(m2,j,0);
+			if(mpw_sgn(l->data.value)==0 ||
+			   mpw_sgn(r->data.value)==0)
+				continue;
+			nn = matrix_index(n->data.matrix,i+j,0);
+			mpw_mul(accu,l->data.value,r->data.value);
+			mpw_add(nn->data.value,nn->data.value,accu);
+		}
+	}
+
+	mpw_clear(accu);
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+derpoly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	int i;
+	Matrix *m;
+	
+	if(!check_poly(a,1,"derpoly",TRUE))
+		return NULL;
+
+	m = a[0]->data.matrix;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_new();
+	if(m->width==1) {
+		matrix_set_size(n->data.matrix,1,1);
+		matrix_index(n->data.matrix,0,0) = makenum_ui(0);
+		return n;
+	}
+	matrix_set_size(n->data.matrix,m->width-1,1);
+	
+	for(i=1;i<m->width;i++) {
+		ETree *r;
+		mpw_t t;
+		mpw_init(t);
+		r = matrix_index(m,i,0);
+		mpw_mul_ui(t,r->data.value,i);
+		matrix_index(n->data.matrix,i-1,0) = makenum_use(t);
+	}
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+der2poly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	int i;
+	Matrix *m;
+	
+	if(!check_poly(a,1,"der2poly",TRUE))
+		return NULL;
+
+	m = a[0]->data.matrix;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_new();
+	if(m->width<=2) {
+		matrix_set_size(n->data.matrix,1,1);
+		matrix_index(n->data.matrix,0,0) = makenum_ui(0);
+		return n;
+	}
+	matrix_set_size(n->data.matrix,m->width-2,1);
+	
+	for(i=2;i<m->width;i++) {
+		ETree *r;
+		mpw_t t;
+		r = matrix_index(m,i,0);
+		mpw_init(t);
+		mpw_mul_ui(t,r->data.value,i*(i-1));
+		matrix_index(n->data.matrix,i-2,0) = makenum_use(t);
+	}
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+trimpoly_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	
+	if(!check_poly(a,1,"trimpoly",TRUE))
+		return NULL;
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix = matrix_copy(a[0]->data.matrix,
+				     (ElementCopyFunc)copynode,
+				     NULL);
+	
+	poly_cut_zeros(n->data.matrix);
+
+	return n;
+}
+
+static ETree *
+is_poly_op(ETree * * a, int *exception)
+{
+	if(check_poly(a,1,"is_poly",FALSE))
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+
+static ETree *
+polytostring_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	int i;
+	GString *gs;
+	int any = FALSE;
+	Matrix *m;
+	char *var;
+	
+	if(!check_poly(a,1,"polytostring",TRUE))
+		return NULL;
+	
+	if(a[1]->type!=STRING_NODE) {
+		(*errorout)(_("polytostring: 2nd argument not a string"));
+		return NULL;
+	}
+	
+	m = a[0]->data.matrix;
+	var = a[1]->data.str;
+	
+	gs = g_string_new("");
+
+	for(i=m->width-1;i>=0;i--) {
+		ETree *t;
+		t = matrix_index(m,i,0);
+		if(mpw_sgn(t->data.value)==0)
+			continue;
+		/*positive*/
+		if(mpw_sgn(t->data.value)>0) {
+			if(any) g_string_append(gs," + ");
+			if(i==0)
+				print_etree(gs,NULL,t);
+			else if(mpw_cmp_ui(t->data.value,1)!=0) {
+				print_etree(gs,NULL,t);
+				g_string_append_c(gs,'*');
+			}
+			/*negative*/
+		} else {
+			if(any) g_string_append(gs," - ");
+			else g_string_append_c(gs,'-');
+			mpw_neg(t->data.value,t->data.value);
+			if(i==0)
+				print_etree(gs,NULL,t);
+			else if(mpw_cmp_ui(t->data.value,1)!=0) {
+				print_etree(gs,NULL,t);
+				g_string_append_c(gs,'*');
+			}
+			mpw_neg(t->data.value,t->data.value);
+		}
+		if(i==1)
+			g_string_sprintfa(gs,"%s",var);
+		else if(i>1)
+			g_string_sprintfa(gs,"%s^%d",var,i);
+		any = TRUE;
+	}
+	if(!any)
+		g_string_append(gs,"0");
+
+	GET_NEW_NODE(n);
+	n->type = STRING_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.str = gs->str;
+	
+	g_string_free(gs,FALSE);
+
+	return n;
+}
+
+static ETree *
+ptf_makenew_power(Token *id, int power)
+{
+	ETree *n;
+	ETree *tokn;
+	GET_NEW_NODE(tokn);
+	tokn->type = IDENTIFIER_NODE;
+	tokn->data.id = id;
+	tokn->args = NULL;
+	tokn->nargs = 0;
+
+	if(power == 1)
+		return tokn;
+
+	GET_NEW_NODE(n);
+	n->type = OPERATOR_NODE;
+	n->data.oper = E_EXP;
+	n->args = g_list_append(NULL,tokn);
+	n->args = g_list_append(n->args,makenum_ui(power));
+	n->nargs = 2;
+
+	return n;
+}
+
+static ETree *
+ptf_makenew_term(mpw_t mul, Token *id, int power)
+{
+	ETree *n;
+	
+	if(power==0) {
+		n = makenum(mul);
+	} else if(mpw_cmp_ui(mul,1)==0) {
+		n = ptf_makenew_power(id,power);
+	} else {
+		GET_NEW_NODE(n);
+		n->type = OPERATOR_NODE;
+		n->data.oper = E_MUL;
+		n->args = g_list_append(NULL,makenum(mul));
+		n->args = g_list_append(n->args,ptf_makenew_power(id,power));
+		n->nargs = 2;
+	}
+	return n;
+}
+
+static ETree *
+polytofunc_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	ETree *nn = NULL;
+	int i;
+	Matrix *m;
+
+	static Token *var = NULL;
+	
+	if(!check_poly(a,1,"polytofunc",TRUE))
+		return NULL;
+	
+	if(!var)
+		var = d_intern("x");
+	
+	m = a[0]->data.matrix;
+
+	for(i=m->width-1;i>=0;i--) {
+		ETree *t;
+		t = matrix_index(m,i,0);
+		if(mpw_sgn(t->data.value)==0)
+			continue;
+		
+		if(!nn)
+			nn = ptf_makenew_term(t->data.value,var,i);
+		else {
+			ETree *nnn;
+			GET_NEW_NODE(nnn);
+			nnn->type = OPERATOR_NODE;
+			nnn->data.oper = E_PLUS;
+			nnn->args = g_list_append(NULL,nn);
+			nnn->args =
+				g_list_append(nnn->args,
+					      ptf_makenew_term(t->data.value,
+							       var,i));
+			nnn->nargs = 2;
+			nn = nnn;
+		}
+	}
+	if(!nn)
+		nn = makenum_ui(0);
+
+	GET_NEW_NODE(n);
+	n->type = FUNCTION_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.func = d_makeufunc(NULL,nn,g_list_append(NULL,var),1);
+	n->data.func->context = -1;
+
+	return n;
+}
+
 /*add the routines to the dictionary*/
 void
 funclib_addall(void)
@@ -826,12 +1310,26 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("Re"),Re_op,1));
 	d_addfunc(d_makebifunc(d_intern("Im"),Im_op,1));
 	d_addfunc(d_makebifunc(d_intern("I"),I_op,1));
+	d_addfunc(d_makebifunc(d_intern("rows"),rows_op,1));
+	d_addfunc(d_makebifunc(d_intern("columns"),columns_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_value_only"),is_value_only_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_null"),is_null_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_value"),is_value_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_string"),is_string_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_matrix"),is_matrix_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_function"),is_function_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_function_ref"),is_function_ref_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_complex"),is_complex_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_integer"),is_integer_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_rational"),is_rational_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_float"),is_float_op,1));
-	d_addfunc(d_makebifunc(d_intern("is_null"),is_null_op,1));
+	d_addfunc(d_makebifunc(d_intern("addpoly"),addpoly_op,2));
+	d_addfunc(d_makebifunc(d_intern("subpoly"),subpoly_op,2));
+	d_addfunc(d_makebifunc(d_intern("mulpoly"),mulpoly_op,2));
+	d_addfunc(d_makebifunc(d_intern("derpoly"),derpoly_op,1));
+	d_addfunc(d_makebifunc(d_intern("der2poly"),der2poly_op,1));
+	d_addfunc(d_makebifunc(d_intern("trimpoly"),trimpoly_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_poly"),is_poly_op,1));
+	d_addfunc(d_makebifunc(d_intern("polytostring"),polytostring_op,2));
+	d_addfunc(d_makebifunc(d_intern("polytofunc"),polytofunc_op,1));
 }

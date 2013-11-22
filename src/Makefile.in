@@ -123,6 +123,8 @@ VERSION = @VERSION@
 XPM_LIBS = @XPM_LIBS@
 YACC = @YACC@
 ZVT_LIBS = @ZVT_LIBS@
+cflags_set = @cflags_set@
+cxxflags_set = @cxxflags_set@
 l = @l@
 
 Utilitiesdir = $(datadir)/apps/Utilities
@@ -377,7 +379,7 @@ genius.o: genius.c ../config.h calc.h structs.h mpwrap.h matrix.h util.h
 gnome-genius.o: gnome-genius.c ../config.h gnome-genius.h calc.h \
 	structs.h mpwrap.h matrix.h util.h
 lexer.o: lexer.c mpwrap.h eval.h structs.h matrix.h dict.h calc.h \
-	parse.h
+	parse.h util.h
 matrix.o: matrix.c matrix.h
 mpwrap.o: mpwrap.c calc.h structs.h mpwrap.h matrix.h util.h mymath.h
 mymath.o: mymath.c mpwrap.h mymath.h

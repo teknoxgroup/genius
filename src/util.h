@@ -43,4 +43,10 @@ char * prependstr(char *s,char *p);
 void stack_push(GList **stack, gpointer data);
 gpointer stack_pop(GList **stack);
 
+/*escape/unescape \n\t\r\b\a\"\\ ... unescape also \<anything>==<anything>,
+  nounescape means characters which to leave escaped*/
+char *unescape_string(char *s, char *end, char *nounescape);
+/*escape also "'s and \'s*/
+char *escape_string(char *s);
+
 #endif

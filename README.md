@@ -120,27 +120,61 @@ round		1 (value)		rounds the value
 floor		1 (value)		greatest integer <= value
 ceil		1 (value)		least integer >= value
 trunc		1 (value)		truncate the number to an integer
-Re		1 (value)		return the real part of a complex number
-Im		1 (value)		return the imaginary part of a complex number
-I		1 (integer)		return an identity matrix of the size n
-
-is_value	1 			returns true if the argument is a
-					scalar value
-is_string	1 			returns true if the argument is a
-					string
-is_matrix	1 			returns true if the argument is a
-					matrix
-is_complex	1 			returns true if the argument is a
+Re		1 (value)		get the real part of a complex number
+Im		1 (value)		get the imaginary part of a
 					complex number
-is_integer	1 			returns true if the argument is an
-					integer
-is_rational	1 			returns true if the argument is an
-					rational, note that it is false if
-					it's an integer!
-is_float	1			returns true if the argument is a
-					floating point number
-is_null		1			returns true if the argument is a
+I		1 (integer)		make an identity matrix of the size n
+rows		1 (matrix)		get the number of rows in a matrix
+columns		1 (matrix)		get the number of columns in a matrix
+is_value_only	1 (matrix)		are all the nodes in the matrix values
+
+is_null		1 (anything)		returns true if the argument is a
 					null (empty result not a 0)
+is_value	1 (anything)		returns true if the argument is a
+					scalar value
+is_string	1 (anything)		returns true if the argument is a
+					string
+is_matrix	1 (anything)		returns true if the argument is a
+					matrix
+is_function	1 (anything)		returns true if the argument is a
+					function (anonymous)
+is_function_ref	1 (anything)		returns true if the argument is a
+					reference variable to a function
+is_complex	1 (value)		returns true if the argument is a
+					complex number, it will fail if
+					the argument is not a value
+is_integer	1 (value)		returns true if the argument is an
+					integer, it will fail if
+					the argument is not a value
+is_rational	1 (value)		returns true if the argument is an
+					rational, note that it is false if
+					it's an integer! also it will fail if
+					the argument is not a value
+is_float	1 (value)		returns true if the argument is a
+					floating point number, it will fail if
+					the argument is not a value
+
+is_poly		1 (vector)		does this vector look like a
+					polynomial (horizontal with value
+					nodes only)
+trimpoly	1 (vector)		trim the 0's off of the polynomial
+					high powers
+addpoly		2 (vector,vector)	add two polynomials
+subpoly		2 (vector,vector)	subtract two polynomials
+mulpoly		2 (vector,vector)	multiply two polynomials
+derpoly		1 (vector)		returns the first derivative of
+					a polynomial
+der2poly	1 (vector)		returns the second derivative of
+					a polynomial
+polytostring	2 (vector,string)	convert the polynomial to a string
+					which is a humal (and GEL) readable
+					expression, the string argument is
+					what is to be used for the variable
+					name (such as "x")
+polytofunc	1 (vector)		convert the polynomial into a function 
+					reference which you can then assign
+					to an identifier for use
+
 
 Functions in the standard library (lib.gel):
 
@@ -157,6 +191,12 @@ prod		3 (from,to,function)	calculates the product of the
 nPr		2 (integer,integer)	calculate permutations
 nCr		2 (integer,integer)	calculate combinations
 fib		1 (integer)		returns n'th fibbonachi number
+ref		1 (matrix)		reduce the matrix to row-echelon form
+					using the gaussian elimination method
+rref		1 (matrix)		reduce the matrix to reduced
+					row-echelon form, this is usefull for
+					solving systems of linear equations
+trace		1 (matrix)		calculate the trace of the matrix
 
 
 To define a function do:
@@ -196,7 +236,8 @@ yeilds 5
 This will require some parenthesizing to make it unambiguous sometimes,
 especially if the ; is not the top most primitive. This slightly differs
 from other programming languages where the ; is a terminator of statements,
-whereas in GEL it's actually a binary operator.
+whereas in GEL it's actually a binary operator. If you are familiar with
+pascal this should be second nature.
 
 The GEL operators:
 
@@ -260,6 +301,19 @@ And now the comparison operators:
     if left side is larger
 
 To build up logical expressions use the words "not","and","or","xor"
+
+"not" and "and" are special beasts as they evaluate their arguemnts one by
+one, so the usual trick for conditional evaluation works here as well.
+(E.g. "1 or a=1" will not set a=1 since the first argument was true)
+
+You can also use break and continue, in the same manner as they are used
+in C. Such as in (bn are booleans s is just some statement):
+
+while(b1) do (
+	if(b2) break
+	else if(b3) continue;
+	s1
+)
 
 Null:
 
@@ -335,7 +389,8 @@ You can also use function references for that:
     define b(x){x*x};
     f(&b,2)
 
-Matrix entry:
+
+Matrix support:
 
 To enter matrixes use one of the following two syntaxes. You can either
 enter the matrix separating values by commas and rows by semicolons, or
@@ -403,6 +458,26 @@ You can transpose a matrix by using the ' operator, example:
 
 We transpose the second vector to make matrix multiplication possible.
 
+
+Strings:
+
+You can enter strings into gel and store them as values inside variables
+and pass them to functions. (And do just about anything that values can
+do). You can also concatenate the strings with something else (anything),
+with the plus operator. So say:
+
+a=2+3;"The result is: "+a
+
+Will create a string "The result is: 5". You can also use C-like escape
+sequences \n,\t,\b,\a,\r, to get a \ or " into the string you can qoute it
+with a \. Example:
+
+"Slash: \\ Quotes: \" Tabs: \t1\t2\t3"
+
+will make a string:
+Slash: \ Quotes: " Tabs: 	1	2	3
+
+
 Error handeling:
 
 If you detect an error in your function, you can bail out of it. You can
@@ -412,6 +487,46 @@ went really wrong and you want to completely kill the current computation,
 you can use "exception".
 
 Look at lib.gel for some examples.
+
+Polynomials:
+
+Genius can do some things on polynomials. Polynomials in genius are just
+horizontal vectors with value only nodes. The power of the term is the
+position in the vector, with the first position being 0. So, [1,2,3]
+translates to a polynomial of "1 + 2*x + 3*x^2".
+
+You can add, subtract and multiply polynomials using the addpoly,
+subpoly and mulpoly functions and you can print out a human readable
+string using the polytostring function. This function takes the polynomial
+vector as the first argument and a string to use as the variable as the
+second argument and returns a string. You can also get a funcion
+representation of the polynomial so that you can evaluate it. This is
+done by the polytofunc function, which returns an anonymous function which
+you can assign to something.
+
+f = polytofunc([0,1,1])
+f(2)
+
+Look at the function table for the rest of polynomial functions.
+
+Loading external programs:
+
+Sometimes you have a larger program that you wrote into a file and want
+to read in that file, you have two options, you can keep the functions
+you use most inside a ~/.geniusinit file. Or if you want to load up a
+file in a middle of a session (or from within another file), you can
+type "load <list of filenames>" at the prompt. This has to be done
+on the top level and not inside any function or whatnot, and it cannot
+be part of any expression. It also has a slightly different syntax then the
+rest of gnome, more similiar to a shell. You can enter the file in
+quotes, but you can't then add more then one file on the command line,
+and there can only be one set of quotes and they have to be the outermost
+characters. If you use the '' quotes, you will get exactly the string
+that you typed, if you use the "" quotes, special characters will be
+unescaped as they are for strings. Example:
+
+load program1.gel program2.gel
+load "Weird File Name With SPACES.gel"
 
 
 EXAMPLE PROGRAM in GEL:

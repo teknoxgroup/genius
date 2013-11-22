@@ -20,14 +20,19 @@
  */
 %{
 #include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include "mpwrap.h"
 #include "eval.h"
 #include "dict.h"
 #include "calc.h"
 #include "parse.h"
+#include "util.h"
 #ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
+#include <readline/history.h>
 #endif
 
 int lex_fd[2];
@@ -56,13 +61,16 @@ static int matrix_entry=0;
 			got_eof = TRUE;					\
 			return '\n';					\
 		}							\
-		if(!*s)							\
+		if(!*s)	{						\
+			free(s);					\
 			continue;					\
+		}							\
 		add_history(s);						\
 									\
 		/*this seems ugly but for some reason that's the only	\
 		  way it works*/					\
 		close(lex_fd[0]);					\
+		fclose(yyin);						\
 									\
 		pipe(lex_fd);						\
 		yyin=fdopen(lex_fd[0],"r");				\
@@ -70,6 +78,7 @@ static int matrix_entry=0;
 		write(lex_fd[1],s,strlen(s));				\
 		write(lex_fd[1],"\n",1);				\
 		close(lex_fd[1]);					\
+		free(s);						\
 		break;							\
 	}								\
 }
@@ -97,24 +106,60 @@ static int matrix_entry=0;
 
 #.*$		; /*comment, ignore*/
 
-\;		{ DO_RET; return SEPAR; }
-
-\"[^"]*\"	{ 
+^[ 	]*load[ 	]+\"([^"]|\\\")*\"[ 	]*$ {
+			char *s;
+			char *end;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'"')+1; /*find the beginning*/
+			end=strrchr(yytext,'"'); /*find the end*/
+			yylval.id = unescape_string(s,end,NULL);
 			DO_RET;
-			yylval.id = g_strdup(&yytext[1]);
+			return LOADFILE;
+		}
+
+^[ 	]*load[ 	]+\'([^']|\\\')*\'[ 	]*$ {
+			char *s;
+			char *end;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'\'')+1; /*find the beginning*/
+			end=strrchr(yytext,'\''); /*find the end*/
+			yylval.id = g_strndup(s,end-s);
+			DO_RET;
+			return LOADFILE;
+		}
+
+^[ 	]*load[ 	]+[^ 	].*$ {
+			char *s;
+			char *end;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'d')+1; /*move after the load*/
+			/*btw from the above RE we know this will work*/
+			while(*s==' ' || *s=='\t')
+				s++;
+			yylval.id = g_strdup(s);
+			DO_RET;
+			return LOADFILE_GLOB;
+		}
+
+";"		{ DO_RET; return SEPAR; }
+
+\"([^"]|\\\")*\"	{ 
+			DO_RET;
+			yylval.id = unescape_string(&yytext[1],NULL,NULL);
+			/*kill the trailing "*/
 			yylval.id[strlen(yylval.id)-1]='\0';
 			return STRING;
 		}
 
 ==		{ NO_RET; return EQ_CMP; }
 !=		{ NO_RET; return NE_CMP; }
-\<=\>		{ NO_RET; return CMP_CMP; }
+"<=>"		{ NO_RET; return CMP_CMP; }
 
-\<=		{ NO_RET; return LE_CMP; }
-\>=		{ NO_RET; return GE_CMP; }
+"<="		{ NO_RET; return LE_CMP; }
+">="		{ NO_RET; return GE_CMP; }
 
-\<		{ NO_RET; return LT_CMP; }
-\>		{ NO_RET; return GT_CMP; }
+"<"		{ NO_RET; return LT_CMP; }
+">"		{ NO_RET; return GT_CMP; }
 
 =		{ NO_RET; return EQUALS; }
 
@@ -136,11 +181,19 @@ call		{ NO_RET; return CALL; }
 return		{ NO_RET; return RETURNTOK; }
 bailout		{ DO_RET; return BAILOUT; }
 exception	{ DO_RET; return EXCEPTION; }
+continue	{ DO_RET; return CONTINUE; }
+break		{ DO_RET; return BREAK; }
 
-@[(]		{
+"@("		{
 			parenth_depth++;
 			NO_RET;
 			return AT;
+		}
+\.\.		{
+			REJECT;
+			/*FIXME:*/
+			/*NO_RET;
+			return REGION_SEP;*/
 		}
 		
 [[][\t ]*	{
@@ -170,7 +223,7 @@ exception	{ DO_RET; return EXCEPTION; }
 			return yytext[0];
 		}
 
-[a-zA-Z][a-zA-Z0-9_]*	{
+[a-zA-Z_][a-zA-Z0-9_]*	{
 				/* identifier*/
 				yylval.id = g_strdup(yytext);
 				DO_RET;
@@ -219,6 +272,7 @@ exception	{ DO_RET; return EXCEPTION; }
 			if(base>36) { g_free(s); REJECT; }
 			mpw_init(yylval.val);
 			mpw_set_str_int(yylval.val,s,base);
+			g_free(s);
 			DO_RET;
 			return NUMBER;
 		}

@@ -79,6 +79,7 @@ void mpw_set_default_prec(unsigned long int i);
 
 /*initialize a number*/
 void mpw_init(mpw_ptr op);
+void mpw_init_set(mpw_ptr rop,mpw_ptr op);
 
 /*clear memory held by number*/
 void mpw_clear(mpw_ptr op);

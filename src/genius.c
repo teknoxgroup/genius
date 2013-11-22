@@ -28,6 +28,7 @@
 #include <glib.h>
 
 #include <string.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "calc.h"
@@ -47,7 +48,7 @@ calcstate_t curstate={
 extern calc_error_t error_num;
 extern int got_eof;
 
-void
+static void
 puterror(char *s)
 {
 	fprintf(stderr,"%s\n",s);
@@ -58,6 +59,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	int inter;
+	int use_readline = TRUE;
 	int lastarg = FALSE;
 	GList *files = NULL;
 	char *file;
@@ -85,6 +87,10 @@ main(int argc, char *argv[])
 			curstate.scientific_notation = TRUE;
 		else if(strcmp(argv[i],"--noscinot")==0)
 			curstate.scientific_notation = FALSE;
+		else if(strcmp(argv[i],"--readline")==0)
+			use_readline = TRUE;
+		else if(strcmp(argv[i],"--noreadline")==0)
+			use_readline = FALSE;
 		else if(strcmp(argv[i],"--help")==0) {
 			puts("Genius "VERSION" usage:\n\n"
 			     "genius [options] [files]\n\n"
@@ -94,6 +100,7 @@ main(int argc, char *argv[])
 			     "\t                  \tmiddle of calculations [OFF]\n"
 			     "\t--[no]floatresult \tAll results as floats [OFF]\n"
 			     "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
+			     "\t--[no]readline    \tUse readline even if it is available [ON]\n"
 			     );
 			exit(1);
 		}
@@ -157,7 +164,7 @@ main(int argc, char *argv[])
 	for(;;) {
 		while(1/*!feof(fp)*/) {
 #ifdef WITH_READLINE_SUPPORT
-			if(inter) /*use readline mode*/
+			if(inter && use_readline) /*use readline mode*/
 				evalexp(NULL,NULL,stdout,"= ",curstate,puterror,TRUE);
 			else
 #endif

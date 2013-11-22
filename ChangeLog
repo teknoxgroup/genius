@@ -1,3 +1,114 @@
+Thu Apr 15 20:26:46 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.3.1
+
+Thu Apr 15 20:24:47 1999  George Lebl  <jirka@5z.com>
+
+	* src/{eval.c,dict.c,parse.y,lexer.l,calc.c}: fix many memory
+	  leaks
+
+	* src/genius.c: added a switch to run in non-readline mode although
+	  that doesn't work too well
+
+	* configure.in,src/*.c: added the standard gnome compile warnings
+	  and corrected the ones I could
+
+	* src/{parse.y,lexer.l}: add syntax for future replacement of the
+	  GET_ROW and GET_COLUMN by GET_RANGE which will be far more
+	  flexible (and won't change current syntax)
+
+	* src/lib.gel: (rref) corrected out of bounds problem for some
+	  matrixes
+
+Thu Apr 15 16:40:47 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l,src/calc.c,src/util.[ch]: accept escaped characters
+	  inside strings, print escaped strings
+
+	* src/lexer.l,src/calc.c: add a load command that loads files with
+	  gel code
+
+	* README: update
+
+Thu Apr 15 04:08:58 1999  George Lebl  <jirka@5z.com>
+
+	* src/matrix.c: fix segfault problem with setting a matrix size
+
+Wed Apr 14 12:22:30 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: got rid of the gauss function and replaced it with
+	  more general ref and rref functions, and added a trace function
+
+	* src/mpwrap.c: fixed an integer division bug with negative
+	  denominators
+
+	* src/geniustests.txt: added more tests
+
+	* README: updated for the above changes
+
+Wed Apr 14 04:13:42 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: 'or' and 'and' now evaluate their arguments as they
+	  go instead of all of them upfront, so that the conditial
+	  evaluation tricks works as well.
+
+	* src/{lexer.l,parse.y,eval.[ch],calc.c}: added break and continue
+	  statements for loops
+
+	* src/lib.gel: implemented gauss, a function to solve systems of
+	  equations using the gauss method
+
+	* src/geniustests.txt: added some new tests for new things
+
+	* src/funclib.c: added is_value_only function to test matrixes
+	  for being all value matrixes
+
+	* README: updated
+
+Tue Apr 13 23:56:08 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: fix a segfault bug with multiplication
+
+	* src/funclib.c: add derpoly and der2poly functions that take
+	  derivatives of polynomials
+
+	* src/eval.[ch],src/funclib.c: add a new function to speed up some
+	  operations when making new value nodes
+
+	* README: update for the above functions
+
+Tue Apr 13 21:04:54 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c: add two new functions is_function and
+	  is_function_ref, usefull for checking arguments
+
+	* src/lib.gel: check arguments better for library functions
+
+	* src/eval.c: keep a fake token around when evaluating a reference
+	  to an anonymous function so that we can retrieve the function
+	  later
+
+	* src/funclib.c: add rows and columns function for checking sizes
+	  of matrixes
+
+	* README: update for new functions
+
+Tue Apr 13 19:44:47 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c: added a whole bunch of polynomial manipulation
+	  functions, now that we can do vectors
+
+	* src/geniustests.txt: added tests for the above
+
+	* README: updated for polynomials
+
+	* configure.in: raise to 0.3.1 so that it doesn't get confused with
+	  the released version
+
+	* po/*: updates from release 0.3.0
+
+	* src/Makefile.am: updates from release 0.3.0
+
 Tue Apr 13 01:16:35 1999  George Lebl  <jirka@5z.com>
 
 	* src/{parse.y,eval.c}: add new transpose "'" operator

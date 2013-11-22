@@ -1234,7 +1234,7 @@ mpwl_mul_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 		if(rop!=op) {
 			mpwl_clear(rop);
 			mpwl_init_type(rop,MPW_INTEGER);
-			mpz_set(rop->data.ival,op->data.ival);
+			mpz_set_si(rop->data.ival,op->data.nval);
 			mpz_mul_ui(rop->data.ival,rop->data.ival,i);
 		} else {
 			mpwl_make_type(rop,MPW_INTEGER);
@@ -1317,6 +1317,11 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		mpwl_make_int(&r,FALSE);
 		break;
 	case MPW_NATIVEINT:
+		if(op1->data.nval%op2->data.nval == 0) {
+			mpwl_init_type(&r,MPW_NATIVEINT);
+			r.data.nval = op1->data.nval/op2->data.nval;
+			break;
+		}
 		mpwl_init_type(&r,MPW_RATIONAL);
 		if(op2->data.nval>0)
 			mpq_set_si(r.data.rval,
@@ -1324,7 +1329,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 				   op2->data.nval);
 		else
 			mpq_set_si(r.data.rval,
-				   op1->data.nval,
+				   -(op1->data.nval),
 				   -(op2->data.nval));
 		break;
 	}
@@ -1368,6 +1373,12 @@ mpwl_div_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 		mpwl_clear_extra_type(rop,t);
 		break;
 	case MPW_NATIVEINT:
+		if(op->data.nval%i == 0) {
+			long n = op->data.nval;
+			mpwl_init_type(rop,MPW_NATIVEINT);
+			rop->data.nval = n/i;
+			break;
+		}
 		t = rop->type;
 		mpwl_make_extra_type(rop,MPW_RATIONAL);
 		rop->type = MPW_RATIONAL;
@@ -1413,6 +1424,12 @@ mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op)
 		mpwl_clear_extra_type(rop,t);
 		break;
 	case MPW_NATIVEINT:
+		if(i%op->data.nval == 0) {
+			long n = op->data.nval;
+			mpwl_init_type(rop,MPW_NATIVEINT);
+			rop->data.nval = i/n;
+			break;
+		}
 		t = rop->type;
 		mpwl_make_extra_type(rop,MPW_RATIONAL);
 		rop->type = MPW_RATIONAL;
@@ -1420,7 +1437,7 @@ mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op)
 			mpq_set_ui(rop->data.rval,i,
 				   op->data.nval);
 		else
-			mpq_set_ui(rop->data.rval,i,
+			mpq_set_ui(rop->data.rval,-i,
 				   -(op->data.nval));
 		mpwl_clear_extra_type(rop,t);
 		break;
@@ -1715,7 +1732,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 
 	if(mpz_cmp_ui(op2->data.ival,ULONG_MAX)>0) {
 		MpwRealNum r={0};
-		int reverse;
+		int reverse = FALSE;;
 		
 		if(mpz_sgn(op2->data.ival)<0) {
 			reverse = TRUE;
@@ -2970,6 +2987,8 @@ mpw_make_float(mpw_ptr rop)
 void
 mpw_init_mp(void)
 {
+	static int done = FALSE;
+	if(done) return;
 	mp_set_memory_functions(my_malloc,my_realloc,my_free);
 	GET_NEW_REAL(zero);
 	mpwl_init_type(zero,MPW_NATIVEINT);
@@ -2979,6 +2998,7 @@ mpw_init_mp(void)
 	mpwl_init_type(one,MPW_NATIVEINT);
 	mpwl_set_ui(one,1);
 	one->alloc.usage = 1;
+	done = TRUE;
 }
 
 char *

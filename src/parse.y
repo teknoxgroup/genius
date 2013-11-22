@@ -35,6 +35,8 @@ extern calc_error_t error_num;
 extern int got_eof;
 extern ETree *free_trees;
 extern EFunc *free_funcs;
+extern char *loadfile;
+extern char *loadfile_glob;
 
 #define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
 
@@ -58,7 +60,7 @@ extern EFunc *free_funcs;
 	ETree * tree; \
 	GET_NEW_NODE(tree); \
 	tree->type = STRING_NODE; \
-	tree->data.str = g_strdup(ID); \
+	tree->data.str = ID; \
 	tree->args = NULL; \
 	tree->nargs = 0; \
 	stack_push(&evalstack,tree); \
@@ -105,6 +107,7 @@ push_func(void)
 		memset(func,0,sizeof(EFunc));
 	}
 	
+	func->id = NULL;
 	func->type = USER_FUNC;
 	func->context = -1;
 	func->nargs = i;
@@ -185,6 +188,8 @@ push_matrix_row(void)
 	tree->nargs = i;
 
 	stack_push(&evalstack,tree);
+	
+	return TRUE;
 }
 	
 /*gather all expressions up until a row start marker and push the
@@ -286,17 +291,19 @@ push_null(void)
 
 %token STARTTOK
 
+%token LOADFILE LOADFILE_GLOB
+
 %token <val> NUMBER
 %token <id> STRING
 %token <id> FUNCID
 
 %token DEFINE CALL
 
-%token RETURNTOK BAILOUT EXCEPTION
+%token RETURNTOK BAILOUT EXCEPTION CONTINUE BREAK
 
 %token WHILE UNTIL DO IF THEN ELSE
 
-%token AT
+%token AT REGION_SEP
 
 %token SEPAR EQUALS
 
@@ -331,6 +338,8 @@ push_null(void)
 %%
 
 fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
+	|	STARTTOK LOADFILE '\n' { loadfile = $<id>2; YYACCEPT; }
+	|	STARTTOK LOADFILE_GLOB '\n' { loadfile_glob = $<id>2; YYACCEPT; }
 	|	STARTTOK '\n' { YYACCEPT; }
 	|	STARTTOK expr SEPAR '\n' { push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; }
 	|	error '\n' { return_ret = TRUE; yyclearin; YYABORT; }
@@ -360,10 +369,14 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr '\''		{ PUSH_ACT(E_TRANSPOSE); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
-	|	expr AT expr ',' expr ')'
-					{ PUSH_ACT(E_GET_ELEMENT); }
+	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
+	|	expr AT reg ',' expr ')' { PUSH_ACT(-1/*FIXME:*/); }
+	|	expr AT expr ',' reg ')' { PUSH_ACT(-1/*FIXME:*/); }
+	|	expr AT reg ',' reg ')' { PUSH_ACT(-1/*FIXME:*/); }
 	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW); }
+	|	expr AT reg ',' ')'	{ PUSH_ACT(-1/*FIXME:*/); }
 	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COLUMN); }
+	|	expr AT ',' reg ')'	{ PUSH_ACT(-1/*FIXME:*/); }
 	|	'[' matrixrows ']'	{ if(!push_matrix()) {SYNTAX_ERROR;} }
 	|	WHILE expr DO expr	{ PUSH_ACT(E_WHILE_CONS); }
 	|	UNTIL expr DO expr	{ PUSH_ACT(E_UNTIL_CONS); }
@@ -389,9 +402,10 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
 	|	BAILOUT			{ PUSH_ACT(E_BAILOUT); }
 	|	EXCEPTION		{ PUSH_ACT(E_EXCEPTION); }
-	|	NUMBER			{ stack_push(&evalstack,makenum($1));
-					  mpw_clear($1);
-					}
+	|	CONTINUE		{ PUSH_ACT(E_CONTINUE); }
+	|	BREAK			{ PUSH_ACT(E_BREAK); }
+	|	NUMBER			{ stack_push(&evalstack,
+						     makenum_use($<val>1)); }
 	|	STRING			{ PUSH_STRING($<id>1); }
 	|	'.'			{ push_null(); }
 	;
@@ -399,7 +413,7 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 deref:		'*' ident		{ PUSH_ACT(E_DEREFERENCE); }
 	;
 	
-ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); }
+ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); g_free($<id>1); }
 	;
 	
 funcdef:	'(' identlist')' '{' expr '}'	{ if(!push_func()) {SYNTAX_ERROR;} }
@@ -417,6 +431,9 @@ exprlist:	exprlist ',' expr
 	
 matrixrows:	matrixrows ':' exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} }
 	|	exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
+	;
+	
+reg:		expr REGION_SEP expr	{/*FIXME:*/;}
 	;
 	
 %%

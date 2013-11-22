@@ -124,6 +124,8 @@ VERSION = @VERSION@
 XPM_LIBS = @XPM_LIBS@
 YACC = @YACC@
 ZVT_LIBS = @ZVT_LIBS@
+cflags_set = @cflags_set@
+cxxflags_set = @cxxflags_set@
 l = @l@
 
 SUBDIRS = intl po macros src

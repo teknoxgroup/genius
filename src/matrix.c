@@ -103,7 +103,7 @@ matrix_set_size(Matrix *matrix, int width, int height)
 	matrix->fullsize = (width+10)*(height+10);
 	na = g_ptr_array_new();
 	g_ptr_array_set_size(na,matrix->fullsize);
-	memset(matrix->data->pdata,0,matrix->fullsize*sizeof(void *));
+	memset(na->pdata,0,matrix->fullsize*sizeof(void *));
 	
 	for(i=0;i<matrix->height;i++) {
 		memcpy(na->pdata+((width+10)*i)*sizeof(void *),matrix->data->pdata+(matrix->realwidth*i)*sizeof(void *),matrix->width*sizeof(void *));
@@ -154,7 +154,7 @@ matrix_copy(Matrix *source, ElementCopyFunc el_copy, gpointer func_data)
 	Matrix *matrix;
 	int i,j;
 
-	g_return_if_fail(source != NULL);
+	g_return_val_if_fail(source != NULL,NULL);
 	
 	matrix = matrix_new();
 	
@@ -194,7 +194,7 @@ matrix_transpose(Matrix *matrix)
 	int i,j;
 	Matrix *new;
 
-	g_return_if_fail(matrix != NULL);
+	g_return_val_if_fail(matrix != NULL,NULL);
 	
 	new = matrix_new();
 
