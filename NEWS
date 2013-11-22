@@ -1,3 +1,32 @@
+Changes to 1.0.17
+
+* Better precision for graphs especially when zoomed it a lot, and make font
+  smaller if needed
+* Line plots and parametric plots now allow "fit dependent axis" automatically
+  when y limits are unspecified.  And this is the default in the UI
+* Add export of graphs to PDF directly
+* Line plot step size is adaptive, also line plots now detect jumps and do not
+  draw a connecting line, try plotting UnitStep for example
+* Use arrow keys to move around a line plot
+* left-right arrow keys rotate surface plot
+* All plots are now antialiased on the screen (due to GtkExtra update and
+  cairo usage).
+* Update internal GtkExtra to 3.0.5, and forward port all our changes/fixes
+  (this gets us closer to supporting GTK+3 at some point)
+* Completion for "help on function" in the GUI
+* Fix FindRootBisection and FindRootMullersMethod
+* Factors is now a lot faster on very large numbers (as fast as Factorize)
+* Fix placement of labels on surface plots
+* A few small fixes and updates to the documentation
+* A few minor bugfixes
+* Update mersenne primes (new one is known)
+* Translation updates (Daniel Mustieles, Marek Černocký, Dimitris Spingos,
+  Jiro Matsuzawa, Kjartan Maraas, Martin Srebotnjak, Matej Urbančič,
+  Gil Forcada, Alexandre Franke, Joe Hansen, Miguel Rodríguez)
+
+* During making of these changes the author (Jiri) was partially supported by
+  NSF grant DMS 0900885 and the University of Wisconsin-Madison
+
 Changes to 1.0.16
 
 * Add SurfacePlotData and SurfacePlotDataGrid functions to draw arbitrary

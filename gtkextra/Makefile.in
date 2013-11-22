@@ -78,9 +78,10 @@ am_libgtkextra_genius_a_OBJECTS = $(am__objects_1) \
 	gtkplotcanvasrectangle.$(OBJEXT) gtkplotcanvastext.$(OBJEXT) \
 	gtkplotcsurface.$(OBJEXT) gtkplotdata.$(OBJEXT) \
 	gtkplotdt.$(OBJEXT) gtkplotflux.$(OBJEXT) gtkplotgdk.$(OBJEXT) \
-	gtkplotpc.$(OBJEXT) gtkplotpixmap.$(OBJEXT) \
-	gtkplotpolar.$(OBJEXT) gtkplotprint.$(OBJEXT) \
-	gtkplotps.$(OBJEXT) gtkplotsurface.$(OBJEXT)
+	gtkplotcairo.$(OBJEXT) gtkplotpc.$(OBJEXT) \
+	gtkplotpixmap.$(OBJEXT) gtkplotpolar.$(OBJEXT) \
+	gtkplotprint.$(OBJEXT) gtkplotps.$(OBJEXT) \
+	gtkplotsurface.$(OBJEXT)
 libgtkextra_genius_a_OBJECTS = $(am_libgtkextra_genius_a_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -354,6 +355,7 @@ EXTRA_LIBRARIES = \
 EXTRA_DIST = gtkextra-marshal.list
 public_h_sources = \
 	gtkextra.h		\
+	gtkextra-compat.h	\
 	gtkpsfont.h		\
 	gtkplot.h		\
 	gtkplot3d.h		\
@@ -373,6 +375,7 @@ public_h_sources = \
 	gtkplotdt.h		\
 	gtkplotflux.h		\
 	gtkplotgdk.h		\
+	gtkplotcairo.h		\
 	gtkplotpc.h		\
 	gtkplotpixmap.h		\
 	gtkplotpolar.h		\
@@ -406,6 +409,7 @@ libgtkextra_genius_a_SOURCES = \
 	gtkplotdt.c		\
 	gtkplotflux.c		\
 	gtkplotgdk.c		\
+	gtkplotcairo.c		\
 	gtkplotpc.c		\
 	gtkplotpixmap.c		\
 	gtkplotpolar.c		\
@@ -469,6 +473,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotbox.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcairo.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcandle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvas.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvasellipse.Po@am__quote@

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2013 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -71,6 +71,7 @@ void gp_push_null(void) GEL_WEAK_FUNC;
 	GEL_GET_NEW_NODE(tree); \
 	tree->type = GEL_IDENTIFIER_NODE; \
 	tree->id.id = d_intern(ID); \
+	tree->id.uninitialized = FALSE; \
 	gel_stack_push(&gel_parsestack,tree); \
 	g_free (ID); \
 }

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 2003-2012 Jiri (George) Lebl
+ * Copyright (C) 2003-2013 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -66,6 +66,7 @@ static GtkWidget *plot_resetzoom_item = NULL;
 static GtkWidget *plot_print_item = NULL;
 static GtkWidget *plot_exportps_item = NULL;
 static GtkWidget *plot_exporteps_item = NULL;
+static GtkWidget *plot_exportpdf_item = NULL;
 static GtkWidget *plot_exportpng_item = NULL;
 
 static GtkWidget *view_menu_item = NULL;
@@ -180,7 +181,7 @@ static gboolean lineplot_draw_legends = TRUE;
 static gboolean lineplot_draw_legends_cb = TRUE;
 static gboolean lineplot_draw_labels = TRUE;
 static gboolean lineplot_draw_labels_cb = TRUE;
-/* static gboolean lineplot_fit_dependent_axis_cb = TRUE; */
+static gboolean lineplot_fit_dependent_axis_cb = TRUE;
 static gboolean vectorfield_normalize_arrow_length = FALSE;
 static gboolean vectorfield_normalize_arrow_length_cb = FALSE;
 static gboolean vectorfield_normalize_arrow_length_parameter = FALSE;
@@ -189,7 +190,9 @@ static gboolean surfaceplot_draw_legends_cb = TRUE;
 static gboolean surfaceplot_fit_dependent_axis_cb = TRUE;
 
 static GtkWidget* surfaceplot_dep_axis_buttons = NULL;
-/* static GtkWidget* lineplot_dep_axis_buttons = NULL; */
+static GtkWidget* lineplot_dep_axis_buttons = NULL;
+static GtkWidget* lineplot_depx_axis_buttons = NULL;
+static GtkWidget* lineplot_fit_dep_axis_checkbox = NULL;
 
 /* Replotting info */
 static GelEFunc *plot_func[MAXFUNC] = { NULL };
@@ -308,7 +311,9 @@ static void plot_axis (void);
 
 /* lineplots */
 static void plot_functions (gboolean do_window_present,
-			    gboolean from_gui);
+			    gboolean from_gui,
+			    gboolean fit);
+static void recompute_functions (gboolean fitting);
 
 /* surfaces */
 static void plot_surface_functions (gboolean do_window_present, gboolean fit_function);
@@ -341,7 +346,7 @@ static void set_surface_labels (void);
 #define PROPORTION3D 0.80
 #define PROPORTION_OFFSETX 0.1
 #define PROPORTION_OFFSETY 0.075
-#define PROPORTION3D_OFFSET 0.1
+#define PROPORTION3D_OFFSET 0.12
 
 #include "funclibhelper.cP"
 
@@ -350,6 +355,14 @@ enum {
 	RESPONSE_PLOT,
 	RESPONSE_CLEAR
 };
+
+enum {
+	EXPORT_PS,
+	EXPORT_EPS,
+	EXPORT_PDF,
+	EXPORT_PNG
+};
+
 
 static gboolean
 is_letter_or_underscore (char l)
@@ -386,24 +399,6 @@ is_identifier (const char *e)
 	}
 	return TRUE;
 }
-
-static char *
-FIXME_removeuscore (char *s)
-{
-	char *p;
-	s = g_strdup (s);
-
-	p = strchr (s, '_');
-	if (p != NULL) {
-		do {
-			*p = *(p+1);
-			p++;
-		} while (*p != '\0');
-	}
-
-	return s;
-}
-
 
 static void
 init_var_names (void)
@@ -483,6 +478,8 @@ plot_window_setup (void)
 		gtk_widget_set_sensitive (plot_print_item, ! plot_in_progress);
 		gtk_widget_set_sensitive (plot_exportps_item, ! plot_in_progress);
 		gtk_widget_set_sensitive (plot_exporteps_item, ! plot_in_progress);
+		if (plot_exportpdf_item != NULL)
+			gtk_widget_set_sensitive (plot_exportpdf_item, ! plot_in_progress);
 		gtk_widget_set_sensitive (plot_exportpng_item, ! plot_in_progress);
 		gtk_widget_set_sensitive (view_menu_item, ! plot_in_progress);
 		gtk_widget_set_sensitive (solver_menu_item, ! plot_in_progress);
@@ -784,7 +781,7 @@ plot_print_cb (void)
 	GtkWidget *req = NULL;
 	GtkWidget *hbox, *w, *cmd;
 	int fd;
-	char tmpfile[] = "/tmp/genius-ps-XXXXXX";
+	char *tmpfile;
 	static char *last_cmd = NULL;
 
 	if (last_cmd == NULL)
@@ -829,12 +826,15 @@ plot_print_cb (void)
 		return;
 	}
 
+	g_free (last_cmd);
 	last_cmd = g_strdup (gtk_entry_get_text (GTK_ENTRY (cmd)));
 
 	gtk_widget_destroy (req);
 
+	tmpfile = g_build_filename (g_get_tmp_dir (), "genius-ps-XXXXXX", NULL);
 	fd = g_mkstemp (tmpfile);
 	if (fd < 0) {
+		g_free (tmpfile);
 		genius_display_error (graph_window, _("Cannot open temporary file, cannot print."));
 		return;
 	}
@@ -866,6 +866,7 @@ plot_print_cb (void)
 		gel_interrupted = FALSE;
 		close (fd);
 		unlink (tmpfile);
+		g_free (tmpfile);
 		return;
 	}
 
@@ -890,6 +891,7 @@ plot_print_cb (void)
 
 	close (fd);
 	unlink (tmpfile);
+	g_free (tmpfile);
 }
 
 static char *last_export_dir = NULL;
@@ -900,14 +902,14 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 	char *s;
 	char *base;
 	gboolean ret;
-	gboolean eps;
-	char tmpfile[] = "/tmp/genius-ps-XXXXXX";
+	int export_type;
+	char *tmpfile = NULL;
 	char *file_to_write = NULL;
 	int fd = -1;
 	gboolean run_epsi = FALSE;
 	GtkWidget *w;
 
-	eps = GPOINTER_TO_INT (data);
+	export_type = GPOINTER_TO_INT (data);
 
 	if (response != GTK_RESPONSE_OK) {
 		gtk_widget_destroy (GTK_WIDGET (fs));
@@ -917,10 +919,12 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 	}
 
 	/* run epsi checkbox */
-	w = gtk_file_chooser_get_extra_widget (GTK_FILE_CHOOSER (fs));
-	if (w != NULL &&
-	    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (w))) {
-		run_epsi = TRUE;
+	if (export_type == EXPORT_EPS) {
+		w = gtk_file_chooser_get_extra_widget (GTK_FILE_CHOOSER (fs));
+		if (w != NULL &&
+		    gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (w))) {
+			run_epsi = TRUE;
+		}
 	}
 
 	s = g_strdup (gtk_file_chooser_get_filename (fs));
@@ -931,8 +935,10 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 	if (base != NULL && base[0] != '\0' &&
 	    strchr (base, '.') == NULL) {
 		char *n;
-		if (eps)
+		if (export_type == EXPORT_EPS)
 			n = g_strconcat (s, ".eps", NULL);
+		else if (export_type == EXPORT_PDF)
+			n = g_strconcat (s, ".pdf", NULL);
 		else
 			n = g_strconcat (s, ".ps", NULL);
 		g_free (s);
@@ -955,7 +961,15 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 	gtk_widget_set_sensitive (graph_window, TRUE);
 
 	file_to_write = s;
-	if (eps && run_epsi && ve_is_prog_in_path ("ps2epsi")) {
+	if (export_type == EXPORT_EPS && run_epsi && ve_is_prog_in_path ("ps2epsi")) {
+		tmpfile = g_build_filename (g_get_tmp_dir (), "genius-ps-XXXXXX", NULL);
+		fd = g_mkstemp (tmpfile);
+		/* FIXME: tell about errors ?*/
+		if (fd >= 0) {
+			file_to_write = tmpfile;
+		}
+	} else if (export_type == EXPORT_PDF) {
+		tmpfile = g_build_filename (g_get_tmp_dir (), "genius-ps-XXXXXX", NULL);
 		fd = g_mkstemp (tmpfile);
 		/* FIXME: tell about errors ?*/
 		if (fd >= 0) {
@@ -972,7 +986,8 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 			(GTK_PLOT_CANVAS (plot_canvas),
 			 file_to_write,
 			 GTK_PLOT_PORTRAIT,
-			 eps /* epsflag */,
+			 (export_type == EXPORT_EPS ||
+			  export_type == EXPORT_PDF) /* epsflag */,
 			 GTK_PLOT_PSPOINTS,
 			 400, ASPECT * 400);
 	else
@@ -983,8 +998,8 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
 	}
 
-	/* If we used a temporary file, now use ps2epsi */
-	if (fd >= 0) {
+	/* If we used a temporary file, now use ps2epsi or ps2pdf */
+	if (fd >= 0 && run_epsi) {
 		int status;
 		char *qs = g_shell_quote (s);
 		char *cmd = g_strdup_printf ("ps2epsi %s %s", tmpfile, qs);
@@ -1004,6 +1019,26 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 		}
 		g_free (cmd);
 		g_free (qs);
+	} else if (fd >= 0 && export_type == EXPORT_PDF) {
+		int status;
+		char *qs = g_shell_quote (s);
+		char *cmd = g_strdup_printf ("ps2pdf -dEPSCrop -dPDFSETTINGS=/prepress %s %s", tmpfile, qs);
+		if ( ! g_spawn_command_line_sync  (cmd,
+						   NULL /*stdout*/,
+						   NULL /*stderr*/,
+						   &status,
+						   NULL /* error */)) {
+			status = -1;
+		}
+		close (fd);
+		if (status == 0) {
+			unlink (tmpfile);
+		} else {
+			/* EEK, couldn't run ps2pdf for some reason */
+			rename (tmpfile, s);
+		}
+		g_free (cmd);
+		g_free (qs);
 	}
 
 	plot_in_progress --;
@@ -1013,11 +1048,15 @@ really_export_cb (GtkFileChooser *fs, int response, gpointer data)
 		if ( ! gel_interrupted)
 			genius_display_error (graph_window, _("Export failed"));
 		g_free (s);
+		if (tmpfile != NULL)
+			g_free (tmpfile);
 		gel_interrupted = FALSE;
 		return;
 	}
 
 	g_free (s);
+	if (tmpfile != NULL)
+		g_free (tmpfile);
 }
 
 static void
@@ -1088,12 +1127,6 @@ really_export_png_cb (GtkFileChooser *fs, int response, gpointer data)
 	g_free (s);
 }
 
-enum {
-	EXPORT_PS,
-	EXPORT_EPS,
-	EXPORT_PNG
-};
-
 static void
 do_export_cb (int export_type)
 {
@@ -1114,11 +1147,19 @@ do_export_cb (int export_type)
 		title = _("Export encapsulated postscript");
 	else if (export_type == EXPORT_PS)
 		title = _("Export postscript");
+	else if (export_type == EXPORT_PDF)
+		title = _("Export PDF");
 	else if (export_type == EXPORT_PNG)
 		title = _("Export PNG");
 	else
 		/* should never happen */
 		title = "Export ???";
+
+	if (export_type == EXPORT_PDF &&
+	    ! ve_is_prog_in_path ("ps2pdf")) {
+		genius_display_error (graph_window, _("Missing ps2pdf command, perhaps ghostscript is not installed."));
+		return;
+	}
 
 	fs = gtk_file_chooser_dialog_new (title,
 					  GTK_WINDOW (graph_window),
@@ -1138,6 +1179,10 @@ do_export_cb (int export_type)
 		gtk_file_filter_set_name (filter_ps, _("PS files"));
 		gtk_file_filter_add_pattern (filter_ps, "*.ps");
 		gtk_file_filter_add_pattern (filter_ps, "*.PS");
+	} else if (export_type == EXPORT_PDF) {
+		gtk_file_filter_set_name (filter_ps, _("PDF files"));
+		gtk_file_filter_add_pattern (filter_ps, "*.pdf");
+		gtk_file_filter_add_pattern (filter_ps, "*.PDF");
 	} else if (export_type == EXPORT_PNG) {
 		gtk_file_filter_set_name (filter_ps, _("PNG files"));
 		gtk_file_filter_add_pattern (filter_ps, "*.png");
@@ -1152,7 +1197,7 @@ do_export_cb (int export_type)
 	gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fs), filter_all);
 	gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (fs), filter_ps);
 
-	if (ve_is_prog_in_path ("ps2epsi")) {
+	if (export_type == EXPORT_EPS && ve_is_prog_in_path ("ps2epsi")) {
 		GtkWidget *w;
 		w = gtk_check_button_new_with_label (_("Generate preview in EPS file (with ps2epsi)"));
 		gtk_widget_show (w);
@@ -1162,14 +1207,12 @@ do_export_cb (int export_type)
 
 	g_signal_connect (G_OBJECT (fs), "destroy",
 			  G_CALLBACK (gtk_widget_destroyed), &fs);
-	if (export_type == EXPORT_EPS) {
+	if (export_type == EXPORT_EPS ||
+	    export_type == EXPORT_PS ||
+	    export_type == EXPORT_PDF) {
 		g_signal_connect (G_OBJECT (fs), "response",
 				  G_CALLBACK (really_export_cb),
-				  GINT_TO_POINTER (TRUE /*eps*/));
-	} else if (export_type == EXPORT_PS) {
-		g_signal_connect (G_OBJECT (fs), "response",
-				  G_CALLBACK (really_export_cb),
-				  GINT_TO_POINTER (FALSE /*eps*/));
+				  GINT_TO_POINTER (export_type));
 	} else if (export_type == EXPORT_PNG) {
 		g_signal_connect (G_OBJECT (fs), "response",
 				  G_CALLBACK (really_export_png_cb),
@@ -1199,6 +1242,12 @@ static void
 plot_exporteps_cb (void)
 {
 	do_export_cb (EXPORT_EPS);
+}
+
+static void
+plot_exportpdf_cb (void)
+{
+	do_export_cb (EXPORT_PDF);
 }
 
 static void
@@ -1422,6 +1471,39 @@ plot_resetzoom_cb (void)
 			surfacez1 = reset_surfacez1;
 			surfacez2 = reset_surfacez2;
 		}
+
+		plot_axis ();
+
+		if (gel_interrupted)
+			gel_interrupted = FALSE;
+
+		gel_printout_infos ();
+		genius_setup.info_box = last_info;
+		genius_setup.error_box = last_error;
+	}
+}
+
+static void
+lineplot_move_graph (double horiz, double vert)
+{
+	if (plot_in_progress == 0 && 
+	    (plot_mode == MODE_LINEPLOT ||
+	     plot_mode == MODE_LINEPLOT_PARAMETRIC ||
+	     plot_mode == MODE_LINEPLOT_SLOPEFIELD ||
+	     plot_mode == MODE_LINEPLOT_VECTORFIELD)) {
+		double len;
+		gboolean last_info = genius_setup.info_box;
+		gboolean last_error = genius_setup.error_box;
+		genius_setup.info_box = TRUE;
+		genius_setup.error_box = TRUE;
+
+		len = plotx2 - plotx1;
+		plotx1 = plotx1 + horiz * len;
+		plotx2 = plotx2 + horiz* len;
+
+		len = ploty2 - ploty1;
+		ploty1 = ploty1 + vert * len;
+		ploty2 = ploty2 + vert* len;
 
 		plot_axis ();
 
@@ -1682,7 +1764,7 @@ add_surface_plot (void)
 	GtkPlotAxis *xy, *xz, *yx, *yz, *zx, *zy;
 	GtkPlotAxis *top, *left, *bottom;
 
-	surface_plot = gtk_plot3d_new_with_size (NULL, PROPORTION3D, PROPORTION3D);
+	surface_plot = gtk_plot3d_new (NULL);
 	gtk_widget_show (surface_plot);
 	g_signal_connect (G_OBJECT (surface_plot),
 			  "destroy",
@@ -1904,6 +1986,45 @@ clear_solutions_cb (GtkWidget *item, gpointer data)
 	clear_solutions ();
 }
 
+static gboolean
+plot_canvas_key_press_event (GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	switch (event->keyval) {
+	case GDK_Up:
+		lineplot_move_graph (0.0, 0.1);
+		break;
+	case GDK_Down:
+		lineplot_move_graph (0.0, -0.1);
+		break;
+	case GDK_Left:
+		lineplot_move_graph (-0.1, 0.0);
+
+		if (plot_mode == MODE_SURFACE &&
+		    surface_plot != NULL &&
+		    plot_in_progress == 0) {
+			gtk_plot3d_rotate_z (GTK_PLOT3D (surface_plot), 360-10);
+
+			gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+			gtk_plot_canvas_refresh (GTK_PLOT_CANVAS (plot_canvas));
+		}
+		break;
+	case GDK_Right:
+		lineplot_move_graph (0.1, 0.0);
+
+		if (plot_mode == MODE_SURFACE &&
+		    surface_plot != NULL &&
+		    plot_in_progress == 0) {
+			gtk_plot3d_rotate_z (GTK_PLOT3D (surface_plot), 10);
+
+			gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+			gtk_plot_canvas_refresh (GTK_PLOT_CANVAS (plot_canvas));
+		}
+		break;
+	}
+
+	return FALSE; 
+}
+
 static void
 graph_window_destroyed (GtkWidget *w, gpointer data)
 {
@@ -2008,6 +2129,16 @@ ensure_window (gboolean do_window_present)
 	gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 	plot_exporteps_item = item;
 
+	if (ve_is_prog_in_path ("ps2pdf")) {
+		item = gtk_menu_item_new_with_mnemonic (_("Export P_DF..."));
+		g_signal_connect (G_OBJECT (item), "activate",
+				  G_CALLBACK (plot_exportpdf_cb), NULL);
+		gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
+		plot_exportpdf_item = item;
+	} else {
+		plot_exportpdf_item = NULL;
+	}
+
 	item = gtk_menu_item_new_with_mnemonic (_("Export P_NG..."));
 	g_signal_connect (G_OBJECT (item), "activate",
 			  G_CALLBACK (plot_exportpng_cb), NULL);
@@ -2105,6 +2236,9 @@ ensure_window (gboolean do_window_present)
 	g_signal_connect (G_OBJECT (plot_canvas), "select_region",
 			  G_CALLBACK (plot_select_region),
 			  NULL);
+	g_signal_connect (G_OBJECT (plot_canvas), "key_press_event",
+			  G_CALLBACK (plot_canvas_key_press_event),
+			  NULL);
 	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (graph_window))),
 			    GTK_WIDGET (plot_canvas), TRUE, TRUE, 0);
 
@@ -2147,17 +2281,30 @@ clear_graph (void)
 
 static void
 get_ticks (double start, double end, double *tick, int *prec,
-	   int *style)
+	   int *style, int *fontheight)
 {
 	int incs;
 	double len = end-start;
 	int tries = 0;
 	int tickprec;
 	int extra_prec;
+	int maxprec;
+	int diff_of_prec;
+
+	/* actually maxprec is the minimum since we're taking negatives */
+	if (start == 0.0) {
+		maxprec = -floor (log10(fabs(end)));
+	} else if (end == 0.0) {
+		maxprec = -floor (log10(fabs(start)));
+	} else {
+		maxprec = MIN(-floor (log10(fabs(start))),-floor (log10(fabs(end))));
+	}
 
 	tickprec = -floor (log10(len));
 	*tick = pow (10, -tickprec);
 	incs = floor (len / *tick);
+
+	*fontheight = 12;
 
 	extra_prec = 0;
 
@@ -2186,18 +2333,39 @@ get_ticks (double start, double end, double *tick, int *prec,
 		}
 	}
 
-	if (tickprec + extra_prec <= -6) {
-		*prec = 1;
+	diff_of_prec = tickprec + extra_prec - maxprec;
+
+	if (maxprec <= -6) {
+		*prec = MAX(diff_of_prec,1);
 		*style = GTK_PLOT_LABEL_EXP;
-	} else if (tickprec + extra_prec <= 0) {
+	} else if (maxprec >= 6) {
+		*prec = MAX(diff_of_prec,1);
+		*style = GTK_PLOT_LABEL_EXP;
+	} else if (maxprec <= 0) {
 		*style = GTK_PLOT_LABEL_FLOAT;
-		*prec = 0;
-	} else if (tickprec + extra_prec >= 6) {
-		*prec = 1;
-		*style = GTK_PLOT_LABEL_EXP;
+		*prec = MAX(tickprec + extra_prec,0);
 	} else {
-		*style = GTK_PLOT_LABEL_FLOAT;
-		*prec = tickprec + extra_prec;
+		if (diff_of_prec > 2) {
+			*prec = MAX(diff_of_prec,1);
+			*style = GTK_PLOT_LABEL_EXP;
+		} else {
+			*style = GTK_PLOT_LABEL_FLOAT;
+			*prec = tickprec + extra_prec;
+		}
+	}
+
+	if (*style == GTK_PLOT_LABEL_FLOAT) {
+		if (diff_of_prec > 8) {
+			*fontheight = 8;
+		} else if (diff_of_prec > 6) {
+			*fontheight = 10;
+		}
+	} else if (*style == GTK_PLOT_LABEL_EXP) {
+		if (*prec > 4) {
+			*fontheight = 8;
+		} else if (*prec > 2) {
+			*fontheight = 10;
+		}
 	}
 }
 
@@ -2208,9 +2376,10 @@ plot_setup_axis (void)
 	double xtick, ytick;
 	GtkPlotAxis *axis;
 	GdkColor gray;
+	int xfontheight, yfontheight;
 
-	get_ticks (plotx1, plotx2, &xtick, &xprec, &xstyle);
-	get_ticks (ploty1, ploty2, &ytick, &yprec, &ystyle);
+	get_ticks (plotx1, plotx2, &xtick, &xprec, &xstyle, &xfontheight);
+	get_ticks (ploty1, ploty2, &ytick, &yprec, &ystyle, &yfontheight);
 
 	gtk_plot_freeze (GTK_PLOT (line_plot));
 
@@ -2252,6 +2421,8 @@ plot_setup_axis (void)
 
 
 	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_TOP);
+	/* FIXME: this is a hack */
+	axis->labels_attr.height = xfontheight;
 	gtk_plot_axis_set_labels_style (axis,
 					xstyle /* style */,
 					xprec /* precision */);
@@ -2260,6 +2431,8 @@ plot_setup_axis (void)
 				      GTK_PLOT_LABEL_NONE);
 
 	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_BOTTOM);
+	/* FIXME: this is a hack */
+	axis->labels_attr.height = xfontheight;
 	gtk_plot_axis_set_labels_style (axis,
 					xstyle /* style */,
 					xprec /* precision */);
@@ -2268,6 +2441,8 @@ plot_setup_axis (void)
 				      GTK_PLOT_LABEL_NONE);
 
 	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_LEFT);
+	/* FIXME: this is a hack */
+	axis->labels_attr.height = yfontheight;
 	gtk_plot_axis_set_labels_style (axis,
 					ystyle /* style */,
 					yprec /* precision */);
@@ -2276,6 +2451,8 @@ plot_setup_axis (void)
 				      GTK_PLOT_LABEL_NONE);
 
 	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_RIGHT);
+	/* FIXME: this is a hack */
+	axis->labels_attr.height = yfontheight;
 	gtk_plot_axis_set_labels_style (axis,
 					ystyle /* style */,
 					yprec /* precision */);
@@ -2286,8 +2463,7 @@ plot_setup_axis (void)
 
 	/* FIXME: implement logarithmic scale
 	gtk_plot_set_xscale (GTK_PLOT (line_plot), GTK_PLOT_SCALE_LOG10);
-	gtk_plot_set_yscale (GTK_PLOT (line_plot), GTK_PLOT_SCALE_LOG10);
-	*/
+	gtk_plot_set_yscale (GTK_PLOT (line_plot), GTK_PLOT_SCALE_LOG10);*/
 
 	gtk_plot_thaw (GTK_PLOT (line_plot));
 }
@@ -2299,10 +2475,11 @@ surface_setup_axis (void)
 	int xstyle, ystyle, zstyle;
 	double xtick, ytick, ztick;
 	GtkPlotAxis *x, *y, *z;
+	int xfontheight, yfontheight, zfontheight;
 
-	get_ticks (surfacex1, surfacex2, &xtick, &xprec, &xstyle);
-	get_ticks (surfacey1, surfacey2, &ytick, &yprec, &ystyle);
-	get_ticks (surfacez1, surfacez2, &ztick, &zprec, &zstyle);
+	get_ticks (surfacex1, surfacex2, &xtick, &xprec, &xstyle, &xfontheight);
+	get_ticks (surfacey1, surfacey2, &ytick, &yprec, &ystyle, &yfontheight);
+	get_ticks (surfacez1, surfacez2, &ztick, &zprec, &zstyle, &zfontheight);
 
 	x = gtk_plot3d_get_axis (GTK_PLOT3D (surface_plot), GTK_PLOT_AXIS_X);
 	y = gtk_plot3d_get_axis (GTK_PLOT3D (surface_plot), GTK_PLOT_AXIS_Y);
@@ -2318,6 +2495,11 @@ surface_setup_axis (void)
 	gtk_plot_axis_set_ticks (y, ytick, 1);
 	gtk_plot3d_set_zrange (GTK_PLOT3D (surface_plot), surfacez1, surfacez2);
 	gtk_plot_axis_set_ticks (z, ztick, 1);
+
+	/*FIXME: hack*/
+	x->labels_attr.height = xfontheight;
+	y->labels_attr.height = yfontheight;
+	z->labels_attr.height = zfontheight;
 
 	gtk_plot_axis_set_labels_style (x,
 					xstyle,
@@ -2383,19 +2565,24 @@ plot_axis (void)
 	plot_in_progress ++;
 	plot_window_setup ();
 
-	plot_maxy = - G_MAXDOUBLE/2;
-	plot_miny = G_MAXDOUBLE/2;
-	plot_maxz = - G_MAXDOUBLE/2;
-	plot_minz = G_MAXDOUBLE/2;
-	plot_maxx = - G_MAXDOUBLE/2;
-	plot_minx = G_MAXDOUBLE/2;
-
-	if (plot_mode == MODE_LINEPLOT ||
-	    plot_mode == MODE_LINEPLOT_PARAMETRIC ||
-	    plot_mode == MODE_LINEPLOT_SLOPEFIELD ||
-	    plot_mode == MODE_LINEPLOT_VECTORFIELD) {
+	if (plot_mode == MODE_LINEPLOT) {
+		plot_maxy = - G_MAXDOUBLE/2;
+		plot_miny = G_MAXDOUBLE/2;
+		plot_maxx = - G_MAXDOUBLE/2;
+		plot_minx = G_MAXDOUBLE/2;
+		recompute_functions (FALSE /*fitting*/);
+		plot_setup_axis ();
+	} else if (plot_mode == MODE_LINEPLOT_PARAMETRIC ||
+		   plot_mode == MODE_LINEPLOT_SLOPEFIELD ||
+		   plot_mode == MODE_LINEPLOT_VECTORFIELD) {
 		plot_setup_axis ();
 	} else if (plot_mode == MODE_SURFACE) {
+		plot_maxx = - G_MAXDOUBLE/2;
+		plot_minx = G_MAXDOUBLE/2;
+		plot_maxy = - G_MAXDOUBLE/2;
+		plot_miny = G_MAXDOUBLE/2;
+		plot_maxz = - G_MAXDOUBLE/2;
+		plot_minz = G_MAXDOUBLE/2;
 		surface_setup_axis ();
 		surface_setup_steps ();
 		gtk_plot_surface_build_mesh (GTK_PLOT_SURFACE (surface_data));
@@ -2688,6 +2875,7 @@ call_func_z (GelCtx *ctx,
 	gel_freetree (ret);
 }
 
+#if 0
 static double
 plot_func_data (GtkPlot *plot, GtkPlotData *data, double x, gboolean *error)
 {
@@ -2751,6 +2939,7 @@ plot_func_data (GtkPlot *plot, GtkPlotData *data, double x, gboolean *error)
 
 	return y;
 }
+#endif
 
 static double
 call_xy_or_z_function (GelEFunc *f, double x, double y, gboolean *ex)
@@ -3142,6 +3331,52 @@ get_limits_from_matrix (GelETree *m, double *x1, double *x2, double *y1, double 
 		*x2 = *x1 + MINPLOT;
 	if (*y2 - *y1 < MINPLOT)
 		*y2 = *y1 + MINPLOT;
+
+	return TRUE;
+}
+
+static gboolean
+get_limits_from_matrix_xonly (GelETree *m, double *x1, double *x2)
+{
+	GelETree *t;
+
+	if (m->type != GEL_MATRIX_NODE ||
+	    gel_matrixw_elements (m->mat.matrix) != 2) {
+		gel_errorout (_("Graph limits not given as a 2-vector"));
+		return FALSE;
+	}
+
+	t = gel_matrixw_vindex (m->mat.matrix, 0);
+	if (t->type != GEL_VALUE_NODE) {
+		gel_errorout (_("Graph limits not given as numbers"));
+		return FALSE;
+	}
+	*x1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
+	t = gel_matrixw_vindex (m->mat.matrix, 1);
+	if (t->type != GEL_VALUE_NODE) {
+		gel_errorout (_("Graph limits not given as numbers"));
+		return FALSE;
+	}
+	*x2 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
+	if (*x1 > *x2) {
+		double s = *x1;
+		*x1 = *x2;
+		*x2 = s;
+	}
+
+	/* sanity */
+	if (*x2 - *x1 < MINPLOT)
+		*x2 = *x1 + MINPLOT;
 
 	return TRUE;
 }
@@ -3930,9 +4165,348 @@ init_plot_ctx (void)
 	}
 }
 
+typedef struct {
+	double x;
+	double y;
+} Point;
+
+#ifdef NAN
+# define BADPTVAL NAN
+#else
+#ifdef INFINITY
+# define BADPTVAL INFINITY
+#else
+# define BADPTVAL (1.0/0.0)
+#endif
+#endif
+
+static Point *
+function_get_us_a_point (int funci, double x)
+{
+	gboolean ex = FALSE;
+	double rety;
+	Point *pt = g_new0 (Point, 1);
+	mpw_set_d (plot_arg->val.value, x);
+	rety = call_func (plot_ctx, plot_func[funci], plot_arg, &ex, NULL);
+
+	if G_UNLIKELY (ex) {
+		pt->x = x;
+		pt->y = BADPTVAL;
+	} else {
+		pt->x = x;
+		pt->y = rety;
+
+		if G_UNLIKELY (rety > plot_maxy)
+			plot_maxy = rety;
+		if G_UNLIKELY (rety < plot_miny)
+			plot_miny = rety;
+	}
+
+	return pt;
+}
+
+
+static double
+approx_arcsin(double x)
+{
+	/* Pade quotient approximation, see
+	 * http://www.ecse.rpi.edu/~wrf/Research/Short_Notes/arcsin/onlyelem.html*/
+	return ((-17.0/60.0)*x*x*x+x)/(1.0-(9.0/20.0)*x*x);
+}
+
+
+static void
+bisect_points (int funci, GQueue *points, GList *li, double sizex, double sizey, int level, int *count)
+{
+	Point *pt;
+	Point *nextpt;
+	Point *prevpt;
+	Point *newpt;
+	double xdiffscaled;
+	double ydiffscaled;
+	double xprevdiffscaled;
+	double yprevdiffscaled;
+	double seglensq;
+	gboolean do_bisect = FALSE;
+	gboolean bisect_prev = FALSE;
+	gboolean bisect_next = FALSE;
+
+	pt = li->data;
+	nextpt = li->next->data;
+
+	if ( ! isfinite (nextpt->y) || ! isfinite(pt->y))
+		return;
+
+	if (li->prev) {
+		prevpt = li->prev->data;
+		if ( ! isfinite (prevpt->y))
+			prevpt = NULL;
+	} else {
+		prevpt = NULL;
+	}
+
+	xdiffscaled = (nextpt->x-pt->x)/sizex;
+	ydiffscaled = (nextpt->y-pt->y)/sizey;
+
+	seglensq = xdiffscaled*xdiffscaled+ydiffscaled*ydiffscaled;
+
+	/* lines of size 1% are fine */
+	if (seglensq >= 0.01*0.01) {
+		do_bisect = TRUE;
+		bisect_next = TRUE;
+	} else if (prevpt != NULL) {
+		double seglen1sq;
+		xprevdiffscaled = (pt->x-prevpt->x)/sizex;
+		yprevdiffscaled = (pt->y-prevpt->y)/sizey;
+
+		seglen1sq = xprevdiffscaled*xprevdiffscaled+yprevdiffscaled*yprevdiffscaled;
+
+		/* difference of angles is bigger than approx 0.1 radians */
+		if (fabs (approx_arcsin (yprevdiffscaled/sqrt(seglen1sq)) - approx_arcsin (ydiffscaled/sqrt(seglensq))) > 0.1) {
+			do_bisect = TRUE;
+			bisect_prev = TRUE;
+		}
+	}
+
+
+	if (do_bisect) {
+		(*count)++;
+		newpt = function_get_us_a_point (funci, pt->x + (nextpt->x-pt->x)/2.0);
+		g_queue_insert_after (points, li, newpt);
+
+		if (level < 3) {
+			GList *linext = li->next;
+			if (bisect_prev)
+				bisect_points (funci, points, li->prev, sizex, sizey, level+1, count);
+			bisect_points (funci, points, li, sizex, sizey, level+1, count);
+			if (bisect_next)
+				bisect_points (funci, points, linext, sizex, sizey, level+1, count);
+		}
+	}
+
+
+}
+
+static void
+recompute_function (int funci, double **x, double **y, int *len, gboolean fitting)
+{
+	int i, count, lentried;
+	double maxfuzz;
+	double fuzz[16];
+	GQueue *points = g_queue_new ();
+	GList *li;
+	double sizex, sizey;
+	double tmpploty1, tmpploty2;
+
+	lentried = WIDTH/2;/* FIXME: perhaps settable */
+
+	/* up to 1% of the interval is fuzzed */
+	maxfuzz = 0.01*(plotx2-plotx1)/(lentried-1);
+	for (i = 0; i < 16; i++) {
+		fuzz[i] = g_random_double_range (-maxfuzz, maxfuzz);
+	}
+
+	count = 0;
+	for (i = 0; i < lentried; i++) {
+		static int hookrun = 0;
+		double thex;
+		Point *pt;
+
+		if G_UNLIKELY (gel_interrupted) {
+			break;
+		}
+
+		thex = plotx1 + ((plotx2-plotx1)*(double)i)/(lentried-1) +
+			fuzz[i&0xf];
+		/* don't fuzz beyond the domain */
+		if (thex < plotx1)
+			thex = plotx1;
+		else if (thex > plotx2)
+			thex = plotx2;
+
+		count++;
+		pt = function_get_us_a_point (funci, thex);
+		g_queue_push_tail (points, pt);
+
+		if G_UNLIKELY (hookrun++ >= 10) {
+			if (gel_evalnode_hook != NULL) {
+				hookrun = 0;
+				(*gel_evalnode_hook)();
+				if G_UNLIKELY (gel_interrupted) {
+					break;
+				}
+			}
+		}
+	}
+
+	if (fitting) {
+		sizey = plot_maxy - plot_miny;
+		if (sizey <= 0.0)
+			sizey = 0.01;
+		tmpploty1 = plot_miny - 0.05*sizey;
+		tmpploty2 = plot_maxy + 0.05*sizey;
+
+		sizey *= 1.05 * sizey;
+	} else {
+		sizey = ploty2 - ploty1;
+		tmpploty1 = ploty1;
+		tmpploty2 = ploty2;
+	}
+	sizex = plotx2 - plotx1;
+
+	/* sanity */
+	if (sizey <= 0.0)
+		sizey = 0.01;
+	if (sizex <= 0.0)
+		sizex = 0.01;
+
+
+	/* adaptively bisect intervals */
+	li = g_queue_peek_head_link (points);
+	while (li != NULL && li->next != NULL) {
+		Point *pt = li->data;
+		GList *orignext = li->next;
+		Point *nextpt = orignext->data;
+
+		if ((pt->y < tmpploty1-0.5*sizey && 
+		     nextpt->y < tmpploty1-0.5*sizey) ||
+		    (pt->y > tmpploty2+0.5*sizey && 
+		     nextpt->y > tmpploty2+0.5*sizey)) {
+			li = orignext;
+			continue;
+		}
+
+		bisect_points (funci, points, li, sizex, sizey, 1, &count);
+		li = orignext;
+	}
+
+	/* find "steep jumps" and insert invalid points */
+	li = g_queue_peek_head_link (points);
+	while (li != NULL && li->next != NULL) {
+		Point *pt = li->data;
+		Point *nextpt = li->next->data;
+		GList *orignext = li->next;
+		double xdiffscaled;
+		double ydiffscaled;
+
+		if ( ! isfinite (nextpt->y) || ! isfinite(pt->y)) {
+			li = orignext;
+			continue;
+		}
+
+		xdiffscaled = fabs(nextpt->x-pt->x)/sizex;
+		ydiffscaled = fabs(nextpt->y-pt->y)/sizey;
+
+		/* derivative at least 100 after scaling, length bigger than 1% */
+		if (100.0*xdiffscaled < ydiffscaled &&
+		    xdiffscaled*xdiffscaled+ydiffscaled*ydiffscaled > 0.01*0.01 &&
+		    li->next->next != NULL && li->prev != NULL) {
+			Point *prevpt = li->prev->data;
+			Point *nextnextpt = li->next->next->data;
+			double xnextdiffscaled;
+			double ynextdiffscaled;
+			double xprevdiffscaled;
+			double yprevdiffscaled;
+
+			xnextdiffscaled = fabs(nextnextpt->x-nextpt->x)/sizex;
+			ynextdiffscaled = fabs(nextnextpt->y-nextpt->y)/sizey;
+
+			xprevdiffscaled = fabs(pt->x-prevpt->x)/sizex;
+			yprevdiffscaled = fabs(pt->y-prevpt->y)/sizey;
+
+
+			/* too steep! and steeper than surrounding which is derivative at most 10 */
+			if (10.0*xprevdiffscaled >= yprevdiffscaled && 
+			    10.0*xnextdiffscaled >= ynextdiffscaled) {
+				Point *newpt;
+				newpt = g_new0 (Point, 1);
+				newpt->x = BADPTVAL;
+				newpt->y = BADPTVAL;
+
+				g_queue_insert_after (points, li, newpt);
+				count++;
+			}
+		};
+		li = orignext;
+	}
+
+	*len = count;
+	*x = g_new0 (double, count);
+	*y = g_new0 (double, count);
+	i = 0;
+	for (li = g_queue_peek_head_link (points); li != NULL; li = li->next) {
+		Point *pt = li->data;
+		li->data = NULL;
+
+		(*x)[i] = pt->x;
+		(*y)[i] = pt->y;
+		i++;
+
+		g_free (pt);
+	}
+
+	g_queue_free (points);
+}
+
+#if 0
+static double
+get_maxes(double **y, int len, int place)
+{
+	double max = 0.0;
+	int i;
+
+	for (i = MAX(place-5,1); i < place; i++) {
+		double diff = fabs(y[i]-y[i-1]);
+		if (diff > max)
+			max = diff;
+	}
+
+	for (i = place+1; i <= MIN(place+5,len-2); i++) {
+		double diff = fabs(y[i]-y[i+1]);
+		if (diff > max)
+			max = diff;
+	}
+	return max;
+}
+
+/* insert invalid points and places where things jump way too much,
+ * FIXME: we should make the step smaller adaptively I think */
+static void
+cutup_function (double **x, double **y, int *len)
+{
+	double *oldx = *x;
+	double *oldy = *y;
+	int oldlen = *len;
+
+	*x = g_new0 (double, *len);
+	*y = g_new0 (double, *len);
+
+	for (i
+}
+#endif
+
+
+static void
+recompute_functions (gboolean fitting)
+{
+	int i;
+	for (i = 0; i < MAXFUNC && plot_func[i] != NULL; i++) {
+		double *x, *y;
+		int len;
+		recompute_function (i, &x, &y, &len, fitting);
+
+		gtk_plot_data_set_points (line_data[i], x, y, NULL, NULL, len);
+		g_object_set_data_full (G_OBJECT (line_data[i]),
+					"x", x, (GDestroyNotify)g_free);
+		g_object_set_data_full (G_OBJECT (line_data[i]),
+					"y", y, (GDestroyNotify)g_free);
+	}
+}
+
 static void
 plot_functions (gboolean do_window_present,
-		gboolean from_gui)
+		gboolean from_gui,
+		gboolean fit)
 {
 	char *colors[] = {
 		"darkblue",
@@ -3967,6 +4541,7 @@ plot_functions (gboolean do_window_present,
 
 	plot_in_progress ++;
 	plot_window_setup ();
+	gtk_plot_freeze (GTK_PLOT (line_plot));
 
 	/* sanity */
 	if (plotx2 < plotx1) {
@@ -3990,8 +4565,6 @@ plot_functions (gboolean do_window_present,
 	plot_maxy = - G_MAXDOUBLE/2;
 	plot_miny = G_MAXDOUBLE/2;
 
-	plot_setup_axis ();
-
 	init_plot_ctx ();
 
 	if (gel_evalnode_hook != NULL)
@@ -4003,8 +4576,7 @@ plot_functions (gboolean do_window_present,
 		GdkColor color;
 		char *label;
 
-		line_data[i] = GTK_PLOT_DATA
-			(gtk_plot_data_new_function (plot_func_data));
+		line_data[i] = GTK_PLOT_DATA (gtk_plot_data_new ());
 		gtk_plot_add_data (GTK_PLOT (line_plot),
 				   line_data[i]);
 
@@ -4024,6 +4596,27 @@ plot_functions (gboolean do_window_present,
 		gtk_plot_data_set_legend (line_data[i], label);
 		g_free (label);
 	}
+
+	recompute_functions (fit);
+
+	if (plot_func[0] != NULL && fit) {
+		double size = plot_maxy - plot_miny;
+		if (size <= 0)
+			size = 1.0;
+		ploty1 = plot_miny - size * 0.05;
+		ploty2 = plot_maxy + size * 0.05;
+
+		/* sanity */
+		if (ploty2 <= ploty1)
+			ploty2 = ploty1 + 0.1;
+
+		/* sanity */
+		if (ploty1 < -(G_MAXDOUBLE/2))
+			ploty1 = -(G_MAXDOUBLE/2);
+		if (ploty2 > (G_MAXDOUBLE/2))
+			ploty2 = (G_MAXDOUBLE/2);
+	}
+
 
 	if ((parametric_func_x != NULL && parametric_func_y != NULL) ||
 	    (parametric_func_z != NULL)) {
@@ -4090,7 +4683,38 @@ plot_functions (gboolean do_window_present,
 		}
 		gtk_plot_data_set_legend (parametric_data, label);
 		g_free (label);
+
+		if (fit) {
+			double sizex = plot_maxx - plot_minx;
+			double sizey = plot_maxy - plot_miny;
+			if (sizex <= 0)
+				sizex = 1.0;
+			if (sizey <= 0)
+				sizey = 1.0;
+			plotx1 = plot_minx - sizex * 0.05;
+			plotx2 = plot_maxx + sizex * 0.05;
+			ploty1 = plot_miny - sizey * 0.05;
+			ploty2 = plot_maxy + sizey * 0.05;
+
+			/* sanity */
+			if (plotx2 <= plotx1)
+				plotx2 = plotx1 + 0.1;
+			if (ploty2 <= ploty1)
+				ploty2 = ploty1 + 0.1;
+
+			/* sanity */
+			if (plotx1 < -(G_MAXDOUBLE/2))
+				plotx1 = -(G_MAXDOUBLE/2);
+			if (plotx2 > (G_MAXDOUBLE/2))
+				plotx2 = (G_MAXDOUBLE/2);
+			if (ploty1 < -(G_MAXDOUBLE/2))
+				ploty1 = -(G_MAXDOUBLE/2);
+			if (ploty2 > (G_MAXDOUBLE/2))
+				ploty2 = (G_MAXDOUBLE/2);
+		}
 	} 
+
+	plot_setup_axis ();
 
 	replot_fields ();
 
@@ -4111,6 +4735,7 @@ plot_functions (gboolean do_window_present,
 			(*gel_evalnode_hook)();
 	}
 
+	gtk_plot_thaw (GTK_PLOT (line_plot));
 	plot_in_progress --;
 	plot_window_setup ();
 }
@@ -4970,6 +5595,61 @@ run_dialog_again:
 	set_surface_labels ();
 }
 
+static void
+setup_page (int page)
+{
+	if (page == 0 /* functions */) {
+		gtk_widget_set_sensitive (lineplot_fit_dep_axis_checkbox, TRUE);
+
+		if (lineplot_fit_dependent_axis_cb) {
+			gtk_widget_set_sensitive (lineplot_dep_axis_buttons, FALSE);
+		} else {
+			gtk_widget_set_sensitive (lineplot_dep_axis_buttons, TRUE);
+		}
+		gtk_widget_set_sensitive (lineplot_depx_axis_buttons, TRUE);
+	} else if (page == 1 /* parametric */) {
+		gtk_widget_set_sensitive (lineplot_fit_dep_axis_checkbox, TRUE);
+
+		if (lineplot_fit_dependent_axis_cb) {
+			gtk_widget_set_sensitive (lineplot_dep_axis_buttons, FALSE);
+			gtk_widget_set_sensitive (lineplot_depx_axis_buttons, FALSE);
+		} else {
+			gtk_widget_set_sensitive (lineplot_dep_axis_buttons, TRUE);
+			gtk_widget_set_sensitive (lineplot_depx_axis_buttons, TRUE);
+		}
+	} else {
+		gtk_widget_set_sensitive (lineplot_fit_dep_axis_checkbox, FALSE);
+
+		gtk_widget_set_sensitive (lineplot_dep_axis_buttons, TRUE);
+		gtk_widget_set_sensitive (lineplot_depx_axis_buttons, TRUE);
+	}
+}
+
+static void
+lineplot_switch_page_cb (GtkNotebook *notebook, GtkWidget *page, guint page_num,
+			 gpointer data)
+{
+	setup_page (page_num);
+}
+
+
+/*option callback*/
+static void
+lineplot_fit_cb_cb (GtkWidget * widget)
+{
+	int function_page = gtk_notebook_get_current_page (GTK_NOTEBOOK (function_notebook));
+
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+		lineplot_fit_dependent_axis_cb = TRUE;
+	} else {
+		lineplot_fit_dependent_axis_cb = FALSE;
+	}
+
+	setup_page (function_page);
+
+}
+
+
 static GtkWidget *
 create_lineplot_box (void)
 {
@@ -5233,6 +5913,7 @@ create_lineplot_box (void)
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
 	gtk_box_pack_start (GTK_BOX(box), b, FALSE, FALSE, 0);
+	lineplot_depx_axis_buttons = b;
 
 	/*
 	 * Y range
@@ -5245,9 +5926,25 @@ create_lineplot_box (void)
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
 	gtk_box_pack_start (GTK_BOX(box), b, FALSE, FALSE, 0);
+	lineplot_dep_axis_buttons = b;
+
+	/* fit dependent axis? */
+	w = gtk_check_button_new_with_label (_("Fit dependent axis"));
+	lineplot_fit_dep_axis_checkbox = w;
+	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
+				      lineplot_fit_dependent_axis_cb);
+	g_signal_connect (G_OBJECT (w), "toggled",
+			  G_CALLBACK (lineplot_fit_cb_cb), NULL);
+	lineplot_fit_cb_cb (w);
+
+
 
 	/* set labels correclty */
 	set_lineplot_labels ();
+
+	g_signal_connect (G_OBJECT (function_notebook), "switch_page",
+			  G_CALLBACK (lineplot_switch_page_cb), NULL);
 
 	return mainbox;
 }
@@ -5365,7 +6062,7 @@ create_surface_box (void)
 	surfaceplot_dep_axis_buttons = b;
 
 	/* fit dependent axis? */
-	w = gtk_check_button_new_with_label (FIXME_removeuscore(_("_Fit dependent axis")));
+	w = gtk_check_button_new_with_label (_("Fit dependent axis"));
 	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
 				      surfaceplot_fit_dependent_axis_cb);
@@ -5848,7 +6545,13 @@ plot_from_dialog_lineplot (void)
 	}
 
 	plot_functions (TRUE /* do_window_present */,
-			TRUE /* from_gui */);
+			TRUE /* from_gui */,
+			lineplot_fit_dependent_axis_cb /*fit*/);
+
+	if (lineplot_fit_dependent_axis_cb) {
+		reset_ploty1 = ploty1;
+		reset_ploty2 = ploty2;
+	}
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -5980,7 +6683,15 @@ plot_from_dialog_parametric (void)
 	}
 
 	plot_functions (TRUE /* do_window_present */,
-			TRUE /* from_gui */);
+			TRUE /* from_gui */,
+			lineplot_fit_dependent_axis_cb /*fit*/);
+
+	if (lineplot_fit_dependent_axis_cb) {
+		reset_plotx1 = plotx1;
+		reset_plotx2 = plotx2;
+		reset_ploty1 = ploty1;
+		reset_ploty2 = ploty2;
+	}
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -6084,7 +6795,8 @@ plot_from_dialog_slopefield (void)
 	slopefield_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (slopefield_entry)));
 
 	plot_functions (TRUE /* do_window_present */,
-			TRUE /* from_gui */);
+			TRUE /* from_gui */,
+			FALSE /*fit*/);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -6190,7 +6902,8 @@ plot_from_dialog_vectorfield (void)
 	vectorfield_name_y = g_strdup (gtk_entry_get_text (GTK_ENTRY (vectorfield_entry_y)));
 
 	plot_functions (TRUE /* do_window_present */,
-			TRUE /* from_gui */);
+			TRUE /* from_gui */,
+			FALSE /*fit*/);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -6339,10 +7052,13 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 				if ( ! get_limits_from_matrix_surf (a[i], &x1, &x2, &y1, &y2, &z1, &z2))
 					goto whack_copied_funcs;
 				fitz = FALSE;
-			} else {
+			} else if (gel_matrixw_elements (a[i]->mat.matrix) == 4) {
 				if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
 					goto whack_copied_funcs;
 				fitz = TRUE;
+			} else {
+				gel_errorout (_("Graph limits not given as a 4-vector or a 6-vector"));
+				goto whack_copied_funcs;
 			}
 			i++;
 		} else {
@@ -6674,7 +7390,8 @@ SlopefieldPlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	plot_mode = MODE_LINEPLOT_SLOPEFIELD;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from gui */);
+			FALSE /* from gui */,
+			FALSE /*fit*/);
 
 	if (gel_interrupted)
 		return NULL;
@@ -6794,7 +7511,8 @@ VectorfieldPlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	plot_mode = MODE_LINEPLOT_VECTORFIELD;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from_gui */);
+			FALSE /* from_gui */,
+			FALSE /* fit */);
 
 	if (gel_interrupted)
 		return NULL;
@@ -6815,6 +7533,7 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
 	double x1, x2, y1, y2;
 	int funcs = 0;
+	gboolean fity = FALSE;
 	GelEFunc *func[MAXFUNC] = { NULL };
 	int i;
 
@@ -6850,8 +7569,18 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	if (a[i] != NULL) {
 		if (a[i]->type == GEL_MATRIX_NODE) {
-			if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
+			if (gel_matrixw_elements (a[i]->mat.matrix) == 4) {
+				if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
+					goto whack_copied_funcs;
+				fity = FALSE;
+			} else if (gel_matrixw_elements (a[i]->mat.matrix) == 2) {
+				if ( ! get_limits_from_matrix_xonly (a[i], &x1, &x2))
+					goto whack_copied_funcs;
+				fity = TRUE;
+			} else {
+				gel_errorout (_("Graph limits not given as a 2-vector or a 4-vector"));
 				goto whack_copied_funcs;
+			}
 			i++;
 		} else {
 			GET_DOUBLE(x1, i, "LinePlot");
@@ -6859,9 +7588,11 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 			if (a[i] != NULL) {
 				GET_DOUBLE(x2, i, "LinePlot");
 				i++;
+				fity = TRUE;
 				if (a[i] != NULL) {
 					GET_DOUBLE(y1, i, "LinePlot");
 					i++;
+					fity = FALSE;
 					if (a[i] != NULL) {
 						GET_DOUBLE(y2, i, "LinePlot");
 						i++;
@@ -6912,7 +7643,13 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	plot_mode = MODE_LINEPLOT;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from_gui */);
+			FALSE /* from_gui */,
+			fity /* fit */);
+
+	if (fity) {
+		reset_ploty1 = ploty1;
+		reset_ploty2 = ploty2;
+	}
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -6932,6 +7669,7 @@ static GelETree *
 LinePlotParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
 	double x1, x2, y1, y2, t1, t2, tinc;
+	gboolean fit = FALSE;
 	GelEFunc *funcx = NULL;
 	GelEFunc *funcy = NULL;
 	int i;
@@ -6986,7 +7724,12 @@ LinePlotParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	/* Get window limits */
 	if (a[i] != NULL) {
-		if (a[i]->type == GEL_MATRIX_NODE) {
+		if ( (a[i]->type == GEL_STRING_NODE &&
+		      strcasecmp (a[i]->str.str, "fit") == 0) ||
+		     (a[i]->type == GEL_IDENTIFIER_NODE &&
+		      strcasecmp (a[i]->id.id->token, "fit") == 0)) {
+			fit = TRUE;
+		} else if (a[i]->type == GEL_MATRIX_NODE) {
 			if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
 				goto whack_copied_funcs;
 			i++;
@@ -7056,7 +7799,15 @@ LinePlotParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	plot_mode = MODE_LINEPLOT_PARAMETRIC;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from_gui */ );
+			FALSE /* from_gui */,
+			fit /* fit */);
+
+	if (fit) {
+		reset_plotx1 = plotx1;
+		reset_plotx2 = plotx2;
+		reset_ploty1 = ploty1;
+		reset_ploty2 = ploty2;
+	}
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -7076,6 +7827,7 @@ static GelETree *
 LinePlotCParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
 	double x1, x2, y1, y2, t1, t2, tinc;
+	gboolean fit = FALSE;
 	GelEFunc *func = NULL;
 	int i;
 
@@ -7127,7 +7879,12 @@ LinePlotCParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	/* Get window limits */
 	if (a[i] != NULL) {
-		if (a[i]->type == GEL_MATRIX_NODE) {
+		if ( (a[i]->type == GEL_STRING_NODE &&
+		      strcasecmp (a[i]->str.str, "fit") == 0) ||
+		     (a[i]->type == GEL_IDENTIFIER_NODE &&
+		      strcasecmp (a[i]->id.id->token, "fit") == 0)) {
+			fit = TRUE;
+		} else if (a[i]->type == GEL_MATRIX_NODE) {
 			if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
 				goto whack_copied_funcs;
 			i++;
@@ -7196,7 +7953,15 @@ LinePlotCParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	plot_mode = MODE_LINEPLOT_PARAMETRIC;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from_gui */);
+			FALSE /* from_gui */,
+			fit /* fit */);
+
+	if (fit) {
+		reset_plotx1 = plotx1;
+		reset_plotx2 = plotx2;
+		reset_ploty1 = ploty1;
+		reset_ploty2 = ploty2;
+	}
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -7224,7 +7989,8 @@ LinePlotClear_op (GelCtx *ctx, GelETree * * a, int *exception)
 	/* This will just clear the window */
 	plot_mode = MODE_LINEPLOT;
 	plot_functions (FALSE /* do_window_present */,
-			FALSE /* from_gui */);
+			FALSE /* from_gui */,
+			FALSE /* fit */);
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;

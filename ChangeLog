@@ -1,3 +1,158 @@
+Tue Jun 25 14:57:03 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.17
+
+Tue Jun 25 14:48:55 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/gtkplot.c: fix a very nasty infinite loop with a memory leak
+	  on very very large zoom due to a numerical issue.
+
+Fri Jun 14 15:19:19 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/gtkplot3d.c: fix placement of labels.
+
+	* src/graphing.c: make surface plot slightly smaller so that it fits
+	  on screen.
+
+Fri Jun 14 12:01:24 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix precision when the starting limit is 0 or much
+	  nearrer zero than the ending limit.  On left/right keys rotate 3d
+	  plot, and on all arrow keys move about line plots
+
+Fri Jun 14 10:48:41 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/*: finish updating GtkExtra to 3.0.5
+
+Fri Jun 14 10:04:20 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: Properly report errors from saving files
+
+Thu Jun 13 16:42:42 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/*: copied lots of the files from 3.0.5, only gtkplot3d,
+	  gtkplotdt and gtkplotsurface remain unupdated
+
+	* gtkextra/gtkplotps.c: updated to the 3.0.5 version part way, the
+	  new one is still broken so the new geometry stuff is not there (it
+	  is drawn still upside down and then rotated).  Also
+	  a fix from James Cloos to change the EPS header to EPSF from PCF,
+	  seems to fix PDF conversion.
+
+	* src/graphing.c: allow PDF export by calling ps2pdf properly,
+	  also don't show the epsi checkbox unless we are exporting to EPS
+
+Thu Jun 13 00:12:46 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/*.c: start updating to gtkextra 3.0.5.  Only few files
+	  converted: gtkplotcanvas.[ch], gtkplotpc.[ch], gtkextra.[ch],
+	  gtkplotprint.[ch].  Must slowly work through custom bugfixes and
+	  patches.  Note that gtkplotps.[ch] seems broken, so it's even
+	  older than the other files.
+	  Also added gtkplotcairo.[ch] for cairo output which is lots nicer
+
+Wed Jun 12 19:20:51 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: adaptive step size for line plots, also detect jump
+	  discontinuities
+
+Wed Jun 12 14:22:13 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, gtkextra/gtkplotdata.c: Allow immediate fitting of
+	  the dependent axis on function and parametric plots just as for
+	  surface plots.  Fix fitting a parametric plot after zoom was
+	  changed.
+
+	* help/C/genius/xml: update documentation
+
+Tue Jun 11 17:36:01 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/geniustests.txt: some new tests
+
+Tue Jun 11 17:19:55 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/factoring.gel: Improve Factors so that for larger
+	  numbers it uses "Factorize" rather than a slow naive
+	  implementation.
+
+	* lib/number_theory/primes.gel: minor mersenne update
+
+Tue Jun 11 16:12:48 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add completion to "help on function"
+
+	* help/C/genius.xml: workaround for broken help browser by adding
+	  anchors to function descriptions rather than using the varlistentry
+	  id (Which should work but does not).  A bug has been reported there
+	  quite some time ago, but I don't think it got any attention.
+
+Wed Apr 24 16:52:56 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* update version number
+
+	* update copyright strings.  Remove the "PhD"  ... the novelty wore
+	  off
+
+Wed Apr 24 16:45:17 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/parseutil.h, src/funclib.c: properly initialize
+	  id.uninitialized (ironic huh? :)
+
+	* src/graphing.c: use the proper temp directory
+
+Wed Apr 24 15:54:44 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/Makefile.am: fix compile
+
+	* help/C/genius.xml: fix some english issues
+
+Wed Apr 24 15:36:52 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: more sane precision computations especially when
+	  zoomed in.  Also reduce font size in case of too many digits.
+
+Wed Apr 24 13:58:27 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: include the function list in the main xml
+
+	* help/C/genius.xml: expand help for the root finding functions
+
+	* lib/equation_solving/find_root.gel: fix FindRootBisection and
+	  FindRootMullersMethod to actually work.
+
+Mon Mar 04 12:33:47 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: fix up the about entry to reflect reality a bit
+	  better.
+
+Mon Mar 04 12:29:41 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: remove scale="50" from images apparently that
+	  nowadays makes everything 50 pixels large or some other nonsense
+	  like that.
+
+Wed Feb 06 22:22:16 2013  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theoory/primes.gel: update the mersenne stuff
+
+Sun Dec 23 13:22:07 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: fix documentation of less than and greater than
+	  (thanks to Marek Cernocky).  Also expand the documentation in
+	  several places a little.
+
+Tue Dec 18 20:49:50 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c, src/calc.c: make a minor optimization, and remove an
+	  unsafe unnecessary one
+
+Mon Dec 17 15:15:44 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: bit of post release cleanup
+
+	* help/C/genius.xml: do some fixes, add help about comments and
+	  the new way that for loops with floats work.
+
 Mon Dec 17 13:52:35 2012  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.16
@@ -853,7 +1008,7 @@ Mon Mar 02 02:07:52 2009  Jiri (George) Lebl <jirka@5z.com>
 
 	* src/graphing.c: fix bad drawing of very vertical functions.  Our
 	  new hack in gtkextra handles lines way off screen more sanely so
-	  we needent worry much here.
+	  we needn't worry much here.
 
 Fri Feb 27 14:42:12 2009  Jiri (George) Lebl <jirka@5z.com>
 
@@ -1706,7 +1861,7 @@ Sat Nov 03 20:51:37 2007  Jiri (George) Lebl <jirka@5z.com>
 	  hanging behaviour.
 
 	* gtkextra/*: copy new files from cvs version of gtk extra except
-	  for gtkpslot which is broken, so keep our old version which works
+	  for gtkplotps which is broken, so keep our old version which works
 
 	* gtkextra/gtkplot3d.[ch]: fix up the axis mess
 

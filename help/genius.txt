@@ -12,7 +12,7 @@ Kai Willadsen
 
     <kaiw@itee.uq.edu.au>
 
-   Copyright © 1997-2012 Jiří (George) Lebl
+   Copyright © 1997-2013 Jiří (George) Lebl
 
    Copyright © 2004 Kai Willadsen
 
@@ -75,7 +75,7 @@ Kai Willadsen
    To report a bug or make a suggestion regarding the Genius
    Mathematics Tool application or this manual, follow the
    directions in the GNOME Feedback Page.
-   This manual describes version 1.0.16 of Genius.
+   This manual describes version 1.0.17 of Genius.
      __________________________________________________________
 
    Table of Contents
@@ -123,6 +123,7 @@ Kai Willadsen
 
         Absolute Value / Modulus
         Separator
+        Comments
         Modular Evaluation
         List of GEL Operators
 
@@ -414,16 +415,18 @@ Line Plots
 
    Figure 1. Create Plot Window
 
-   Into the text boxes just type in expressions where x is the
-   independent variable. You can also just give names of functions
-   such as cos rather then having to type cos(x). You can graph up
-   to ten functions. If you make a mistake and Genius cannot parse
+   Type expressions with x as the independent variable into the
+   textboxes. Alternatively you can give names of functions such
+   as cos rather then having to type cos(x). You can graph up to
+   ten functions. If you make a mistake and Genius cannot parse
    the input it will signify this with a warning icon on the right
    of the text input box where the error occurred, as well as
    giving you an error dialog. You can change the ranges of the
    dependent and independent variables in the bottom part of the
-   dialog. Pressing the Plot button produces the graph shown in
-   Figure 2.
+   dialog. The y (dependent) range can be set automatically by
+   turning on the Fit dependent axis checkbox. The names of the
+   variables can also be changed. Pressing the Plot button
+   produces the graph shown in Figure 2.
 
    [line_plot_graph.png]
 
@@ -444,7 +447,11 @@ Parametric Plots
    notebook tab to create two dimensional parametric plots. This
    way you can plot a single parametric function. You can either
    specify the points as x and y, or giving a single complex
-   number. See Figure 3.
+   number as a function of the variable t. The range of the
+   variable t is given explicitly, and the function is sampled
+   according to the given increment. The x and y range can be set
+   automatically by turning on the Fit dependent axis checkbox, or
+   it can be specified explicitly. See Figure 3.
 
    [parametric.png]
 
@@ -527,6 +534,9 @@ Surface Plots
    parameters, you could enter |cos(z)|. This would be equivalent
    to |cos(x+1i*y)|. See Figure 5. For plotting using the command
    line see the documentation of the SurfacePlot function.
+
+   The z range can be set automatically by turning on the Fit
+   dependent axis checkbox.
 
    [surface_graph.png]
 
@@ -931,6 +941,18 @@ Separator
    there is one more operator involved.
      __________________________________________________________
 
+Comments
+
+   GEL is similar to other scripting languages in that # denotes a
+   comments, that is text that is not meant to be evaluated.
+   Everything beyond the pound sign till the end of line will just
+   be ignored. So
+# This is just a comment
+# every line in a comment must have its own pond sign
+# in the next line we set x to the value 123
+x=123;
+     __________________________________________________________
+
 Modular Evaluation
 
    Genius implements modular arithmetic. To use it you just add
@@ -938,11 +960,14 @@ Modular Evaluation
    2^(5!) * 3^(6!) mod 5
 
    It could be possible to do modular arithmetic by computing with
-   integers and then modding in the end with the % operator, but
-   that may be time consuming if not impossible when working with
-   larger numbers. For example 10^(10^10) % 6 will simply not work
-   (the exponent will be too large), while 10^(10^10) mod 6 is
-   instanteneous.
+   integers and then modding in the end with the % operator, which
+   simply gives the remainder, but that may be time consuming if
+   not impossible when working with larger numbers. For example,
+   10^(10^10) % 6 will simply not work (the exponent will be too
+   large), while 10^(10^10) mod 6 is instanteneous. The first
+   expression first tries to compute the integer 10^(10^10) and
+   then find remainder after division by 6, while the second
+   expression evaluates everything modulo 6 to begin with.
 
    You can calculate the inverses of numbers mod some integer by
    just using rational numbers (of course the inverse has to
@@ -970,6 +995,17 @@ genius> 2*2 mod 7
 = 4
 
    sqrt will actually return all the possible square roots.
+
+   Do not chain mod operators, simply place it at the end of the
+   computation, all computations in the expression on the left
+   will be carried out in mod arithmetic. If you place a mod
+   inside a mod, you will get unexpected results. If you simply
+   want to mod a single number and control exactly when remainders
+   are taken, best to use the % operator. When you need to chain
+   several expressions in modular arithmetic with different
+   divisors, it may be best to just split up the expression into
+   several and use temporary variables to avoid a mod inside a
+   mod.
      __________________________________________________________
 
 List of GEL Operators
@@ -1115,17 +1151,17 @@ a>=b
 
 a<b
 
-          Less than operator, returns true if a is less than or
-          equal to b else returns false. These can be chained as
-          in a < b < c (can also be combine with the less than or
-          equal to operator).
+          Less than operator, returns true if a is less than b
+          else returns false. These can be chained as in a < b < c
+          (can also be combine with the less than or equal to
+          operator).
 
 a>b
 
           Greater than operator, returns true if a is greater than
-          or equal to b else returns false. These can be chained
-          as in a > b > c (can also be combine with the greater
-          than or equal to operator).
+          b else returns false. These can be chained as in a > b >
+          c (can also be combine with the greater than or equal to
+          operator).
 
 a<=>b
 
@@ -1157,13 +1193,14 @@ not a
 
 -a
 
-          Negation operator.
+          Negation operator. Returns the negative of a number or a
+          matrix (works elementwise on a matrix).
 
 &a
 
-          Variable referencing (to pass a reference to something).
-          See the Section called References in the Chapter called
-          Programming with GEL.
+          Variable referencing (to pass a reference to a
+          variable). See the Section called References in the
+          Chapter called Programming with GEL.
 
 *a
 
@@ -1173,11 +1210,15 @@ not a
 
 a'
 
-          Matrix conjugate transpose.
+          Matrix conjugate transpose. That is, rows and columns
+          get swapped and we take complex conjugate of all
+          entries. That is if the i,j element of a is x+iy, then
+          the j,i element of a' is x-iy.
 
 a.'
 
-          Matrix transpose, does not conjugate the entries.
+          Matrix transpose, does not conjugate the entries. That
+          is, the i,j element of a becomes the j,i element of a.'.
 
 a@(b,c)
 
@@ -1187,7 +1228,7 @@ a@(b,c)
 
 a@(b,)
 
-          Get row of a matrix (or rows if b is a vector).
+          Get row of a matrix (or multiple rows if b is a vector).
 
 a@(b,:)
 
@@ -1344,6 +1385,23 @@ for <identifier> = <from> to <to> by <increment> do <body>
    but will never be overshot, for example the following prints
    out odd numbers from 1 to 19:
 for i = 1 to 20 by 2 do print(i)
+
+   When one of the values is a floating point number, then the
+   final check is done to within 2^-20 of the step size. That is,
+   even if we overshoot by 2^-20 times the "by" above, we still
+   execute the last iteration. This way
+for x = 0 to 1 by 0.1 do print(x)
+
+   does the expected even though adding 0.1 ten times becomes just
+   slightly more 1.0 due to the way that floating point numbers
+   are stored in base 2 (there is no 0.1, the actual number stored
+   is just ever so slightly bigger). This is not perfect but it
+   handles the majority of the cases. If you want to avoid dealing
+   with this issue, use actual rational numbers for example:
+for x = 0 to 1 by 1/10 do print(x)
+
+   This check is done only from version 1.0.16 onwards, so
+   execution of your code may differ on older versions.
      __________________________________________________________
 
 Foreach Loops
@@ -1394,6 +1452,9 @@ prod <identifier> in <matrix> do <body>
 
    If no body is executed (for example sum i=1 to 0 do ...) then
    sum returns 0 and prod returns 1 as is the standard convention.
+
+   For floating point numbers the same roundoff error protection
+   is done as in the for loop. See the Section called For Loops.
      __________________________________________________________
 
 Comparison Operators
@@ -1831,7 +1892,7 @@ GEL Startup Procedure
    looks into the current directory, and then it tries to load an
    uncompiled file called ~/.geniusinit.
 
-   If you ever change the the library its installed place, you’ll
+   If you ever change the library in its installed place, you’ll
    have to first compile it with genius --compile loader.gel >
    lib.cgel
      __________________________________________________________
@@ -4227,7 +4288,7 @@ Linear Algebra
 AuxiliaryUnitMatrix (n)
 
           Get the auxiliary unit matrix of size n. This is a
-          square matrix matrix with that is all zero except the
+          square matrix with that is all zero except the
           superdiagonal being all ones. It is the Jordan block
           matrix of one zero eigenvalue.
 
@@ -5291,9 +5352,9 @@ NumericalFourierSeriesFunction (f,L,N)
 
 NumericalFourierCosineSeriesCoefficients (f,L,N)
 
-          Return a vector of coefficients of the the cosine
-          Fourier series of f with half-period L. That is, we take
-          f defined on [0,L] take the even periodic extension and
+          Return a vector of coefficients of the cosine Fourier
+          series of f with half-period L. That is, we take f
+          defined on [0,L] take the even periodic extension and
           compute the Fourier series, which only has cosine terms.
           The series is computed up to the Nth harmonic. The
           coefficients are computed by numerical integration using
@@ -5321,7 +5382,7 @@ NumericalFourierCosineSeriesFunction (f,L,N)
 
 NumericalFourierSineSeriesCoefficients (f,L,N)
 
-          Return a vector of coefficients of the the sine Fourier
+          Return a vector of coefficients of the sine Fourier
           series of f with half-period L. That is, we take f
           defined on [0,L] take the odd periodic extension and
           compute the Fourier series, which only has sine terms.
@@ -5702,29 +5763,31 @@ EulersMethodFull (f,x0,y0,x1,n)
 
 FindRootBisection (f,a,b,TOL,N)
 
-          Find root of a function using the bisection method. TOL
-          is the desired tolerance and N is the limit on the
-          number of iterations to run, 0 means no limit. The
-          function returns a vector [success,value,iteration],
-          where success is a boolean indicating success, value is
-          the last value computed, and iteration is the number of
-          iterations done.
+          Find root of a function using the bisection method. a
+          and b are the initial guess interval, f(a) and f(b)
+          should have opposite signs. TOL is the desired tolerance
+          and N is the limit on the number of iterations to run, 0
+          means no limit. The function returns a vector
+          [success,value,iteration], where success is a boolean
+          indicating success, value is the last value computed,
+          and iteration is the number of iterations done.
 
    FindRootFalsePosition
 
 FindRootFalsePosition (f,a,b,TOL,N)
 
           Find root of a function using the method of false
-          position. TOL is the desired tolerance and N is the
-          limit on the number of iterations to run, 0 means no
-          limit. The function returns a vector
+          position. a and b are the initial guess interval, f(a)
+          and f(b) should have opposite signs. TOL is the desired
+          tolerance and N is the limit on the number of iterations
+          to run, 0 means no limit. The function returns a vector
           [success,value,iteration], where success is a boolean
           indicating success, value is the last value computed,
           and iteration is the number of iterations done.
 
    FindRootMullersMethod
 
-FindRootMullersMethod (f,x1,x2,x3,TOL,N)
+FindRootMullersMethod (f,x0,x1,x2,TOL,N)
 
           Find root of a function using the Muller's method. TOL
           is the desired tolerance and N is the limit on the
@@ -5738,13 +5801,14 @@ FindRootMullersMethod (f,x1,x2,x3,TOL,N)
 
 FindRootSecant (f,a,b,TOL,N)
 
-          Find root of a function using the secant method. TOL is
-          the desired tolerance and N is the limit on the number
-          of iterations to run, 0 means no limit. The function
-          returns a vector [success,value,iteration], where
-          success is a boolean indicating success, value is the
-          last value computed, and iteration is the number of
-          iterations done.
+          Find root of a function using the secant method. a and b
+          are the initial guess interval, f(a) and f(b) should
+          have opposite signs. TOL is the desired tolerance and N
+          is the limit on the number of iterations to run, 0 means
+          no limit. The function returns a vector
+          [success,value,iteration], where success is a boolean
+          indicating success, value is the last value computed,
+          and iteration is the number of iterations done.
 
    PolynomialRoots
 
@@ -6146,7 +6210,7 @@ ExportPlot (file,type)
 ExportPlot (file)
 
           Export the contents of the plotting window to a file.
-          the type is a string that specifies the file type to
+          The type is a string that specifies the file type to
           use, "png", "eps", or "ps". If the type is not
           specified, then it is taken to be the extension, in
           which case the extension must be ".png", ".eps", or
@@ -6166,13 +6230,21 @@ genius> ExportPlot("/directory/file","eps")
 
 LinePlot (func1,func2,func3,...)
 
+LinePlot (func1,func2,func3,x1,x2)
+
 LinePlot (func1,func2,func3,x1,x2,y1,y2)
 
+LinePlot (func1,func2,func3,[x1,x2])
+
+LinePlot (func1,func2,func3,[x1,x2,y1,y2])
+
           Plot a function (or several functions) with a line.
-          First up to 10 arguments are functions, then optionally
-          you can specify the limits of the plotting window as x1,
-          x2, y1, y2. If limits are not specified, then the
-          currently set limits apply (See LinePlotWindow)
+          First (up to 10) arguments are functions, then
+          optionally you can specify the limits of the plotting
+          window as x1, x2, y1, y2. If limits are not specified,
+          then the currently set limits apply (See LinePlotWindow)
+          If the y limits are not specified, then the functions
+          are computed and then the maxima and minima are used.
 
           The parameter LinePlotDrawLegends controls the drawing
           of the legend.
@@ -6226,12 +6298,18 @@ LinePlotParametric (xfunc,yfunc,t1,t2,tinc)
 
 LinePlotParametric (xfunc,yfunc,t1,t2,tinc,x1,x2,y1,y2)
 
+LinePlotParametric (xfunc,yfunc,t1,t2,tinc,[x1,x2,y1,y2])
+
+LinePlotParametric (xfunc,yfunc,t1,t2,tinc,"fit")
+
           Plot a parametric function with a line. First come the
           functions for x and y then optionally the t limits as
           t1,t2,tinc, then optionally the limits as x1,x2,y1,y2.
 
-          If limits are not specified, then the currently set
-          limits apply (See LinePlotWindow).
+          If x and y limits are not specified, then the currently
+          set limits apply (See LinePlotWindow). If instead the
+          string "fit" is given for the x and y limits, then the
+          limits are the maximum extent of the graph
 
           The parameter LinePlotDrawLegends controls the drawing
           of the legend.
@@ -6250,7 +6328,9 @@ LinePlotCParametric (func,t1,t2,tinc,x1,x2,y1,y2)
           the limits as x1,x2,y1,y2.
 
           If limits are not specified, then the currently set
-          limits apply (See LinePlotWindow).
+          limits apply (See LinePlotWindow). If instead the string
+          "fit" is given for the x and y limits, then the limits
+          are the maximum extent of the graph
 
           The parameter LinePlotDrawLegends controls the drawing
           of the legend.
@@ -6300,7 +6380,11 @@ SurfacePlot (func)
 
 SurfacePlot (func,x1,x2,y1,y2,z1,z2)
 
+SurfacePlot (func,x1,x2,y1,y2)
+
 SurfacePlot (func,[x1,x2,y1,y2,z1,z2])
+
+SurfacePlot (func,[x1,x2,y1,y2])
 
           Plot a surface function which takes either two arguments
           or a complex number. First comes the function then
@@ -6308,6 +6392,9 @@ SurfacePlot (func,[x1,x2,y1,y2,z1,z2])
           are not specified, then the currently set limits apply
           (See SurfacePlotWindow). Genius can only plot a single
           surface function at this time.
+
+          If the z limits are not specified then the maxima and
+          minima of the function are used.
 
           Examples:
 
@@ -6683,11 +6770,12 @@ About Genius Mathematics Tool
    visit the Genius Web page.
 
    To report a bug or make a suggestion regarding this application
-   or this manual, follow the directions in this document.
+   or this manual, send email to me (the author) or post to the
+   mailing list (see the web page).
 
    This program is distributed under the terms of the GNU General
    Public license as published by the Free Software Foundation;
-   either version 2 of the License, or (at your option) any later
+   either version 3 of the License, or (at your option) any later
    version. A copy of this license can be found at this link, or
    in the file COPYING included with the source code of this
    program.
@@ -6695,5 +6783,5 @@ About Genius Mathematics Tool
    Jiří Lebl was during various parts of the development partially
    supported for the work by NSF grant DMS 0900885, the University
    of Illinois at Urbana-Champaign, the University of California
-   at San Diego and the University of Wisconsin-Madison. The
+   at San Diego, and the University of Wisconsin-Madison. The
    software has been used for both teaching and research.
