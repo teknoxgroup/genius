@@ -1,24 +1,23 @@
-/* A Bison parser, made by GNU Bison 2.3.  */
+
+/* A Bison parser, made by GNU Bison 2.4.1.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
-
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
+   
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
    Free Software Foundation, Inc.
-
-   This program is free software; you can redistribute it and/or modify
+   
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
-
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-
+   
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -29,7 +28,7 @@
    special exception, which will cause the skeleton and the resulting
    Bison output files to be licensed under the GNU General Public
    License without this special exception.
-
+   
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
@@ -47,7 +46,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.3"
+#define YYBISON_VERSION "2.4.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -55,9 +54,67 @@
 /* Pure parsers.  */
 #define YYPURE 0
 
+/* Push parsers.  */
+#define YYPUSH 0
+
+/* Pull parsers.  */
+#define YYPULL 1
+
 /* Using locations.  */
 #define YYLSP_NEEDED 0
 
+
+
+/* Copy the first part of user declarations.  */
+
+/* Line 189 of yacc.c  */
+#line 21 "parse.y"
+
+#include "config.h"
+
+#include <glib.h>
+#include <string.h>
+#include "structs.h"
+#include "mpwrap.h"
+#include "eval.h"
+#include "dict.h"
+#include "util.h"
+#include "calc.h"
+#include "matrix.h"
+#include "matrixw.h"
+	
+#include "parseutil.h"
+
+extern GSList *gel_parsestack;
+
+extern gboolean gel_return_ret; /*should the lexer return on \n*/
+
+/* prototype for yylex */
+int yylex(void);
+void yyerror(char *);
+
+
+
+/* Line 189 of yacc.c  */
+#line 100 "y.tab.c"
+
+/* Enabling traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 1
+#endif
+
+/* Enabling verbose error messages.  */
+#ifdef YYERROR_VERBOSE
+# undef YYERROR_VERBOSE
+# define YYERROR_VERBOSE 1
+#else
+# define YYERROR_VERBOSE 0
+#endif
+
+/* Enabling the token table.  */
+#ifndef YYTOKEN_TABLE
+# define YYTOKEN_TABLE 0
+#endif
 
 
 /* Tokens.  */
@@ -203,74 +260,32 @@
 
 
 
-/* Copy the first part of user declarations.  */
-#line 21 "parse.y"
-
-#include "config.h"
-
-#include <glib.h>
-#include <string.h>
-#include "structs.h"
-#include "mpwrap.h"
-#include "eval.h"
-#include "dict.h"
-#include "util.h"
-#include "calc.h"
-#include "matrix.h"
-#include "matrixw.h"
-	
-#include "parseutil.h"
-
-extern GSList *gel_parsestack;
-
-extern gboolean gel_return_ret; /*should the lexer return on \n*/
-
-/* prototype for yylex */
-int yylex(void);
-void yyerror(char *);
-
-
-
-/* Enabling traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 1
-#endif
-
-/* Enabling verbose error messages.  */
-#ifdef YYERROR_VERBOSE
-# undef YYERROR_VERBOSE
-# define YYERROR_VERBOSE 1
-#else
-# define YYERROR_VERBOSE 0
-#endif
-
-/* Enabling the token table.  */
-#ifndef YYTOKEN_TABLE
-# define YYTOKEN_TABLE 0
-#endif
-
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 47 "parse.y"
 {
+
+/* Line 214 of yacc.c  */
+#line 47 "parse.y"
+
 	mpw_t val;
 	char *id;
-}
-/* Line 187 of yacc.c.  */
-#line 261 "y.tab.c"
-	YYSTYPE;
+
+
+
+/* Line 214 of yacc.c  */
+#line 277 "y.tab.c"
+} YYSTYPE;
+# define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
-# define YYSTYPE_IS_TRIVIAL 1
 #endif
-
 
 
 /* Copy the second part of user declarations.  */
 
 
-/* Line 216 of yacc.c.  */
-#line 274 "y.tab.c"
+/* Line 264 of yacc.c  */
+#line 289 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -345,14 +360,14 @@ typedef short int yytype_int16;
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static int
-YYID (int i)
+YYID (int yyi)
 #else
 static int
-YYID (i)
-    int i;
+YYID (yyi)
+    int yyi;
 #endif
 {
-  return i;
+  return yyi;
 }
 #endif
 
@@ -433,9 +448,9 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
-  yytype_int16 yyss;
-  YYSTYPE yyvs;
-  };
+  yytype_int16 yyss_alloc;
+  YYSTYPE yyvs_alloc;
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
@@ -469,12 +484,12 @@ union yyalloc
    elements in the stack, and YYPTR gives the new location of the
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
-# define YYSTACK_RELOCATE(Stack)					\
+# define YYSTACK_RELOCATE(Stack_alloc, Stack)				\
     do									\
       {									\
 	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
+	YYCOPY (&yyptr->Stack_alloc, Stack, yysize);			\
+	Stack = &yyptr->Stack_alloc;					\
 	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
 	yyptr += yynewbytes / sizeof (*yyptr);				\
       }									\
@@ -659,10 +674,11 @@ static const char *const yytname[] =
   "EQ_CMP", "NE_CMP", "CMP_CMP", "LT_CMP", "GT_CMP", "LE_CMP", "GE_CMP",
   "LOGICAL_XOR", "LOGICAL_OR", "LOGICAL_AND", "LOGICAL_NOT",
   "LOWER_THAN_ELSE", "MOD", "':'", "'+'", "'-'", "'*'", "'/'", "'\\\\'",
-  "'%'", "ELTELTBACKDIV", "'''", "UPLUS", "UMINUS", "'^'", "'!'", "'\\n'",
-  "'('", "')'", "'|'", "','", "'['", "']'", "'`'", "'{'", "'}'", "'&'",
-  "'.'", "$accept", "fullexpr", "expr", "deref", "ident", "paramdef",
-  "anyequals", "funcdef", "identlist", "exprlist", "matrixrows", 0
+  "'%'", "ELTELTBACKDIV", "'\\''", "UPLUS", "UMINUS", "'^'", "'!'",
+  "'\\n'", "'('", "')'", "'|'", "','", "'['", "']'", "'`'", "'{'", "'}'",
+  "'&'", "'.'", "$accept", "fullexpr", "expr", "deref", "ident",
+  "paramdef", "anyequals", "funcdef", "identlist", "exprlist",
+  "matrixrows", 0
 };
 #endif
 
@@ -1527,17 +1543,20 @@ yy_symbol_print (yyoutput, yytype, yyvaluep)
 #if (defined __STDC__ || defined __C99__FUNC__ \
      || defined __cplusplus || defined _MSC_VER)
 static void
-yy_stack_print (yytype_int16 *bottom, yytype_int16 *top)
+yy_stack_print (yytype_int16 *yybottom, yytype_int16 *yytop)
 #else
 static void
-yy_stack_print (bottom, top)
-    yytype_int16 *bottom;
-    yytype_int16 *top;
+yy_stack_print (yybottom, yytop)
+    yytype_int16 *yybottom;
+    yytype_int16 *yytop;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
-  for (; bottom <= top; ++bottom)
-    YYFPRINTF (stderr, " %d", *bottom);
+  for (; yybottom <= yytop; yybottom++)
+    {
+      int yybot = *yybottom;
+      YYFPRINTF (stderr, " %d", yybot);
+    }
   YYFPRINTF (stderr, "\n");
 }
 
@@ -1571,11 +1590,11 @@ yy_reduce_print (yyvsp, yyrule)
   /* The symbols being reduced.  */
   for (yyi = 0; yyi < yynrhs; yyi++)
     {
-      fprintf (stderr, "   $%d = ", yyi + 1);
+      YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr, yyrhs[yyprhs[yyrule] + yyi],
 		       &(yyvsp[(yyi + 1) - (yynrhs)])
 		       		       );
-      fprintf (stderr, "\n");
+      YYFPRINTF (stderr, "\n");
     }
 }
 
@@ -1855,10 +1874,8 @@ yydestruct (yymsg, yytype, yyvaluep)
 	break;
     }
 }
-
 
 /* Prevent warnings from -Wmissing-prototypes.  */
-
 #ifdef YYPARSE_PARAM
 #if defined __STDC__ || defined __cplusplus
 int yyparse (void *YYPARSE_PARAM);
@@ -1874,11 +1891,10 @@ int yyparse ();
 #endif /* ! YYPARSE_PARAM */
 
 
-
-/* The look-ahead symbol.  */
+/* The lookahead symbol.  */
 int yychar;
 
-/* The semantic value of the look-ahead symbol.  */
+/* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
 
 /* Number of syntax errors so far.  */
@@ -1886,9 +1902,9 @@ int yynerrs;
 
 
 
-/*----------.
-| yyparse.  |
-`----------*/
+/*-------------------------.
+| yyparse or yypush_parse.  |
+`-------------------------*/
 
 #ifdef YYPARSE_PARAM
 #if (defined __STDC__ || defined __C99__FUNC__ \
@@ -1912,14 +1928,39 @@ yyparse ()
 #endif
 #endif
 {
-  
-  int yystate;
+
+
+    int yystate;
+    /* Number of tokens to shift before error messages enabled.  */
+    int yyerrstatus;
+
+    /* The stacks and their tools:
+       `yyss': related to states.
+       `yyvs': related to semantic values.
+
+       Refer to the stacks thru separate pointers, to allow yyoverflow
+       to reallocate them elsewhere.  */
+
+    /* The state stack.  */
+    yytype_int16 yyssa[YYINITDEPTH];
+    yytype_int16 *yyss;
+    yytype_int16 *yyssp;
+
+    /* The semantic value stack.  */
+    YYSTYPE yyvsa[YYINITDEPTH];
+    YYSTYPE *yyvs;
+    YYSTYPE *yyvsp;
+
+    YYSIZE_T yystacksize;
+
   int yyn;
   int yyresult;
-  /* Number of tokens to shift before error messages enabled.  */
-  int yyerrstatus;
-  /* Look-ahead token as an internal (translated) token number.  */
-  int yytoken = 0;
+  /* Lookahead token as an internal (translated) token number.  */
+  int yytoken;
+  /* The variables used to return semantic value and location from the
+     action routines.  */
+  YYSTYPE yyval;
+
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
   char yymsgbuf[128];
@@ -1927,51 +1968,28 @@ yyparse ()
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-  /* Three stacks and their tools:
-     `yyss': related to states,
-     `yyvs': related to semantic values,
-     `yyls': related to locations.
-
-     Refer to the stacks thru separate pointers, to allow yyoverflow
-     to reallocate them elsewhere.  */
-
-  /* The state stack.  */
-  yytype_int16 yyssa[YYINITDEPTH];
-  yytype_int16 *yyss = yyssa;
-  yytype_int16 *yyssp;
-
-  /* The semantic value stack.  */
-  YYSTYPE yyvsa[YYINITDEPTH];
-  YYSTYPE *yyvs = yyvsa;
-  YYSTYPE *yyvsp;
-
-
-
 #define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
-
-  YYSIZE_T yystacksize = YYINITDEPTH;
-
-  /* The variables used to return semantic value and location from the
-     action routines.  */
-  YYSTYPE yyval;
-
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
   int yylen = 0;
+
+  yytoken = 0;
+  yyss = yyssa;
+  yyvs = yyvsa;
+  yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
 
   yystate = 0;
   yyerrstatus = 0;
   yynerrs = 0;
-  yychar = YYEMPTY;		/* Cause a token to be read.  */
+  yychar = YYEMPTY; /* Cause a token to be read.  */
 
   /* Initialize stack pointers.
      Waste one element of value and location stack
      so that they stay on the same level as the state stack.
      The wasted elements are never initialized.  */
-
   yyssp = yyss;
   yyvsp = yyvs;
 
@@ -2001,7 +2019,6 @@ yyparse ()
 	YYSTYPE *yyvs1 = yyvs;
 	yytype_int16 *yyss1 = yyss;
 
-
 	/* Each stack pointer address is followed by the size of the
 	   data in use in that stack, in bytes.  This used to be a
 	   conditional around just the two extra args, but that might
@@ -2009,7 +2026,6 @@ yyparse ()
 	yyoverflow (YY_("memory exhausted"),
 		    &yyss1, yysize * sizeof (*yyssp),
 		    &yyvs1, yysize * sizeof (*yyvsp),
-
 		    &yystacksize);
 
 	yyss = yyss1;
@@ -2032,9 +2048,8 @@ yyparse ()
 	  (union yyalloc *) YYSTACK_ALLOC (YYSTACK_BYTES (yystacksize));
 	if (! yyptr)
 	  goto yyexhaustedlab;
-	YYSTACK_RELOCATE (yyss);
-	YYSTACK_RELOCATE (yyvs);
-
+	YYSTACK_RELOCATE (yyss_alloc, yyss);
+	YYSTACK_RELOCATE (yyvs_alloc, yyvs);
 #  undef YYSTACK_RELOCATE
 	if (yyss1 != yyssa)
 	  YYSTACK_FREE (yyss1);
@@ -2045,7 +2060,6 @@ yyparse ()
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
 
-
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
 		  (unsigned long int) yystacksize));
 
@@ -2055,6 +2069,9 @@ yyparse ()
 
   YYDPRINTF ((stderr, "Entering state %d\n", yystate));
 
+  if (yystate == YYFINAL)
+    YYACCEPT;
+
   goto yybackup;
 
 /*-----------.
@@ -2063,16 +2080,16 @@ yyparse ()
 yybackup:
 
   /* Do appropriate processing given the current state.  Read a
-     look-ahead token if we need one and don't already have one.  */
+     lookahead token if we need one and don't already have one.  */
 
-  /* First try to decide what to do without reference to look-ahead token.  */
+  /* First try to decide what to do without reference to lookahead token.  */
   yyn = yypact[yystate];
   if (yyn == YYPACT_NINF)
     goto yydefault;
 
-  /* Not known => get a look-ahead token if don't already have one.  */
+  /* Not known => get a lookahead token if don't already have one.  */
 
-  /* YYCHAR is either YYEMPTY or YYEOF or a valid look-ahead symbol.  */
+  /* YYCHAR is either YYEMPTY or YYEOF or a valid lookahead symbol.  */
   if (yychar == YYEMPTY)
     {
       YYDPRINTF ((stderr, "Reading a token: "));
@@ -2104,20 +2121,16 @@ yybackup:
       goto yyreduce;
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   /* Count tokens shifted since error; after three, turn off error
      status.  */
   if (yyerrstatus)
     yyerrstatus--;
 
-  /* Shift the look-ahead token.  */
+  /* Shift the lookahead token.  */
   YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
 
-  /* Discard the shifted token unless it is eof.  */
-  if (yychar != YYEOF)
-    yychar = YYEMPTY;
+  /* Discard the shifted token.  */
+  yychar = YYEMPTY;
 
   yystate = yyn;
   *++yyvsp = yylval;
@@ -2157,81 +2170,113 @@ yyreduce:
   switch (yyn)
     {
         case 2:
+
+/* Line 1455 of yacc.c  */
 #line 116 "parse.y"
     { YYACCEPT; }
     break;
 
   case 3:
+
+/* Line 1455 of yacc.c  */
 #line 117 "parse.y"
     { gel_command = GEL_LOADFILE; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 4:
+
+/* Line 1455 of yacc.c  */
 #line 118 "parse.y"
     { gel_command = GEL_LOADFILE_GLOB; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 5:
+
+/* Line 1455 of yacc.c  */
 #line 119 "parse.y"
     { gel_command = GEL_CHANGEDIR; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 6:
+
+/* Line 1455 of yacc.c  */
 #line 120 "parse.y"
     { gel_command = GEL_LS; YYACCEPT; }
     break;
 
   case 7:
+
+/* Line 1455 of yacc.c  */
 #line 121 "parse.y"
     { gel_command = GEL_LS_ARG; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 8:
+
+/* Line 1455 of yacc.c  */
 #line 122 "parse.y"
     { gel_command = GEL_HELP; YYACCEPT; }
     break;
 
   case 9:
+
+/* Line 1455 of yacc.c  */
 #line 123 "parse.y"
     { gel_command = GEL_HELP_ARG; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 10:
+
+/* Line 1455 of yacc.c  */
 #line 124 "parse.y"
     { gel_command = GEL_PWD; YYACCEPT; }
     break;
 
   case 11:
+
+/* Line 1455 of yacc.c  */
 #line 125 "parse.y"
     { gel_command = GEL_LOADPLUGIN; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 12:
+
+/* Line 1455 of yacc.c  */
 #line 126 "parse.y"
     { YYACCEPT; }
     break;
 
   case 13:
+
+/* Line 1455 of yacc.c  */
 #line 127 "parse.y"
     { gp_push_null(); PUSH_ACT(GEL_E_SEPAR); YYACCEPT; }
     break;
 
   case 14:
+
+/* Line 1455 of yacc.c  */
 #line 128 "parse.y"
     { gel_return_ret = TRUE; yyclearin; YYABORT; }
     break;
 
   case 15:
+
+/* Line 1455 of yacc.c  */
 #line 129 "parse.y"
     { gel_return_ret = TRUE; }
     break;
 
   case 16:
+
+/* Line 1455 of yacc.c  */
 #line 132 "parse.y"
     { PUSH_ACT(GEL_E_SEPAR); }
     break;
 
   case 17:
+
+/* Line 1455 of yacc.c  */
 #line 133 "parse.y"
     { if ( ! gp_push_local_all ()) {
 						SYNTAX_ERROR;
@@ -2240,6 +2285,8 @@ yyreduce:
     break;
 
   case 18:
+
+/* Line 1455 of yacc.c  */
 #line 137 "parse.y"
     { if ( ! gp_push_local_idents ()) {
 						SYNTAX_ERROR;
@@ -2248,22 +2295,30 @@ yyreduce:
     break;
 
   case 19:
+
+/* Line 1455 of yacc.c  */
 #line 141 "parse.y"
     { PUSH_ACT(GEL_E_MOD_CALC); }
     break;
 
   case 20:
+
+/* Line 1455 of yacc.c  */
 #line 142 "parse.y"
     { gp_push_null(); PUSH_ACT(GEL_E_SEPAR);
 					  gp_push_spacer(); }
     break;
 
   case 21:
+
+/* Line 1455 of yacc.c  */
 #line 144 "parse.y"
     { gp_push_spacer(); }
     break;
 
   case 22:
+
+/* Line 1455 of yacc.c  */
 #line 145 "parse.y"
     { mpw_t i;
 					  mpw_init (i);
@@ -2275,171 +2330,239 @@ yyreduce:
     break;
 
   case 23:
+
+/* Line 1455 of yacc.c  */
 #line 152 "parse.y"
     { PUSH_ACT(GEL_E_EQUALS); }
     break;
 
   case 24:
+
+/* Line 1455 of yacc.c  */
 #line 153 "parse.y"
     { PUSH_ACT(GEL_E_DEFEQUALS); }
     break;
 
   case 25:
+
+/* Line 1455 of yacc.c  */
 #line 154 "parse.y"
     { PUSH_ACT(GEL_E_ABS); }
     break;
 
   case 26:
+
+/* Line 1455 of yacc.c  */
 #line 155 "parse.y"
     { PUSH_ACT(GEL_E_PLUS); }
     break;
 
   case 27:
+
+/* Line 1455 of yacc.c  */
 #line 156 "parse.y"
     { PUSH_ACT(GEL_E_ELTPLUS); }
     break;
 
   case 28:
+
+/* Line 1455 of yacc.c  */
 #line 157 "parse.y"
     { PUSH_ACT(GEL_E_MINUS); }
     break;
 
   case 29:
+
+/* Line 1455 of yacc.c  */
 #line 158 "parse.y"
     { PUSH_ACT(GEL_E_ELTMINUS); }
     break;
 
   case 30:
+
+/* Line 1455 of yacc.c  */
 #line 159 "parse.y"
     { PUSH_ACT(GEL_E_MUL); }
     break;
 
   case 31:
+
+/* Line 1455 of yacc.c  */
 #line 160 "parse.y"
     { PUSH_ACT(GEL_E_ELTMUL); }
     break;
 
   case 32:
+
+/* Line 1455 of yacc.c  */
 #line 161 "parse.y"
     { PUSH_ACT(GEL_E_DIV); }
     break;
 
   case 33:
+
+/* Line 1455 of yacc.c  */
 #line 162 "parse.y"
     { PUSH_ACT(GEL_E_ELTDIV); }
     break;
 
   case 34:
+
+/* Line 1455 of yacc.c  */
 #line 163 "parse.y"
     { PUSH_ACT(GEL_E_BACK_DIV); }
     break;
 
   case 35:
+
+/* Line 1455 of yacc.c  */
 #line 164 "parse.y"
     { PUSH_ACT(GEL_E_ELT_BACK_DIV); }
     break;
 
   case 36:
+
+/* Line 1455 of yacc.c  */
 #line 165 "parse.y"
     { PUSH_ACT(GEL_E_MOD); }
     break;
 
   case 37:
+
+/* Line 1455 of yacc.c  */
 #line 166 "parse.y"
     { PUSH_ACT(GEL_E_ELTMOD); }
     break;
 
   case 38:
+
+/* Line 1455 of yacc.c  */
 #line 167 "parse.y"
     { PUSH_ACT(GEL_E_CMP_CMP); }
     break;
 
   case 39:
+
+/* Line 1455 of yacc.c  */
 #line 169 "parse.y"
     { PUSH_ACT(GEL_E_EQ_CMP); }
     break;
 
   case 40:
+
+/* Line 1455 of yacc.c  */
 #line 170 "parse.y"
     { PUSH_ACT(GEL_E_NE_CMP); }
     break;
 
   case 41:
+
+/* Line 1455 of yacc.c  */
 #line 171 "parse.y"
     { PUSH_ACT(GEL_E_LT_CMP); }
     break;
 
   case 42:
+
+/* Line 1455 of yacc.c  */
 #line 172 "parse.y"
     { PUSH_ACT(GEL_E_GT_CMP); }
     break;
 
   case 43:
+
+/* Line 1455 of yacc.c  */
 #line 173 "parse.y"
     { PUSH_ACT(GEL_E_LE_CMP); }
     break;
 
   case 44:
+
+/* Line 1455 of yacc.c  */
 #line 174 "parse.y"
     { PUSH_ACT(GEL_E_GE_CMP); }
     break;
 
   case 45:
+
+/* Line 1455 of yacc.c  */
 #line 176 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_AND); }
     break;
 
   case 46:
+
+/* Line 1455 of yacc.c  */
 #line 177 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_OR); }
     break;
 
   case 47:
+
+/* Line 1455 of yacc.c  */
 #line 178 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_XOR); }
     break;
 
   case 48:
+
+/* Line 1455 of yacc.c  */
 #line 179 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_NOT); }
     break;
 
   case 49:
+
+/* Line 1455 of yacc.c  */
 #line 184 "parse.y"
     { PUSH_ACT(GEL_E_FACT); }
     break;
 
   case 50:
+
+/* Line 1455 of yacc.c  */
 #line 185 "parse.y"
     { PUSH_ACT(GEL_E_DBLFACT); }
     break;
 
   case 51:
+
+/* Line 1455 of yacc.c  */
 #line 186 "parse.y"
     { PUSH_ACT(GEL_E_CONJUGATE_TRANSPOSE); }
     break;
 
   case 52:
+
+/* Line 1455 of yacc.c  */
 #line 187 "parse.y"
     { PUSH_ACT(GEL_E_TRANSPOSE); }
     break;
 
   case 53:
+
+/* Line 1455 of yacc.c  */
 #line 188 "parse.y"
     { PUSH_ACT(GEL_E_NEG); }
     break;
 
   case 55:
+
+/* Line 1455 of yacc.c  */
 #line 190 "parse.y"
     { PUSH_ACT(GEL_E_EXP); }
     break;
 
   case 56:
+
+/* Line 1455 of yacc.c  */
 #line 191 "parse.y"
     { PUSH_ACT(GEL_E_ELTEXP); }
     break;
 
   case 57:
+
+/* Line 1455 of yacc.c  */
 #line 193 "parse.y"
     {
 				if (gp_prepare_push_region_sep ()) {
@@ -2451,52 +2574,72 @@ yyreduce:
     break;
 
   case 58:
+
+/* Line 1455 of yacc.c  */
 #line 201 "parse.y"
     { /* FIXME: do nothing?, this is just a 
 					     get all */ }
     break;
 
   case 59:
+
+/* Line 1455 of yacc.c  */
 #line 203 "parse.y"
     { PUSH_ACT(GEL_E_GET_VELEMENT); }
     break;
 
   case 60:
+
+/* Line 1455 of yacc.c  */
 #line 204 "parse.y"
     { PUSH_ACT(GEL_E_GET_ELEMENT); }
     break;
 
   case 61:
+
+/* Line 1455 of yacc.c  */
 #line 205 "parse.y"
     { PUSH_ACT(GEL_E_GET_ROW_REGION); }
     break;
 
   case 62:
+
+/* Line 1455 of yacc.c  */
 #line 206 "parse.y"
     { PUSH_ACT(GEL_E_GET_ROW_REGION); }
     break;
 
   case 63:
+
+/* Line 1455 of yacc.c  */
 #line 207 "parse.y"
     { PUSH_ACT(GEL_E_GET_COL_REGION); }
     break;
 
   case 64:
+
+/* Line 1455 of yacc.c  */
 #line 208 "parse.y"
     { PUSH_ACT(GEL_E_GET_COL_REGION); }
     break;
 
   case 65:
+
+/* Line 1455 of yacc.c  */
 #line 209 "parse.y"
     { if(!gp_push_matrix(FALSE)) {SYNTAX_ERROR;} }
     break;
 
   case 66:
+
+/* Line 1455 of yacc.c  */
 #line 210 "parse.y"
     { if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;} }
     break;
 
   case 67:
+
+/* Line 1455 of yacc.c  */
 #line 217 "parse.y"
     {
 			if(!gp_push_matrix_row()) {SYNTAX_ERROR;}
@@ -2506,196 +2649,272 @@ yyreduce:
     break;
 
   case 68:
+
+/* Line 1455 of yacc.c  */
 #line 222 "parse.y"
     {SYNTAX_ERROR;}
     break;
 
   case 69:
+
+/* Line 1455 of yacc.c  */
 #line 223 "parse.y"
     {SYNTAX_ERROR;}
     break;
 
   case 70:
+
+/* Line 1455 of yacc.c  */
 #line 224 "parse.y"
     { PUSH_ACT(GEL_E_WHILE_CONS); }
     break;
 
   case 71:
+
+/* Line 1455 of yacc.c  */
 #line 225 "parse.y"
     { PUSH_ACT(GEL_E_UNTIL_CONS); }
     break;
 
   case 72:
+
+/* Line 1455 of yacc.c  */
 #line 226 "parse.y"
     { PUSH_ACT(GEL_E_DOWHILE_CONS); }
     break;
 
   case 73:
+
+/* Line 1455 of yacc.c  */
 #line 227 "parse.y"
     { PUSH_ACT(GEL_E_DOUNTIL_CONS); }
     break;
 
   case 74:
+
+/* Line 1455 of yacc.c  */
 #line 228 "parse.y"
     { PUSH_ACT(GEL_E_FOR_CONS); }
     break;
 
   case 75:
+
+/* Line 1455 of yacc.c  */
 #line 229 "parse.y"
     { PUSH_ACT(GEL_E_FORBY_CONS); }
     break;
 
   case 76:
+
+/* Line 1455 of yacc.c  */
 #line 230 "parse.y"
     { PUSH_ACT(GEL_E_FORIN_CONS); }
     break;
 
   case 77:
+
+/* Line 1455 of yacc.c  */
 #line 231 "parse.y"
     { PUSH_ACT(GEL_E_SUM_CONS); }
     break;
 
   case 78:
+
+/* Line 1455 of yacc.c  */
 #line 232 "parse.y"
     { PUSH_ACT(GEL_E_SUMBY_CONS); }
     break;
 
   case 79:
+
+/* Line 1455 of yacc.c  */
 #line 233 "parse.y"
     { PUSH_ACT(GEL_E_SUMIN_CONS); }
     break;
 
   case 80:
+
+/* Line 1455 of yacc.c  */
 #line 234 "parse.y"
     { PUSH_ACT(GEL_E_PROD_CONS); }
     break;
 
   case 81:
+
+/* Line 1455 of yacc.c  */
 #line 235 "parse.y"
     { PUSH_ACT(GEL_E_PRODBY_CONS); }
     break;
 
   case 82:
+
+/* Line 1455 of yacc.c  */
 #line 236 "parse.y"
     { PUSH_ACT(GEL_E_PRODIN_CONS); }
     break;
 
   case 83:
+
+/* Line 1455 of yacc.c  */
 #line 237 "parse.y"
     { PUSH_ACT(GEL_E_IF_CONS); }
     break;
 
   case 84:
+
+/* Line 1455 of yacc.c  */
 #line 238 "parse.y"
     { PUSH_ACT(GEL_E_IFELSE_CONS); }
     break;
 
   case 85:
+
+/* Line 1455 of yacc.c  */
 #line 239 "parse.y"
     { gp_convert_identifier_to_bool ();
 					  /* convert true/false to bool */}
     break;
 
   case 86:
+
+/* Line 1455 of yacc.c  */
 #line 241 "parse.y"
     { PUSH_ACT(GEL_E_QUOTE); }
     break;
 
   case 87:
+
+/* Line 1455 of yacc.c  */
 #line 242 "parse.y"
     { PUSH_ACT(GEL_E_REFERENCE); }
     break;
 
   case 89:
+
+/* Line 1455 of yacc.c  */
 #line 244 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 90:
+
+/* Line 1455 of yacc.c  */
 #line 246 "parse.y"
     { PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 91:
+
+/* Line 1455 of yacc.c  */
 #line 247 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 92:
+
+/* Line 1455 of yacc.c  */
 #line 249 "parse.y"
     { PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 93:
+
+/* Line 1455 of yacc.c  */
 #line 250 "parse.y"
     { PUSH_ACT(GEL_E_CALL); }
     break;
 
   case 94:
+
+/* Line 1455 of yacc.c  */
 #line 251 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_CALL); }
     break;
 
   case 95:
+
+/* Line 1455 of yacc.c  */
 #line 253 "parse.y"
     { PUSH_ACT(GEL_E_DEFEQUALS); }
     break;
 
   case 99:
+
+/* Line 1455 of yacc.c  */
 #line 257 "parse.y"
     { PUSH_ACT(GEL_E_RETURN); }
     break;
 
   case 100:
+
+/* Line 1455 of yacc.c  */
 #line 258 "parse.y"
     { PUSH_ACT(GEL_E_BAILOUT); }
     break;
 
   case 101:
+
+/* Line 1455 of yacc.c  */
 #line 259 "parse.y"
     { PUSH_ACT(GEL_E_EXCEPTION); }
     break;
 
   case 102:
+
+/* Line 1455 of yacc.c  */
 #line 260 "parse.y"
     { PUSH_ACT(GEL_E_CONTINUE); }
     break;
 
   case 103:
+
+/* Line 1455 of yacc.c  */
 #line 261 "parse.y"
     { PUSH_ACT(GEL_E_BREAK); }
     break;
 
   case 104:
+
+/* Line 1455 of yacc.c  */
 #line 262 "parse.y"
     { gel_stack_push(&gel_parsestack,
 							 gel_makenum_use((yyvsp[(1) - (1)].val))); }
     break;
 
   case 105:
+
+/* Line 1455 of yacc.c  */
 #line 264 "parse.y"
     { PUSH_CONST_STRING((yyvsp[(1) - (1)].id)); }
     break;
 
   case 106:
+
+/* Line 1455 of yacc.c  */
 #line 265 "parse.y"
     { gp_push_null(); }
     break;
 
   case 107:
+
+/* Line 1455 of yacc.c  */
 #line 268 "parse.y"
     { PUSH_ACT(GEL_E_DEREFERENCE); }
     break;
 
   case 108:
+
+/* Line 1455 of yacc.c  */
 #line 271 "parse.y"
     { PUSH_IDENTIFIER((yyvsp[(1) - (1)].id)); }
     break;
 
   case 109:
+
+/* Line 1455 of yacc.c  */
 #line 274 "parse.y"
     {
 			gp_prepare_push_param (FALSE);
@@ -2704,6 +2923,8 @@ yyreduce:
     break;
 
   case 112:
+
+/* Line 1455 of yacc.c  */
 #line 288 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2716,6 +2937,8 @@ yyreduce:
     break;
 
   case 113:
+
+/* Line 1455 of yacc.c  */
 #line 296 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -2728,6 +2951,8 @@ yyreduce:
     break;
 
   case 114:
+
+/* Line 1455 of yacc.c  */
 #line 304 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2740,6 +2965,8 @@ yyreduce:
     break;
 
   case 115:
+
+/* Line 1455 of yacc.c  */
 #line 312 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2752,6 +2979,8 @@ yyreduce:
     break;
 
   case 116:
+
+/* Line 1455 of yacc.c  */
 #line 320 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -2764,6 +2993,8 @@ yyreduce:
     break;
 
   case 117:
+
+/* Line 1455 of yacc.c  */
 #line 328 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2776,6 +3007,8 @@ yyreduce:
     break;
 
   case 118:
+
+/* Line 1455 of yacc.c  */
 #line 337 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2788,6 +3021,8 @@ yyreduce:
     break;
 
   case 119:
+
+/* Line 1455 of yacc.c  */
 #line 345 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -2800,6 +3035,8 @@ yyreduce:
     break;
 
   case 120:
+
+/* Line 1455 of yacc.c  */
 #line 353 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2812,28 +3049,37 @@ yyreduce:
     break;
 
   case 122:
+
+/* Line 1455 of yacc.c  */
 #line 364 "parse.y"
     { if(!gp_push_marker(GEL_EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 125:
+
+/* Line 1455 of yacc.c  */
 #line 371 "parse.y"
     { if(!gp_push_marker(GEL_EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 126:
+
+/* Line 1455 of yacc.c  */
 #line 374 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} }
     break;
 
   case 127:
+
+/* Line 1455 of yacc.c  */
 #line 375 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} if(!gp_push_marker(GEL_MATRIX_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
 
-/* Line 1267 of yacc.c.  */
-#line 2837 "y.tab.c"
+
+/* Line 1455 of yacc.c  */
+#line 3083 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2843,7 +3089,6 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
-
 
   /* Now `shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -2909,7 +3154,7 @@ yyerrlab:
 
   if (yyerrstatus == 3)
     {
-      /* If just tried and failed to reuse look-ahead token after an
+      /* If just tried and failed to reuse lookahead token after an
 	 error, discard it.  */
 
       if (yychar <= YYEOF)
@@ -2926,7 +3171,7 @@ yyerrlab:
 	}
     }
 
-  /* Else will try to reuse look-ahead token after shifting the error
+  /* Else will try to reuse lookahead token after shifting the error
      token.  */
   goto yyerrlab1;
 
@@ -2983,9 +3228,6 @@ yyerrlab1:
       YY_STACK_PRINT (yyss, yyssp);
     }
 
-  if (yyn == YYFINAL)
-    YYACCEPT;
-
   *++yyvsp = yylval;
 
 
@@ -3010,7 +3252,7 @@ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
-#ifndef yyoverflow
+#if !defined(yyoverflow) || YYERROR_VERBOSE
 /*-------------------------------------------------.
 | yyexhaustedlab -- memory exhaustion comes here.  |
 `-------------------------------------------------*/
@@ -3021,7 +3263,7 @@ yyexhaustedlab:
 #endif
 
 yyreturn:
-  if (yychar != YYEOF && yychar != YYEMPTY)
+  if (yychar != YYEMPTY)
      yydestruct ("Cleanup: discarding lookahead",
 		 yytoken, &yylval);
   /* Do not reclaim the symbols of the rule which action triggered
@@ -3047,6 +3289,8 @@ yyreturn:
 }
 
 
+
+/* Line 1675 of yacc.c  */
 #line 378 "parse.y"
 
 

@@ -112,9 +112,8 @@ GtkUIManager *genius_ui = NULL;
 static GtkWidget *setupdialog = NULL;
 static GtkWidget *term = NULL;
 static GtkWidget *notebook = NULL;
-static GtkTooltips *tips;
-static GString *errors=NULL;
-static GString *infos=NULL;
+static GString *errors = NULL;
+static GString *infos = NULL;
 
 static char *clipboard_str = NULL;
 
@@ -2330,12 +2329,12 @@ setup_calc(GtkWidget *widget, gpointer data)
 			  G_CALLBACK (optioncb),
 			  (gpointer)&tmpsetup.output_remember);
 
-	gtk_tooltips_set_tip (tips, w,
-			      _("Should the output settings in the "
-			       "\"Number/Expression output options\" frame "
-			       "be remembered for next session.  Does not apply "
-			       "to the \"Error/Info output options\" frame."),
-			      NULL);
+	gtk_widget_set_tooltip_text
+		(w,
+		 _("Should the output settings in the "
+		   "\"Number/Expression output options\" frame "
+		   "be remembered for next session.  Does not apply "
+		   "to the \"Error/Info output options\" frame."));
 
 	frame=gtk_frame_new(_("Error/Info output options"));
 	gtk_box_pack_start(GTK_BOX(mainbox),frame,FALSE,FALSE,0);
@@ -2434,10 +2433,9 @@ setup_calc(GtkWidget *widget, gpointer data)
 			  G_CALLBACK (optioncb),
 			  (gpointer)&tmpsetup.precision_remember);
 
-	gtk_tooltips_set_tip (tips, w,
-			      _("Should the precision setting "
-			       "be remembered for next session."),
-			      NULL);
+	gtk_widget_set_tooltip_text (w,
+				     _("Should the precision setting "
+				       "be remembered for next session."));
 
 
 	mainbox = gtk_vbox_new(FALSE, GENIUS_PAD);
@@ -4448,6 +4446,7 @@ genius_got_etree (GelETree *e)
 {
 	if (e != NULL) {
 		calc_running ++;
+		check_events();
 		gel_evalexp_parsed (e, gel_main_out, "= \e[1;36m", TRUE);
 		gel_test_max_nodes_again ();
 		calc_running --;
@@ -4896,9 +4895,6 @@ main (int argc, char *argv[])
 	g_signal_connect (G_OBJECT (genius_window), "drag_data_received",
 			  G_CALLBACK (drag_data_received), 
 			  NULL);
-
-	/*set up the tooltips*/
-	tips = gtk_tooltips_new();
 
 	/* setup the notebook */
 	g_signal_connect (G_OBJECT (notebook), "switch_page",
