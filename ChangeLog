@@ -1,3 +1,295 @@
+Sun Mar 15 00:04:08 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.6
+
+Sun Mar 15 00:01:20 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/*.[ch]: do much interface cleanup again.
+
+Mon Mar 09 16:48:03 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/*.[ch]: lots of cleanup plus bin compat breakage for plugins:
+	  Moved many things to the gel_ or genius_ namespace for consistency
+	  sake.  There aren't actually any plugins that I know of so, who
+	  cares if this all changes.  Plus bin compat is already broken this
+	  release, as it does almost every other release
+
+	* src/funclib.c: accept opposite orientation interval for
+	  CompositeSimpsonsRule
+
+	* src/geniustests.txt: update tests
+
+Thu Mar 05 01:47:55 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: LinePlotDrawLegends parameter actually updates
+	  the legends drawing in real time.  Don't store the parameter value
+	  as an extra.
+
+	* src/graphing.c: always update spinboxes before plotting something
+	  not just on activate.
+
+Wed Mar 04 23:58:43 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: add two more style strings to LinePlotDrawLine.
+	  First "window" can set the window, with a "fit" being a fitting
+	  window.  Also allow drawing of arrows by "arrow" followed by
+	  "end", "both", "origin", "none" (done in canvas coordinates, not
+	  screen coordinates, not ideal, try zooming)
+	
+	* src/graphing.c, src/funclib.c: a bit of cleanup, some pointless
+	  optimizations, and make sure the graphing functions don't get
+	  called during plotting.  Also setting LinePlotWindow,
+	  SurfacePlotWindow will change zoom immediately as one would expect
+
+	* help/C/gel-function-list.xml: update
+
+Mon Mar 02 02:38:40 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* **/Makefile.am: implement profile-generate and profile-use
+	  target for profile guided optimization.  Not quite all working
+	  I don't think, but simple tests produce impressive results.
+
+	* gtkextra/gtkplotflux.c: fix bad use of snprintf
+
+Mon Mar 02 02:07:52 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix bad drawing of very vertical functions.  Our
+	  new hack in gtkextra handles lines way off screen more sanely so
+	  we needent worry much here.
+
+Fri Feb 27 14:42:12 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch], src/funclib.c: remove the dependence on the MPF
+	  compat layer.  Inline a few more functions.  Implement mpwl_eql
+	  to make comparisons of rationals quicker.  Remove certain old
+	  gmp/mpfr bug workarounds, a bit of cleanup
+
+	* src/matop.c: in the mul_sub_row, cache the tmp variable for
+	  greater speed.
+
+Thu Feb 26 18:40:16 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: don't kill newlines in descriptions.  This is no longer
+	  a problem.  Further reduces startup time by a tiny bit.
+
+Thu Feb 26 02:34:54 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: fix crash of string dumping
+
+Thu Feb 26 02:27:06 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c, src/calc.c, src/dict.[ch], src/gnome-genius.h,
+	  src/structs.h, src/symbolic.c: store uncompiled string in the
+	  token, not in a separate hash table.  This avoids extra lookups
+	  during startup.
+
+	* src/calc.c: a bit more optimization for help initialization
+
+Thu Feb 26 00:54:16 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: handle crashes of the readline-helper without
+	  hanging.  Slight reorganization of startup to show window few
+	  nanoseconds faster.  Also don't use gtk_show_uri yet.  This
+	  causes backwards binary incompatibility which sucks as my other
+	  laptop uses hardy.
+
+	* src/calc.c: slight improvement in help handling.  Don't sort
+	  the functions in the categories until we really need to.
+
+	* src/dict.c: when checking for similar id's do the sum and a square
+	  sum to check for reorderings.  This fixes the strange suggestions
+	  sometimes
+
+	* src/genius-readline-helper.c: avoid crashes on getting SIGINT, ignore
+
+Tue Feb 24 22:05:41 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/gtkplotdata.c, gtkextra/gtkplotgdk.c: Move the line
+	  clipping code from the GDK backend to the plotdata.  Replace
+	  the one relevant draw_lines call with the new one.  I wonder
+	  if this should be done in more places.  This is a mess!
+	  There are still bugs if you zoom in way too much.  Not quite sure
+	  what the bug is.  We may need to actually move the endpoints 
+	  of the line.  This fixes broken EPS/PS export and printing
+	  when zoomed in to a slopefield/vectorfield/parametric graph.
+
+Tue Feb 24 01:35:34 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: use gtkextra clipping of lines
+
+	* gtkextra/*.c: apply patches from cvs gtkextra
+
+	* gtkextra/gtkplotgdk.c: fix drawing of lines which have parts which
+	  are very far offscreen.  Need to push this logic higher up the stack
+	  since such lines also kill the postscript output.
+
+	* src/graphing.c: remove some pointless allocation of point
+	  arrays.
+
+	* src/gnome-genius.c, src/graphing.c: fix menu accelerators
+
+Mon Feb 23 11:01:10 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix the extra precision calculations to work 
+	  for increments of 2.5.  Also try a tiny bit harder to get more
+	  than 3 ticks
+
+Sun Feb 22 00:00:04 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: clip slopefield solutions to within the plot window.
+	  to avoid unsightly overshooting lines when step size is too large
+	  (or when slope is too large)
+
+Sat Feb 21 03:12:36 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: after ps/eps export queue draw on the plot canvas
+	  because it for some reason needs it
+
+Thu Feb 19 23:48:45 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/genius_lists.c, src/inter.c, src/genius-readline-helper.c: fixup
+	  operator list, remove the param list since params have toplevel
+	  function nodes nowdays (for better part of a decade already :)
+
+Thu Feb 19 23:19:37 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c: set prgname and application_name
+	  for glib
+
+Thu Feb 19 20:33:26 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* ve/ve-miscui.[ch]: remove the option menu func since option menu is
+	  deprecated anyway
+
+	* src/gnome-genius.c: use g_idle_add instead of gtk_idle_add
+
+Wed Feb 18 00:28:12 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: handle read only files properly.  Also verify 
+	  text to be proper utf8 before inserting it into the text entry.
+	  And the notebook now has a right click menu to switch between
+	  programs.
+
+	* src/graphing.c, gtkextra/gtkplotcanvas.c: avoid spurious draws
+	  during new plots to avoid flicker when several LinePlot actions
+	  are done in sequence.  Also fix gtkextra to honour the freeze 
+	  in child draw.
+
+Tue Feb 17 17:35:44 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix the scales on the axis (the precision was
+	  reversed!)
+
+	* src/graphing.c: draw the x/y axis and a dotted grid in grey.  This
+	  really improves readability I think.  This should be configurable I
+	  guess.
+
+	* src/funclib.c, src/gnome-genius.c, src/genius.c: allow setting
+	  default for AskString as second argument
+
+	* help/C/gel-function-list.xml: update
+
+Mon Feb 16 01:27:46 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix some strings
+
+Mon Feb 16 01:09:16 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add padding to string query dialogs.  Add stock
+	  plot icon
+
+	* pixmaps/*/genius-stock-plot.png: Draw a simple plot icon for the
+	  menu/toolbar
+
+Mon Feb 16 00:11:29 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/plugin.c: minor fixes.  Display help for
+	  plugin loading, don't do lazy binding (can lead to stupid crashes,
+	  better just not load bad plugins) also pass the LOCAL flag to
+	  plugins to be safer.
+
+	* src/Makefile.am: add the NOGUI libs to gnome-genius.  That will
+	  make plugins work again
+
+Sun Feb 15 20:05:05 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, src/gnome-genius.c: small cleanup
+
+Sun Feb 15 19:50:15 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix tlen default (to be 5 not 0.1), tinc default is
+	  set according to tlen
+
+Sun Feb 15 18:51:42 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add solver dialog to vectorfields.  Also add
+	  VectorfieldDrawSolution and VectorfieldClearSolutions.  Also draw
+	  arrows with proper arrows not triangles.  Change default to not
+	  normalize arrow length, that's better default I think.
+
+	* help/C/genius.xml, help/C/gel-function-list.xml: update
+
+	* ve/ve-nongnome.c: remove some unused functions
+
+Sun Feb 15 15:18:20 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: raise version
+
+	* configure.in, src/gnome-genius.c: finish the de-libgnome(ui)ization
+	  And remove the libgnome(ui) dep.  Removes 14 libs from the output
+	  of 'ldd'
+
+	* ve/viciousui.h: remove libgnome include
+
+Sun Feb 15 11:25:47 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: in the event hook, handle events until all
+	  handled, fixes "hangs" or extreme ui slowdowns
+	  when event hook is not run often enough
+
+	* ve/ve-miscui.[ch]: steal gtk_dialog_run and do
+	  ve_dialog_run_nonmodal.  This way we can interrupt a tight loop
+	  with AskString's in it
+
+	* src/gnome-genius.c: start implementing a window with GtkUIManager
+	  to get rid of libgnomeui dep.
+
+Fri Feb 13 14:51:43 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: use gtk_show_uri to show help
+	  when gtk is high enough version
+
+Fri Feb 13 13:59:11 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/graphing.c, src/gnome-genius.h src/genius.c:
+	  some more delibgnome(ui)ification
+
+Fri Feb 13 13:29:35 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* ve/ve-misc.c, ve/ve-misc.h, ve/ve-gnome.c, ve/ve-nongnome.c,
+	  ve/ve-config.c:  remove ve_find_prog_in_path and
+	  ve_i18n_get_language_list, those have analogs in glib now
+	  ve_is_prog_in_path now doesn't take the extra path argument,
+	  gdm needed that somewhere and ve is only for genius now.
+
+	* src/graphing.c: use ve_is_prog_in_path in the new way
+
+	* configure.in: require glib 2.6.0 as well
+
+Fri Feb 13 13:08:55 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, ve/Makefile.am: do not compile glade-helper,
+	  we don't need glade thus kill the libglade dep
+
+	* configure.in: require GTK 2.6.0 (yeah way behind times)
+
+	* src/gnome-genius.c: exorcise some libgnome/ui demons.  get rid of
+	  gnome_help_* and gnome_config_* and gnome_about*  One more step
+	  towards getting rid of this dep
+
+	* src/genius.c, src/gnome-genius.c: when binreloc gets us the wrong
+	  dir do not use it.  Use the default compiled in dir as backup.
+
 Tue Feb 10 16:43:08 2009  Jiri (George) Lebl <jirka@5z.com>
 
 	* configure.in, NEWS: raise version update NEWS

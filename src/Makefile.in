@@ -102,7 +102,8 @@ am_gnome_genius_OBJECTS = binreloc.$(OBJEXT) calc.$(OBJEXT) \
 gnome_genius_OBJECTS = $(am_gnome_genius_OBJECTS)
 gnome_genius_DEPENDENCIES = $(top_builddir)/ve/libviciousui.a \
 	$(top_builddir)/gtkextra/libgtkextra-genius.a \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -250,7 +251,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
-POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
@@ -342,6 +342,7 @@ INCLUDES = \
 	$(GSV_CFLAGS)						\
 	$(EXTRA_WARNING_CFLAGS)
 
+AM_CFLAGS = $(PGO_CFLAGS)
 gnome_genius_SOURCES = \
 	binreloc.c	\
 	binreloc.h	\
@@ -404,6 +405,7 @@ gnome_genius_LDADD = \
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
+	$(GENIUS_NOGUI_LIBS)			\
 	$(GSV_LIBS)				\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@

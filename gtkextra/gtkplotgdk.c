@@ -621,6 +621,7 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
   PangoContext *context = GTK_PLOT_GDK(pc)->context;
   GdkDrawable *drawable = GTK_PLOT_GDK(pc)->drawable;
   gint sign_x = 1, sign_y = 0;
+  gint old_tx = tx, old_ty = ty;
 
   if(!GTK_PLOT_GDK(pc)->drawable) return;
   if(!GTK_PLOT_GDK(pc)->gc) return;
@@ -680,23 +681,31 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
             tx -= descent;
             break;
       }
+      old_tx = tx;
+      old_ty = ty;
       break;
     case GTK_JUSTIFY_RIGHT:
       switch(angle){
         case 0:
             tx -= width;
             ty -= ascent;
+            old_tx -= width;
+            old_ty -= ascent;
             break;
         case 90:
             tx -= ascent;
             ty += height;
+            old_tx -= ascent;
             break;
         case 180:
             tx += width;
             ty -= descent;
+            old_ty -= descent;
             break;
         case 270:
             tx -= descent;
+            old_tx -= descent;
+            old_ty -= height;
             break;
       }
       break;
@@ -706,18 +715,26 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
         case 0:
             tx -= width / 2.;
             ty -= ascent;
+            old_tx -= width / 2.;
+            old_ty -= ascent;
             break;
         case 90:
             tx -= ascent;
             ty += height / 2.;
+            old_tx -= ascent;
+            old_ty -= height / 2.;
             break;
         case 180:
             tx += width / 2.;
             ty -= descent;
+            old_tx -= width / 2.;
+            old_ty -= descent;
             break;
         case 270:
             tx -= descent;
             ty -= height / 2.;
+            old_tx -= descent;
+            old_ty -= height / 2.;
             break;
       }
   }
@@ -733,7 +750,7 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
 
   if(!transparent){
     gdk_gc_set_foreground(gc, &real_bg);
-    gdk_draw_rectangle(drawable, gc, TRUE, tx, ty, old_width, old_height);
+    gdk_draw_rectangle(drawable, gc, TRUE, old_tx, old_ty, old_width, old_height);
   }
 
 /* TEST */
@@ -950,6 +967,8 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
    }
   }
 
+  pango_matrix_rotate (&matrix, 0);
+  pango_context_set_matrix (context, &matrix);
   pango_font_description_free(font);
   if(latin_font) pango_font_description_free(latin_font);
   if(metrics) pango_font_metrics_unref(metrics);
@@ -963,18 +982,18 @@ gtk_plot_gdk_draw_string                        (GtkPlotPC *pc,
     case GTK_PLOT_BORDER_SHADOW:
       gtk_plot_pc_draw_rectangle(pc,
    		         TRUE,
-                         tx - border_space + shadow_width,
-                         ty + height + border_space,
+                         old_tx - border_space + shadow_width,
+                         old_ty + height + border_space,
                          width + 2 * border_space, shadow_width);
       gtk_plot_pc_draw_rectangle(pc,
    		         TRUE,
-                         tx + width + border_space,
-                         ty - border_space + shadow_width,
+                         old_tx + width + border_space,
+                         old_ty - border_space + shadow_width,
                          shadow_width, height + 2 * border_space);
     case GTK_PLOT_BORDER_LINE:
       gtk_plot_pc_draw_rectangle(pc,
    		         FALSE,
-                         tx - border_space, ty - border_space,
+                         old_tx - border_space, old_ty - border_space,
                          width + 2*border_space, height + 2*border_space);
     case GTK_PLOT_BORDER_NONE:
     default:

@@ -18,7 +18,6 @@ static GList *plugins;
 static GList *functions;
 
 static int addtoplevels = TRUE;
-extern const char *genius_params[];
 extern const char *genius_toplevels[];
 extern const char *genius_operators[];
 
@@ -48,12 +47,6 @@ command_generator (const char *text, int state)
 
 	while(genius_operators[oi]) {
 		const char *s = genius_operators[oi++];
-		if(strncmp(s,text,len)==0)
-			return strdup(s);
-	}
-
-	while(genius_params[pi]) {
-		const char *s = genius_params[pi++];
 		if(strncmp(s,text,len)==0)
 			return strdup(s);
 	}
@@ -162,6 +155,9 @@ main(int argc, char *argv[])
 		     "CANNOT OPEN READLINE OUT FIFO");
 		exit(1);
 	}
+
+	/* for some reasons we get SIGINT sometimes because of vte? */
+	signal (SIGINT, SIG_IGN);
 
 	rl_catch_signals = 1;
 	rl_catch_sigwinch = 1;

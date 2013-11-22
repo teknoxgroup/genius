@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2004 Jiri (George) Lebl
+ * Copyright (C) 1997-2009 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -41,7 +41,7 @@ void gp_push_marker_simple(GelETreeType markertype) GEL_WEAK_FUNC;
 gboolean gp_push_spacer(void) GEL_WEAK_FUNC;
 
 /*gather all expressions up until a row start marker and push the
-  result as a MATRIX_ROW_NODE*/
+  result as a GEL_MATRIX_ROW_NODE*/
 gboolean gp_push_matrix_row(void) GEL_WEAK_FUNC;
 
 /*gather all expressions up until a row start marker and push the
@@ -55,24 +55,24 @@ void gp_push_null(void) GEL_WEAK_FUNC;
 #define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
 
 #define PUSH_ACT(ACT) { \
-	GelETree *tree = makeoperator((ACT),&gel_parsestack); \
+	GelETree *tree = gel_makeoperator((ACT),&gel_parsestack); \
 	if(!tree) {SYNTAX_ERROR;} \
-	stack_push(&gel_parsestack,tree); \
+	gel_stack_push(&gel_parsestack,tree); \
 }
 
 #define PUSH_IDENTIFIER(ID) { \
 	GelETree * tree; \
-	GET_NEW_NODE(tree); \
-	tree->type = IDENTIFIER_NODE; \
+	GEL_GET_NEW_NODE(tree); \
+	tree->type = GEL_IDENTIFIER_NODE; \
 	tree->id.id = d_intern(ID); \
-	stack_push(&gel_parsestack,tree); \
+	gel_stack_push(&gel_parsestack,tree); \
 	g_free (ID); \
 }
 
 #define PUSH_CONST_STRING(ID) { \
 	GelETree * tree; \
 	tree = gel_makenum_string_constant (ID); \
-	stack_push(&gel_parsestack,tree); \
+	gel_stack_push(&gel_parsestack,tree); \
 	g_free (ID); \
 }
 

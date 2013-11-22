@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2008 Jiri (George) Lebl
+ * Copyright (C) 1997-2009 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -35,8 +35,6 @@
 
 #include "matop.h"
 
-extern calcstate_t calcstate;
-
 gboolean
 gel_is_matrix_value_only (GelMatrixW *m)
 {
@@ -48,7 +46,7 @@ gel_is_matrix_value_only (GelMatrixW *m)
 	for (j = 0; j < h; j++) {
 		for (i = 0; i < w; i++) {
 			GelETree *n = gel_matrixw_get_index(m,i,j);
-			if(n && n->type != VALUE_NODE) {
+			if(n && n->type != GEL_VALUE_NODE) {
 				m->cached_value_only = 1;
 				m->value_only = 0;
 				m->cached_value_only_real = 1;
@@ -80,12 +78,12 @@ gel_is_matrix_value_or_bool_only (GelMatrixW *m)
 			GelETree *n = gel_matrixw_get_index(m,i,j);
 			if ( ! n)
 				continue;
-			if (n->type == BOOL_NODE) {
+			if (n->type == GEL_BOOL_NODE) {
 				got_bools = TRUE;
 				continue;
 			}
 
-			if (n->type != VALUE_NODE) {
+			if (n->type != GEL_VALUE_NODE) {
 				m->cached_value_or_bool_only = 1;
 				m->value_or_bool_only = 0;
 				m->cached_value_only = 1;
@@ -124,7 +122,7 @@ gel_is_matrix_value_only_real (GelMatrixW *m)
 		for (i = 0; i < w; i++) {
 			GelETree *n = gel_matrixw_get_index(m,i,j);
 			if (n != NULL &&
-			    (n->type != VALUE_NODE ||
+			    (n->type != GEL_VALUE_NODE ||
 			     mpw_is_complex (n->val.value))) {
 				m->cached_value_only_real = 1;
 				m->value_only_real = 0;
@@ -151,7 +149,7 @@ gel_is_matrix_value_only_rational (GelMatrixW *m)
 		for (i = 0; i < w; i++) {
 			GelETree *n = gel_matrixw_get_index(m,i,j);
 			if (n != NULL &&
-			    (n->type != VALUE_NODE ||
+			    (n->type != GEL_VALUE_NODE ||
 			     mpw_is_complex (n->val.value) ||
 			     mpw_is_float (n->val.value))) {
 				m->cached_value_only_rational = 1;
@@ -179,7 +177,7 @@ gel_is_matrix_value_only_integer (GelMatrixW *m)
 		for (i = 0; i < w; i++) {
 			GelETree *n = gel_matrixw_get_index(m,i,j);
 			if (n != NULL &&
-			    (n->type != VALUE_NODE ||
+			    (n->type != GEL_VALUE_NODE ||
 			     mpw_is_complex (n->val.value) ||
 			     ! mpw_is_integer (n->val.value))) {
 				m->cached_value_only_integer = 1;
@@ -216,17 +214,17 @@ gel_matrix_conjugate_transpose (GelMatrixW *m)
 			GelETree *n = gel_matrixw_get_index (m, i, j);
 			if (n == NULL)
 				continue;
-			if (n->type == VALUE_NODE) {
+			if (n->type == GEL_VALUE_NODE) {
 				if (mpw_is_complex (n->val.value))
 					mpw_conj (n->val.value, n->val.value);
 			} else {
 				GelETree *nn;
-				GET_NEW_NODE (nn);
-				nn->type = OPERATOR_NODE;
-				nn->op.oper = E_DIRECTCALL;
+				GEL_GET_NEW_NODE (nn);
+				nn->type = GEL_OPERATOR_NODE;
+				nn->op.oper = GEL_E_DIRECTCALL;
 
-				GET_NEW_NODE (nn->op.args);
-				nn->op.args->type = IDENTIFIER_NODE;
+				GEL_GET_NEW_NODE (nn->op.args);
+				nn->op.args->type = GEL_IDENTIFIER_NODE;
 				nn->op.args->id.id = d_intern ("conj");
 
 				nn->op.args->any.next = n;
@@ -268,8 +266,8 @@ gel_value_matrix_multiply (GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2,
 				mpw_add(accu,accu,tmp);
 				if (modulo != NULL) {
 					mpw_mod (accu, accu, modulo);
-					if (error_num != 0) { /*FIXME: for now ignore errors in moding*/
-						error_num = 0;
+					if G_UNLIKELY (gel_error_num != 0) { /*FIXME: for now ignore errors in moding*/
+						gel_error_num = 0;
 					}
 					if (mpw_sgn (accu) < 0)
 						mpw_add (accu, modulo, accu);
@@ -328,7 +326,7 @@ div_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t div)
 			if (ctx->modulo != NULL) {
 				gel_mod_node (ctx, t);
 				/* can't mod so we have a singular matrix / system */
-				if (t != NULL && t->type != VALUE_NODE)
+				if (t != NULL && t->type != GEL_VALUE_NODE)
 					ret = FALSE;
 			}
 		}
@@ -341,39 +339,44 @@ static gboolean
 mul_sub_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t mul, int row2)
 {
 	int i, w;
-	mpw_t tmp;
+	static mpw_t tmp;
+	static gboolean tmp_inited = FALSE;
 	gboolean ret = TRUE;
 	
 	/* no need for this, only used within gauss and matrix is already private
 	gel_matrixw_make_private(m);*/
 	
-	mpw_init(tmp);
+	if G_UNLIKELY ( ! tmp_inited) {
+		mpw_init(tmp);
+		tmp_inited = TRUE;
+	}
 	w = gel_matrixw_width(m);
 	for (i = 0; i < w; i++) {
 		GelETree *t = gel_matrixw_get_index(m,i,row);
 		if (t && ! mpw_zero_p (t->val.value)) {
 			GelETree *t2 = gel_matrixw_get_index(m,i,row2);
 			mpw_mul(tmp,t->val.value,mul);
-			if(!t2) {
+			if (t2 == NULL) {
 				mpw_neg(tmp,tmp);
-				gel_matrixw_set_index(m,i,row2) = t2 = gel_makenum_use(tmp);
+				t2 = gel_makenum_use(tmp);
+				gel_matrixw_set_index(m,i,row2) = t2;
 				mpw_init(tmp);
+			} else if ( ! mpw_is_complex_float (tmp) &&
+				   mpw_symbolic_eql (t2->val.value, tmp)) {
+				gel_freetree (t2);
+				gel_matrixw_set_index(m,i,row2) = NULL;
 			} else {
-				mpw_sub(t2->val.value,t2->val.value,tmp);
-				if (mpw_exact_zero_p (t2->val.value)) {
-					gel_freetree (t2);
-					gel_matrixw_set_index(m,i,row2) = NULL;
-				}
+				mpw_sub (t2->val.value,
+					 t2->val.value, tmp);
 			}
-			if (ctx->modulo != NULL) {
+			if (ctx->modulo != NULL && t2 != NULL) {
 				gel_mod_node (ctx, t2);
 				/* can't mod so we have a singular matrix / system */
-				if (t2 != NULL && t2->type != VALUE_NODE)
+				if (t2 != NULL && t2->type != GEL_VALUE_NODE)
 					ret = FALSE;
 			}
 		}
 	}
-	mpw_clear(tmp);
 	return ret;
 }
 
@@ -542,7 +545,7 @@ gel_value_matrix_gauss (GelCtx *ctx,
 					gel_mod_node (ctx, t);
 					if (stopsing &&
 					    t != NULL &&
-					    t->type != VALUE_NODE) {
+					    t->type != GEL_VALUE_NODE) {
 						mpw_clear(tmp);
 						return FALSE;
 					}

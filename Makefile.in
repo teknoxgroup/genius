@@ -203,7 +203,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
-POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
@@ -809,6 +808,14 @@ install-data-hook:
 
 uninstall-hook:
 @ENABLE_UPDATE_MIMEDB_TRUE@	-update-mime-database "$(DESTDIR)${datadir}/mime"
+
+profile-generate:
+	make clean
+	PGO_CFLAGS="-fprofile-generate" make
+
+profile-use:
+	make clean
+	PGO_CFLAGS="-fprofile-use" make
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

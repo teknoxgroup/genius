@@ -28,6 +28,8 @@ INCLUDES = \
 	$(GSV_CFLAGS)						\
 	$(EXTRA_WARNING_CFLAGS)
 
+AM_CFLAGS = $(PGO_CFLAGS)
+
 bin_PROGRAMS = @GNOME_GENIUS@ genius
 
 libexec_PROGRAMS = @GENIUS_READLINE_HELPER_FIFO@
@@ -97,6 +99,7 @@ gnome_genius_LDADD = \
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
+	$(GENIUS_NOGUI_LIBS)			\
 	$(GSV_LIBS)				\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2008 Jiri (George) Lebl
+ * Copyright (C) 1997-2009 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef EVAL_H
-#define EVAL_H
+#ifndef _GEL_EVAL_H
+#define _GEL_EVAL_H
 
 /* #define EVAL_DEBUG 1 */
 /* Note: this won't be completely mem-debug friendly, but only mostly */
@@ -31,79 +31,6 @@
 
 /*declarations of structures*/
 #include "structs.h"
-
-/* builtin primitives */
-enum {
-	E_SEPAR = 0,
-	E_EQUALS, /* see E_DEFEQUALS (on the end not to break bincompat) */
-	E_PARAMETER,
-	E_ABS,
-	E_PLUS,
-	E_ELTPLUS,
-	E_MINUS,
-	E_ELTMINUS,
-	E_MUL,
-	E_ELTMUL,
-	E_DIV,
-	E_ELTDIV,
-	E_BACK_DIV,
-	E_ELT_BACK_DIV,
-	E_MOD,
-	E_ELTMOD,
-	E_NEG,
-	E_EXP,
-	E_ELTEXP,
-	E_FACT,
-	E_DBLFACT,
-	E_TRANSPOSE,
-	E_CONJUGATE_TRANSPOSE,
-	E_IF_CONS,
-	E_IFELSE_CONS,
-	E_WHILE_CONS,
-	E_UNTIL_CONS,
-	E_DOWHILE_CONS,
-	E_DOUNTIL_CONS,
-	E_FOR_CONS,
-	E_FORBY_CONS,
-	E_FORIN_CONS,
-	E_SUM_CONS,
-	E_SUMBY_CONS,
-	E_SUMIN_CONS,
-	E_PROD_CONS,
-	E_PRODBY_CONS,
-	E_PRODIN_CONS,
-	E_EQ_CMP,
-	E_NE_CMP,
-	E_CMP_CMP,
-	E_LT_CMP,
-	E_GT_CMP,
-	E_LE_CMP,
-	E_GE_CMP,
-	E_LOGICAL_AND,
-	E_LOGICAL_OR,
-	E_LOGICAL_XOR,
-	E_LOGICAL_NOT,
-	E_REGION_SEP,
-	E_REGION_SEP_BY,
-	E_GET_VELEMENT,
-	E_GET_ELEMENT,
-	E_GET_ROW_REGION,
-	E_GET_COL_REGION,
-	E_QUOTE,
-	E_REFERENCE,
-	E_DEREFERENCE,
-	E_DIRECTCALL,
-	E_CALL,
-	E_RETURN,
-	E_BAILOUT,
-	E_EXCEPTION,
-	E_CONTINUE,
-	E_BREAK,
-	E_MOD_CALC,
-	E_DEFEQUALS,
-	E_OPER_LAST
-};
-
 
 /*table of operators, at least the primitive types*/
 enum {
@@ -143,7 +70,7 @@ GelETree * gel_makenum_string (const char *str);
 GelETree * gel_makenum_string_use (char *str);
 GelETree * gel_makenum_string_constant (const char *str);
 /* FIXME: implement GelETree * gel_makenum_polynomial (...); */
-GelETree * makeoperator(int oper, GSList **stack);
+GelETree * gel_makeoperator(int oper, GSList **stack);
 
 /*make new node, but don't actually get a new GelETree, just stick it
   into an already allocated but unused structure*/
@@ -155,7 +82,7 @@ void gel_makenum_bool_from (GelETree *n, gboolean bool_);
 void gel_makenum_null_from(GelETree *n);
 
 /*copy a node*/
-GelETree * copynode(GelETree *o);
+GelETree * gel_copynode(GelETree *o);
 
 void gel_replacenode (GelETree *to, GelETree *from, gboolean copy);
 
@@ -167,37 +94,37 @@ void gel_emptytree(GelETree *n);
 GelETree * gel_stealnode (GelETree *n);
 
 /* you need to get, then free an evaluation context*/
-GelCtx * eval_get_context(void);
-void eval_free_context(GelCtx *ctx);
+GelCtx * gel_eval_get_context(void);
+void gel_eval_free_context(GelCtx *ctx);
 /* evaluate tree*/
-GelETree * eval_etree(GelCtx *ctx, GelETree *etree);
+GelETree * gel_eval_etree(GelCtx *ctx, GelETree *etree);
 
 /*return TRUE if node is true (a number node !=0, or nonempty string),
   false otherwise*/
 int gel_isnodetrue(GelETree *n, int *bad_node);
 
 /*call a function (arguments should have already been evaluated)*/
-GelETree * funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
+GelETree * gel_funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
 void gel_expandmatrix (GelETree *n);
 
 /* func is a function taking one argument and l is a function/identifier */
 /* Note: a copy of the function is made */
-GelETree * function_from_function (GelEFunc *func, GelETree *l);
+GelETree * gel_function_from_function (GelEFunc *func, GelETree *l);
 
 /* Functions to fixup the parsed tree */
-GelETree * gather_comparisons(GelETree *n);
-void replace_equals (GelETree *n, gboolean in_expression);
-void replace_exp (GelETree *n);
-void fixup_num_neg (GelETree *n);
+GelETree * gel_gather_comparisons(GelETree *n);
+void gel_replace_equals (GelETree *n, gboolean in_expression);
+void gel_replace_exp (GelETree *n);
+void gel_fixup_num_neg (GelETree *n);
 /* careful precalculation */
-void try_to_do_precalc (GelETree *n);
+void gel_try_to_do_precalc (GelETree *n);
 /* aggressive precalculation/simplification */
 void gel_simplify (GelETree *n);
 /* is the tree semantically the same? */
 gboolean gel_is_tree_same (GelETree *l, GelETree *r);
 
 /* find an identifier */
-gboolean eval_find_identifier (GelETree *n,
+gboolean gel_eval_find_identifier (GelETree *n,
 			       GelToken *tok,
 			       gboolean funcbody);
 
@@ -217,28 +144,28 @@ mpw_ptr gel_find_pre_function_modulo (GelCtx *ctx);
   makes them the same type as a side effect*/
 gboolean gel_eqlnodes (GelETree *l, GelETree *r);
 
-#define GET_ABCDE(n,a,b,c,d,e) { \
+#define GEL_GET_ABCDE(n,a,b,c,d,e) { \
 	(a) = (n)->op.args; \
 	(b) = (n)->op.args->any.next; \
 	(c) = (n)->op.args->any.next->any.next; \
 	(d) = (n)->op.args->any.next->any.next->any.next; \
 	(e) = (n)->op.args->any.next->any.next->any.next->any.next; \
 }
-#define GET_ABCD(n,a,b,c,d) { \
+#define GEL_GET_ABCD(n,a,b,c,d) { \
 	(a) = (n)->op.args; \
 	(b) = (n)->op.args->any.next; \
 	(c) = (n)->op.args->any.next->any.next; \
 	(d) = (n)->op.args->any.next->any.next->any.next; \
 }
-#define GET_LRR(n,l,r,rr) { \
+#define GEL_GET_LRR(n,l,r,rr) { \
 	(l) = (n)->op.args; \
 	(r) = (n)->op.args->any.next; \
 	(rr) = (n)->op.args->any.next->any.next; \
 }
-#define GET_LR(n,l,r) { (l) = (n)->op.args; (r) = (n)->op.args->any.next; }
-#define GET_L(n,l) { (l) = (n)->op.args; }
+#define GEL_GET_LR(n,l,r) { (l) = (n)->op.args; (r) = (n)->op.args->any.next; }
+#define GEL_GET_L(n,l) { (l) = (n)->op.args; }
 
-extern GelETree *free_trees;
+extern GelETree *gel_free_trees;
 
 
 #ifdef MEM_DEBUG_FRIENDLY
@@ -248,14 +175,14 @@ void register_new_tree (GelETree *n);
 void deregister_tree (GelETree *n);
 void print_live_trees (void);
 void deregister_all_trees (void);
-#  define GET_NEW_NODE(n) {				\
+#  define GEL_GET_NEW_NODE(n) {				\
 	n = g_new0 (GelETree, 1);			\
 	printf ("%s NEW NODE %p\n", G_STRLOC, n);	\
 	register_new_tree (n);				\
 }
 # else /* EVAL_DEBUG */
 
-#  define GET_NEW_NODE(n) {				\
+#  define GEL_GET_NEW_NODE(n) {				\
 	n = g_new0 (GelETree, 1);			\
 }
 # endif /* EVAL_DEBUG */
@@ -263,18 +190,18 @@ void deregister_all_trees (void);
 #else /* MEM_DEBUG_FRIENDLY */
 
 void _gel_make_free_trees (void);
-# define GET_NEW_NODE(n) {				\
-	if G_UNLIKELY (free_trees == NULL)		\
+# define GEL_GET_NEW_NODE(n) {				\
+	if G_UNLIKELY (gel_free_trees == NULL)		\
 		_gel_make_free_trees ();		\
-	n = free_trees;					\
-	free_trees = free_trees->any.next;		\
+	n = gel_free_trees;				\
+	gel_free_trees = gel_free_trees->any.next;	\
 }
 #endif
 
-extern void (*_gel_tree_limit_hook)(void);
+const extern GelHookFunc _gel_tree_limit_hook;
 void gel_test_max_nodes_again (void);
 
-extern GelEFunc *_internal_ln_function;
-extern GelEFunc *_internal_exp_function;
+extern GelEFunc *_gel_internal_ln_function;
+extern GelEFunc *_gel_internal_exp_function;
 
-#endif /* EVAL_H */
+#endif /* _GEL_EVAL_H */

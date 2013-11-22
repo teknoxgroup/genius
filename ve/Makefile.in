@@ -60,8 +60,7 @@ libviciousui_a_AR = $(AR) $(ARFLAGS)
 libviciousui_a_LIBADD =
 am__objects_1 = ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
 	ve-nongnome.$(OBJEXT)
-am_libviciousui_a_OBJECTS = $(am__objects_1) glade-helper.$(OBJEXT) \
-	ve-miscui.$(OBJEXT)
+am_libviciousui_a_OBJECTS = $(am__objects_1) ve-miscui.$(OBJEXT)
 libviciousui_a_OBJECTS = $(am_libviciousui_a_OBJECTS)
 PROGRAMS = $(noinst_PROGRAMS)
 am_test_ve_config_OBJECTS = test-ve-config.$(OBJEXT)
@@ -212,7 +211,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
-POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
@@ -285,6 +283,7 @@ INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" \
 	$(VICIOUS_CFLAGS)
 
+AM_CFLAGS = $(PGO_CFLAGS)
 
 # Use these only really for checking for deprecated use, not all the time
 #	-DG_DISABLE_DEPRECATED			\
@@ -311,12 +310,15 @@ libvicious_a_SOURCES = \
 
 libviciousui_a_SOURCES = \
 	$(libvicious_a_SOURCES) \
-	glade-helper.c	\
-	glade-helper.h	\
 	ve-miscui.c	\
 	ve-miscui.h	\
 	viciousui.h
 
+
+#	Genius does not use glade, if you want to use ve in your project
+#	and want to use glade-helper make sure to compile it in
+#	glade-helper.c	\
+#	glade-helper.h
 test_ve_config_SOURCES = \
 	test-ve-config.c
 
@@ -387,7 +389,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/glade-helper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-ve-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ve-config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ve-misc.Po@am__quote@

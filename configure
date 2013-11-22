@@ -937,7 +937,6 @@ GENIUS_READLINE_HELPER_FIFO
 GNOME_GENIUS_DESKTOP_IN
 VICIOUS_CFLAGS
 VICIOUS_LIBS
-POPT_LIBS
 EXTRA_WARNING_CFLAGS
 ENABLE_SK_TRUE
 ENABLE_SK_FALSE
@@ -2350,7 +2349,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=genius
- VERSION=1.0.5
+ VERSION=1.0.6
 
 
 cat >>confdefs.h <<_ACEOF
@@ -4218,11 +4217,9 @@ fi
 
 
 VTE_REQUIRED=0.8.19
-LIBGNOMEUI_REQUIRED=2.0.0
-LIBGLADE_REQUIRED=1.99.2
-LIBGNOME_REQUIRED=2.0.0
-GTK_REQUIRED=2.4.0
-GLIB_REQUIRED=2.0.0
+LIBGNOMEVFS_REQUIRED=2.0.0
+GTK_REQUIRED=2.6.0
+GLIB_REQUIRED=2.6.0
 GTKSOURCEVIEW_REQUIRED=0.3.0
 GTKSOURCEVIEW2_REQUIRED=2.0.2
 
@@ -6479,13 +6476,13 @@ if test "${lt_cv_nm_interface+set}" = set; then
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:6482: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:6479: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:6485: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:6482: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:6488: output\"" >&5)
+  (eval echo "\"\$as_me:6485: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -7595,7 +7592,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 7598 "configure"' > conftest.$ac_ext
+  echo '#line 7595 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -9037,11 +9034,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9040: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9037: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9044: \$? = $ac_status" >&5
+   echo "$as_me:9041: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9361,11 +9358,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9364: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9361: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:9368: \$? = $ac_status" >&5
+   echo "$as_me:9365: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -9466,11 +9463,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9469: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9466: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9473: \$? = $ac_status" >&5
+   echo "$as_me:9470: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -9521,11 +9518,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:9524: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:9521: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:9528: \$? = $ac_status" >&5
+   echo "$as_me:9525: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12282,7 +12279,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12285 "configure"
+#line 12282 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12382,7 +12379,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12385 "configure"
+#line 12382 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15510,11 +15507,11 @@ fi
 
 
 
-GENIUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED libgnome-2.0 >= $LIBGNOME_REQUIRED libgnomeui-2.0 >= $LIBGNOMEUI_REQUIRED vte >= $VTE_REQUIRED libglade-2.0 >= $LIBGLADE_REQUIRED"
+GENIUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED gnome-vfs-2.0 >= $LIBGNOMEVFS_REQUIRED vte >= $VTE_REQUIRED"
 
 if test "x$use_gnome" = "xyes" ; then
   echo "
-Testing for presence of GNOME and GtkSourceView:
+Testing for presence of GNOME (GTK and gnome-vfs is enough) and GtkSourceView:
 Note:
       You can compile without GNOME by using the --disable-gnome option
 "
@@ -15911,7 +15908,7 @@ echo "${ECHO_T}yes" >&6; }
 fi
   fi
 
-  VICIOUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED libgnomeui-2.0 >= $LIBGNOMEUI_REQUIRED libglade-2.0 >= $LIBGLADE_REQUIRED"
+  VICIOUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED"
   VICIOUS_UI_LIBS="libviciousui.a"
   GTKEXTRA_LIBS="libgtkextra-genius.a"
 
@@ -16052,79 +16049,6 @@ else
         { echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6; }
 	:
-fi
-
-
-
-{ echo "$as_me:$LINENO: checking for poptGetArgs in -lpopt" >&5
-echo $ECHO_N "checking for poptGetArgs in -lpopt... $ECHO_C" >&6; }
-if test "${ac_cv_lib_popt_poptGetArgs+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpopt  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char poptGetArgs ();
-int
-main ()
-{
-return poptGetArgs ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext &&
-       $as_test_x conftest$ac_exeext; then
-  ac_cv_lib_popt_poptGetArgs=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_popt_poptGetArgs=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_popt_poptGetArgs" >&5
-echo "${ECHO_T}$ac_cv_lib_popt_poptGetArgs" >&6; }
-if test $ac_cv_lib_popt_poptGetArgs = yes; then
-  POPT_LIBS="-lpopt"
-else
-  { { echo "$as_me:$LINENO: error: popt is required to build genius.
-You can download the latest version from ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/" >&5
-echo "$as_me: error: popt is required to build genius.
-You can download the latest version from ftp://ftp.rpm.org/pub/rpm/dist/rpm-4.0.x/" >&2;}
-   { (exit 1); exit 1; }; }
 fi
 
 
@@ -17569,7 +17493,6 @@ GENIUS_READLINE_HELPER_FIFO!$GENIUS_READLINE_HELPER_FIFO$ac_delim
 GNOME_GENIUS_DESKTOP_IN!$GNOME_GENIUS_DESKTOP_IN$ac_delim
 VICIOUS_CFLAGS!$VICIOUS_CFLAGS$ac_delim
 VICIOUS_LIBS!$VICIOUS_LIBS$ac_delim
-POPT_LIBS!$POPT_LIBS$ac_delim
 EXTRA_WARNING_CFLAGS!$EXTRA_WARNING_CFLAGS$ac_delim
 ENABLE_SK_TRUE!$ENABLE_SK_TRUE$ac_delim
 ENABLE_SK_FALSE!$ENABLE_SK_FALSE$ac_delim
@@ -17580,7 +17503,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 87; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

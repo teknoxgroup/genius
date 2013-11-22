@@ -177,7 +177,6 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
-POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
@@ -247,7 +246,8 @@ appsicondir = \
 	$(datadir)/icons/hicolor/48x48/apps
 
 appsicon_DATA = \
-	gnome-genius.png
+	gnome-genius.png \
+	genius-stock-plot.png
 
 EXTRA_DIST = \
 	$(appsicon_DATA)

@@ -1,11 +1,13 @@
 /* GENIUS Calculator
- * Copyright (C) 2005 Jiri (George) Lebl
+ * Copyright (C) 1997-2009 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -39,10 +39,6 @@
 #include "compil.h"
 
 #include "funclibhelper.cP"
-
-extern calcstate_t calcstate;
-
-extern GHashTable *uncompiled;
 
 static GelETree * differentiate_expr (GelETree *expr, GelToken *xtok);
 static GelETree * gel_differentiate_func1_expr (GelToken *tok);
@@ -164,13 +160,13 @@ substitute_x_y_z_w (GelETree *expr,
 	if (expr == NULL)
 		return;
 
-	if (expr->type == SPACER_NODE) {
+	if (expr->type == GEL_SPACER_NODE) {
 		substitute_x_y_z_w (expr->sp.arg,
 				    xtok, x, xcopy,
 				    ytok, y, ycopy,
 				    ztok, z, zcopy,
 				    wtok, w, wcopy);
-	} else if (expr->type == IDENTIFIER_NODE ) {
+	} else if (expr->type == GEL_IDENTIFIER_NODE ) {
 		if (xtok != NULL && x != NULL && expr->id.id == xtok) {
 			gel_replacenode (expr, x, xcopy);
 		} else if (ytok != NULL && y != NULL && expr->id.id == ytok) {
@@ -180,7 +176,7 @@ substitute_x_y_z_w (GelETree *expr,
 		} else if (wtok != NULL && w != NULL && expr->id.id == wtok) {
 			gel_replacenode (expr, w, wcopy);
 		}
-	} else if (expr->type == OPERATOR_NODE) {
+	} else if (expr->type == GEL_OPERATOR_NODE) {
 		GelETree *args = expr->op.args;
 		while (args != NULL) {
 			substitute_x_y_z_w (args,
@@ -190,7 +186,7 @@ substitute_x_y_z_w (GelETree *expr,
 					    wtok, w, wcopy);
 			args = args->any.next;
 		}
-	} else if (expr->type == MATRIX_NODE &&
+	} else if (expr->type == GEL_MATRIX_NODE &&
 		   expr->mat.matrix != NULL) {
 		int i, j;
 		int mw, mh;
@@ -208,7 +204,7 @@ substitute_x_y_z_w (GelETree *expr,
 							    wtok, w, wcopy);
 			}
 		}
-	} else if (expr->type == SET_NODE ) {
+	} else if (expr->type == GEL_SET_NODE ) {
 		GelETree *ali;
 		for (ali = expr->set.items; ali != NULL; ali = ali->any.next) {
 			substitute_x_y_z_w (ali,
@@ -218,7 +214,7 @@ substitute_x_y_z_w (GelETree *expr,
 					    wtok, w, wcopy);
 		}
 		/* Not inside function body I don't think
-	} else if (expr->type == FUNCTION_NODE &&
+	} else if (expr->type == GEL_FUNCTION_NODE &&
 		   (expr->func.func->type == GEL_USER_FUNC ||
 		    expr->func.func->type == GEL_VARIABLE_FUNC) &&
 		   ENSURE BODY! expr->func.func->data.user != NULL) {
@@ -255,12 +251,12 @@ substitute_x_y (GelETree *expr,
 static gboolean
 is_constant (GelETree *expr, GelToken *xtok)
 {
-	if (expr->type == VALUE_NODE ||
-	    (expr->type == IDENTIFIER_NODE &&
+	if (expr->type == GEL_VALUE_NODE ||
+	    (expr->type == GEL_IDENTIFIER_NODE &&
 	     expr->id.id != xtok)) {
 		return TRUE;
 	}
-	if (eval_find_identifier (expr, xtok, FALSE /* funcbody */))
+	if (gel_eval_find_identifier (expr, xtok, FALSE /* funcbody */))
 		return FALSE;
 	else
 		return TRUE;
@@ -285,15 +281,15 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 	GelETree *n, *nn, *nnn;
 
 	switch (expr->op.oper) {
-	case E_EXP:
-	/* FIXME: case E_ELTEXP: */
+	case GEL_E_EXP:
+	/* FIXME: case GEL_E_ELTEXP: */
 		if (is_constant (expr->op.args, xtok)) {
 			nnn = differentiate_expr (expr->op.args->any.next, xtok);
 			if (nnn == NULL) {
 				/* FIXME: */
 				return NULL;
 			}
-			if (expr->op.args->type == IDENTIFIER_NODE &&
+			if (expr->op.args->type == GEL_IDENTIFIER_NODE &&
 			    expr->op.args->id.id == d_intern ("e")) {
 				n = PARSE ("(x^y)*dy");
 			} else {
@@ -312,7 +308,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				/* FIXME: */
 				return NULL;
 			}
-			if (expr->op.args->any.next->type == VALUE_NODE) {
+			if (expr->op.args->any.next->type == GEL_VALUE_NODE) {
 				GelETree *ymo = NULL;
 				mpw_t val;
 				if (mpw_zero_p (expr->op.args->any.next->val.value)) {
@@ -322,12 +318,12 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				mpw_init (val);
 				mpw_sub_ui (val,
 					    expr->op.args->any.next->val.value, 1);
-				if (nn->type == VALUE_NODE &&
+				if (nn->type == GEL_VALUE_NODE &&
 				    mpw_eql_ui (nn->val.value, 1)) {
 					if (mpw_zero_p (val)) {
 						n = gel_makenum_ui (1);
 					} else if (mpw_eql_ui (val, 1)) {
-						n = copynode (PARSE ("2*x"));
+						n = gel_copynode (PARSE ("2*x"));
 					} else {
 						n = PARSE ("y*x^ymo");
 						ymo = gel_makenum (val);
@@ -351,7 +347,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 						    d_intern ("ymo"), ymo, FALSE);
 				return n;
 			}
-			if (nn->type == VALUE_NODE &&
+			if (nn->type == GEL_VALUE_NODE &&
 			    mpw_eql_ui (nn->val.value, 1)) {
 				n = PARSE ("y*x^(y-1)");
 				gel_freetree (nn);
@@ -386,7 +382,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				    d_intern ("dy"), nnn, FALSE);
 		return n;
 
-	case E_ABS:
+	case GEL_E_ABS:
 		if (is_constant (expr->op.args, xtok))
 			return gel_makenum_ui (0);
 		nn = differentiate_expr (expr->op.args, xtok);
@@ -399,10 +395,10 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				d_intern ("x"), expr->op.args, TRUE,
 				d_intern ("y"), nn, FALSE);
 		return n;
-	case E_PLUS:
-	/* FIXME: case E_ELTPLUS: */
-	case E_MINUS:
-	/* FIXME: case E_ELTMINUS: */
+	case GEL_E_PLUS:
+	/* FIXME: case GEL_E_ELTPLUS: */
+	case GEL_E_MINUS:
+	/* FIXME: case GEL_E_ELTMINUS: */
 		nn = differentiate_expr (expr->op.args, xtok);
 		if (nn == NULL) {
 			/* FIXME: */
@@ -414,26 +410,26 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 			/* FIXME: */
 			return NULL;
 		}
-		GET_NEW_NODE(n);
-		n->type = OPERATOR_NODE;
+		GEL_GET_NEW_NODE(n);
+		n->type = GEL_OPERATOR_NODE;
 		n->op.oper = expr->op.oper;
 		n->op.args = nn;
 		n->op.args->any.next = nnn;
 		n->op.args->any.next->any.next = NULL;
 		n->op.nargs = 2;
 		return n;
-	case E_MUL:
-	/* FIXME: case E_ELTMUL: */
+	case GEL_E_MUL:
+	/* FIXME: case GEL_E_ELTMUL: */
 		if (is_constant (expr->op.args, xtok)) {
 			nnn = differentiate_expr (expr->op.args->any.next, xtok);
 			if (nnn == NULL) {
 				/* FIXME: */
 				return NULL;
 			}
-			GET_NEW_NODE(n);
-			n->type = OPERATOR_NODE;
+			GEL_GET_NEW_NODE(n);
+			n->type = GEL_OPERATOR_NODE;
 			n->op.oper = expr->op.oper;
-			n->op.args = copynode (expr->op.args);
+			n->op.args = gel_copynode (expr->op.args);
 			n->op.args->any.next = nnn;
 			n->op.args->any.next->any.next = NULL;
 			n->op.nargs = 2;
@@ -444,11 +440,11 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				/* FIXME: */
 				return NULL;
 			}
-			GET_NEW_NODE(n);
-			n->type = OPERATOR_NODE;
+			GEL_GET_NEW_NODE(n);
+			n->type = GEL_OPERATOR_NODE;
 			n->op.oper = expr->op.oper;
 			n->op.args = nn;
-			n->op.args->any.next = copynode (expr->op.args->any.next);
+			n->op.args->any.next = gel_copynode (expr->op.args->any.next);
 			n->op.args->any.next->any.next = NULL;
 			n->op.nargs = 2;
 			return n;
@@ -471,19 +467,19 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				    d_intern ("dx"), nn, FALSE,
 				    d_intern ("dy"), nnn, FALSE);
 		return n;
-	case E_DIV:
-	/* FIXME: case E_ELTDIV: */
+	case GEL_E_DIV:
+	/* FIXME: case GEL_E_ELTDIV: */
 		if (is_constant (expr->op.args->any.next, xtok)) {
 			nn = differentiate_expr (expr->op.args, xtok);
 			if (nn == NULL) {
 				/* FIXME: */
 				return NULL;
 			}
-			GET_NEW_NODE(n);
-			n->type = OPERATOR_NODE;
+			GEL_GET_NEW_NODE(n);
+			n->type = GEL_OPERATOR_NODE;
 			n->op.oper = expr->op.oper;
 			n->op.args = nn;
-			n->op.args->any.next = copynode (expr->op.args->any.next);
+			n->op.args->any.next = gel_copynode (expr->op.args->any.next);
 			n->op.args->any.next->any.next = NULL;
 			n->op.nargs = 2;
 			return n;
@@ -500,7 +496,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 			return NULL;
 		}
 		/* FIXME: is this better idea then is_constant? */
-		if (nn->type == VALUE_NODE &&
+		if (nn->type == GEL_VALUE_NODE &&
 		    mpw_zero_p (nn->val.value)) {
 			gel_freetree (nn);
 			nn = NULL;
@@ -514,26 +510,26 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 				    d_intern ("dx"), nn, FALSE,
 				    d_intern ("dy"), nnn, FALSE);
 		return n;
-	/* FIXME: case E_BACK_DIV: */
-	/* FIXME: case E_ELT_BACK_DIV: */
-	case E_NEG:
+	/* FIXME: case GEL_E_BACK_DIV: */
+	/* FIXME: case GEL_E_ELT_BACK_DIV: */
+	case GEL_E_NEG:
 		nn = differentiate_expr (expr->op.args, xtok);
 		if (nn == NULL) {
 			/* FIXME: */
 			return NULL;
 		}
-		GET_NEW_NODE(n);
-		n->type = OPERATOR_NODE;
+		GEL_GET_NEW_NODE(n);
+		n->type = GEL_OPERATOR_NODE;
 		n->op.oper = expr->op.oper;
 		n->op.args = nn;
 		n->op.args->any.next = NULL;
 		n->op.nargs = 1;
 		return n;
 
-	case E_CALL:
-	case E_DIRECTCALL:
-		if (expr->op.args->type != IDENTIFIER_NODE &&
-		    expr->op.args->type != FUNCTION_NODE) {
+	case GEL_E_CALL:
+	case GEL_E_DIRECTCALL:
+		if (expr->op.args->type != GEL_IDENTIFIER_NODE &&
+		    expr->op.args->type != GEL_FUNCTION_NODE) {
 			/* FIXME: */
 			return NULL;
 		}
@@ -545,9 +541,9 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 		if (is_constant (expr->op.args->any.next, xtok)) {
 			return gel_makenum_ui (0);
 		}
-		if (expr->op.args->type == IDENTIFIER_NODE) {
+		if (expr->op.args->type == GEL_IDENTIFIER_NODE) {
 			ftok = get_symbolic_id (expr->op.args->id.id);
-		} else /* if (expr->op.args->type == FUNCTION_NODE) */ {
+		} else /* if (expr->op.args->type == GEL_FUNCTION_NODE) */ {
 			GelEFunc *f = expr->op.args->func.func;
 			if (f->symbolic_id != NULL)
 				ftok = f->symbolic_id;
@@ -571,20 +567,20 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 		}
 		substitute_x (nn, d_intern ("x"), expr->op.args->any.next, TRUE);
 
-		if (nnn->type == VALUE_NODE &&
+		if (nnn->type == GEL_VALUE_NODE &&
 		    mpw_eql_ui (nnn->val.value, 1)) {
 			gel_freetree (nnn);
 			return nn;
-		} else if (nnn->type == VALUE_NODE &&
+		} else if (nnn->type == GEL_VALUE_NODE &&
 			   mpw_zero_p (nnn->val.value)) {
 			gel_freetree (nnn);
 			gel_freetree (nn);
 			return gel_makenum_ui (0);
 		}
 
-		GET_NEW_NODE (n);
-		n->type = OPERATOR_NODE;
-		n->op.oper = E_MUL;
+		GEL_GET_NEW_NODE (n);
+		n->type = GEL_OPERATOR_NODE;
+		n->op.oper = GEL_E_MUL;
 		n->op.args = nn;
 		n->op.args->any.next = nnn;
 		n->op.args->any.next->any.next = NULL;
@@ -604,26 +600,26 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 static GelETree *
 differentiate_expr (GelETree *expr, GelToken *xtok)
 {
-	if (evalnode_hook != NULL) {
+	if (gel_evalnode_hook != NULL) {
 		static int i = 0;
-		if G_UNLIKELY ((i++ & RUN_HOOK_EVERY_MASK) == RUN_HOOK_EVERY_MASK) {
-			(*evalnode_hook)();
+		if G_UNLIKELY ((i++ & GEL_RUN_HOOK_EVERY_MASK) == GEL_RUN_HOOK_EVERY_MASK) {
+			(*gel_evalnode_hook)();
 			i = 0;
-			if G_UNLIKELY (interrupted)
+			if G_UNLIKELY (gel_interrupted)
 				return NULL;
 		}
 	}
 
 	if (expr == NULL) {
 		return NULL;
-	} else if (expr->type == VALUE_NODE) {
+	} else if (expr->type == GEL_VALUE_NODE) {
 		return gel_makenum_ui (0);
-	} else if (expr->type == IDENTIFIER_NODE) {
+	} else if (expr->type == GEL_IDENTIFIER_NODE) {
 		if (expr->id.id == xtok)
 			return gel_makenum_ui (1);
 		else
 			return gel_makenum_ui (0);
-	} else if (expr->type == OPERATOR_NODE) {
+	} else if (expr->type == GEL_OPERATOR_NODE) {
 		return differentiate_oper (expr, xtok);
 	} else {
 		/* FIXME: complain about this more finegraindly? */
@@ -697,7 +693,7 @@ gel_differentiate_func (GelEFunc *f)
 
 	if (rf == NULL &&
 	    gel_derivative_silent <= 0 &&
-	    ! interrupted) {
+	    ! gel_interrupted) {
 		gel_errorout (_("%s: Cannot differentiate the '%s' function"),
 			      "SymbolicDerivative",
 			      f->id ? f->id->token : "anonymous");
@@ -715,9 +711,9 @@ SymbolicDerivative_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if G_UNLIKELY ( ! check_argument_function_or_identifier (a, 0, "SymbolicDerivative"))
 		return NULL;
 
-	if (a[0]->type == FUNCTION_NODE) {
+	if (a[0]->type == GEL_FUNCTION_NODE) {
 		f = a[0]->func.func;
-	} else /* (a[0]->type == IDENTIFIER_NODE) */ {
+	} else /* (a[0]->type == GEL_IDENTIFIER_NODE) */ {
 		f = d_lookup_global (a[0]->id.id);
 	}
 
@@ -730,8 +726,8 @@ SymbolicDerivative_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	rf = gel_differentiate_func (f);
 	if (rf != NULL) {
-		GET_NEW_NODE (n);
-		n->type = FUNCTION_NODE;
+		GEL_GET_NEW_NODE (n);
+		n->type = GEL_FUNCTION_NODE;
 		n->func.func = rf;
 		return n;
 	} else {
@@ -765,9 +761,9 @@ SimplifyFunction_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if G_UNLIKELY ( ! check_argument_function_or_identifier (a, 0, "SimplifyFunction"))
 		return NULL;
 
-	if (a[0]->type == FUNCTION_NODE) {
+	if (a[0]->type == GEL_FUNCTION_NODE) {
 		f = a[0]->func.func;
-	} else /* (a[0]->type == IDENTIFIER_NODE) */ {
+	} else /* (a[0]->type == GEL_IDENTIFIER_NODE) */ {
 		f = d_lookup_global (a[0]->id.id);
 	}
 
@@ -783,7 +779,7 @@ gel_add_symbolic_functions (void)
 {
 	GelEFunc *f;
 
-	new_category ("symbolic", N_("Symbolic Operations"), TRUE /* internal */);
+	gel_new_category ("symbolic", N_("Symbolic Operations"), TRUE /* internal */);
 
 	FUNC (SymbolicDerivative, 1, "f", "symbolic",
 	      N_("Attempt to symbolically differentiate the function f, "

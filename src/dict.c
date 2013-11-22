@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2008 Jiri (George) Lebl
+ * Copyright (C) 1997-2009 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -43,8 +43,6 @@ typedef struct _GelDictContext {
 static GelDictContext context = {NULL, NULL, NULL, -1};
 
 static GHashTable *dictionary;
-
-extern GHashTable *uncompiled;
 
 extern const char *genius_toplevels[];
 extern const char *genius_operators[];
@@ -193,7 +191,7 @@ d_copyfunc(GelEFunc *o)
 	if(n->type == GEL_USER_FUNC ||
 	   n->type == GEL_VARIABLE_FUNC) {
 		D_ENSURE_USER_BODY (o);
-		n->data.user=copynode(o->data.user);
+		n->data.user = gel_copynode(o->data.user);
 	}
 	n->named_args = g_slist_copy (o->named_args);
 
@@ -231,7 +229,7 @@ d_makerealfunc(GelEFunc *o,GelToken *id, gboolean use)
 			n->data.user = o->data.user;
 			o->data.user = NULL;
 		} else
-			n->data.user = copynode(o->data.user);
+			n->data.user = gel_copynode(o->data.user);
 	}
 	if(use) {
 		o->named_args = NULL;
@@ -277,7 +275,7 @@ d_setrealfunc(GelEFunc *n,GelEFunc *fake, gboolean use)
 			n->data.user = fake->data.user;
 			fake->data.user = NULL;
 		} else
-			n->data.user = copynode(fake->data.user);
+			n->data.user = gel_copynode(fake->data.user);
 	}
 
 	if(use) {
@@ -819,6 +817,18 @@ d_getcontext_global (void)
 }
 
 static int
+lowercase_ascii_sum_square (const char *id)
+{
+	int sum = 0;
+	int i;
+	for (i = 0; id[i] != '\0'; i++) {
+		int n = g_ascii_tolower (id[i]) - 'a';
+		sum += n*n;
+	}
+	return sum;
+}
+
+static int
 lowercase_ascii_sum (const char *id)
 {
 	int sum = 0;
@@ -891,13 +901,16 @@ are_ids_similar (const char *id1, const char *id2)
 
 	if (len1 > 6 && len1 == len2) {
 		int sum1, sum2;
+		int sum1s, sum2s;
 
 		sum1 = lowercase_ascii_sum (id1);
 		sum2 = lowercase_ascii_sum (id2);
 
-		/* just a reordering (possibly)
-		   (won't work right on small words) */
-		if (sum1 == sum2) {
+		sum1s = lowercase_ascii_sum_square (id1);
+		sum2s = lowercase_ascii_sum_square (id2);
+
+		/* just a reordering (possibly) */
+		if (sum1 == sum2 && sum1s == sum2s) {
 			return TRUE;
 		}
 	}

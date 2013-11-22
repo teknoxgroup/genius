@@ -25,8 +25,6 @@
 void		ve_entry_set_red (GtkWidget *w,
 				  gboolean state);
 
-GtkWidget *	ve_gtk_option_menu_get_item (GtkOptionMenu *option_menu,
-					     int index);
 GtkWidget *	ve_hig_dialog_new (GtkWindow      *parent,
 				   GtkDialogFlags flags,
 				   GtkMessageType type,
@@ -35,5 +33,8 @@ GtkWidget *	ve_hig_dialog_new (GtkWindow      *parent,
 				   const gchar    *header,
 				   const gchar    *messagefmt,
 				   ...) G_GNUC_PRINTF (7, 8);
+
+int		ve_dialog_run_nonmodal (GtkDialog *dialog);
+
 
 #endif /* VE_MISCUI_H */
