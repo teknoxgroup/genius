@@ -56,6 +56,7 @@ static int matrix_entry=0;
 	if(lex_init) {
 		return_ret = FALSE;
 		parenth_depth = 0;
+		matrix_entry = 0;
 		lex_init = FALSE;
 	}
 	
@@ -155,7 +156,6 @@ if		{ NO_RET; return IF; }
 then		{ NO_RET; return THEN; }
 else		{ NO_RET; return ELSE; }
 
-define		{ NO_RET; return DEFINE; }
 function	{ NO_RET; return FUNCTION; }
 call		{ NO_RET; return CALL; }
 
@@ -295,13 +295,16 @@ null		{ DO_RET; return '.'; }
 			return yytext[0];
 		}
 
-[@^*/%+-]	{ NO_RET; return yytext[0]; }
+[@^*/%+-`]	{ NO_RET; return yytext[0]; }
 
 \.		{ DO_RET; return '.'; }
 
 \|		{ DO_RET; return '|'; }
 
-<<EOF>>		{ got_eof = TRUE; return '\n'; }
+<<EOF>>		{
+			got_eof = TRUE;
+			return '\n';
+		}
 
 .		{ NO_RET; return yytext[0]; }
 

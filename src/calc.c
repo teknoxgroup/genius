@@ -18,14 +18,17 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-#include <config.h>
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
 #include <libintl.h>
 #define _(x) gettext(x)
 #endif
+
 #include <stdlib.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <signal.h>
 #include <glob.h>
@@ -44,6 +47,7 @@
 #include "funclib.h"
 #include "matrixw.h"
 #include "compil.h"
+#include "plugread.h"
 
 #include "mpwrap.h"
 
@@ -69,6 +73,9 @@ int run_hook_every = 1000;
 void (*statechange_hook)(calcstate_t) = NULL;
 
 static GHashTable *funcdesc = NULL;
+
+static int ignore_end_parse_errors = FALSE;
+static int got_end_too_soon = FALSE;
 
 FILE *outputfp = NULL;
 
@@ -96,8 +103,53 @@ int interrupted = FALSE;
 static GList *curfile = NULL;
 static GList *curline = NULL;
 
+GList *plugin_list = NULL;
+
 /*from lexer.l*/
 int my_yyinput(void);
+
+void
+read_plugin_list(void)
+{
+	GList *li;
+	DIR *dir;
+	char *dir_name;
+	struct dirent *dent;
+
+	/*free the previous list*/
+	for(li=plugin_list;li;li=g_list_next(li)) {
+		plugin_t *plg = li->data;
+		g_free(plg->file);
+		g_free(plg->name);
+		g_free(plg);
+	}
+	g_list_free(plugin_list);
+	plugin_list = NULL;
+	
+	dir_name = g_strconcat(LIBRARY_DIR,"/plugins",NULL);
+	dir = opendir(dir_name);
+	if(!dir) {
+		g_free(dir_name);
+		return;
+	}
+	while((dent = readdir (dir)) != NULL) {
+		char *p;
+		plugin_t *plg;
+		if(dent->d_name[0] == '.' &&
+		   (dent->d_name[1] == '\0' ||
+		    (dent->d_name[1] == '.' &&
+		     dent->d_name[2] == '\0')))
+			continue;
+		p = strrchr(dent->d_name,'.');
+		if(!p || strcmp(p,".plugin")!=0)
+			continue;
+		plg = readplugin(dir_name,dent->d_name);
+		if(plg)
+			plugin_list = g_list_prepend(plugin_list,plg);
+	}
+	g_free(dir_name);
+	plugin_list = g_list_reverse(plugin_list);
+}
 
 void
 add_description(char *func, char *desc)
@@ -248,7 +300,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 	ETree *l,*r,*rr;
 	GList *li;
 
-	switch(n->data.oper) {
+	switch(n->op.oper) {
 		case E_SEPAR:
 			append_binaryoper(gs,out,";",n); break;
 		case E_EQUALS:
@@ -454,8 +506,8 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			GET_L(n,l);
 			appendout_c(gs,out,'(');
 			if(l->type==IDENTIFIER_NODE) {
-				appendout(gs,out,l->data.id->token);
-			} else if(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE) {
+				appendout(gs,out,l->id.id->token);
+			} else if(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE) {
 				ETree *t;
 				GET_L(l,t);
 				if(t->type!=IDENTIFIER_NODE) {
@@ -464,14 +516,14 @@ appendoper(GString *gs,FILE *out, ETree *n)
 					break;
 				}
 				appendout_c(gs,out,'*');
-				appendout(gs,out,t->data.id->token);
+				appendout(gs,out,t->id.id->token);
 			} else {
 				(*errorout)(_("Bad identifier for function node!"));
 				appendout(gs,out,"???)");
 				break;
 			}
 			appendout_c(gs,out,'(');
-			li = n->args->next;
+			li = n->op.args->next;
 			print_etree(gs,out,li->data);
 			li=g_list_next(li);
 			for(;li!=NULL;li=g_list_next(li)) {
@@ -505,7 +557,7 @@ appendcomp(GString *gs,FILE *out, ETree *n)
 	
 	appendout_c(gs,out,'(');
 	
-	for(oli=n->data.comp,li=n->args;oli;
+	for(oli=n->comp.comp,li=n->comp.args;oli;
 	    li=g_list_next(li),oli=g_list_next(oli)) {
 		int oper= GPOINTER_TO_INT(oli->data);
 		print_etree(gs,out,li->data);
@@ -573,24 +625,26 @@ print_etree(GString *gs, FILE *out, ETree *n)
 		appendout(gs,out,"(null)");
 		break;
 	case VALUE_NODE:
-		p=mpw_getstring(n->data.value,calcstate.max_digits,
+		p=mpw_getstring(n->val.value,calcstate.max_digits,
 				calcstate.scientific_notation,
 				calcstate.results_as_floats);
 		appendout(gs,out,p);
 		g_free(p);
 		break;
 	case MATRIX_NODE:
-		appendmatrix(gs,out,n->data.matrix);
+		if(n->mat.quoted)
+			appendout_c(gs,out,'`');
+		appendmatrix(gs,out,n->mat.matrix);
 		break;
 	case OPERATOR_NODE:
 		appendoper(gs,out,n);
 		break;
 	case IDENTIFIER_NODE:
-		appendout(gs,out,n->data.id->token);
+		appendout(gs,out,n->id.id->token);
 		break;
 	case STRING_NODE:
 		appendout_c(gs,out,'"');
-		p = escape_string(n->data.str);
+		p = escape_string(n->str.str);
 		appendout(gs,out,p);
 		g_free(p);
 		appendout_c(gs,out,'"');
@@ -600,7 +654,7 @@ print_etree(GString *gs, FILE *out, ETree *n)
 			GList *li;
 			EFunc *f;
 			
-			f = n->data.func;
+			f = n->func.func;
 			if(!f) {
 				(*errorout)(_("NULL function!"));
 				appendout(gs,out,"(???)");
@@ -656,13 +710,21 @@ pretty_print_etree(GString *gs, FILE *out, ETree *n)
 	  top node*/
 	if(n->type == MATRIX_NODE) {
 		int i,j;
-		appendout(gs,out,"\n[");
-		for(j=0;j<matrixw_height(n->data.matrix);j++) {
-			if(j>0) appendout(gs,out,"\n ");
-			for(i=0;i<matrixw_width(n->data.matrix);i++) {
+		if(n->mat.quoted)
+			appendout(gs,out,"\n`[");
+		else
+			appendout(gs,out,"\n[");
+		for(j=0;j<matrixw_height(n->mat.matrix);j++) {
+			if(j>0) {
+				if(n->mat.quoted)
+					appendout(gs,out,"\n  ");
+				else
+					appendout(gs,out,"\n ");
+			}
+			for(i=0;i<matrixw_width(n->mat.matrix);i++) {
 				if(i>0) appendout(gs,out,"\t");
 				print_etree(gs, out,
-					    matrixw_index(n->data.matrix,i,j));
+					    matrixw_index(n->mat.matrix,i,j));
 			}
 		}
 		appendout(gs,out,"]");
@@ -1049,7 +1111,7 @@ do_load_files(void)
 }
 
 ETree *
-parseexp(char *str, FILE *infile, int load_files)
+parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 {
 	int stacklen;
 	
@@ -1073,11 +1135,12 @@ parseexp(char *str, FILE *infile, int load_files)
 	g_assert(!(str && infile));
 
 	if(str) {
+		int l = strlen(str);
 		pipe(lex_fd);
 		yyin=fdopen(lex_fd[0],"r");
-		if(str)
-			write(lex_fd[1],str,strlen(str));
-		write(lex_fd[1],"\n",1);
+		write(lex_fd[1],str,l);
+		if(str[l-1]!='\n')
+			write(lex_fd[1],"\n",1);
 		close(lex_fd[1]);
 	} else
 		yyin = infile;
@@ -1087,7 +1150,10 @@ parseexp(char *str, FILE *infile, int load_files)
 
 	lex_init = TRUE;
 	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
+	if(testparse) ignore_end_parse_errors = TRUE;
+	got_end_too_soon = FALSE;
 	yyparse();
+	ignore_end_parse_errors = FALSE;
 
 	/*while(yyparse() && !feof(yyin))
 		;*/
@@ -1106,6 +1172,15 @@ parseexp(char *str, FILE *infile, int load_files)
 		g_free(loadfile_glob); loadfile_glob = NULL;
 	} else if(loadfile || loadfile_glob) {
 		do_load_files();
+		if(finished) *finished = TRUE;
+		return NULL;
+	}
+
+	/*if we are testing and got an unfinished expression just report that*/
+	if(testparse && got_end_too_soon) {
+		while(evalstack)
+			freetree(stack_pop(&evalstack));
+		if(finished) *finished = FALSE;
 		return NULL;
 	}
 	
@@ -1113,23 +1188,29 @@ parseexp(char *str, FILE *infile, int load_files)
 	if(error_num!=NO_ERROR) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
+		if(finished) *finished = TRUE;
 		return NULL;
 	}
 	
 	stacklen = g_list_length(evalstack);
 	
-	if(stacklen==0)
+	if(stacklen==0) {
+		if(finished) *finished = FALSE;
 		return NULL;
+	}
 
 	/*stack is supposed to have only ONE entry*/
 	if(stacklen!=1) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		(*errorout)(_("ERROR: Probably corrupt stack!"));
+		if(!testparse)
+			(*errorout)(_("ERROR: Probably corrupt stack!"));
+		if(finished) *finished = FALSE;
 		return NULL;
 	}
 	evalstack->data = gather_comparisons(evalstack->data);
 	
+	if(finished) *finished = TRUE;
 	return stack_pop(&evalstack);
 }
 
@@ -1189,9 +1270,8 @@ runexp(ETree *exp)
 }
 
 void
-evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+evalexp_parsed(ETree *parsed, FILE *outfile, char **outstring, char *prefix,int pretty)
 {
-	ETree *parsed;
 	ETree *ret;
 	
 	if(!outputfp)
@@ -1200,7 +1280,6 @@ evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,
 	if(outstring)
 		*outstring = NULL;
 	
-	parsed = parseexp(str,infile,TRUE);
 	if(!parsed) return;
 	ret = runexp(parsed);
 	freetree(parsed);
@@ -1231,16 +1310,16 @@ evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,
 
 	/*set ans to the last answer*/
 	if(ret->type == FUNCTION_NODE) {
-		if(ret->data.func)
-			d_addfunc(d_makerealfunc(ret->data.func,d_intern("Ans")));
+		if(ret->func.func)
+			d_addfunc(d_makerealfunc(ret->func.func,d_intern("Ans"),TRUE));
 		else
 			d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
 		freetree(ret);
 	} else if(ret->type == OPERATOR_NODE &&
-		ret->data.oper == E_REFERENCE) {
-		ETree *t = ret->args->data;
+		ret->op.oper == E_REFERENCE) {
+		ETree *t = ret->op.args->data;
 		if(!t) {
-			EFunc *rf = d_lookup_global(t->data.id);
+			EFunc *rf = d_lookup_global(t->id.id);
 			if(rf)
 				d_addfunc(d_makereffunc(d_intern("Ans"),rf));
 			else
@@ -1252,6 +1331,14 @@ evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,
 		d_addfunc(d_makevfunc(d_intern("Ans"),ret));
 }
 
+void
+evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+{
+	ETree *parsed;
+	parsed = parseexp(str,infile,TRUE,FALSE,NULL);
+	evalexp_parsed(parsed,outfile,outstring,prefix,pretty);
+}
+
 /*just to make the compiler happy*/
 void yyerror(char *s);
 
@@ -1261,8 +1348,15 @@ yyerror(char *s)
 	char *out=NULL;
 	char *p;
 	
+	if(ignore_end_parse_errors && yytext[0]=='\0') {
+		got_end_too_soon = TRUE;
+		return;
+	}
+	
 	if(strcmp(yytext,"\n")==0) {
 		out=g_strconcat(_("ERROR: "),s,_(" before newline"),NULL);
+	} else if(yytext[0]=='\0') {
+		out=g_strconcat(_("ERROR: "),s,_(" at end of input"),NULL);
 	} else {
 		char *tmp = g_strdup(yytext);
 		while((p=strchr(tmp,'\n')))
@@ -1276,4 +1370,3 @@ yyerror(char *s)
 	g_free(out);
 	error_num=PARSE_ERROR;
 }
-

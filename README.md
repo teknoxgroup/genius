@@ -344,10 +344,6 @@ function <identifier>(<comma separated argument names>) = <function body>
 (you could also assign the anonymous function syntax to an identifier as in:
  <identifier> = (`() = <function body>)
 
-Old and depreceated ways which will dissapear one of these days:
-define <identifier>(<comma separated argument names>) { <function body> }
-<identifier> = `(<comma separated argument names>) { <function body> }
-
 NOTE: that's a backquote and signifies an anonymous function, by setting
 it to a variable name you effectively define a function
 

@@ -19,6 +19,8 @@
  * USA.
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -86,22 +88,23 @@ compile_node(ETree *t,GString *gs)
 	char *s;
 	int i,j;
 	GList *li;
-	g_string_sprintfa(gs,";%d;%d",t->type,t->nargs);
+	g_string_sprintfa(gs,";%d",t->type);
 	switch(t->type) {
 	case NULL_NODE:
 		break;
 	case VALUE_NODE:
-		s = mpw_getstring(t->data.value,0,FALSE,FALSE);
+		s = mpw_getstring(t->val.value,0,FALSE,FALSE);
 		g_string_append_c(gs,';');
 		g_string_append(gs,s);
 		g_free(s);
 		break;
 	case MATRIX_NODE:
-		g_string_sprintfa(gs,";%dx%d",matrixw_width(t->data.matrix),
-				 matrixw_height(t->data.matrix));
-		for(i=0;i<matrixw_width(t->data.matrix);i++) {
-			for(j=0;j<matrixw_height(t->data.matrix);j++) {
-				ETree *tt = matrixw_set_index(t->data.matrix,i,j);
+		g_string_sprintfa(gs,";%dx%d;%d",matrixw_width(t->mat.matrix),
+				 matrixw_height(t->mat.matrix),
+				 t->mat.quoted);
+		for(i=0;i<matrixw_width(t->mat.matrix);i++) {
+			for(j=0;j<matrixw_height(t->mat.matrix);j++) {
+				ETree *tt = matrixw_set_index(t->mat.matrix,i,j);
 				if(!tt) g_string_append(gs,";0");
 				else {
 					g_string_append(gs,";N");
@@ -111,41 +114,47 @@ compile_node(ETree *t,GString *gs)
 		}
 		break;
 	case OPERATOR_NODE:
-		g_string_sprintfa(gs,";%d",t->data.oper);
+		g_string_sprintfa(gs,";%d;%d",t->op.oper,
+				  t->op.nargs);
+		for(li=t->op.args;li;li=g_list_next(li)) {
+			ETree *tt = li->data;
+			compile_node(tt,gs);
+		}
 		break;
 	case IDENTIFIER_NODE:
-		g_string_sprintfa(gs,";%s",t->data.id->token);
+		g_string_sprintfa(gs,";%s",t->id.id->token);
 		break;
 	case STRING_NODE:
-		if(*t->data.str) {
+		if(*t->str.str) {
 			g_string_append_c(gs,';');
-			append_string(gs,t->data.str);
+			append_string(gs,t->str.str);
 		} else {
 			g_string_append(gs,";E");
 		}
 		break;
 	case FUNCTION_NODE:
-		g_assert(t->data.func->type==USER_FUNC);
-		g_assert(t->data.func->id==NULL);
-		g_string_sprintfa(gs,";%d",t->data.func->nargs);
-		for(li=t->data.func->named_args;li;li=g_list_next(li)) {
+		g_assert(t->func.func->type==USER_FUNC);
+		g_assert(t->func.func->id==NULL);
+		g_string_sprintfa(gs,";%d",t->func.func->nargs);
+		for(li=t->func.func->named_args;li;li=g_list_next(li)) {
 			Token *tok = li->data;
 			g_string_sprintfa(gs,";%s",tok->token);
 		}
-		compile_node(t->data.func->data.user,gs);
+		compile_node(t->func.func->data.user,gs);
 		break;
 	case COMPARISON_NODE:
-		for(li=t->data.comp;li;li=g_list_next(li)) {
+		g_string_sprintfa(gs,";%d",t->comp.nargs);
+		for(li=t->comp.comp;li;li=g_list_next(li)) {
 			int oper = GPOINTER_TO_INT(li->data);
 			g_string_sprintfa(gs,";%d",oper);
+		}
+		for(li=t->comp.args;li;li=g_list_next(li)) {
+			ETree *tt = li->data;
+			compile_node(tt,gs);
 		}
 		break;
 	default:
 		g_assert_not_reached(); break;
-	}
-	for(li=t->args;li;li=g_list_next(li)) {
-		ETree *tt = li->data;
-		compile_node(tt,gs);
 	}
 }
 
@@ -171,6 +180,7 @@ decompile_node(void)
 	char *p;
 	int type=-1;
 	int nargs=-1;
+	int quote;
 	int oper;
 	int i,j;
 	int w,h;
@@ -184,11 +194,6 @@ decompile_node(void)
 	sscanf(p,"%d",&type);
 	if(type==-1) return NULL;
 
-	p = strtok(NULL,";");
-	if(!p) return NULL;
-	sscanf(p,"%d",&nargs);
-	if(nargs==-1) return NULL;
-	
 	switch(type) {
 	case NULL_NODE:
 		return makenum_null();
@@ -205,6 +210,13 @@ decompile_node(void)
 		sscanf(p,"%dx%d",&w,&h);
 		if(h==-1 || w ==-1)
 			return NULL;
+
+		p = strtok(NULL,";");
+		if(!p) return NULL;
+		quote = -1;
+		sscanf(p,"%d",&quote);
+		if(quote==-1) return NULL;
+
 		m = matrixw_new();
 		matrixw_set_size(m,w,h);
 		for(i=0;i<w;i++) {
@@ -229,9 +241,8 @@ decompile_node(void)
 		}
 		GET_NEW_NODE(n);
 		n->type = MATRIX_NODE;
-		n->args = NULL;
-		n->nargs = 0;
-		n->data.matrix = m;
+		n->mat.matrix = m;
+		n->mat.quoted = quote;
 		return n;
 	case OPERATOR_NODE:
 		p = strtok(NULL,";");
@@ -239,6 +250,11 @@ decompile_node(void)
 		oper = -1;
 		sscanf(p,"%d",&oper);
 		if(oper==-1) return NULL;
+
+		p = strtok(NULL,";");
+		if(!p) return NULL;
+		sscanf(p,"%d",&nargs);
+		if(nargs==-1) return NULL;
 		
 		li = NULL;
 		for(i=0;i<nargs;i++) {
@@ -253,18 +269,16 @@ decompile_node(void)
 
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
-		n->args = li;
-		n->nargs = nargs;
-		n->data.oper = oper;
+		n->op.args = li;
+		n->op.nargs = nargs;
+		n->op.oper = oper;
 		return n;
 	case IDENTIFIER_NODE:
 		p = strtok(NULL,";");
 		if(!p) return NULL;
 		GET_NEW_NODE(n);
 		n->type = IDENTIFIER_NODE;
-		n->args = NULL;
-		n->nargs = 0;
-		n->data.id = d_intern(p);
+		n->id.id = d_intern(p);
 		return n;
 	case STRING_NODE:
 		p = strtok(NULL,";");
@@ -278,9 +292,7 @@ decompile_node(void)
 		}
 		GET_NEW_NODE(n);
 		n->type = STRING_NODE;
-		n->args = NULL;
-		n->nargs = 0;
-		n->data.str = p;
+		n->str.str = p;
 		return n;
 	case FUNCTION_NODE:
 		p = strtok(NULL,";");
@@ -310,11 +322,14 @@ decompile_node(void)
 
 		GET_NEW_NODE(n);
 		n->type = FUNCTION_NODE;
-		n->args = NULL;
-		n->nargs = 0;
-		n->data.func = func;
+		n->func.func = func;
 		return n;
 	case COMPARISON_NODE:
+		p = strtok(NULL,";");
+		if(!p) return NULL;
+		sscanf(p,"%d",&nargs);
+		if(nargs==-1) return NULL;
+	
 		oli = NULL;
 		for(i=0;i<nargs-1;i++) {
 			p = strtok(NULL,";");
@@ -345,9 +360,9 @@ decompile_node(void)
 
 		GET_NEW_NODE(n);
 		n->type = COMPARISON_NODE;
-		n->args = li;
-		n->nargs = nargs;
-		n->data.comp = oli;
+		n->comp.args = li;
+		n->comp.nargs = nargs;
+		n->comp.comp = oli;
 		return n;
 	default:
 		return NULL;

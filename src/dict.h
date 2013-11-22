@@ -46,10 +46,11 @@ EFunc * d_makereffunc(Token *id, EFunc *ref);
 EFunc *d_copyfunc(EFunc *o);
 
 /*make a real function from a fake*/
-EFunc * d_makerealfunc(EFunc *o,Token *id);
+EFunc * d_makerealfunc(EFunc *o,Token *id, int use);
 
 /*make real func and replace o with it, without changing o's context or id*/
-void d_setrealfunc(EFunc *n,EFunc *fake);
+/*if use is set, we USE the original function, NULLing approriately*/
+void d_setrealfunc(EFunc *n,EFunc *fake, int use);
 
 void d_initcontext(void);
 

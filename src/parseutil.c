@@ -62,7 +62,7 @@ push_func(void)
 			g_list_free(list); 
 			return FALSE;
 		}
-		list = g_list_prepend(list,tree->data.id);
+		list = g_list_prepend(list,tree->id.id);
 		freetree(tree);
 		i++;
 	}
@@ -70,10 +70,8 @@ push_func(void)
 	GET_NEW_NODE(tree);
 
 	tree->type = FUNCTION_NODE;
-	tree->data.func = d_makeufunc(NULL,val,list,i);
-	tree->data.func->context = -1;
-	tree->args = NULL;
-	tree->nargs = 0;
+	tree->func.func = d_makeufunc(NULL,val,list,i);
+	tree->func.func->context = -1;
 
 	stack_push(&evalstack,tree);
 
@@ -93,8 +91,6 @@ push_marker(ETreeType markertype)
        
 	GET_NEW_NODE(tree);
 	tree->type = markertype;
-	tree->args = NULL;
-	tree->nargs = 0;
 	stack_push(&evalstack,tree);
 	stack_push(&evalstack,last_expr);
 	return TRUE;
@@ -107,8 +103,6 @@ push_marker_simple(ETreeType markertype)
 	ETree *tree;
 	GET_NEW_NODE(tree);
 	tree->type = markertype;
-	tree->args = NULL;
-	tree->nargs = 0;
 	stack_push(&evalstack,tree);
 }
 
@@ -127,8 +121,7 @@ push_spacer(void)
 		ETree * tree;
 		GET_NEW_NODE(tree);
 		tree->type = SPACER_NODE;
-		tree->args = g_list_append(NULL,last_expr);
-		tree->nargs = 1;
+		tree->sp.arg = last_expr;
 		stack_push(&evalstack,tree);
 	}
 	return TRUE;
@@ -160,8 +153,8 @@ push_matrix_row(void)
 	}
 	GET_NEW_NODE(tree);
 	tree->type = MATRIX_ROW_NODE;
-	tree->args = row;
-	tree->nargs = i;
+	tree->row.args = row;
+	tree->row.nargs = i;
 
 	stack_push(&evalstack,tree);
 	
@@ -171,7 +164,7 @@ push_matrix_row(void)
 /*gather all expressions up until a row start marker and push the
   result as a matrix*/
 int
-push_matrix(void)
+push_matrix(int quoted)
 {
 	ETree *tree;
 	int i,j;
@@ -201,11 +194,11 @@ push_matrix(void)
 			freetree(tree);
 			break;
 		} else if(tree->type==MATRIX_ROW_NODE) {
-			if(tree->nargs>cols)
-				cols = tree->nargs;
-			rowl = g_list_prepend(rowl,tree->args);
-			tree->args = NULL;
-			tree->nargs = 0;
+			if(tree->row.nargs>cols)
+				cols = tree->row.nargs;
+			rowl = g_list_prepend(rowl,tree->row.args);
+			tree->row.args = NULL;
+			tree->row.nargs = 0;
 			freetree(tree);
 			rows++;
 			continue;
@@ -236,9 +229,8 @@ push_matrix(void)
 	
 	GET_NEW_NODE(tree);
 	tree->type = MATRIX_NODE;
-	tree->data.matrix = matrixw_new_with_matrix(matrix);
-	tree->args = NULL;
-	tree->nargs = 0;
+	tree->mat.matrix = matrixw_new_with_matrix(matrix);
+	tree->mat.quoted = quoted?1:0;
 	
 	stack_push(&evalstack,tree);
 	return TRUE;
@@ -252,8 +244,6 @@ push_null(void)
 	ETree *tree;
 	GET_NEW_NODE(tree);
 	tree->type = NULL_NODE;
-	tree->args = NULL;
-	tree->nargs = 0;
 
 	stack_push(&evalstack,tree);
 }

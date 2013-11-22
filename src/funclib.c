@@ -126,7 +126,7 @@ static ETree *
 error_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		(*errorout)(a[0]->data.str);
+		(*errorout)(a[0]->str.str);
 	else {
 		GString *gs;
 		gs = g_string_new(NULL);
@@ -141,7 +141,7 @@ static ETree *
 print_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		fprintf(outputfp,"%s\n",a[0]->data.str);
+		fprintf(outputfp,"%s\n",a[0]->str.str);
 	else {
 		pretty_print_etree(NULL,outputfp,a[0]);
 		fprintf(outputfp,"\n");
@@ -153,7 +153,7 @@ static ETree *
 printn_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		fprintf(outputfp,"%s",a[0]->data.str);
+		fprintf(outputfp,"%s",a[0]->str.str);
 	else
 		print_etree(NULL,outputfp,a[0]);
 	fflush(outputfp);
@@ -167,7 +167,7 @@ display_op(ETree * * a, int *exception)
 		(*errorout)(_("display: first argument must be string!"));
 		return NULL;
 	}
-	fprintf(outputfp,"%s: ",a[0]->data.str);
+	fprintf(outputfp,"%s: ",a[0]->str.str);
 	pretty_print_etree(NULL,outputfp,a[1]);
 	fprintf(outputfp,"\n");
 	return makenum_null();
@@ -186,16 +186,20 @@ apply_func_to_matrixen(ETree *mat1, ETree *mat2,
 	int reverse = FALSE;
 	ETree *n;
 	int i,j;
+	int quote = 0;
 
 	if(mat1->type == MATRIX_NODE &&
 	   mat2->type == MATRIX_NODE) {
-		m1 = mat1->data.matrix;
-		m2 = mat2->data.matrix;
+		m1 = mat1->mat.matrix;
+		m2 = mat2->mat.matrix;
+		quote = mat1->mat.quoted || mat2->mat.quoted;
 	} else if(mat1->type == MATRIX_NODE) {
-		m1 = mat1->data.matrix;
+		m1 = mat1->mat.matrix;
+		quote = mat1->mat.quoted;
 		re_node = mat2;
 	} else /*if(mat2->type == MATRIX_NODE)*/ {
-		m1 = mat2->data.matrix;
+		m1 = mat2->mat.matrix;
+		quote = mat2->mat.quoted;
 		re_node = mat1;
 		reverse = TRUE;
 	}
@@ -209,9 +213,8 @@ apply_func_to_matrixen(ETree *mat1, ETree *mat2,
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	new = n->data.matrix = matrixw_new();
+	new = n->mat.matrix = matrixw_new();
+	n->mat.quoted = quote;
 	matrixw_set_size(new,matrixw_width(m1),matrixw_height(m1));
 
 	for(i=0;i<matrixw_width(m1);i++) {
@@ -233,19 +236,17 @@ apply_func_to_matrixen(ETree *mat1, ETree *mat2,
 				ETree *ni;
 				GET_NEW_NODE(nn);
 				nn->type = OPERATOR_NODE;
-				nn->data.oper = E_CALL;
-				nn->args = NULL;
-				nn->nargs = 3;
+				nn->op.oper = E_CALL;
+				nn->op.args = NULL;
+				nn->op.nargs = 3;
 				
 				GET_NEW_NODE(ni);
 				ni->type = IDENTIFIER_NODE;
-				ni->data.id = d_intern(ident);
-				ni->args = NULL;
-				ni->nargs = 0;
+				ni->id.id = d_intern(ident);
 				
-				nn->args = g_list_prepend(nn->args,copynode(t[1]));
-				nn->args = g_list_prepend(nn->args,copynode(t[0]));
-				nn->args = g_list_prepend(nn->args,ni);
+				nn->op.args = g_list_prepend(nn->op.args,copynode(t[1]));
+				nn->op.args = g_list_prepend(nn->op.args,copynode(t[0]));
+				nn->op.args = g_list_prepend(nn->op.args,ni);
 
 				matrixw_set_index(new,i,j) = nn;
 			} else {
@@ -267,14 +268,13 @@ apply_func_to_matrix(ETree *mat,
 	ETree *n;
 	int i,j;
 
-	m = mat->data.matrix;
+	m = mat->mat.matrix;
 	
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	new = n->data.matrix = matrixw_new();
+	new = n->mat.matrix = matrixw_new();
+	n->mat.quoted = mat->mat.quoted;
 	matrixw_set_size(new,matrixw_width(m),matrixw_height(m));
 
 	for(i=0;i<matrixw_width(m);i++) {
@@ -290,18 +290,16 @@ apply_func_to_matrix(ETree *mat,
 				ETree *ni;
 				GET_NEW_NODE(nn);
 				nn->type = OPERATOR_NODE;
-				nn->data.oper = E_CALL;
-				nn->args = NULL;
-				nn->nargs = 2;
+				nn->op.oper = E_CALL;
+				nn->op.args = NULL;
+				nn->op.nargs = 2;
 				
 				GET_NEW_NODE(ni);
 				ni->type = IDENTIFIER_NODE;
-				ni->data.id = d_intern(ident);
-				ni->args = NULL;
-				ni->nargs = 0;
+				ni->id.id = d_intern(ident);
 				
-				nn->args = g_list_prepend(nn->args,copynode(t[0]));
-				nn->args = g_list_prepend(nn->args,ni);
+				nn->op.args = g_list_prepend(nn->op.args,copynode(t[0]));
+				nn->op.args = g_list_prepend(nn->op.args,ni);
 
 				matrixw_set_index(new,i,j) = nn;
 			} else {
@@ -329,7 +327,7 @@ sin_op(ETree * * a, int *exception)
 
 	mpw_init(fr);
 
-	mpw_sin(fr,a[0]->data.value);
+	mpw_sin(fr,a[0]->val.value);
 
 	return makenum_use(fr);
 }
@@ -351,7 +349,7 @@ sinh_op(ETree * * a, int *exception)
 
 	mpw_init(fr);
 
-	mpw_sinh(fr,a[0]->data.value);
+	mpw_sinh(fr,a[0]->val.value);
 
 	return makenum_use(fr);
 }
@@ -373,7 +371,7 @@ cos_op(ETree * * a, int *exception)
 
 	mpw_init(fr);
 
-	mpw_cos(fr,a[0]->data.value);
+	mpw_cos(fr,a[0]->val.value);
 
 	return makenum_use(fr);
 }
@@ -395,7 +393,7 @@ cosh_op(ETree * * a, int *exception)
 
 	mpw_init(fr);
 
-	mpw_cosh(fr,a[0]->data.value);
+	mpw_cosh(fr,a[0]->val.value);
 
 	return makenum_use(fr);
 }
@@ -412,13 +410,13 @@ tan_op(ETree * * a, int *exception)
 		return apply_func_to_matrix(a[0],tan_op,"tan");
 
 	if(a[0]->type!=VALUE_NODE ||
-	   mpw_is_complex(a[0]->data.value)) {
+	   mpw_is_complex(a[0]->val.value)) {
 		(*errorout)(_("tan: argument not a real number"));
 		return NULL;
 	}
 
 	mpw_init(fr);
-	mpw_set(fr,a[0]->data.value);
+	mpw_set(fr,a[0]->val.value);
 
 	/*is this algorithm always precise??? sin/cos*/
 	mpw_init(fr2);
@@ -447,7 +445,7 @@ atan_op(ETree * * a, int *exception)
 
 	mpw_init(fr);
 
-	mpw_arctan(fr,a[0]->data.value);
+	mpw_arctan(fr,a[0]->val.value);
 
 	return makenum_use(fr);
 }
@@ -523,11 +521,11 @@ static ETree *
 is_function_ref_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==OPERATOR_NODE &&
-	   a[0]->data.oper == E_REFERENCE) {
-		ETree *arg = a[0]->args->data;
+	   a[0]->op.oper == E_REFERENCE) {
+		ETree *arg = a[0]->op.args->data;
 		g_assert(arg);
 		if(arg->type==IDENTIFIER_NODE &&
-		   d_lookup_global(arg->data.id))
+		   d_lookup_global(arg->id.id))
 			return makenum_ui(1);
 	}
 	return makenum_ui(0);
@@ -537,7 +535,7 @@ is_complex_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE)
 		return makenum_ui(0);
-	else if(mpw_is_complex(a[0]->data.value))
+	else if(mpw_is_complex(a[0]->val.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -547,7 +545,7 @@ is_real_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE)
 		return makenum_ui(0);
-	else if(mpw_is_complex(a[0]->data.value))
+	else if(mpw_is_complex(a[0]->val.value))
 		return makenum_ui(0);
 	else
 		return makenum_ui(1);
@@ -556,9 +554,9 @@ static ETree *
 is_integer_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE ||
-	   mpw_is_complex(a[0]->data.value))
+	   mpw_is_complex(a[0]->val.value))
 		return makenum_ui(0);
-	else if(mpw_is_integer(a[0]->data.value))
+	else if(mpw_is_integer(a[0]->val.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -567,9 +565,9 @@ static ETree *
 is_rational_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE ||
-	   mpw_is_complex(a[0]->data.value))
+	   mpw_is_complex(a[0]->val.value))
 		return makenum_ui(0);
-	else if(mpw_is_rational(a[0]->data.value))
+	else if(mpw_is_rational(a[0]->val.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -578,9 +576,9 @@ static ETree *
 is_float_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE ||
-	   mpw_is_complex(a[0]->data.value))
+	   mpw_is_complex(a[0]->val.value))
 		return makenum_ui(0);
-	else if(mpw_is_float(a[0]->data.value))
+	else if(mpw_is_float(a[0]->val.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -599,7 +597,7 @@ trunc_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_trunc(fr,a[0]->data.value);
+	mpw_trunc(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 static ETree *
@@ -615,7 +613,7 @@ floor_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_floor(fr,a[0]->data.value);
+	mpw_floor(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 static ETree *
@@ -631,7 +629,7 @@ ceil_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_ceil(fr,a[0]->data.value);
+	mpw_ceil(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 static ETree *
@@ -647,7 +645,7 @@ round_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_round(fr,a[0]->data.value);
+	mpw_round(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 static ETree *
@@ -662,7 +660,7 @@ float_op(ETree * * a, int *exception)
 		(*errorout)(_("float: argument not a number"));
 		return NULL;
 	}
-	mpw_init_set(fr,a[0]->data.value);
+	mpw_init_set(fr,a[0]->val.value);
 	mpw_make_float(fr);
 	return makenum_use(fr);
 }
@@ -680,7 +678,7 @@ Re_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_re(fr,a[0]->data.value);
+	mpw_re(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 
@@ -697,7 +695,7 @@ Im_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_im(fr,a[0]->data.value);
+	mpw_im(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 
@@ -714,7 +712,7 @@ sqrt_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_sqrt(fr,a[0]->data.value);
+	mpw_sqrt(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 
@@ -731,7 +729,7 @@ exp_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_exp(fr,a[0]->data.value);
+	mpw_exp(fr,a[0]->val.value);
 	return makenum_use(fr);
 }
 
@@ -748,7 +746,7 @@ ln_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	mpw_init(fr);
-	mpw_ln(fr,a[0]->data.value);
+	mpw_ln(fr,a[0]->val.value);
 	if(error_num) {
 		error_num = 0;
 		mpw_clear(fr);
@@ -775,8 +773,8 @@ gcd_op(ETree * * a, int *exception)
 
 	mpw_init(tmp);
 	mpw_gcd(tmp,
-		a[0]->data.value,
-		a[1]->data.value);
+		a[0]->val.value,
+		a[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		mpw_clear(tmp);
@@ -805,8 +803,8 @@ lcm_op(ETree * * a, int *exception)
 
 	mpw_init(tmp);
 	mpw_gcd(tmp,
-		a[0]->data.value,
-		a[1]->data.value);
+		a[0]->val.value,
+		a[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		mpw_clear(tmp);
@@ -814,8 +812,8 @@ lcm_op(ETree * * a, int *exception)
 	}
 	mpw_init(prod);
 	mpw_mul(prod,
-		a[0]->data.value,
-		a[1]->data.value);
+		a[0]->val.value,
+		a[1]->val.value);
 	mpw_div(tmp,prod,tmp);
 	mpw_clear(prod);
 
@@ -840,8 +838,8 @@ jacobi_op(ETree * * a, int *exception)
 
 	mpw_init(tmp);
 	mpw_jacobi(tmp,
-		   a[0]->data.value,
-		   a[1]->data.value);
+		   a[0]->val.value,
+		   a[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		mpw_clear(tmp);
@@ -869,8 +867,8 @@ legendre_op(ETree * * a, int *exception)
 
 	mpw_init(tmp);
 	mpw_legendre(tmp,
-		     a[0]->data.value,
-		     a[1]->data.value);
+		     a[0]->val.value,
+		     a[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		mpw_clear(tmp);
@@ -894,7 +892,7 @@ perfect_square_op(ETree * * a, int *exception)
 		return NULL;
 	}
 
-	if(mpw_perfect_square(a[0]->data.value)) {
+	if(mpw_perfect_square(a[0]->val.value)) {
 		return makenum_ui(1);
 	} else {
 		if(error_num) {
@@ -921,14 +919,14 @@ max_op(ETree * * a, int *exception)
 		return NULL;
 	}
 
-	if(mpw_cmp(a[0]->data.value,a[1]->data.value)>0)
-		return makenum(a[0]->data.value);
+	if(mpw_cmp(a[0]->val.value,a[1]->val.value)>0)
+		return makenum(a[0]->val.value);
 	else {
 		if(error_num) {
 			error_num = 0;
 			return NULL;
 		}
-		return makenum(a[1]->data.value);
+		return makenum(a[1]->val.value);
 	}
 }
 
@@ -948,14 +946,14 @@ min_op(ETree * * a, int *exception)
 		return NULL;
 	}
 
-	if(mpw_cmp(a[0]->data.value,a[1]->data.value)>0)
-		return makenum(a[1]->data.value);
+	if(mpw_cmp(a[0]->val.value,a[1]->val.value)>0)
+		return makenum(a[1]->val.value);
 	else {
 		if(error_num) {
 			error_num = 0;
 			return NULL;
 		}
-		return makenum(a[0]->data.value);
+		return makenum(a[0]->val.value);
 	}
 }
 
@@ -967,7 +965,7 @@ is_value_only_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	
-	if(is_matrix_value_only(a[0]->data.matrix))
+	if(is_matrix_value_only(a[0]->mat.matrix))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -981,12 +979,12 @@ I_op(ETree * * a, int *exception)
 	int i,j;
 
 	if(a[0]->type!=VALUE_NODE ||
-	   !mpw_is_integer(a[0]->data.value)) {
+	   !mpw_is_integer(a[0]->val.value)) {
 		(*errorout)(_("I: argument not an integer"));
 		return NULL;
 	}
 
-	size = mpw_get_long(a[0]->data.value);
+	size = mpw_get_long(a[0]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
@@ -1003,15 +1001,14 @@ I_op(ETree * * a, int *exception)
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
-	matrixw_set_size(n->data.matrix,size,size);
+	n->mat.matrix = matrixw_new();
+	n->mat.quoted = 0;
+	matrixw_set_size(n->mat.matrix,size,size);
 	
 	for(i=0;i<size;i++)
 		for(j=0;j<size;j++)
 			if(i==j)
-				matrixw_set_index(n->data.matrix,i,j) =
+				matrixw_set_index(n->mat.matrix,i,j) =
 					makenum_ui(1);
 
 	return n;
@@ -1024,7 +1021,7 @@ rows_op(ETree * * a, int *exception)
 		(*errorout)(_("rows: argument not a matrix"));
 		return NULL;
 	}
-	return makenum_ui(matrixw_height(a[0]->data.matrix));
+	return makenum_ui(matrixw_height(a[0]->mat.matrix));
 }
 static ETree *
 columns_op(ETree * * a, int *exception)
@@ -1033,7 +1030,7 @@ columns_op(ETree * * a, int *exception)
 		(*errorout)(_("columns: argument not a matrix"));
 		return NULL;
 	}
-	return makenum_ui(matrixw_width(a[0]->data.matrix));
+	return makenum_ui(matrixw_width(a[0]->mat.matrix));
 }
 static ETree *
 set_size_op(ETree * * a, int *exception)
@@ -1046,12 +1043,12 @@ set_size_op(ETree * * a, int *exception)
 		(*errorout)(_("set_size: wrong argument type"));
 		return NULL;
 	}
-	w = mpw_get_long(a[1]->data.value);
+	w = mpw_get_long(a[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
 	}
-	h = mpw_get_long(a[2]->data.value);
+	h = mpw_get_long(a[2]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
@@ -1065,7 +1062,7 @@ set_size_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	n = copynode(a[0]);
-	matrixw_set_size(n->data.matrix,h,w);
+	matrixw_set_size(n->mat.matrix,h,w);
 	return n;
 }
 
@@ -1074,12 +1071,12 @@ det_op(ETree * * a, int *exception)
 {
 	mpw_t ret;
 	if(a[0]->type!=MATRIX_NODE ||
-	   !is_matrix_value_only(a[0]->data.matrix)) {
+	   !is_matrix_value_only(a[0]->mat.matrix)) {
 		(*errorout)(_("det: argument not a value only matrix"));
 		return NULL;
 	}
 	mpw_init(ret);
-	if(!value_matrix_det(ret,a[0]->data.matrix)) {
+	if(!value_matrix_det(ret,a[0]->mat.matrix)) {
 		mpw_clear(ret);
 		return NULL;
 	}
@@ -1090,17 +1087,16 @@ ref_op(ETree * * a, int *exception)
 {
 	ETree *n;
 	if(a[0]->type!=MATRIX_NODE ||
-	   !is_matrix_value_only(a[0]->data.matrix)) {
+	   !is_matrix_value_only(a[0]->mat.matrix)) {
 		(*errorout)(_("ref: argument not a value only matrix"));
 		return NULL;
 	}
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix =
-		value_matrix_gauss(a[0]->data.matrix,FALSE,FALSE,FALSE,NULL,NULL);
+	n->mat.matrix =
+		value_matrix_gauss(a[0]->mat.matrix,FALSE,FALSE,FALSE,NULL,NULL);
+	n->mat.quoted = 0;
 	return n;
 }
 static ETree *
@@ -1108,17 +1104,16 @@ rref_op(ETree * * a, int *exception)
 {
 	ETree *n;
 	if(a[0]->type!=MATRIX_NODE ||
-	   !is_matrix_value_only(a[0]->data.matrix)) {
+	   !is_matrix_value_only(a[0]->mat.matrix)) {
 		(*errorout)(_("rref: argument not a value only matrix"));
 		return NULL;
 	}
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix =
-		value_matrix_gauss(a[0]->data.matrix,TRUE,FALSE,FALSE,NULL,NULL);
+	n->mat.matrix =
+		value_matrix_gauss(a[0]->mat.matrix,TRUE,FALSE,FALSE,NULL,NULL);
+	n->mat.quoted = 0;
 	return n;
 }
 
@@ -1147,12 +1142,12 @@ prime_op(ETree * * a, int *exception)
 		return apply_func_to_matrix(a[0],prime_op,"prime");
 
 	if(a[0]->type!=VALUE_NODE ||
-	   !mpw_is_integer(a[0]->data.value)) {
+	   !mpw_is_integer(a[0]->val.value)) {
 		(*errorout)(_("prime: argument not an integer"));
 		return NULL;
 	}
 
-	num = mpw_get_long(a[0]->data.value);
+	num = mpw_get_long(a[0]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
@@ -1205,7 +1200,7 @@ poly_cut_zeros(MatrixW *m)
 	int cutoff;
 	for(i=matrixw_width(m)-1;i>=1;i--) {
 		ETree *t = matrixw_index(m,i,0);
-	       	if(mpw_sgn(t->data.value)!=0)
+	       	if(mpw_sgn(t->val.value)!=0)
 			break;
 	}
 	cutoff = i+1;
@@ -1221,7 +1216,7 @@ check_poly(ETree * *a, int args, char *func, int complain)
 
 	for(j=0;j<args;j++) {
 		if(a[j]->type!=MATRIX_NODE ||
-		   matrixw_height(a[j]->data.matrix)!=1) {
+		   matrixw_height(a[j]->mat.matrix)!=1) {
 			char buf[256];
 			if(!complain) return FALSE;
 			g_snprintf(buf,256,_("%s: arguments not horizontal vectors"),func);
@@ -1229,8 +1224,8 @@ check_poly(ETree * *a, int args, char *func, int complain)
 			return FALSE;
 		}
 
-		for(i=0;i<matrixw_width(a[j]->data.matrix);i++) {
-			ETree *t = matrixw_index(a[j]->data.matrix,i,0);
+		for(i=0;i<matrixw_width(a[j]->mat.matrix);i++) {
+			ETree *t = matrixw_index(a[j]->mat.matrix,i,0);
 			if(t->type != VALUE_NODE) {
 				char buf[256];
 				if(!complain) return FALSE;
@@ -1249,38 +1244,41 @@ addpoly_op(ETree * * a, int *exception)
 	ETree *n;
 	long size;
 	int i;
+	MatrixW *m1,*m2,*mn;
 	
 	if(!check_poly(a,2,"addpoly",TRUE))
 		return NULL;
 
+	m1 = a[0]->mat.matrix;
+	m2 = a[1]->mat.matrix;
+
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
-	size = MAX(matrixw_width(a[0]->data.matrix), matrixw_width(a[1]->data.matrix));
-	matrixw_set_size(n->data.matrix,size,1);
+	n->mat.matrix = mn = matrixw_new();
+	n->mat.quoted = 0;
+	size = MAX(matrixw_width(m1), matrixw_width(m2));
+	matrixw_set_size(mn,size,1);
 	
 	for(i=0;i<size;i++) {
-		if(i<matrixw_width(a[0]->data.matrix) &&
-		   i<matrixw_width(a[1]->data.matrix)) {
+		if(i<matrixw_width(m1) &&
+		   i<matrixw_width(m2)) {
 			ETree *l,*r;
 			mpw_t t;
 			mpw_init(t);
-			l = matrixw_index(a[0]->data.matrix,i,0);
-			r = matrixw_index(a[1]->data.matrix,i,0);
-			mpw_add(t,l->data.value,r->data.value);
-			matrixw_set_index(n->data.matrix,i,0) = makenum_use(t);
-		} else if(i<matrixw_width(a[0]->data.matrix)) {
-			matrixw_set_index(n->data.matrix,i,0) =
-				copynode(matrixw_set_index(a[0]->data.matrix,i,0));
-		} else /*if(i<matrixw_width(a[1]->data.matrix))*/ {
-			matrixw_set_index(n->data.matrix,i,0) =
-				copynode(matrixw_set_index(a[1]->data.matrix,i,0));
+			l = matrixw_index(m1,i,0);
+			r = matrixw_index(m2,i,0);
+			mpw_add(t,l->val.value,r->val.value);
+			matrixw_set_index(mn,i,0) = makenum_use(t);
+		} else if(i<matrixw_width(m1)) {
+			matrixw_set_index(mn,i,0) =
+				copynode(matrixw_set_index(m1,i,0));
+		} else /*if(i<matrixw_width(m2)*/ {
+			matrixw_set_index(mn,i,0) =
+				copynode(matrixw_set_index(m2,i,0));
 		}
 	}
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(mn);
 
 	return n;
 }
@@ -1291,41 +1289,44 @@ subpoly_op(ETree * * a, int *exception)
 	ETree *n;
 	long size;
 	int i;
+	MatrixW *m1,*m2,*mn;
 	
 	if(!check_poly(a,2,"subpoly",TRUE))
 		return NULL;
 
+	m1 = a[0]->mat.matrix;
+	m2 = a[1]->mat.matrix;
+
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
-	size = MAX(matrixw_width(a[0]->data.matrix), matrixw_width(a[1]->data.matrix));
-	matrixw_set_size(n->data.matrix,size,1);
-	
+	n->mat.matrix = mn = matrixw_new();
+	n->mat.quoted = 0;
+	size = MAX(matrixw_width(m1), matrixw_width(m2));
+	matrixw_set_size(mn,size,1);
+
 	for(i=0;i<size;i++) {
-		if(i<matrixw_width(a[0]->data.matrix) &&
-		   i<matrixw_width(a[1]->data.matrix)) {
+		if(i<matrixw_width(m1) &&
+		   i<matrixw_width(m2)) {
 			ETree *l,*r;
 			mpw_t t;
 			mpw_init(t);
-			l = matrixw_index(a[0]->data.matrix,i,0);
-			r = matrixw_index(a[1]->data.matrix,i,0);
-			mpw_sub(t,l->data.value,r->data.value);
-			matrixw_set_index(n->data.matrix,i,0) = makenum_use(t);
-		} else if(i<matrixw_width(a[0]->data.matrix)) {
-			matrixw_set_index(n->data.matrix,i,0) =
-				copynode(matrixw_set_index(a[0]->data.matrix,i,0));
-		} else /*if(i<matrixw_width(a[1]->data.matrix))*/ {
+			l = matrixw_index(m1,i,0);
+			r = matrixw_index(m2,i,0);
+			mpw_sub(t,l->val.value,r->val.value);
+			matrixw_set_index(mn,i,0) = makenum_use(t);
+		} else if(i<matrixw_width(m1)) {
+			matrixw_set_index(mn,i,0) =
+				copynode(matrixw_set_index(m1,i,0));
+		} else /*if(i<matrixw_width(m2))*/ {
 			ETree *nn,*r;
-			r = matrixw_index(a[1]->data.matrix,i,0);
+			r = matrixw_index(m2,i,0);
 			nn = makenum_ui(0);
-			mpw_neg(nn->data.value,r->data.value);
-			matrixw_set_index(n->data.matrix,i,0) = nn;
+			mpw_neg(nn->val.value,r->val.value);
+			matrixw_set_index(mn,i,0) = nn;
 		}
 	}
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(mn);
 
 	return n;
 }
@@ -1337,20 +1338,19 @@ mulpoly_op(ETree * * a, int *exception)
 	long size;
 	int i,j;
 	mpw_t accu;
-	MatrixW *m1,*m2;
+	MatrixW *m1,*m2,*mn;
 	
 	if(!check_poly(a,2,"mulpoly",TRUE))
 		return NULL;
-	m1 = a[0]->data.matrix;
-	m2 = a[1]->data.matrix;
+	m1 = a[0]->mat.matrix;
+	m2 = a[1]->mat.matrix;
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
+	n->mat.matrix = mn = matrixw_new();
+	n->mat.quoted = 0;
 	size = matrixw_width(m1) + matrixw_width(m2);
-	matrixw_set_size(n->data.matrix,size,1);
+	matrixw_set_size(mn,size,1);
 	
 	mpw_init(accu);
 		
@@ -1359,22 +1359,22 @@ mulpoly_op(ETree * * a, int *exception)
 			ETree *l,*r,*nn;
 			l = matrixw_index(m1,i,0);
 			r = matrixw_index(m2,j,0);
-			if(mpw_sgn(l->data.value)==0 ||
-			   mpw_sgn(r->data.value)==0)
+			if(mpw_sgn(l->val.value)==0 ||
+			   mpw_sgn(r->val.value)==0)
 				continue;
-			mpw_mul(accu,l->data.value,r->data.value);
-			nn = matrixw_set_index(n->data.matrix,i+j,0);
+			mpw_mul(accu,l->val.value,r->val.value);
+			nn = matrixw_set_index(mn,i+j,0);
 			if(nn)
-				mpw_add(nn->data.value,nn->data.value,accu);
+				mpw_add(nn->val.value,nn->val.value,accu);
 			else 
-				matrixw_set_index(n->data.matrix,i+j,0) =
+				matrixw_set_index(mn,i+j,0) =
 					makenum(accu);
 		}
 	}
 
 	mpw_clear(accu);
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(mn);
 
 	return n;
 }
@@ -1384,34 +1384,33 @@ derpoly_op(ETree * * a, int *exception)
 {
 	ETree *n;
 	int i;
-	MatrixW *m;
+	MatrixW *m,*mn;
 	
 	if(!check_poly(a,1,"derpoly",TRUE))
 		return NULL;
 
-	m = a[0]->data.matrix;
+	m = a[0]->mat.matrix;
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
+	n->mat.matrix = mn = matrixw_new();
+	n->mat.quoted = 0;
 	if(matrixw_width(m)==1) {
-		matrixw_set_size(n->data.matrix,1,1);
+		matrixw_set_size(mn,1,1);
 		return n;
 	}
-	matrixw_set_size(n->data.matrix,matrixw_width(m)-1,1);
+	matrixw_set_size(mn,matrixw_width(m)-1,1);
 	
 	for(i=1;i<matrixw_width(m);i++) {
 		ETree *r;
 		mpw_t t;
 		mpw_init(t);
 		r = matrixw_index(m,i,0);
-		mpw_mul_ui(t,r->data.value,i);
-		matrixw_set_index(n->data.matrix,i-1,0) = makenum_use(t);
+		mpw_mul_ui(t,r->val.value,i);
+		matrixw_set_index(mn,i-1,0) = makenum_use(t);
 	}
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(mn);
 
 	return n;
 }
@@ -1421,34 +1420,33 @@ der2poly_op(ETree * * a, int *exception)
 {
 	ETree *n;
 	int i;
-	MatrixW *m;
+	MatrixW *m,*mn;
 	
 	if(!check_poly(a,1,"der2poly",TRUE))
 		return NULL;
 
-	m = a[0]->data.matrix;
+	m = a[0]->mat.matrix;
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_new();
+	n->mat.matrix = mn = matrixw_new();
+	n->mat.quoted = 0;
 	if(matrixw_width(m)<=2) {
-		matrixw_set_size(n->data.matrix,1,1);
+		matrixw_set_size(mn,1,1);
 		return n;
 	}
-	matrixw_set_size(n->data.matrix,matrixw_width(m)-2,1);
+	matrixw_set_size(mn,matrixw_width(m)-2,1);
 	
 	for(i=2;i<matrixw_width(m);i++) {
 		ETree *r;
 		mpw_t t;
 		r = matrixw_index(m,i,0);
 		mpw_init(t);
-		mpw_mul_ui(t,r->data.value,i*(i-1));
-		matrixw_set_index(n->data.matrix,i-2,0) = makenum_use(t);
+		mpw_mul_ui(t,r->val.value,i*(i-1));
+		matrixw_set_index(mn,i-2,0) = makenum_use(t);
 	}
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(mn);
 
 	return n;
 }
@@ -1463,11 +1461,10 @@ trimpoly_op(ETree * * a, int *exception)
 
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.matrix = matrixw_copy(a[0]->data.matrix);
+	n->mat.matrix = matrixw_copy(a[0]->mat.matrix);
+	n->mat.quoted = 0;
 	
-	poly_cut_zeros(n->data.matrix);
+	poly_cut_zeros(n->mat.matrix);
 
 	return n;
 }
@@ -1499,22 +1496,22 @@ polytostring_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	
-	m = a[0]->data.matrix;
-	var = a[1]->data.str;
+	m = a[0]->mat.matrix;
+	var = a[1]->str.str;
 	
 	gs = g_string_new("");
 
 	for(i=matrixw_width(m)-1;i>=0;i--) {
 		ETree *t;
 		t = matrixw_index(m,i,0);
-		if(mpw_sgn(t->data.value)==0)
+		if(mpw_sgn(t->val.value)==0)
 			continue;
 		/*positive*/
-		if(mpw_sgn(t->data.value)>0) {
+		if(mpw_sgn(t->val.value)>0) {
 			if(any) g_string_append(gs," + ");
 			if(i==0)
 				print_etree(gs,NULL,t);
-			else if(mpw_cmp_ui(t->data.value,1)!=0) {
+			else if(mpw_cmp_ui(t->val.value,1)!=0) {
 				print_etree(gs,NULL,t);
 				g_string_append_c(gs,'*');
 			}
@@ -1522,14 +1519,14 @@ polytostring_op(ETree * * a, int *exception)
 		} else {
 			if(any) g_string_append(gs," - ");
 			else g_string_append_c(gs,'-');
-			mpw_neg(t->data.value,t->data.value);
+			mpw_neg(t->val.value,t->val.value);
 			if(i==0)
 				print_etree(gs,NULL,t);
-			else if(mpw_cmp_ui(t->data.value,1)!=0) {
+			else if(mpw_cmp_ui(t->val.value,1)!=0) {
 				print_etree(gs,NULL,t);
 				g_string_append_c(gs,'*');
 			}
-			mpw_neg(t->data.value,t->data.value);
+			mpw_neg(t->val.value,t->val.value);
 		}
 		if(i==1)
 			g_string_sprintfa(gs,"%s",var);
@@ -1542,9 +1539,7 @@ polytostring_op(ETree * * a, int *exception)
 
 	GET_NEW_NODE(n);
 	n->type = STRING_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.str = gs->str;
+	n->str.str = gs->str;
 	
 	g_string_free(gs,FALSE);
 
@@ -1558,19 +1553,17 @@ ptf_makenew_power(Token *id, int power)
 	ETree *tokn;
 	GET_NEW_NODE(tokn);
 	tokn->type = IDENTIFIER_NODE;
-	tokn->data.id = id;
-	tokn->args = NULL;
-	tokn->nargs = 0;
+	tokn->id.id = id;
 
 	if(power == 1)
 		return tokn;
 
 	GET_NEW_NODE(n);
 	n->type = OPERATOR_NODE;
-	n->data.oper = E_EXP;
-	n->args = g_list_append(NULL,tokn);
-	n->args = g_list_append(n->args,makenum_ui(power));
-	n->nargs = 2;
+	n->op.oper = E_EXP;
+	n->op.args = g_list_append(NULL,tokn);
+	n->op.args = g_list_append(n->op.args,makenum_ui(power));
+	n->op.nargs = 2;
 
 	return n;
 }
@@ -1587,10 +1580,10 @@ ptf_makenew_term(mpw_t mul, Token *id, int power)
 	} else {
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
-		n->data.oper = E_MUL;
-		n->args = g_list_append(NULL,makenum(mul));
-		n->args = g_list_append(n->args,ptf_makenew_power(id,power));
-		n->nargs = 2;
+		n->op.oper = E_MUL;
+		n->op.args = g_list_append(NULL,makenum(mul));
+		n->op.args = g_list_append(n->op.args,ptf_makenew_power(id,power));
+		n->op.nargs = 2;
 	}
 	return n;
 }
@@ -1611,27 +1604,27 @@ polytofunc_op(ETree * * a, int *exception)
 	if(!var)
 		var = d_intern("x");
 	
-	m = a[0]->data.matrix;
+	m = a[0]->mat.matrix;
 
 	for(i=matrixw_width(m)-1;i>=0;i--) {
 		ETree *t;
 		t = matrixw_index(m,i,0);
-		if(mpw_sgn(t->data.value)==0)
+		if(mpw_sgn(t->val.value)==0)
 			continue;
 		
 		if(!nn)
-			nn = ptf_makenew_term(t->data.value,var,i);
+			nn = ptf_makenew_term(t->val.value,var,i);
 		else {
 			ETree *nnn;
 			GET_NEW_NODE(nnn);
 			nnn->type = OPERATOR_NODE;
-			nnn->data.oper = E_PLUS;
-			nnn->args = g_list_append(NULL,nn);
-			nnn->args =
-				g_list_append(nnn->args,
-					      ptf_makenew_term(t->data.value,
+			nnn->op.oper = E_PLUS;
+			nnn->op.args = g_list_append(NULL,nn);
+			nnn->op.args =
+				g_list_append(nnn->op.args,
+					      ptf_makenew_term(t->val.value,
 							       var,i));
-			nnn->nargs = 2;
+			nnn->op.nargs = 2;
 			nn = nnn;
 		}
 	}
@@ -1640,10 +1633,8 @@ polytofunc_op(ETree * * a, int *exception)
 
 	GET_NEW_NODE(n);
 	n->type = FUNCTION_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	n->data.func = d_makeufunc(NULL,nn,g_list_append(NULL,var),1);
-	n->data.func->context = -1;
+	n->func.func = d_makeufunc(NULL,nn,g_list_append(NULL,var),1);
+	n->func.func->context = -1;
 
 	return n;
 }
@@ -1675,7 +1666,7 @@ sethelp_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	
-	add_description(a[0]->data.str,a[1]->data.str);
+	add_description(a[0]->str.str,a[1]->str.str);
 
 	return makenum_null();
 }
@@ -1686,12 +1677,12 @@ float_prec_op(ETree * * a, int *exception)
 	long bits;
 
 	if(a[0]->type!=VALUE_NODE ||
-	   !mpw_is_integer(a[0]->data.value)) {
+	   !mpw_is_integer(a[0]->val.value)) {
 		(*errorout)(_("float_prec: argument not an integer"));
 		return NULL;
 	}
 
-	bits = mpw_get_long(a[0]->data.value);
+	bits = mpw_get_long(a[0]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
@@ -1723,12 +1714,12 @@ max_digits_op(ETree * * a, int *exception)
 	long digits;
 
 	if(a[0]->type!=VALUE_NODE ||
-	   !mpw_is_integer(a[0]->data.value)) {
+	   !mpw_is_integer(a[0]->val.value)) {
 		(*errorout)(_("max_digits: argument not an integer"));
 		return NULL;
 	}
 
-	digits = mpw_get_long(a[0]->data.value);
+	digits = mpw_get_long(a[0]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return NULL;
@@ -1760,7 +1751,7 @@ results_as_floats_op(ETree * * a, int *exception)
 		(*errorout)(_("results_as_floats: argument not a value"));
 		return NULL;
 	}
-	calcstate.results_as_floats = mpw_sgn(a[0]->data.value)!=0;
+	calcstate.results_as_floats = mpw_sgn(a[0]->val.value)!=0;
 	if(statechange_hook)
 		(*statechange_hook)(calcstate);
 
@@ -1776,7 +1767,7 @@ scientific_notation_op(ETree * * a, int *exception)
 		(*errorout)(_("scientific_notation: argument not a value"));
 		return NULL;
 	}
-	calcstate.scientific_notation = mpw_sgn(a[0]->data.value)!=0;
+	calcstate.scientific_notation = mpw_sgn(a[0]->val.value)!=0;
 	if(statechange_hook)
 		(*statechange_hook)(calcstate);
 

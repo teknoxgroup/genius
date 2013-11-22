@@ -23,14 +23,14 @@
  * this is a command line genius interface program!
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
 #include <libintl.h>
 #define _(x) gettext(x)
 #endif
-
-#include "config.h"
 
 #include <glib.h>
 
@@ -191,7 +191,7 @@ main(int argc, char *argv[])
 	set_new_infoout(puterror);
 	
 	if(!do_compile) {
-		file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
+		file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
 		load_compiled_file(file,FALSE);
 		g_free(file);
 
@@ -232,13 +232,10 @@ main(int argc, char *argv[])
 	for(;;) {
 		for(;;) {
 			if(inter && use_readline) /*use readline mode*/ {
-				char *str;
+				ETree *e;
 				rewind_file_info();
-				do
-					str = get_expression(&got_eof);
-				while(interrupted);
-				evalexp(str,NULL,stdout,NULL,"= ",TRUE);
-				g_free(str);
+				e = get_p_expression();
+				if(e) evalexp_parsed(e,stdout,NULL,"= ",TRUE);
 			} else {
 				if(be_quiet)
 					evalexp(NULL,fp,NULL,NULL,NULL,FALSE);

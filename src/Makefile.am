@@ -1,11 +1,11 @@
 Utilitiesdir = $(datadir)/apps/Utilities
-Librarydir = $(datadir)/genius
+Librarydir = $(datadir)/genius/gel
+Plugindescdir = $(datadir)/genius/plugins
 
 
 #YACCFLAGS += -d -t
 YFLAGS += -d -t
 CFLAGS += @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
-
 
 INCLUDES = \
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" \
@@ -46,6 +46,8 @@ gnome_genius_SOURCES = 	\
 	parseutil.c	\
 	inter.c		\
 	inter.h		\
+	plugread.c	\
+	plugread.h	\
 	parse.y
 
 gnome_genius_LDADD = \
@@ -85,6 +87,8 @@ genius_SOURCES = 	\
 	inter.c		\
 	inter.h		\
 	lexer.l		\
+	plugread_nongnome.c	\
+	plugread.h	\
 	parse.y
 
 genius_LDADD = \
@@ -99,11 +103,13 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES += $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin
 
 Utilities_DATA = gnome-genius.desktop
 
 Library_DATA = lib.gel lib.cgel
+
+Plugindesc_DATA = test.plugin
 
 MOSTLYCLEANFILES = lib.cgel
 

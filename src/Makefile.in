@@ -127,7 +127,8 @@ cxxflags_set = @cxxflags_set@
 l = @l@
 
 Utilitiesdir = $(datadir)/apps/Utilities
-Librarydir = $(datadir)/genius
+Librarydir = $(datadir)/genius/gel
+Plugindescdir = $(datadir)/genius/plugins
 
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
@@ -140,13 +141,13 @@ bin_PROGRAMS = @GNOME_GENIUS@ genius
 
 EXTRA_PROGRAMS = gnome-genius
 
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			parseutil.h		parseutil.c		inter.c			inter.h			parse.y
+gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			parseutil.h		parseutil.c		inter.c			inter.h			plugread.c		plugread.h		parse.y
 
 
 gnome_genius_LDADD =  	$(GNOME_LIBDIR) 	$(GNOMEUI_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@ZVT_LIBS@ 	@READLINE_LIB@
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			parse.y
+genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			plugread_nongnome.c		plugread.h		parse.y
 
 
 genius_LDADD =  	-lm 	$(GLIB_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@READLINE_LIB@
@@ -156,11 +157,13 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES =  $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel test.plugin
 
 Utilities_DATA = gnome-genius.desktop
 
 Library_DATA = lib.gel lib.cgel
+
+Plugindesc_DATA = test.plugin
 
 MOSTLYCLEANFILES = lib.cgel
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -173,12 +176,12 @@ DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
 gnome_genius_OBJECTS =  calc.o eval.o gnome-genius.o util.o dict.o \
 funclib.o mpwrap.o matrix.o matrixw.o matop.o compil.o lexer.o \
-parseutil.o inter.o parse.o
+parseutil.o inter.o plugread.o parse.o
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
 genius_OBJECTS =  calc.o eval.o genius.o util.o dict.o funclib.o \
 mpwrap.o matrix.o matrixw.o matop.o compil.o parseutil.o inter.o \
-lexer.o parse.o
+lexer.o plugread_nongnome.o parse.o
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
@@ -187,7 +190,7 @@ COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CF
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DATA =  $(Library_DATA) $(Utilities_DATA)
+DATA =  $(Library_DATA) $(Plugindesc_DATA) $(Utilities_DATA)
 
 DIST_COMMON =  Makefile.am Makefile.in lexer.c parse.c
 
@@ -309,6 +312,25 @@ uninstall-LibraryDATA:
 	  rm -f $(DESTDIR)$(Librarydir)/$$p; \
 	done
 
+install-PlugindescDATA: $(Plugindesc_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(Plugindescdir)
+	@list='$(Plugindesc_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Plugindescdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Plugindescdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(Plugindescdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(Plugindescdir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-PlugindescDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(Plugindesc_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(Plugindescdir)/$$p; \
+	done
+
 install-UtilitiesDATA: $(Utilities_DATA)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(Utilitiesdir)
@@ -373,31 +395,34 @@ distdir: $(DISTFILES)
 	  fi; \
 	done
 calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h parse.h
-compil.o: compil.c mpwrap.h eval.h structs.h calc.h dict.h util.h \
-	matrix.h matrixw.h compil.h
+	dict.h funclib.h matrixw.h matrix.h compil.h plugread.h parse.h
+compil.o: compil.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h matrix.h matrixw.h compil.h
 dict.o: dict.c eval.h mpwrap.h structs.h dict.h util.h funclib.h \
 	compil.h
-eval.o: eval.c mpwrap.h eval.h structs.h calc.h dict.h util.h funclib.h \
-	matrix.h matrixw.h matop.h compil.h
+eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h funclib.h matrix.h matrixw.h matop.h compil.h
 funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
 	funclib.h calc.h matrix.h matrixw.h matop.h
 genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
 	inter.h
 gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
 	util.h dict.h inter.h
-inter.o: inter.c dict.h structs.h mpwrap.h inter.h
+inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h inter.h
 lexer.o: lexer.c mpwrap.h eval.h structs.h dict.h calc.h parse.h util.h
-matop.o: matop.c mpwrap.h eval.h structs.h calc.h dict.h util.h \
-	funclib.h matrix.h matrixw.h matop.h
+matop.o: matop.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
+	util.h funclib.h matrix.h matrixw.h matop.h
 matrix.o: matrix.c matrix.h
 matrixw.o: matrixw.c structs.h mpwrap.h eval.h matrix.h matrixw.h
-mpwrap.o: mpwrap.c calc.h structs.h mpwrap.h util.h
+mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
 parse.o: parse.c structs.h mpwrap.h eval.h dict.h util.h calc.h matrix.h \
 	matrixw.h parseutil.h
 parseutil.o: parseutil.c structs.h mpwrap.h eval.h dict.h util.h calc.h \
 	matrix.h matrixw.h parseutil.h
-util.o: util.c util.h
+plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugread.h
+plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
+	mpwrap.h plugread.h
+util.o: util.c ../config.h util.h
 
 info-am:
 info: info-am
@@ -410,14 +435,15 @@ installcheck: installcheck-am
 install-exec-am: install-binPROGRAMS
 install-exec: install-exec-am
 
-install-data-am: install-LibraryDATA install-UtilitiesDATA
+install-data-am: install-LibraryDATA install-PlugindescDATA \
+		install-UtilitiesDATA
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
 uninstall-am: uninstall-binPROGRAMS uninstall-LibraryDATA \
-		uninstall-UtilitiesDATA
+		uninstall-PlugindescDATA uninstall-UtilitiesDATA
 uninstall: uninstall-am
 all-am: Makefile $(PROGRAMS) $(DATA)
 all-redirect: all-am
@@ -425,7 +451,7 @@ install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(bindir) $(DESTDIR)$(Librarydir) \
-		$(DESTDIR)$(Utilitiesdir)
+		$(DESTDIR)$(Plugindescdir) $(DESTDIR)$(Utilitiesdir)
 
 
 mostlyclean-generic:
@@ -471,12 +497,13 @@ maintainer-clean-binPROGRAMS uninstall-binPROGRAMS install-binPROGRAMS \
 mostlyclean-compile distclean-compile clean-compile \
 maintainer-clean-compile mostlyclean-libtool distclean-libtool \
 clean-libtool maintainer-clean-libtool uninstall-LibraryDATA \
-install-LibraryDATA uninstall-UtilitiesDATA install-UtilitiesDATA tags \
-mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
-distdir info-am info dvi-am dvi check check-am installcheck-am \
-installcheck install-exec-am install-exec install-data-am install-data \
-install-am install uninstall-am uninstall all-redirect all-am all \
-installdirs mostlyclean-generic distclean-generic clean-generic \
+install-LibraryDATA uninstall-PlugindescDATA install-PlugindescDATA \
+uninstall-UtilitiesDATA install-UtilitiesDATA tags mostlyclean-tags \
+distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
+dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
+install-exec install-data-am install-data install-am install \
+uninstall-am uninstall all-redirect all-am all installdirs \
+mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 

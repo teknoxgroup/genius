@@ -5,6 +5,8 @@ $errors = 0;
 $tests = 0;
 $options = "";
 
+$i = 0;
+
 while(<TESTS>) {
 	if(/^OPTIONS[ 	]+(.*)$/) {
 		$options = $1;
@@ -35,6 +37,8 @@ while(<TESTS>) {
 		}
 		print "\n";
 		close(GENIUS);
+		system("mv gmon.out gmon${i}.out") if(-e "gmon.out");
+		$i++;
 	}
 }
 

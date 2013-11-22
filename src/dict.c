@@ -168,7 +168,7 @@ d_copyfunc(EFunc *o)
 
 /*make a real function from a fake*/
 EFunc *
-d_makerealfunc(EFunc *o,Token *id)
+d_makerealfunc(EFunc *o,Token *id, int use)
 {
 	EFunc *n;
 	GList *li;
@@ -192,16 +192,25 @@ d_makerealfunc(EFunc *o,Token *id)
 			g_hash_table_remove(uncompiled,o->id);
 			g_assert(o->data.user);
 		}
-		n->data.user=copynode(o->data.user);
+		if(use) {
+			n->data.user = o->data.user;
+			o->data.user = NULL;
+		} else
+			n->data.user = copynode(o->data.user);
 	}
-	n->named_args = g_list_copy(o->named_args);
+	if(use) {
+		o->named_args = NULL;
+		o->named_args = 0;
+	} else
+		n->named_args = g_list_copy(o->named_args);
 	
 	return n;
 }
 
 /*make real func and replace n with it, without changing n's context or id*/
+/*if use is set, we USE the original function, NULLing approriately*/
 void
-d_setrealfunc(EFunc *n,EFunc *fake)
+d_setrealfunc(EFunc *n,EFunc *fake, int use)
 {
 	GList *li;
 	
@@ -220,11 +229,22 @@ d_setrealfunc(EFunc *n,EFunc *fake)
 			g_hash_table_remove(uncompiled,fake->id);
 			g_assert(fake->data.user);
 		}
-		n->data.user = copynode(fake->data.user);
+		if(use) {
+			n->data.user = fake->data.user;
+			fake->data.user = NULL;
+		} else
+			n->data.user = copynode(fake->data.user);
 	}
 
-	n->named_args = g_list_copy(fake->named_args);
-	n->nargs = fake->nargs;
+	if(use) {
+		n->named_args = fake->named_args;
+		n->nargs = fake->nargs;
+		fake->named_args = NULL;
+		fake->nargs = 0;
+	} else {
+		n->named_args = g_list_copy(fake->named_args);
+		n->nargs = fake->nargs;
+	}
 }
 
 
@@ -394,8 +414,9 @@ freefunc(EFunc *n)
 	g_assert(!n->id || g_list_find(n->id->refs,n)==NULL);
 	/*if(n->id)
 		n->id->refs = g_list_remove(n->id->refs,n);*/
-	if(n->type == USER_FUNC ||
-	   n->type == VARIABLE_FUNC)
+	if((n->type == USER_FUNC ||
+	    n->type == VARIABLE_FUNC) &&
+	   n->data.user)
 		freetree(n->data.user);
 	g_list_free(n->named_args);
 	/*prepend to free list*/

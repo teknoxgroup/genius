@@ -54,7 +54,7 @@ extern char *loadfile_glob;
 %token <id> STRING
 %token <id> FUNCID
 
-%token FUNCTION DEFINE CALL
+%token FUNCTION CALL
 
 %token RETURNTOK BAILOUT EXCEPTION CONTINUE BREAK
 
@@ -72,7 +72,7 @@ extern char *loadfile_glob;
 %left SEPAR
 
 %nonassoc LOWER_THEN_ELSE
-%nonassoc WHILE UNTIL DO IF FOR TO BY IN THEN ELSE DEFINE FUNCTION CALL RETURNTOK
+%nonassoc WHILE UNTIL DO IF FOR TO BY IN THEN ELSE FUNCTION CALL RETURNTOK
 
 %left LOGICAL_XOR LOGICAL_OR
 %left LOGICAL_AND
@@ -142,7 +142,17 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr AT reg ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
 	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COL_REGION); }
 	|	expr AT ',' reg ')'	{ PUSH_ACT(E_GET_COL_REGION); }
-	|	'[' matrixrows ']'	{ if(!push_matrix()) {SYNTAX_ERROR;} }
+	|	'[' matrixrows ']'	{ if(!push_matrix(FALSE)) {SYNTAX_ERROR;} }
+	|	'`' '[' matrixrows ']'	{ if(!push_matrix(TRUE)) {SYNTAX_ERROR;} }
+	/*This next rule DOESN'T work right, we need some sort of connection
+	  to the lexer, OR write our own lexer/parser and kill this bison
+	  crap
+	|	LT_CMP exprlist GT_CMP 	{SYNTAX_ERROR;}
+	*/
+	/*FIXME: ordered set (multiset)*/
+	|	'(' expr ',' exprlist ')'	{SYNTAX_ERROR;}/*FIXME: ordered set (multiset)*/
+	|	'{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: set*/
+	|	'`' '{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: nonordered multiset*/
 	|	WHILE expr DO expr	{ PUSH_ACT(E_WHILE_CONS); }
 	|	UNTIL expr DO expr	{ PUSH_ACT(E_UNTIL_CONS); }
 	|	DO expr WHILE expr	{ PUSH_ACT(E_DOWHILE_CONS); }
@@ -164,11 +174,9 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr CALL '(' exprlist ')' { PUSH_ACT(E_CALL); }
 	|	expr CALL '(' ')'	{ push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_CALL); }
-	|	DEFINE ident funcdef	{ PUSH_ACT(E_EQUALS); }
+	|	FUNCTION ident funcdef	{ PUSH_ACT(E_EQUALS); }
+	|	FUNCTION funcdef
 	|	'`' funcdef
-	|	FUNCTION ident funcdef2	{ PUSH_ACT(E_EQUALS); }
-	|	FUNCTION funcdef2
-	|	'`' funcdef2
 	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
 	|	BAILOUT			{ PUSH_ACT(E_BAILOUT); }
 	|	EXCEPTION		{ PUSH_ACT(E_EXCEPTION); }
@@ -186,24 +194,13 @@ deref:		'*' ident		{ PUSH_ACT(E_DEREFERENCE); }
 ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); g_free($<id>1); }
 	;
 	
-funcdef:	'(' identlist')' block	{ if(!push_func()) {SYNTAX_ERROR;} }
-	|	'(' ')' block		{ if(!push_marker(EXPRLIST_START_NODE))
-						{SYNTAX_ERROR;}
-					  if(!push_func())
-					  	{SYNTAX_ERROR;} }
-	;
-
-funcdef2:	'(' identlist')' EQUALS expr { if(!push_func()) {SYNTAX_ERROR;} }
+funcdef:	'(' identlist')' EQUALS expr { if(!push_func()) {SYNTAX_ERROR;} }
 	|	'(' ')' EQUALS expr	{ if(!push_marker(EXPRLIST_START_NODE))
 						{SYNTAX_ERROR;}
 					  if(!push_func())
 					  	{SYNTAX_ERROR;} }
 	;
 	
-block:		'{' expr '}'
-	|	'{' expr SEPAR '}'	{ push_null(); PUSH_ACT(E_SEPAR); }
-	;
-
 identlist:	identlist ',' ident
 	|	ident { if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
 	;

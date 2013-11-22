@@ -102,8 +102,10 @@ ETree * copynode_args(ETree *o, ETree *r[]);
 void freetree(ETree *n);
 
 /*evaluate a treenode, the treenode will become a number node*/
-/*returns a newly allocated tree, doesn't hurt n*/
-ETree *evalnode(ETree *n);
+/*returns a newly allocated tree, doesn't hurt n, if do_ret is false,
+  returns 0x1 or a tree on success and NULL on exception*/
+ETree *evalnode_full(ETree *n,int do_ret);
+#define evalnode(n) evalnode_full((n),TRUE)
 
 /*return TRUE if node is true (a number node !=0, or nonempty string),
   false otherwise*/
@@ -114,39 +116,41 @@ int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 ETree * gather_comparisons(ETree *n);
 
 #define GET_ABCDE(n,a,b,c,d,e) { \
-	a = n->args->data; \
-	b = n->args->next->data; \
-	c = n->args->next->next->data; \
-	d = n->args->next->next->next->data; \
-	e = n->args->next->next->next->next->data; \
+	a = n->op.args->data; \
+	b = n->op.args->next->data; \
+	c = n->op.args->next->next->data; \
+	d = n->op.args->next->next->next->data; \
+	e = n->op.args->next->next->next->next->data; \
 }
 #define GET_ABCD(n,a,b,c,d) { \
-	a = n->args->data; \
-	b = n->args->next->data; \
-	c = n->args->next->next->data; \
-	d = n->args->next->next->next->data; \
+	a = n->op.args->data; \
+	b = n->op.args->next->data; \
+	c = n->op.args->next->next->data; \
+	d = n->op.args->next->next->next->data; \
 }
 #define GET_LRR(n,l,r,rr) { \
-	l = n->args->data; \
-	r = n->args->next->data; \
-	rr = n->args->next->next->data; \
+	l = n->op.args->data; \
+	r = n->op.args->next->data; \
+	rr = n->op.args->next->next->data; \
 }
 #define GET_LRR(n,l,r,rr) { \
-	l = n->args->data; \
-	r = n->args->next->data; \
-	rr = n->args->next->next->data; \
+	l = n->op.args->data; \
+	r = n->op.args->next->data; \
+	rr = n->op.args->next->next->data; \
 }
-#define GET_LR(n,l,r) { l = n->args->data; r = n->args->next->data; }
-#define GET_L(n,l) { l = n->args->data; }
+#define GET_LR(n,l,r) { l = n->op.args->data; r = n->op.args->next->data; }
+#define GET_L(n,l) { l = n->op.args->data; }
 
 #define GET_NEW_NODE(n) {				\
 	if(!free_trees)					\
 		n = g_new(ETree,1);			\
 	else {						\
 		n = free_trees;				\
-		free_trees = free_trees->data.next;	\
+		free_trees = free_trees->next;		\
 	}						\
 }
+
+#define EMPTY_RET ((void *)0x1)
 
 
 #endif

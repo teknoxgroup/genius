@@ -23,6 +23,7 @@
 #define _CALC_H_
 
 #include <stdio.h>
+#include <glib.h>
 
 #include "structs.h"
 
@@ -44,6 +45,14 @@ typedef struct _calcstate_t {
 	int scientific_notation; /*always scientific notation*/
 } calcstate_t;
 
+typedef struct _plugin_t {
+	char *file;
+	char *name;
+} plugin_t;
+
+/*read or reread the plugin list from the share/genius/plugins directory*/
+void read_plugin_list(void);
+extern GList *plugin_list;
 
 /*so we can use and set the yyparse function for parse errors*/
 int yyparse(void);
@@ -62,11 +71,14 @@ char * addparenth(char *s);
   result, expression is in str or if str is NULL then in infd,
   pretty will use pretty_print_etree*/
 void evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty);
+/*this is the normal evaluation for the frontends if they already parsed,
+  it free's the parsed tree after use*/
+void evalexp_parsed(ETree *parsed, FILE *outfile, char **outstring, char *prefix,int pretty);
 
 /*these are parts of the above*/
 /*note that parseexp will actually load AND execute files if there are load
   toplevel instructions, as those don't translate into an ETree*/
-ETree * parseexp(char *str, FILE *infile, int load_files);
+ETree * parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished);
 ETree * runexp(ETree *exp);
 
 void compile_all_user_funcs(FILE *outfile);

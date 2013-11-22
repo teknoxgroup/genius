@@ -19,6 +19,8 @@
  * USA.
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -1339,14 +1341,13 @@ mpwl_set_ui(MpwRealNum *rop,unsigned long int i)
 	}
 }
 
+/*the original op should be a local or not be used anymore*/
 static void
 mpwl_move(MpwRealNum *rop,MpwRealNum *op)
 {
 	if(rop==op)
 		return;
 	
-	rop->type = op->type;
-	rop->data.nval = op->data.nval;
 	if(rop->data.ival) {
 		mpz_clear(rop->data.ival);
 		g_free(rop->data.ival);
@@ -1359,14 +1360,14 @@ mpwl_move(MpwRealNum *rop,MpwRealNum *op)
 		mpf_clear(rop->data.fval);
 		g_free(rop->data.fval);
 	}
-	rop->data.ival = op->data.ival;
-	rop->data.rval = op->data.rval;
-	rop->data.fval = op->data.fval;
+	memcpy(rop,op,sizeof(MpwRealNum));
+	rop->alloc.usage=1;
+	/* not necessary 
 	op->type = MPW_NATIVEINT;
 	op->data.nval = 0;
 	op->data.ival = NULL;
 	op->data.rval = NULL;
-	op->data.fval = NULL;
+	op->data.fval = NULL;*/
 }
 
 static void
@@ -1925,6 +1926,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			mpq_set_si(r.data.rval,
 				   -(op1->data.nval),
 				   -(op2->data.nval));
+		mpwl_make_int(&r);
 		break;
 	}
 	mpwl_clear_extra_type(op1,t);

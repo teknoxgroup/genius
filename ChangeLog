@@ -1,3 +1,65 @@
+Mon May 24 16:35:51 1999  George Lebl  <jirka@5z.com>
+
+	* src/{lexer.l,parser.y}: fixed up a bit the new syntax and took out
+	  the define keyword
+
+	* src/{inter.c,calc.c}: fixed problems with the test parser
+
+	* src/{structs.h,parser.y,eval.c,funclib.c,calc.c,compil.c}:
+	  implemented quoted matrixes
+
+Mon May 17 23:55:50 1999  George Lebl  <jirka@5z.com>
+
+	* src/parse.y: took out the old way (bc) of writing function as we
+	  will need the "{}" for sets, added some set rules, but no
+	  functionality
+
+	* src/strucs.h,src/*.c: changed ETree to be a union of structs to
+	  do the polymorphism in a nicer manner and to allow more future
+	  extention, this requires some changes to any code using ETree's
+	  (if anybody has done anything lik that)
+
+	* src/*.c: fixed miscellaneous bugs
+
+	* configure.in: raised version
+
+1999-05-18 03:27 1999  Tomas Ögren  <stric@ing.umu.se>
+
+	* src/*.c: Fixed i18n support
+
+Thu May 13 00:50:33 1999  George Lebl  <jirka@5z.com>
+
+	* src/plugread*.[ch]: new routine that has a gnome and a dumb
+	  non-gnome implementation so it's separated into two files
+
+	* src/calc.[ch]: add ability to read a list of .plugin files
+	  (no plugin functionality yet!)
+
+	* src/{genius.c,gnome-genius.c,Makefile.am}: move lib.cgel into
+	  a /gel/ subdirectory when installed and add a plugins directory
+	  as well to add .plugin files into
+
+	* src/test.plugin: just a simple test file
+
+Wed May 12 01:34:04 1999  George Lebl  <jirka@5z.com>
+
+	* src/{calc.[ch],inter.[ch],genius.c,gnome-genius.c}: instead of
+	  the ugly interactive mode hack, I now do test parses, which is
+	  not extremely efficent, but it's only in interactive mode and
+	  it works perfectly and more cleanly
+
+Tue May 11 23:57:41 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: small optimization and minor correction on mpwl_move
+
+	* src/{eval.[ch],dict.[ch]}: minor optimizations wrt to removing
+	  redundunt node copying
+
+Tue May 11 01:10:45 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: fix reduction of fractions on small integer
+	  division
+
 Mon May 10 21:01:42 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.4.2

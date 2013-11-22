@@ -1,3 +1,9 @@
+Changes to 0.4.3
+
+* depreceated the bc way of adding functions
+* better interactive parsing
+* i18n actually works
+
 Changes to 0.4.[12]
 
 * new gnome frontend

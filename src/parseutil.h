@@ -40,7 +40,7 @@ int push_matrix_row(void);
 
 /*gather all expressions up until a row start marker and push the
   result as a matrix*/
-int push_matrix(void);
+int push_matrix(int quoted);
 
 /*pushes a NULL onto the stack, null cannot be evaluated, it will be
   read as ""*/
@@ -49,7 +49,7 @@ void push_null(void);
 #define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
 
 #define PUSH_ACT(ACT) { \
-	ETree *tree = makeoperator(ACT,&evalstack); \
+	ETree *tree = makeoperator((ACT),&evalstack); \
 	if(!tree) {SYNTAX_ERROR;} \
 	stack_push(&evalstack,tree); \
 }
@@ -58,9 +58,7 @@ void push_null(void);
 	ETree * tree; \
 	GET_NEW_NODE(tree); \
 	tree->type = IDENTIFIER_NODE; \
-	tree->data.id = d_intern(ID); \
-	tree->args = NULL; \
-	tree->nargs = 0; \
+	tree->id.id = d_intern(ID); \
 	stack_push(&evalstack,tree); \
 }
 
@@ -68,9 +66,7 @@ void push_null(void);
 	ETree * tree; \
 	GET_NEW_NODE(tree); \
 	tree->type = STRING_NODE; \
-	tree->data.str = ID; \
-	tree->args = NULL; \
-	tree->nargs = 0; \
+	tree->str.str = (ID); \
 	stack_push(&evalstack,tree); \
 }
 

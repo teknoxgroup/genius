@@ -19,6 +19,8 @@
  * USA.
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -34,31 +36,32 @@
 #include <readline/history.h>
 
 #include "dict.h"
+#include "calc.h"
 
 #include "inter.h"
 
 extern int interrupted;
-
-static char *startw[]={
-	"not","and","xor","or","while","until","for","do","to","by","in","if",
-	"then","else","define","function","call","return",NULL
-};
+extern int got_eof;
 
 static int toplevelokg = TRUE;
-	
 
-/*SORT of an ugly hack, this has to match the lexer/parser at figuring
-  out what should be processed as a single expression, hopefully the two
-  match, all this hooplah is because we can only have one parser/lexer
-  active at a single time due to the braindamage of lex/yacc*/
-char *
-get_expression(int *ieof)
+static int
+ok_for_top(char *s)
+{
+	char *t = g_strstrip(g_strdup(s));
+	if(strncmp(t,"load",strlen(t))==0) {
+		g_free(t);
+		return TRUE;
+	} else {
+		g_free(t);
+		return FALSE;
+	}
+}
+
+ETree *
+get_p_expression(void)
 {
 	GString *gs;
-	char *r;
-	int pardepth = 0;
-	int toplevelok = TRUE;
-	int do_ret = TRUE;
 	char *prompt = "genius> ";
 	
 	interrupted = FALSE;
@@ -66,13 +69,12 @@ get_expression(int *ieof)
 	gs = g_string_new("");
 	
 	for(;;) {
-		char *p;
+		int finished;
 		char *s;
-		int i;
-		int found;
+		ETree *ret;
 		int oldtop = toplevelokg;
 
-		toplevelokg = toplevelok;
+		toplevelokg = ok_for_top(gs->str);
 		s = readline(prompt);
 		toplevelokg = oldtop;
 		
@@ -84,9 +86,11 @@ get_expression(int *ieof)
 
 		prompt = "      > ";
 		if(!s) {
-			*ieof = TRUE;
+			got_eof = TRUE;
 			g_string_append_c(gs,'\n');
-			break;
+			ret = parseexp(gs->str,NULL,TRUE,FALSE,NULL);
+			g_string_free(gs,TRUE);
+			return ret;
 		}
 		if(!*s)	{
 			free(s);
@@ -94,93 +98,17 @@ get_expression(int *ieof)
 		}
 		add_history(s);
 		g_string_append(gs,s);
+		free(s);
 		g_string_append_c(gs,'\n');
 		
-		if(toplevelok) {
-			char *ss = g_strstrip(g_strdup(s));
-			
-			if(strncmp(ss,"load",4)==0 &&
-			   (ss[4]==' ' || ss[4]=='\t')) {
-				for(p=&ss[4];*p;p++) {
-					if(*p!=' ' && *p!='\t') {
-						free(s);
-						g_free(ss);
-						r = gs->str;
-						g_string_free(gs,FALSE);
-						return r;
-					}
-				}
-			}
-			g_free(ss);
+		ret = parseexp(gs->str,NULL,TRUE,TRUE,&finished);
+		if(got_eof)
+			got_eof = FALSE;
+		if(finished) {
+			g_string_free(gs,TRUE);
+			return ret;
 		}
-		for(p=s;*p;p++) {
-			switch(*p) {
-			case ' ':
-			case '\t':
-				break;
-			case '(':
-			case '[':
-			case '{':
-				pardepth++;
-				break;
-			case ')':
-			case ']':
-			case '}':
-				pardepth--;
-				break;
-			default:
-				toplevelok=FALSE;
-				break;
-			}
-		}
-		if(pardepth>0) {
-			free(s);
-			continue;
-		}
-		p--;
-		if(*p=='\\') {
-			free(s);
-			continue;
-		}
-		while(p>=s && isspace(*p)) p--;
-		
-		if(p<s || *p=='=' || *p=='>' || *p=='<' ||
-		   (p>s && *p=='.' && *(p-1)=='.') ||
-		   *p=='@' || *p=='^' || *p=='*' || *p=='/' ||
-		   *p=='%' || *p=='+' || *p=='-') {
-			free(s);
-			continue;
-		}
-		
-		/*NOTICE: HERE we modify s*/
-		*(p+1)='\0';
-
-		while(p>=s && (isalnum(*p) || *p=='_')) p--;
-		p++;
-		while(*p && isdigit(*p)) p++;
-		
-		/*could be a complex number before identifier*/
-		if(*p=='i') p++;
-
-		found = FALSE;
-		for(i=0;startw[i];i++) {
-			if(strcmp(p,startw[i])==0) {
-				found = TRUE;
-				break;
-			}
-		}
-		if(found) {
-			free(s);
-			continue;
-		}
-
-		free(s);
-		break;
 	}
-	
-	r = gs->str;
-	g_string_free(gs,FALSE);
-	return r;
 }
 
 static int addtoplevels = TRUE;

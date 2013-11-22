@@ -23,6 +23,7 @@
 #define _INTER_H_
 
 void init_inter(void);
-char *get_expression(int *ieof);
+ETree * get_p_expression(void);
+
 
 #endif

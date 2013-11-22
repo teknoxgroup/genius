@@ -19,6 +19,8 @@
  * USA.
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -130,8 +132,6 @@ makenum_null(void)
 	ETree *n;
 	GET_NEW_NODE(n);
 	n->type = NULL_NODE;
-	n->args = NULL;
-	n->nargs = 0;
 	return n;
 }
 
@@ -141,10 +141,8 @@ makenum_ui(unsigned long num)
 	ETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	mpw_init(n->data.value);
-	mpw_set_ui(n->data.value,num);
+	mpw_init(n->val.value);
+	mpw_set_ui(n->val.value,num);
 	return n;
 }
 
@@ -154,10 +152,8 @@ makenum_si(long num)
 	ETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	mpw_init(n->data.value);
-	mpw_set_si(n->data.value,num);
+	mpw_init(n->val.value);
+	mpw_set_si(n->val.value,num);
 	return n;
 }
 
@@ -167,9 +163,7 @@ makenum(mpw_t num)
 	ETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	mpw_init_set(n->data.value,num);
+	mpw_init_set(n->val.value,num);
 	return n;
 }
 
@@ -180,9 +174,7 @@ makenum_use(mpw_t num)
 	ETree *n;
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
-	n->args = NULL;
-	n->nargs = 0;
-	memcpy(n->data.value,num,sizeof(struct _mpw_t));
+	memcpy(n->val.value,num,sizeof(struct _mpw_t));
 	return n;
 }
 
@@ -244,73 +236,87 @@ makeoperator(int oper, evalstack_t * stack)
 
 	GET_NEW_NODE(n);
 	n->type = OPERATOR_NODE;
-	n->data.oper = oper;
+	n->op.oper = oper;
 	
-	n->args = list;
-	n->nargs = args;
+	n->op.args = list;
+	n->op.nargs = args;
 
 	return n;
 }
 
 static void
-freenode(ETree *n)
+freetree_full(ETree *n, int freeargs)
 {
+	GList *li;
 	if(!n)
 		return;
 	switch(n->type) {
 	case NULL_NODE: break;
 	case VALUE_NODE:
-		mpw_clear(n->data.value);
+		mpw_clear(n->val.value);
 		break;
 	case MATRIX_NODE:
-		if(n->data.matrix)
-			matrixw_free(n->data.matrix);
+		if(n->mat.matrix)
+			matrixw_free(n->mat.matrix);
 		break;
-	case OPERATOR_NODE: break;
+	case OPERATOR_NODE:
+		if(!freeargs) break;
+		for(li=n->op.args;li;li=g_list_next(li)) {
+			if(li->data)
+				freetree_full(li->data,TRUE);
+		}
+		g_list_free(n->op.args); 
+		break;
 	case IDENTIFIER_NODE:
 		/*was this a fake token, to an anonymous function*/
-		if(!n->data.id->token) {
+		if(!n->id.id->token) {
 			/*XXX:where does the function go?*/
-			g_list_free(n->data.id->refs);
-			g_free(n->data.id);
+			g_list_free(n->id.id->refs);
+			g_free(n->id.id);
 		}
 		break;
 	case STRING_NODE:
-		g_free(n->data.str);
+		g_free(n->str.str);
 		break;
 	case FUNCTION_NODE:
-		freefunc(n->data.func);
+		freefunc(n->func.func);
 		break;
 	case COMPARISON_NODE:
-		g_list_free(n->data.comp);
+		for(li=n->comp.args;li;li=g_list_next(li)) {
+			if(li->data)
+				freetree_full(li->data,TRUE);
+		}
+		g_list_free(n->comp.args); 
+		g_list_free(n->comp.comp);
+		break;
+	case MATRIX_ROW_NODE:
+		for(li=n->row.args;li;li=g_list_next(li)) {
+			if(li->data)
+				freetree_full(li->data,TRUE);
+		}
+		g_list_free(n->row.args); 
+		break;
+	case SPACER_NODE:
+		if(freeargs && n->sp.arg)
+			freetree(n->sp.arg);
 		break;
 	default: break;
 	}
 	/*put onto the free list*/
-	n->data.next = free_trees;
+	n->next = free_trees;
 	free_trees = n;
-}
-
-/*free arguments to a dictionary function*/
-static void
-freeargs(ETree *n)
-{
-	int i;
-
-	if(!n)
-		return;
-
-	g_list_foreach(n->args,(GFunc)freetree,NULL);
-	g_list_free(n->args); 
 }
 
 void
 freetree(ETree *n)
 {
-	if(!n)
-		return;
-	freeargs(n);
-	freenode(n);
+	freetree_full(n,TRUE);
+}
+
+static void
+freenode(ETree *n)
+{
+	freetree_full(n,FALSE);
 }
 
 ETree *
@@ -330,38 +336,50 @@ copynode(ETree *o)
 	switch(n->type) {
 	case NULL_NODE: break;
 	case VALUE_NODE:
-		mpw_init_set(n->data.value,o->data.value);
+		mpw_init_set(n->val.value,o->val.value);
 		break;
 	case MATRIX_NODE:
-		n->data.matrix = matrixw_copy(o->data.matrix);
+		n->mat.matrix = matrixw_copy(o->mat.matrix);
 		break;
 	case OPERATOR_NODE:
-	case IDENTIFIER_NODE:
+		n->op.args = NULL;
+		for(li = o->op.args;li!=NULL;li=g_list_next(li))
+			n->op.args = g_list_append(n->op.args,
+						   copynode(li->data));
 		break;
+	case IDENTIFIER_NODE: break;
 	case STRING_NODE:
-		n->data.str = g_strdup(o->data.str);
+		n->str.str = g_strdup(o->str.str);
 		break;
 	case FUNCTION_NODE:
-		n->data.func = d_copyfunc(o->data.func);
+		n->func.func = d_copyfunc(o->func.func);
 		break;
 	case COMPARISON_NODE:
-		n->data.comp = g_list_copy(o->data.comp);
+		n->comp.args = NULL;
+		for(li = o->comp.args;li!=NULL;li=g_list_next(li))
+			n->comp.args = g_list_append(n->comp.args,
+						     copynode(li->data));
+		n->comp.comp = g_list_copy(o->comp.comp);
 		break;
+	case MATRIX_ROW_NODE:
+		n->row.args = NULL;
+		for(li = o->row.args;li!=NULL;li=g_list_next(li))
+			n->row.args = g_list_append(n->row.args,
+						    copynode(li->data));
+		break;
+	case SPACER_NODE:
+		if(o->sp.arg)
+			n->sp.arg = copynode(n->sp.arg);
 	default: break;
 	}
-
-	/*copy the arguments*/
-	n->args = NULL;
-	for(li = o->args;li!=NULL;li=g_list_next(li))
-		n->args = g_list_append(n->args,copynode(li->data));
 
 	return n;
 }
 
 /*evaluate arguments, will crash if the node doesn't have at least
-  one arg*/
+  one arg or isn't and operator*/
 static int
-evalargs(ETree *n, ETree *ret[], int eval_first)
+evalargs(GList *args, ETree *ret[], int eval_first)
 {
 	GList *li;
 	int i;
@@ -369,16 +387,16 @@ evalargs(ETree *n, ETree *ret[], int eval_first)
 	
 	/*if the first shouldn't be evaluated just pass it*/
 	if(!eval_first)
-		ret[0] = copynode(n->args->data);
+		ret[0] = copynode(args->data);
 	else {
-		ret[0] = evalnode(n->args->data);
+		ret[0] = evalnode(args->data);
 		/*exception is signaled by NULL*/
 		if(!ret[0])
 			return 2;
 			
 	}
 	
-	for(i=1,li=n->args->next; li!=NULL; li=g_list_next(li),i++) {
+	for(i=1,li=args->next; li!=NULL; li=g_list_next(li),i++) {
 		ret[i] = evalnode(li->data);
 		/*exception is signaled by NULL*/
 		if(!ret[i]) {
@@ -392,7 +410,7 @@ evalargs(ETree *n, ETree *ret[], int eval_first)
 		  distinguish*/
 		if(ret[i]->type == IDENTIFIER_NODE ||
 		   (ret[i]->type == OPERATOR_NODE &&
-		    ret[i]->data.oper != E_REFERENCE))
+		    ret[i]->op.oper != E_REFERENCE))
 			r = 1;
 	}
 	return r;
@@ -422,8 +440,8 @@ expand_row(Matrix *dest, MatrixW *src, int di, int si, int *need_col, int *need_
 		ev = g_list_prepend(ev,et);
 		if(!et || et->type != MATRIX_NODE)
 			continue;
-		if(matrixw_height(et->data.matrix)>w)
-			w = matrixw_height(et->data.matrix);
+		if(matrixw_height(et->mat.matrix)>w)
+			w = matrixw_height(et->mat.matrix);
 	}
 	
 	matrix_set_at_least_size(dest,1,di+w);
@@ -442,19 +460,19 @@ expand_row(Matrix *dest, MatrixW *src, int di, int si, int *need_col, int *need_
 			for(x=1;x<w;x++)
 				matrix_index(dest,i,di+x) = copynode(et);
 		/*single column matrix, convert to regular nodes*/
-		} else if(matrixw_width(et->data.matrix) == 1) {
+		} else if(matrixw_width(et->mat.matrix) == 1) {
 			int xx;
-			matrixw_make_private(et->data.matrix);
-			for(x=0;x<matrixw_height(et->data.matrix);x++) {
+			matrixw_make_private(et->mat.matrix);
+			for(x=0;x<matrixw_height(et->mat.matrix);x++) {
 				matrix_index(dest,i,di+x) =
-					matrixw_set_index(et->data.matrix,0,x);
-				matrixw_set_index(et->data.matrix,0,x) = NULL;
+					matrixw_set_index(et->mat.matrix,0,x);
+				matrixw_set_index(et->mat.matrix,0,x) = NULL;
 			}
 			xx = 0;
-			for(x=matrixw_height(et->data.matrix);x<w;x++) {
+			for(x=matrixw_height(et->mat.matrix);x<w;x++) {
 				matrix_index(dest,i,di+x) =
 					copynode(matrix_index(dest,i,di+xx));
-				if((++xx)>=matrixw_height(et->data.matrix))
+				if((++xx)>=matrixw_height(et->mat.matrix))
 					xx=0;
 			}
 			freetree(et);
@@ -462,32 +480,33 @@ expand_row(Matrix *dest, MatrixW *src, int di, int si, int *need_col, int *need_
 		} else {
 			int xx;
 
-			matrixw_make_private(et->data.matrix);
+			matrixw_make_private(et->mat.matrix);
 			
-			*need_col += matrixw_width(et->data.matrix) - 1;
+			*need_col += matrixw_width(et->mat.matrix) - 1;
 
-			for(x=0;x<matrixw_height(et->data.matrix);x++) {
+			for(x=0;x<matrixw_height(et->mat.matrix);x++) {
 				ETree *n;
 				GET_NEW_NODE(n);
 				n->type = MATRIX_ROW_NODE;
 				
-				n->args = NULL;
-				for(xx=matrixw_width(et->data.matrix)-1;xx>=0;xx--) {
-					n->args = g_list_prepend(n->args,
-								 matrixw_set_index(et->data.matrix,xx,x));
-					matrixw_set_index(et->data.matrix,xx,x) = NULL;
+				n->row.args = NULL;
+				for(xx=matrixw_width(et->mat.matrix)-1;xx>=0;xx--) {
+					n->row.args =
+						g_list_prepend(n->row.args,
+							       matrixw_set_index(et->mat.matrix,xx,x));
+					matrixw_set_index(et->mat.matrix,xx,x) = NULL;
 				}
-				n->nargs = matrixw_width(et->data.matrix);
+				n->row.nargs = matrixw_width(et->mat.matrix);
 				
 				matrix_index(dest,i,di+x) = n;
 
 				*need_colwise = TRUE;
 			}
 			xx = 0;
-			for(x=matrixw_height(et->data.matrix);x<w;x++) {
+			for(x=matrixw_height(et->mat.matrix);x<w;x++) {
 				matrix_index(dest,i,di+x) =
 					copynode(matrix_index(dest,i,di+xx));
-				if((++xx)>=matrixw_height(et->data.matrix))
+				if((++xx)>=matrixw_height(et->mat.matrix))
 					xx=0;
 			}
 			freetree(et);
@@ -514,8 +533,8 @@ expand_col(Matrix *dest, Matrix *src, int di[], int si, GList *roww)
 		ETree *et = matrix_index(src,si,i);
 		if(!et || et->type != MATRIX_ROW_NODE)
 			continue;
-		if(et->nargs>w)
-			w = et->nargs;
+		if(et->row.nargs>w)
+			w = et->row.nargs;
 	}
 	
 	for(i=0;i<src->height;roww=g_list_next(roww),i++) {
@@ -540,22 +559,21 @@ expand_col(Matrix *dest, Matrix *src, int di[], int si, GList *roww)
 			int xx;
 			int exp;
 			GList *li;
-			for(li=et->args,x=0;li!=NULL;li=g_list_next(li),x++)
+			for(li=et->row.args,x=0;li!=NULL;li=g_list_next(li),x++)
 				matrix_index(dest,di[i]+x,i) = li->data;
 			exp = MIN(w-1,cols-wid);
 			roww->data = GINT_TO_POINTER(wid + exp);
 			xx = 0;
-			for(x=et->nargs;x<=exp;x++) {
+			for(x=et->row.nargs;x<=exp;x++) {
 				matrix_index(dest,di[i]+x,i) =
 					copynode(matrix_index(dest,di[i]+xx,i));
-				if((++xx)>=et->nargs)
+				if((++xx)>=et->row.nargs)
 					xx=0;
 			}
 			di[i] += x;
-			g_list_free(et->args);
-			et->args = NULL;
-			et->nargs = 0;
-			freetree(et);
+			g_list_free(et->row.args);
+			et->row.args = NULL;
+			freenode(et);
 		}
 	}
 	
@@ -575,14 +593,19 @@ evalmatrix(ETree *n)
 	Matrix *m = matrix_new();
 	int need_colwise = FALSE;
 	GList *roww = NULL;
+	MatrixW *nm;
+	int h;
 
-	matrix_set_size(m,matrixw_width(n->data.matrix),matrixw_height(n->data.matrix));
+	nm = n->mat.matrix;
+
+	h = matrixw_height(nm);
+	matrix_set_size(m,matrixw_width(nm),h);
 	
-	cols = matrixw_width(n->data.matrix);
+	cols = matrixw_width(nm);
 	
-	for(i=0,k=0;i<matrixw_height(n->data.matrix);i++) {
+	for(i=0,k=0;i<h;i++) {
 		int c;
-		int w = expand_row(m,n->data.matrix,k,i,&c,&need_colwise);
+		int w = expand_row(m,nm,k,i,&c,&need_colwise);
 		k += w;
 		for(;w>0;w--)
 			roww = g_list_prepend(roww,GINT_TO_POINTER(c));
@@ -594,24 +617,56 @@ evalmatrix(ETree *n)
 	roww = g_list_reverse(roww);
 	
 	if(need_colwise) {
-		Matrix *nm = matrix_new();
+		Matrix *tm = matrix_new();
 		guint *di = g_new0(guint,k);
 		int j;
-		matrix_set_size(nm,cols,m->height);
+		matrix_set_size(tm,cols,m->height);
 		for(i=0;i<m->width;i++)
-			expand_col(nm,m,di,i,roww);
+			expand_col(tm,m,di,i,roww);
 		g_free(di);
 		matrix_free(m);
-		m = nm;
+		m = tm;
 	}
 	
 	g_list_free(roww);
 
 	GET_NEW_NODE(nn);
 	nn->type = MATRIX_NODE;
-	nn->data.matrix = matrixw_new_with_matrix(m);
-	nn->args = NULL;
-	nn->nargs = 0;
+	nn->mat.matrix = matrixw_new_with_matrix(m);
+	nn->mat.quoted = 0;
+	
+	return nn;
+}
+
+/*evaluate a quoted matrix, so we just evaluate all nodes, but don't expand*/
+static ETree *
+qevalmatrix(ETree *n)
+{
+	int i;
+	int j;
+	ETree *nn;
+	Matrix *m = matrix_new();
+	MatrixW *nm;
+	int w,h;
+	
+	nm = n->mat.matrix;
+
+	w = matrixw_width(nm);
+	h = matrixw_height(nm);
+	matrix_set_size(m,w,h);
+	
+	for(i=0;i<w;i++) {
+		for(j=0;j<h;j++) {
+			ETree *e = matrixw_set_index(nm,i,j);
+			if(e)
+				matrix_index(m,i,j)=evalnode(e);
+		}
+	}
+
+	GET_NEW_NODE(nn);
+	nn->type = MATRIX_NODE;
+	nn->mat.matrix = matrixw_new_with_matrix(m);
+	nn->mat.quoted = 1;
 	
 	return nn;
 }
@@ -654,13 +709,13 @@ get_matrix_index_num(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree 
 {
 	long i;
 	if(num->type != VALUE_NODE ||
-	   !mpw_is_integer(num->data.value)) {
+	   !mpw_is_integer(num->val.value)) {
 		(*errorout)(_("Wrong argument type as matrix index"));
 		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
 		return -1;
 	}
 
-	i = mpw_get_long(num->data.value);
+	i = mpw_get_long(num->val.value);
 	if(error_num) {
 		error_num = 0;
 		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
@@ -684,15 +739,15 @@ get_index_region(ETree *n, ETree *l, ETree *set, ETree *m,
 		 ETree *num, ETree **ret, int *from, int *to)
 {
 	if(num->type == OPERATOR_NODE &&
-	   num->data.oper == E_REGION_SEP) {
-		g_assert(num->args);
-		g_assert(num->args->data);
-		g_assert(num->args->next->data);
+	   num->op.oper == E_REGION_SEP) {
+		g_assert(num->op.args);
+		g_assert(num->op.args->data);
+		g_assert(num->op.args->next->data);
 		*from = get_matrix_index_num(n,l,set,m,ll,rr,
-					     num->args->data,ret);
+					     num->op.args->data,ret);
 		if(*from == -1) return FALSE;
 		*to = get_matrix_index_num(n,l,set,m,ll,rr,
-					   num->args->next->data,ret);
+					   num->op.args->next->data,ret);
 		if(*to == -1) return FALSE;
 		if(*from>*to) {
 			(*errorout)(_("Matrix 'to' index less then 'from' index"));
@@ -775,17 +830,16 @@ get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 
 	if(m->type == IDENTIFIER_NODE) {
 		EFunc *f;
-		f = d_lookup_local(m->data.id);
+		f = d_lookup_local(m->id.id);
 		if(!f) {
 			ETree *t;
 			GET_NEW_NODE(t);
 			t->type = MATRIX_NODE;
-			t->args = NULL;
-			t->nargs = 0;
-			t->data.matrix = matrixw_new();
-			matrixw_set_size(t->data.matrix,1,1);
+			t->mat.matrix = matrixw_new();
+			t->mat.quoted = 0;
+			matrixw_set_size(t->mat.matrix,1,1);
 
-			f = d_makevfunc(m->data.id,t);
+			f = d_makevfunc(m->id.id,t);
 			d_addfunc(f);
 			if(new_matrix) *new_matrix = TRUE;
 		} else if(f->type != USER_FUNC &&
@@ -805,17 +859,16 @@ get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 			ETree *t;
 			GET_NEW_NODE(t);
 			t->type = MATRIX_NODE;
-			t->args = NULL;
-			t->nargs = 0;
-			t->data.matrix = matrixw_new();
-			matrixw_set_size(t->data.matrix,1,1);
+			t->mat.matrix = matrixw_new();
+			t->mat.quoted = 0;
+			matrixw_set_size(t->mat.matrix,1,1);
 
 			d_set_value(f,t);
 			if(new_matrix) *new_matrix = TRUE;
 		}
-		mat = f->data.user->data.matrix;
+		mat = f->data.user->mat.matrix;
 	} else if(m->type == OPERATOR_NODE ||
-		  m->data.oper == E_DEREFERENCE) {
+		  m->op.oper == E_DEREFERENCE) {
 		ETree *lll;
 		EFunc *f;
 		GET_L(m,lll);
@@ -826,7 +879,7 @@ get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 			return NULL;
 		}
 
-		f = d_lookup_local(lll->data.id);
+		f = d_lookup_local(lll->id.id);
 		if(!f) {
 			(*errorout)(_("Dereference of undefined variable!"));
 			*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
@@ -855,15 +908,14 @@ get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 			ETree *t;
 			GET_NEW_NODE(t);
 			t->type = MATRIX_NODE;
-			t->args = NULL;
-			t->nargs = 0;
-			t->data.matrix = matrixw_new();
-			matrixw_set_size(t->data.matrix,1,1);
+			t->mat.matrix = matrixw_new();
+			t->mat.quoted = 0;
+			matrixw_set_size(t->mat.matrix,1,1);
 
 			d_set_value(f->data.ref,t);
 			if(new_matrix) *new_matrix = TRUE;
 		}
-		mat = f->data.ref->data.user->data.matrix;
+		mat = f->data.ref->data.user->mat.matrix;
 	} else {
 		(*errorout)(_("Indexed Lvalue not an identifier or a dereference"));
 		*ret = matrix_el_bailout_set(n, set, l, m, ll, rr);
@@ -873,7 +925,7 @@ get_matrix_p(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 }
 
 static ETree *
-equalsop(ETree *n)
+equalsop(ETree *n, int do_ret)
 {
 	ETree *l;
 	ETree *r;
@@ -881,12 +933,12 @@ equalsop(ETree *n)
 	GET_LR(n,l,r);
 	
 	if(l->type != IDENTIFIER_NODE &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_VELEMENT) &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_ELEMENT) &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_COL_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_ROW_REGION) &&
-	   !(l->type == OPERATOR_NODE && l->data.oper == E_DEREFERENCE)) {
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_VELEMENT) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ELEMENT) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_REGION) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_COL_REGION) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_GET_ROW_REGION) &&
+	   !(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE)) {
 		(*errorout)(_("Lvalue not an identifier/dereference/matrix location!"));
 		return copynode(n);
 	}
@@ -896,12 +948,18 @@ equalsop(ETree *n)
 		/*exception*/
 		if(!set)
 			return NULL;
-		if(set->type == FUNCTION_NODE)
-			d_addfunc(d_makerealfunc(set->data.func,l->data.id));
-		else if(set->type == OPERATOR_NODE &&
-			set->data.oper == E_REFERENCE) {
-			ETree *t = set->args->data;
-			EFunc *rf = d_lookup_global(t->data.id);
+		if(set->type == FUNCTION_NODE) {
+			if(do_ret)
+				d_addfunc(d_makerealfunc(set->func.func,l->id.id,FALSE));
+			else {
+				d_addfunc(d_makerealfunc(set->func.func,l->id.id,TRUE));
+				freetree(set);
+				set = EMPTY_RET;
+			}
+		} else if(set->type == OPERATOR_NODE &&
+			set->op.oper == E_REFERENCE) {
+			ETree *t = set->op.args->data;
+			EFunc *rf = d_lookup_global(t->id.id);
 			if(!rf) {
 				ETree *args[2];
 				(*errorout)(_("Referencing an undefined variable!"));
@@ -909,10 +967,16 @@ equalsop(ETree *n)
 				args[1]=set;
 				return copynode_args(n,args);
 			}
-			d_addfunc(d_makereffunc(l->data.id,rf));
-		} else
-			d_addfunc(d_makevfunc(l->data.id,copynode(set)));
-	} else if(l->data.oper == E_DEREFERENCE) {
+			d_addfunc(d_makereffunc(l->id.id,rf));
+		} else {
+			if(do_ret)
+				d_addfunc(d_makevfunc(l->id.id,copynode(set)));
+			else {
+				d_addfunc(d_makevfunc(l->id.id,set));
+				set = EMPTY_RET;
+			}
+		}
+	} else if(l->op.oper == E_DEREFERENCE) {
 		ETree *ll;
 		EFunc *f;
 		GET_L(l,ll);
@@ -930,7 +994,7 @@ equalsop(ETree *n)
 			return copynode_args(n,args);
 		}
 		
-		f = d_lookup_local(ll->data.id);
+		f = d_lookup_local(ll->id.id);
 		if(!f) {
 			ETree *args[2];
 			(*errorout)(_("Dereference of undefined variable!"));
@@ -946,12 +1010,18 @@ equalsop(ETree *n)
 			return copynode_args(n,args);
 		}
 		
-		if(set->type == FUNCTION_NODE)
-			d_setrealfunc(f->data.ref,set->data.func);
-		else if(set->type == OPERATOR_NODE &&
-			set->data.oper == E_REFERENCE) {
-			ETree *t = set->args->data;
-			EFunc *rf = d_lookup_global(t->data.id);
+		if(set->type == FUNCTION_NODE) {
+			if(do_ret)
+				d_setrealfunc(f->data.ref,set->func.func,FALSE);
+			else {
+				d_setrealfunc(f->data.ref,set->func.func,TRUE);
+				freetree(set);
+				set = EMPTY_RET;
+			}
+		} else if(set->type == OPERATOR_NODE &&
+			set->op.oper == E_REFERENCE) {
+			ETree *t = set->op.args->data;
+			EFunc *rf = d_lookup_global(t->id.id);
 			if(!rf) {
 				ETree *args[2];
 				(*errorout)(_("Referencing an undefined variable!"));
@@ -960,9 +1030,15 @@ equalsop(ETree *n)
 				return copynode_args(n,args);
 			}
 			d_set_ref(f->data.ref,rf);
-		} else
-			d_set_value(f->data.ref,copynode(set));
-	} else if(l->data.oper == E_GET_ELEMENT) {
+		} else {
+			if(do_ret)
+				d_set_value(f->data.ref,copynode(set));
+			else {
+				d_set_value(f->data.ref,set);
+				set = EMPTY_RET;
+			}
+		}
+	} else if(l->op.oper == E_GET_ELEMENT) {
 		MatrixW *mat;
 		ETree *ll,*rr,*m;
 		ETree *ret = NULL;
@@ -983,8 +1059,13 @@ equalsop(ETree *n)
 		freetree(ll);
 		freetree(rr);
 		
-		matrixw_set_element(mat,ri-1,li-1,copynode(set));
-	} else if(l->data.oper == E_GET_VELEMENT) {
+		if(do_ret)
+			matrixw_set_element(mat,ri-1,li-1,set);
+		else {
+			matrixw_set_element(mat,ri-1,li-1,copynode(set));
+			set = EMPTY_RET;
+		}
+	} else if(l->op.oper == E_GET_VELEMENT) {
 		MatrixW *mat;
 		ETree *ll,*rr,*m;
 		ETree *ret = NULL;
@@ -1006,14 +1087,29 @@ equalsop(ETree *n)
 		freetree(rr);
 		
 		if(matrixw_height(mat)==1) {
-			matrixw_set_element(mat,li-1,0,copynode(set));
+			if(do_ret)
+				matrixw_set_element(mat,li-1,0,copynode(set));
+			else {
+				matrixw_set_element(mat,li-1,0,set);
+				set = EMPTY_RET;
+			}
 		} else if(matrixw_width(mat)==1) {
-			matrixw_set_element(mat,0,li-1,copynode(set));
+			if(do_ret)
+				matrixw_set_element(mat,0,li-1,copynode(set));
+			else {
+				matrixw_set_element(mat,0,li-1,set);
+				set = EMPTY_RET;
+			}
 		} else {
 			int x,y;
 			x = (li-1)%matrixw_width(mat);
 			y = (li-1)/matrixw_width(mat);
-			matrixw_set_element(mat,x,y,copynode(set));
+			if(do_ret)
+				matrixw_set_element(mat,x,y,copynode(set));
+			else {
+				matrixw_set_element(mat,x,y,set);
+				set = EMPTY_RET;
+			}
 		}
 	} else /*l->data.oper == E_GET_REGION E_GET_COL_REGION E_GET_ROW_REGION*/ {
 		MatrixW *mat;
@@ -1024,10 +1120,10 @@ equalsop(ETree *n)
 		int new_matrix = FALSE;
 		int do_col,do_row;
 		
-		if(l->data.oper == E_GET_REGION) {
+		if(l->op.oper == E_GET_REGION) {
 			do_col = TRUE;
 			do_row = TRUE;
-		} else if(l->data.oper == E_GET_ROW_REGION) {
+		} else if(l->op.oper == E_GET_ROW_REGION) {
 			do_col = FALSE;
 			do_row = TRUE;
 		} else /*E_GET_COL_REGION*/ {
@@ -1051,7 +1147,7 @@ equalsop(ETree *n)
 			rowfrom = 1;
 			if(new_matrix) {
 				if(set->type == MATRIX_NODE)
-					rowto = matrixw_height(set->data.matrix);
+					rowto = matrixw_height(set->mat.matrix);
 				else
 					rowto = 1;
 			} else
@@ -1061,7 +1157,7 @@ equalsop(ETree *n)
 			colfrom = 1;
 			if(new_matrix) {
 				if(set->type == MATRIX_NODE)
-					colto = matrixw_width(set->data.matrix);
+					colto = matrixw_width(set->mat.matrix);
 				else
 					colto = 1;
 			} else
@@ -1075,8 +1171,8 @@ equalsop(ETree *n)
 		  conditions AREN'T met then get out, it was just
 		  easier to write it this way*/
 		if(!(set->type != MATRIX_NODE ||
-		     (matrixw_width(set->data.matrix) == w &&
-		      matrixw_height(set->data.matrix) == h))) {
+		     (matrixw_width(set->mat.matrix) == w &&
+		      matrixw_height(set->mat.matrix) == h))) {
 			(*errorout)(_("Can't set a region to a region of a different size"));
 			return matrix_el_bailout_set(n, set, l, m, ll, rr);
 		}
@@ -1085,7 +1181,7 @@ equalsop(ETree *n)
 		freetree(rr);
 		
 		if(set->type == MATRIX_NODE) {
-			matrixw_set_region(mat,set->data.matrix,0,0,
+			matrixw_set_region(mat,set->mat.matrix,0,0,
 					   colfrom-1,rowfrom-1,w,h);
 		} else {
 			matrixw_set_region_etree(mat,set,
@@ -1105,38 +1201,25 @@ copynode_args(ETree *o, ETree *r[])
 
 	if(!o || !r)
 		return NULL;
+	
+	g_assert(o->type == OPERATOR_NODE ||
+		 o->type == COMPARISON_NODE);
 
 	GET_NEW_NODE(n);
 
 	memcpy(n,o,sizeof(ETree));
 
-	switch(n->type) {
-	case NULL_NODE: break;
-	case VALUE_NODE:
-		mpw_init_set(n->data.value,o->data.value);
-		break;
-	case MATRIX_NODE:
-		n->data.matrix = matrixw_copy(o->data.matrix);
-		break;
-	case OPERATOR_NODE:
-	case IDENTIFIER_NODE:
-		break;
-	case STRING_NODE:
-		n->data.str = g_strdup(o->data.str);
-		break;
-	case FUNCTION_NODE:
-		n->data.func = d_copyfunc(o->data.func);
-		break;
-	case COMPARISON_NODE:
-		n->data.comp = g_list_copy(o->data.comp);
-		break;
-	default: break;
-	}
-	
 	/*add the arguments*/
-	n->args = NULL;
-	for(i=0;i<n->nargs;i++)
-		n->args = g_list_append(n->args,r[i]);
+	if(n->op.type == OPERATOR_NODE) {
+		n->op.args = NULL;
+		for(i=0;i<n->op.nargs;i++)
+			n->op.args = g_list_append(n->op.args,r[i]);
+	} else /*COMPARISON_NODE*/ {
+		n->comp.args = NULL;
+		for(i=0;i<n->comp.nargs;i++)
+			n->comp.args = g_list_append(n->comp.args,r[i]);
+		n->comp.comp = g_list_copy(n->comp.comp);
+	}
 
 	return n;
 }
@@ -1150,7 +1233,7 @@ freeargarr(ETree *r[],int n)
 }
 
 static ETree *
-funccallop(ETree *n,int direct_call)
+funccallop(ETree *n,int direct_call,int do_ret)
 {
 	ETree **r;
 	ETree *ret = NULL;
@@ -1159,38 +1242,38 @@ funccallop(ETree *n,int direct_call)
 	
 	GET_L(n,l);
 	
-	r = g_new(ETree *,n->nargs);
-	if(evalargs(n,r,
+	r = g_new(ETree *,n->op.nargs);
+	if(evalargs(n->op.args,r,
 		    (direct_call ||
 		     (l->type == OPERATOR_NODE &&
-		      l->data.oper == E_DEREFERENCE))?FALSE:TRUE
+		      l->op.oper == E_DEREFERENCE))?FALSE:TRUE
 		   )==2) {
 		g_free(r);
-		return ret;
+		return NULL;
 	}
 	
 	if(l->type == IDENTIFIER_NODE) {
-		f = d_lookup_global(l->data.id);
+		f = d_lookup_global(l->id.id);
 		if(!f) {
 			char buf[256];
 			g_snprintf(buf,256,_("Function '%s' used unintialized"),
-				   l->data.id->token);
+				   l->id.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
 			return ret;
 		}
 	} else if(l->type == FUNCTION_NODE) {
-		f = l->data.func;
+		f = l->func.func;
 	} else if(l->type == OPERATOR_NODE &&
-		l->data.oper == E_DEREFERENCE) {
+		l->op.oper == E_DEREFERENCE) {
 		ETree *ll;
 		GET_L(l,ll);
-		f = d_lookup_global(ll->data.id);
+		f = d_lookup_global(ll->id.id);
 		if(!f) {
 			char buf[256];
 			g_snprintf(buf,256,_("Variable '%s' used unintialized"),
-				   ll->data.id->token);
+				   ll->id.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
@@ -1198,7 +1281,7 @@ funccallop(ETree *n,int direct_call)
 		} else if(f->type != REFERENCE_FUNC) {
 			char buf[256];
 			g_snprintf(buf,256,_("Can't dereference '%s'!"),
-				   ll->data.id->token);
+				   ll->id.id->token);
 			(*errorout)(buf);
 			ret = copynode_args(n,r);
 			g_free(r);
@@ -1214,7 +1297,7 @@ funccallop(ETree *n,int direct_call)
 	
 	g_assert(f);
 	
-	if(f->nargs + 1 != n->nargs) {
+	if(f->nargs + 1 != n->op.nargs) {
 		char buf[256];
 		g_snprintf(buf,256,_("Call of '%s' with the wrong number of arguments!\n"
 				     "(should be %d)"),f->id?f->id->token:"anonymous",f->nargs);
@@ -1230,13 +1313,13 @@ funccallop(ETree *n,int direct_call)
 
 		d_addcontext();
 		/*push arguments on context stack*/
-		for(i=1,li=f->named_args;i<n->nargs;i++,li=g_list_next(li)) {
+		for(i=1,li=f->named_args;i<n->op.nargs;i++,li=g_list_next(li)) {
 			if(r[i]->type == FUNCTION_NODE) {
-				d_addfunc(d_makerealfunc(r[i]->data.func,li->data));
+				d_addfunc(d_makerealfunc(r[i]->func.func,li->data,FALSE));
 			} else if(r[i]->type == OPERATOR_NODE &&
-			   r[i]->data.oper == E_REFERENCE) {
-				ETree *t = r[i]->args->data;
-				EFunc *rf = d_lookup_global_up1(t->data.id);
+			   r[i]->op.oper == E_REFERENCE) {
+				ETree *t = r[i]->op.args->data;
+				EFunc *rf = d_lookup_global_up1(t->id.id);
 				if(!rf) {
 					freedict(d_popcontext());
 					(*errorout)(_("Referencing an undefined variable!"));
@@ -1267,7 +1350,7 @@ funccallop(ETree *n,int direct_call)
 
 		loopout = LOOPOUT_NOTHING;
 		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(0));
-		ret = evalnode(f->data.user);
+		ret = evalnode_full(f->data.user,do_ret);
 		sli=inloop;
 		inloop=g_slist_remove_link(inloop,sli);
 		g_slist_free_1(sli);
@@ -1276,10 +1359,10 @@ funccallop(ETree *n,int direct_call)
 			if(returnval) freetree(returnval);
 			returnval = NULL;
 			inbailout = FALSE;
-			if(ret) freetree(ret);
+			if(ret && ret!=EMPTY_RET) freetree(ret);
 			ret = copynode_args(n,r);
 		} else {
-			for(i=0;i<n->nargs;i++)
+			for(i=0;i<n->op.nargs;i++)
 				freetree(r[i]);
 		}
 		g_free(r);
@@ -1292,7 +1375,7 @@ funccallop(ETree *n,int direct_call)
 		if(inexception) {
 			inbailout = FALSE;
 			inexception = FALSE;
-			if(ret) freetree(ret);
+			if(ret && ret!=EMPTY_RET) freetree(ret);
 			ret = NULL;
 		}
 		return ret;
@@ -1302,7 +1385,7 @@ funccallop(ETree *n,int direct_call)
 		if(!ret && !exception)
 			ret = copynode_args(n,r);
 		else
-			freeargarr(r,n->nargs);
+			freeargarr(r,n->op.nargs);
 		g_free(r);
 		if(exception) {
 			if(ret)
@@ -1326,19 +1409,24 @@ funccallop(ETree *n,int direct_call)
 			g_free(r);
 			return ret;
 		}
+		
+		if(!do_ret) {
+			freeargarr(r,n->op.nargs);
+			g_free(r);
+			return EMPTY_RET;
+		}
+
 		GET_NEW_NODE(i);
 		i->type = IDENTIFIER_NODE;
-		i->data.id = f->id; /*this WILL have an id*/
-		i->args = NULL;
-		i->nargs = 0;
+		i->id.id = f->id; /*this WILL have an id*/
 
 		GET_NEW_NODE(a);
 		a->type = OPERATOR_NODE;
-		a->data.oper = E_REFERENCE;
+		a->op.oper = E_REFERENCE;
 
-		a->args = g_list_append(NULL,i);
-		a->nargs = 1;
-		freeargarr(r,n->nargs);
+		a->op.args = g_list_append(NULL,i);
+		a->op.nargs = 1;
+		freeargarr(r,n->op.nargs);
 		g_free(r);
 		return a;
 	} else {
@@ -1357,10 +1445,10 @@ derefvarop(ETree *n)
 	
 	GET_L(n,l);
 	
-	f = d_lookup_global(l->data.id);
+	f = d_lookup_global(l->id.id);
 	if(!f) {
 		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unintialized"),l->data.id->token);
+		g_snprintf(buf,256,_("Variable '%s' used unintialized"),l->id.id->token);
 		(*errorout)(buf);
 	} else if(f->nargs != 0) {
 		char buf[256];
@@ -1406,16 +1494,14 @@ derefvarop(ETree *n)
 			}
 			GET_NEW_NODE(i);
 			i->type = IDENTIFIER_NODE;
-			i->data.id = f->id; /*this WILL have an id*/
-			i->args = NULL;
-			i->nargs = 0;
+			i->id.id = f->id; /*this WILL have an id*/
 
 			GET_NEW_NODE(a);
 			a->type = OPERATOR_NODE;
-			a->data.oper = E_REFERENCE;
+			a->op.oper = E_REFERENCE;
 			
-			a->args = g_list_append(NULL,i);
-			a->nargs = 1;
+			a->op.args = g_list_append(NULL,i);
+			a->op.nargs = 1;
 			return a;
 		} else
 			(*errorout)(_("Unevaluatable function type encountered!"));
@@ -1428,10 +1514,10 @@ variableop(ETree *n)
 {
 	EFunc *f;
 	
-	f = d_lookup_global(n->data.id);
+	f = d_lookup_global(n->id.id);
 	if(!f) {
 		char buf[256];
-		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->data.id->token);
+		g_snprintf(buf,256,_("Variable '%s' used unitialized"),n->id.id->token);
 		(*errorout)(buf);
 		return copynode(n);
 	}
@@ -1456,11 +1542,9 @@ variableop(ETree *n)
 		}
 		GET_NEW_NODE(nn);
 		nn->type = FUNCTION_NODE;
-		nn->nargs = 0;
-		nn->args = NULL;
-		nn->data.func = d_makeufunc(NULL,copynode(f->data.user),
+		nn->func.func = d_makeufunc(NULL,copynode(f->data.user),
 					    g_list_copy(f->named_args),f->nargs);
-		nn->data.func->context = -1;
+		nn->func.func->context = -1;
 
 		return nn;
 	} else if(f->type == BUILTIN_FUNC) {
@@ -1471,10 +1555,8 @@ variableop(ETree *n)
 			ETree *nn;
 			GET_NEW_NODE(nn);
 			nn->type = FUNCTION_NODE;
-			nn->nargs = 0;
-			nn->args = NULL;
-			nn->data.func = d_makerealfunc(f,NULL);
-			nn->data.func->context = -1;
+			nn->func.func = d_makerealfunc(f,NULL,FALSE);
+			nn->func.func->context = -1;
 
 			return nn;
 		}
@@ -1494,23 +1576,21 @@ variableop(ETree *n)
 		GET_NEW_NODE(i);
 		i->type = IDENTIFIER_NODE;
 		if(f->id) {
-			i->data.id = f->id;
+			i->id.id = f->id;
 		} else {
 			/*make up a new fake id*/
 			Token *tok = g_new(Token,1);
 			tok->token = NULL;
 			tok->refs = g_list_append(NULL,f);
-			i->data.id = tok;
+			i->id.id = tok;
 		}
-		i->args = NULL;
-		i->nargs = 0;
 
 		GET_NEW_NODE(a);
 		a->type = OPERATOR_NODE;
-		a->data.oper = E_REFERENCE;
+		a->op.oper = E_REFERENCE;
 
-		a->args = g_list_append(NULL,i);
-		a->nargs = 1;
+		a->op.args = g_list_append(NULL,i);
+		a->op.nargs = 1;
 		return a;
 	} else
 		(*errorout)(_("Unevaluatable function type encountered!"));
@@ -1518,50 +1598,58 @@ variableop(ETree *n)
 }
 
 static ETree *
-ifop(ETree *n)
+ifop(ETree *n, int do_ret)
 {
 	ETree *l,*r,*rr=NULL;
 	ETree *errorret;
 	int exception=FALSE;
-	if(n->data.oper == E_IF_CONS) {
+	if(n->op.oper == E_IF_CONS) {
 		GET_LR(n,l,r);
 	} else { /*IF_ELSE*/
 		GET_LRR(n,l,r,rr);
 	}
 
 	if(eval_isnodetrue(l,&exception,&errorret)) {
-		return evalnode(r);
+		return evalnode_full(r,do_ret);
 	} else {
 		/*if we got a non-critical error and just can't evaluate*/
 		if(errorret) {
 			/*copy the current node and replace the predicate
 			  with the evaluated value*/
 			ETree *a = copynode(n);
-			freetree(a->args->data);
-			a->args->data = errorret;
+			freetree(a->op.args->data);
+			a->op.args->data = errorret;
 			return a;
 		}
 		if(exception) return NULL;
-		if(n->data.oper == E_IF_CONS)
-			return makenum_null();
-		else /*IF_ELSE*/
-			return evalnode(rr);
+		if(n->op.oper == E_IF_CONS) {
+			if(do_ret)
+				return makenum_null();
+			else
+				return EMPTY_RET;
+		} else /*IF_ELSE*/
+			return evalnode_full(rr,do_ret);
 	}
 }
 
 static ETree *
-loopop(ETree *n)
+loopop(ETree *n,int do_ret)
 {
-	ETree *l,*r,*ret = makenum_null();
+	ETree *l,*r,*ret;
 	ETree *t;
 	ETree *errorret;
 	int exception=FALSE;
 	int until=FALSE;
 	int first=FALSE;
 
+	if(do_ret)
+		ret = makenum_null();
+	else
+		ret = EMPTY_RET;
+
 	GET_LR(n,l,r);
 	
-	switch (n->data.oper) {
+	switch (n->op.oper) {
 	case E_WHILE_CONS:
 		until = FALSE;
 		first = FALSE;
@@ -1585,20 +1673,23 @@ loopop(ETree *n)
 	}
 	if(first) {
 		GSList *li;
-		freetree(ret);
+		if(ret && ret!=EMPTY_RET) freetree(ret);
 		loopout = LOOPOUT_NOTHING;
 		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode(r);
+		ret = evalnode_full(r,do_ret);
 		li=inloop;
 		inloop=g_slist_remove_link(inloop,li);
 		g_slist_free_1(li);
 		if(!ret) {
 			if(loopout == LOOPOUT_BREAK) {
 				loopout = LOOPOUT_NOTHING;
-				return makenum_null();
+				if(do_ret)
+					return makenum_null();
+				else
+					return EMPTY_RET;
 			} else if(loopout == LOOPOUT_CONTINUE) {
 				loopout = LOOPOUT_NOTHING;
-				ret = makenum_null();
+				ret = NULL;
 			} else
 				return NULL;
 		}
@@ -1607,7 +1698,7 @@ loopop(ETree *n)
 	      !eval_isnodetrue(l,&exception,&errorret):
 	      eval_isnodetrue(l,&exception,&errorret)) {
 		GSList *li;
-		freetree(ret);
+		if(ret && ret!=EMPTY_RET) freetree(ret);
 		if(exception)
 			return NULL;
 		/*if we got a non-critical error and just can't evaluate*/
@@ -1615,29 +1706,32 @@ loopop(ETree *n)
 			/*copy the current node and replace the predicate with the
 			  evaluated value*/
 			ETree *a = copynode(n);
-			freetree(a->args->data);
-			a->args->data = errorret;
+			freetree(a->op.args->data);
+			a->op.args->data = errorret;
 			return a;
 		}
 		loopout = LOOPOUT_NOTHING;
 		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode(r);
+		ret = evalnode_full(r,do_ret);
 		li=inloop;
 		inloop=g_slist_remove_link(inloop,li);
 		g_slist_free_1(li);
 		if(!ret) {
 			if(loopout == LOOPOUT_BREAK) {
 				loopout = LOOPOUT_NOTHING;
-				return makenum_null();
+				if(do_ret)
+					return makenum_null();
+				else
+					return EMPTY_RET;
 			} else if(loopout == LOOPOUT_CONTINUE) {
 				loopout = LOOPOUT_NOTHING;
-				ret = makenum_null();
+				ret = NULL;
 			} else
 				return NULL;
 		}
 	}
 	if(exception) {
-		freetree(ret);
+		if(ret && ret!=EMPTY_RET) freetree(ret);
 		return NULL;
 	/*if we got a non-critical error and just can't evaluate*/
 	} else if(errorret) {
@@ -1645,23 +1739,29 @@ loopop(ETree *n)
 		  evaluated value*/
 		ETree *a = copynode(n);
 		freetree(ret);
-		freetree(a->args->data);
-		a->args->data = errorret;
+		freetree(a->op.args->data);
+		a->op.args->data = errorret;
 		return a;
 	}
-	return ret;
+	if(!ret) {
+		if(do_ret)
+			return makenum_null();
+		else
+			return EMPTY_RET;
+	} else
+		return ret;
 }
 
 static ETree *
-forloop(ETree *n)
+forloop(ETree *n, int do_ret)
 {
 	ETree *from,*to,*by=NULL,*body,*ident;
 	ETree *ret = NULL;
 	int init_cmp;
 
-	if (n->data.oper==E_FOR_CONS) {
+	if (n->op.oper==E_FOR_CONS) {
 		GET_ABCD(n,ident,from,to,body);
-	} else /*if (n->data.oper==E_FORBY_CONS)*/ {
+	} else /*if (n->op.oper==E_FORBY_CONS)*/ {
 		GET_ABCDE(n,ident,from,to,by,body);
 	}
 	
@@ -1684,9 +1784,9 @@ forloop(ETree *n)
 	}
 	
 	if((by && (by->type != VALUE_NODE ||
-		   mpw_is_complex(by->data.value))) ||
-	   from->type != VALUE_NODE || mpw_is_complex(from->data.value) ||
-	   to->type != VALUE_NODE || mpw_is_complex(to->data.value)) {
+		   mpw_is_complex(by->val.value))) ||
+	   from->type != VALUE_NODE || mpw_is_complex(from->val.value) ||
+	   to->type != VALUE_NODE || mpw_is_complex(to->val.value)) {
 		(*errorout)(_("Bad type for 'for' loop!"));
 		if(!by) {
 			ETree *args[4];
@@ -1705,7 +1805,7 @@ forloop(ETree *n)
 			return copynode_args(n,args);
 		}
 	}
-	if(by && mpw_sgn(by->data.value)==0) {
+	if(by && mpw_sgn(by->val.value)==0) {
 		(*errorout)(_("'for' loop increment can't be 0"));
 		if(!by) {
 			ETree *args[4];
@@ -1725,25 +1825,31 @@ forloop(ETree *n)
 		}
 	}
 	
-	init_cmp = mpw_cmp(from->data.value,to->data.value);
+	init_cmp = mpw_cmp(from->val.value,to->val.value);
 	
 	/*if no iterations*/
 	if(!by) {
 		if(init_cmp>0) {
 			freetree(to);
 			freetree(by);
-			d_addfunc(d_makevfunc(ident->data.id,from));
-			return makenum_null();
+			d_addfunc(d_makevfunc(ident->id.id,from));
+			if(do_ret)
+				return makenum_null();
+			else
+				return EMPTY_RET;
 		} else if(init_cmp==0) {
 			init_cmp = -1;
 		}
 	} else {
-		int sgn = mpw_sgn(by->data.value);
+		int sgn = mpw_sgn(by->val.value);
 		if((sgn>0 && init_cmp>0) || (sgn<0 && init_cmp<0)) {
 			freetree(to);
 			freetree(by);
-			d_addfunc(d_makevfunc(ident->data.id,from));
-			return makenum_null();
+			d_addfunc(d_makevfunc(ident->id.id,from));
+			if(do_ret)
+				return makenum_null();
+			else
+				return EMPTY_RET;
 		}
 		if(init_cmp == 0)
 			init_cmp = -sgn;
@@ -1752,13 +1858,13 @@ forloop(ETree *n)
 
 	do {
 		GSList *li;
-		if(ret) freetree(ret);
+		if(ret && ret!=EMPTY_RET) freetree(ret);
 
-		d_addfunc(d_makevfunc(ident->data.id,copynode(from)));
+		d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
 
 		loopout = LOOPOUT_NOTHING;
 		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode(body);
+		ret = evalnode_full(body,do_ret);
 		li=inloop;
 		inloop=g_slist_remove_link(inloop,li);
 		g_slist_free_1(li);
@@ -1768,7 +1874,10 @@ forloop(ETree *n)
 				freetree(from);
 				freetree(to);
 				freetree(by);
-				return makenum_null();
+				if(do_ret)
+					return makenum_null();
+				else
+					return EMPTY_RET;
 			} else if(loopout == LOOPOUT_CONTINUE) {
 				loopout = LOOPOUT_NOTHING;
 				ret = NULL;
@@ -1780,20 +1889,25 @@ forloop(ETree *n)
 			}
 		}
 		if(by)
-			mpw_add(from->data.value,from->data.value,by->data.value);
+			mpw_add(from->val.value,from->val.value,by->val.value);
 		else
-			mpw_add_ui(from->data.value,from->data.value,1);
+			mpw_add_ui(from->val.value,from->val.value,1);
 
-	} while(mpw_cmp(from->data.value,to->data.value)!=-init_cmp);
+	} while(mpw_cmp(from->val.value,to->val.value)!=-init_cmp);
 	freetree(from);
 	freetree(to);
 	freetree(by);
-	if(!ret) return makenum_null();
-	else return ret;
+	if(!ret) {
+		if(do_ret)
+			return makenum_null();
+		else
+			return EMPTY_RET;
+	} else
+		return ret;
 }
 
 static ETree *
-forinloop(ETree *n)
+forinloop(ETree *n, int do_ret)
 {
 	ETree *in,*body,*ident;
 	ETree *ret = NULL;
@@ -1818,16 +1932,16 @@ forinloop(ETree *n)
 	i=0;
 	for(;;) {
 		GSList *li;
-		if(ret) freetree(ret);
+		if(ret && ret!=EMPTY_RET) freetree(ret);
 
 		if(in->type == VALUE_NODE)
-			d_addfunc(d_makevfunc(ident->data.id,copynode(in)));
+			d_addfunc(d_makevfunc(ident->id.id,copynode(in)));
 		else
-			d_addfunc(d_makevfunc(ident->data.id,
-					      copynode(matrixw_index(in->data.matrix,i,j))));
+			d_addfunc(d_makevfunc(ident->id.id,
+					      copynode(matrixw_index(in->mat.matrix,i,j))));
 		loopout = LOOPOUT_NOTHING;
 		inloop = g_slist_prepend(inloop,GINT_TO_POINTER(1));
-		ret = evalnode(body);
+		ret = evalnode_full(body,do_ret);
 		li=inloop;
 		inloop=g_slist_remove_link(inloop,li);
 		g_slist_free_1(li);
@@ -1835,7 +1949,10 @@ forinloop(ETree *n)
 			if(loopout == LOOPOUT_BREAK) {
 				loopout = LOOPOUT_NOTHING;
 				freetree(in);
-				return makenum_null();
+				if(do_ret)
+					return makenum_null();
+				else
+					return EMPTY_RET;
 			} else if(loopout == LOOPOUT_CONTINUE) {
 				loopout = LOOPOUT_NOTHING;
 				ret = NULL;
@@ -1848,16 +1965,21 @@ forinloop(ETree *n)
 		if(in->type == VALUE_NODE)
 			break;
 		else {
-			if((++i)>=matrixw_width(in->data.matrix)) {
+			if((++i)>=matrixw_width(in->mat.matrix)) {
 				i=0;
-				if((++j)>=matrixw_height(in->data.matrix))
+				if((++j)>=matrixw_height(in->mat.matrix))
 					break;
 			}
 		}
 	}
 	freetree(in);
-	if(!ret) return makenum_null();
-	else return ret;
+	if(!ret) {
+		if(do_ret)
+			return makenum_null();
+		else
+			return EMPTY_RET;
+	} else
+		return ret;
 }
 
 /*compare nodes, return TRUE if equal
@@ -1865,7 +1987,7 @@ forinloop(ETree *n)
 static int
 eqlnodes(ETree *l, ETree *r)
 {
-	int n = mpw_eql(l->data.value,r->data.value);
+	int n = mpw_eql(l->val.value,r->val.value);
 	if(error_num) return 0;
 	return n;
 }
@@ -1878,7 +2000,7 @@ cmpnodes(ETree *l, ETree *r)
 {
 	int n=0;
 
-	n=mpw_cmp(l->data.value,r->data.value);
+	n=mpw_cmp(l->val.value,r->val.value);
 
 	if(error_num) return 0;
 
@@ -1907,12 +2029,12 @@ logicalandop(ETree *n, int argeval)
 	ETree *ret;
 	int bad_node = FALSE;
 	
-	g_assert(n->args);
-	g_assert(n->args->data);
-	g_assert(n->args->next->data);
+	g_assert(n->op.args);
+	g_assert(n->op.args->data);
+	g_assert(n->op.args->next->data);
 
-	r[0] = n->args->data;
-	r[1] = n->args->next->data;
+	r[0] = n->op.args->data;
+	r[1] = n->op.args->next->data;
 
 	if(argeval) {
 		r[0] = evalnode(r[0]);
@@ -1966,12 +2088,12 @@ logicalorop(ETree *n, int argeval)
 	ETree *ret;
 	int bad_node = FALSE;
 	
-	g_assert(n->args);
-	g_assert(n->args->data);
-	g_assert(n->args->next->data);
+	g_assert(n->op.args);
+	g_assert(n->op.args->data);
+	g_assert(n->op.args->next->data);
 
-	r[0] = n->args->data;
-	r[1] = n->args->next->data;
+	r[0] = n->op.args->data;
+	r[1] = n->op.args->next->data;
 
 	if(argeval) {
 		r[0] = evalnode(r[0]);
@@ -2056,16 +2178,16 @@ string_concat(ETree *n, ETree *arg[], gpointer f)
 	
 	if(arg[0]->type == STRING_NODE &&
 	   arg[1]->type == STRING_NODE) {
-		s = g_strconcat(arg[0]->data.str,arg[1]->data.str,NULL);
+		s = g_strconcat(arg[0]->str.str,arg[1]->str.str,NULL);
 	} else if(arg[0]->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,arg[1]);
-		s = g_strconcat(arg[0]->data.str,gs->str,NULL);
+		s = g_strconcat(arg[0]->str.str,gs->str,NULL);
 		g_string_free(gs,TRUE);
 	} else if(arg[1]->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,arg[0]);
-		s = g_strconcat(gs->str,arg[1]->data.str,NULL);
+		s = g_strconcat(gs->str,arg[1]->str.str,NULL);
 		g_string_free(gs,TRUE);
 	} else
 		g_assert_not_reached();
@@ -2074,9 +2196,7 @@ string_concat(ETree *n, ETree *arg[], gpointer f)
 
 	GET_NEW_NODE(ret);
 	ret->type = STRING_NODE;
-	ret->args = NULL;
-	ret->nargs = 0;
-	ret->data.str = s;
+	ret->str.str = s;
 	
 	return ret;
 }
@@ -2087,16 +2207,16 @@ eqstring(ETree *a, ETree *b)
 	int r=0;
 	if(a->type == STRING_NODE &&
 	   b->type == STRING_NODE) {
-		r=strcmp(a->data.str,b->data.str)==0;
+		r=strcmp(a->str.str,b->str.str)==0;
 	} else if(a->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,b);
-		r = strcmp(a->data.str,gs->str)==0;
+		r = strcmp(a->str.str,gs->str)==0;
 		g_string_free(gs,TRUE);
 	} else if(b->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,a);
-		r = strcmp(b->data.str,gs->str)==0;
+		r = strcmp(b->str.str,gs->str)==0;
 		g_string_free(gs,TRUE);
 	} else
 		g_assert_not_reached();
@@ -2111,20 +2231,20 @@ eqmatrix(ETree *a, ETree *b, int *error)
 	int i,j;
 	if(a->type == MATRIX_NODE &&
 	   b->type == MATRIX_NODE) {
-		if(!is_matrix_value_only(a->data.matrix) ||
-		   !is_matrix_value_only(b->data.matrix)) {
+		if(!is_matrix_value_only(a->mat.matrix) ||
+		   !is_matrix_value_only(b->mat.matrix)) {
 			(*errorout)(_("Cannot compare non value-only matrixes"));
 			*error = TRUE;
 			return 0;
 		}
-		if(matrixw_width(a->data.matrix)!=
-		   matrixw_width(b->data.matrix) ||
-		   matrixw_height(a->data.matrix)!=
-		   matrixw_height(b->data.matrix))
+		if(matrixw_width(a->mat.matrix)!=
+		   matrixw_width(b->mat.matrix) ||
+		   matrixw_height(a->mat.matrix)!=
+		   matrixw_height(b->mat.matrix))
 			r = FALSE;
 		else {
-			MatrixW *m1 = a->data.matrix;
-			MatrixW *m2 = b->data.matrix;
+			MatrixW *m1 = a->mat.matrix;
+			MatrixW *m2 = b->mat.matrix;
 			
 			r = TRUE;
 
@@ -2133,8 +2253,8 @@ eqmatrix(ETree *a, ETree *b, int *error)
 					ETree *t1,*t2;
 					t1 = matrixw_index(m1,i,j);
 					t2 = matrixw_index(m2,i,j);
-					if(mpw_cmp(t1->data.value,
-						   t2->data.value)!=0) {
+					if(mpw_cmp(t1->val.value,
+						   t2->val.value)!=0) {
 						r = FALSE;
 						break;
 					}
@@ -2143,7 +2263,7 @@ eqmatrix(ETree *a, ETree *b, int *error)
 			}
 		}
 	} else if(a->type == MATRIX_NODE) {
-		MatrixW *m = a->data.matrix;
+		MatrixW *m = a->mat.matrix;
 		if(matrixw_width(m)>1 ||
 		   matrixw_height(m)>1) {
 			r = FALSE;
@@ -2154,10 +2274,10 @@ eqmatrix(ETree *a, ETree *b, int *error)
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_cmp(t->data.value,b->data.value)==0;
+			r = mpw_cmp(t->val.value,b->val.value)==0;
 		}
 	} else if(b->type == MATRIX_NODE) {
-		MatrixW *m = b->data.matrix;
+		MatrixW *m = b->mat.matrix;
 		if(matrixw_width(m)>1 ||
 		   matrixw_height(m)>1) {
 			r = FALSE;
@@ -2168,7 +2288,7 @@ eqmatrix(ETree *a, ETree *b, int *error)
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_cmp(t->data.value,a->data.value)==0;
+			r = mpw_cmp(t->val.value,a->val.value)==0;
 		}
 	} else
 		g_assert_not_reached();
@@ -2182,16 +2302,16 @@ cmpstring(ETree *a, ETree *b)
 	int r=0;
 	if(a->type == STRING_NODE &&
 	   b->type == STRING_NODE) {
-		r=strcmp(a->data.str,b->data.str);
+		r=strcmp(a->str.str,b->str.str);
 	} else if(a->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,b);
-		r = strcmp(a->data.str,gs->str);
+		r = strcmp(a->str.str,gs->str);
 		g_string_free(gs,TRUE);
 	} else if(b->type == STRING_NODE) {
 		GString *gs = g_string_new("");
 		print_etree(gs,NULL,a);
-		r = strcmp(b->data.str,gs->str);
+		r = strcmp(b->str.str,gs->str);
 		g_string_free(gs,TRUE);
 	} else
 		g_assert_not_reached();
@@ -2229,7 +2349,7 @@ arglevel(ETree *r[], int cnt)
 	return level;
 }
 
-static ETree * evaloper(ETree *n, int argeval);
+static ETree * evaloper(ETree *n, int argeval, int do_ret);
 
 static ETree *
 op_two_nodes(ETree *rr, ETree *ll, int oper)
@@ -2247,29 +2367,29 @@ op_two_nodes(ETree *rr, ETree *ll, int oper)
 		mpw_init(res);
 		switch(oper) {
 		case E_PLUS:
-			mpw_add(res,arg[0]->data.value,arg[1]->data.value);
+			mpw_add(res,arg[0]->val.value,arg[1]->val.value);
 			break;
 		case E_MINUS:
-			mpw_sub(res,arg[0]->data.value,arg[1]->data.value);
+			mpw_sub(res,arg[0]->val.value,arg[1]->val.value);
 			break;
 		case E_MUL:
-			mpw_mul(res,arg[0]->data.value,arg[1]->data.value);
+			mpw_mul(res,arg[0]->val.value,arg[1]->val.value);
 			break;
 		case E_DIV:
-			mpw_div(res,arg[0]->data.value,arg[1]->data.value);
+			mpw_div(res,arg[0]->val.value,arg[1]->val.value);
 			break;
 		case E_MOD:
-			mpw_mod(res,arg[0]->data.value,arg[1]->data.value);
+			mpw_mod(res,arg[0]->val.value,arg[1]->val.value);
 			break;
 		default: g_assert_not_reached();
 		}
 		if(error_num==NUMERICAL_MPW_ERROR) {
 			GET_NEW_NODE(n);
 			n->type = OPERATOR_NODE;
-			n->data.oper = oper;
-			n->args = g_list_append(NULL,copynode(arg[0]));
-			n->args = g_list_append(n->args,copynode(arg[1]));
-			n->nargs = 2;
+			n->op.oper = oper;
+			n->op.args = g_list_append(NULL,copynode(arg[0]));
+			n->op.args = g_list_append(n->op.args,copynode(arg[1]));
+			n->op.nargs = 2;
 			mpw_clear(res);
 			error_num=NO_ERROR;
 			return n;
@@ -2282,19 +2402,19 @@ op_two_nodes(ETree *rr, ETree *ll, int oper)
 	case 2:
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
-		n->data.oper = oper;
+		n->op.oper = oper;
 
-		n->args = g_list_append(NULL,arg[0]);
-		n->args = g_list_append(n->args,arg[1]);
-		n->nargs = 2;
+		n->op.args = g_list_append(NULL,arg[0]);
+		n->op.args = g_list_append(n->op.args,arg[1]);
+		n->op.nargs = 2;
 
 		/*eval operator without re-evaluating arguments*/
-		r = evaloper(n,FALSE);
+		r = evaloper(n,FALSE,TRUE);
 
 		/*make sure this doesn't free the arguments, so
 		  this has to be freenode not freetree*/
-		g_list_free(n->args);
-		n->args = NULL;
+		g_list_free(n->op.args);
+		n->op.args = NULL;
 		freenode(n);
 
 		return r;
@@ -2302,10 +2422,10 @@ op_two_nodes(ETree *rr, ETree *ll, int oper)
 		(*errorout)(_("Primitives must get numeric/matrix/string arguments"));
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
-		n->data.oper = oper;
-		n->args = g_list_append(NULL,copynode(arg[0]));
-		n->args = g_list_append(n->args,copynode(arg[1]));
-		n->nargs = 2;
+		n->op.oper = oper;
+		n->op.args = g_list_append(NULL,copynode(arg[0]));
+		n->op.args = g_list_append(n->op.args,copynode(arg[1]));
+		n->op.nargs = 2;
 		mpw_clear(res);
 		return n;
 	}
@@ -2320,31 +2440,33 @@ matrix_scalar_matrix_op(ETree *n, ETree *arg[])
 	MatrixW *m;
 	ETree *node;
 	int order = 0;
+	int quote = 0;
 	if(arg[0]->type == MATRIX_NODE) {
-		m = arg[0]->data.matrix;
+		m = arg[0]->mat.matrix;
+		quote = arg[0]->mat.quoted;
 		node = arg[1];
 	} else {
 		order = 1;
-		m = arg[1]->data.matrix;
+		m = arg[1]->mat.matrix;
+		quote = arg[1]->mat.quoted;
 		node = arg[0];
 	}
 
 	GET_NEW_NODE(nn);
 	nn->type = MATRIX_NODE;
-	nn->args = NULL;
-	nn->nargs = 0;
-	nn->data.matrix = matrixw_new();
-	matrixw_set_size(nn->data.matrix,matrixw_width(m),matrixw_height(m));
+	nn->mat.matrix = matrixw_new();
+	nn->mat.quoted = quote;
+	matrixw_set_size(nn->mat.matrix,matrixw_width(m),matrixw_height(m));
 	for(i=0;i<matrixw_width(m);i++) {
 		for(j=0;j<matrixw_height(m);j++) {
 			ETree *t;
 			if(order == 0) {
 				t = op_two_nodes(matrixw_index(m,i,j),
-						 node, n->data.oper);
+						 node, n->op.oper);
 			} else {
 				t = op_two_nodes(node,
 						 matrixw_index(m,i,j),
-						 n->data.oper);
+						 n->op.oper);
 			}
 			/*exception*/
 			if(!t) {
@@ -2352,7 +2474,7 @@ matrix_scalar_matrix_op(ETree *n, ETree *arg[])
 				freetree(nn);
 				return NULL;
 			}
-			matrixw_set_index(nn->data.matrix,i,j) = t;
+			matrixw_set_index(nn->mat.matrix,i,j) = t;
 		}
 	}
 	freeargarr(arg,2);
@@ -2367,8 +2489,8 @@ matrix_addsub_op(ETree *n, ETree *arg[], gpointer f)
 		int i,j;
 		ETree *nn;
 		MatrixW *m1,*m2;
-		m1 = arg[0]->data.matrix;
-		m2 = arg[1]->data.matrix;
+		m1 = arg[0]->mat.matrix;
+		m2 = arg[1]->mat.matrix;
 		if((matrixw_width(m1) != matrixw_width(m2)) ||
 		   (matrixw_height(m1) != matrixw_height(m2))) {
 			(*errorout)(_("Can't add/subtract two matricies of different sizes"));
@@ -2376,22 +2498,21 @@ matrix_addsub_op(ETree *n, ETree *arg[], gpointer f)
 		}
 		GET_NEW_NODE(nn);
 		nn->type = MATRIX_NODE;
-		nn->args = NULL;
-		nn->nargs = 0;
-		nn->data.matrix = matrixw_new();
-		matrixw_set_size(nn->data.matrix,matrixw_width(m1),matrixw_height(m1));
+		nn->mat.matrix = matrixw_new();
+		nn->mat.quoted = arg[0]->mat.quoted || arg[1]->mat.quoted;
+		matrixw_set_size(nn->mat.matrix,matrixw_width(m1),matrixw_height(m1));
 		for(i=0;i<matrixw_width(m1);i++) {
 			for(j=0;j<matrixw_height(m1);j++) {
 				ETree *t = op_two_nodes(matrixw_index(m1,i,j),
 							matrixw_index(m2,i,j),
-							n->data.oper);
+							n->op.oper);
 				/*exception*/
 				if(!t) {
 					freeargarr(arg,2);
 					freetree(nn);
 					return NULL;
 				}
-				matrixw_set_index(nn->data.matrix,i,j) = t;
+				matrixw_set_index(nn->mat.matrix,i,j) = t;
 			}
 		}
 		freeargarr(arg,2);
@@ -2446,24 +2567,23 @@ matrix_mul_op(ETree *n, ETree *arg[],gpointer f)
 		int i,j;
 		ETree *nn;
 		MatrixW *m1,*m2;
-		m1 = arg[0]->data.matrix;
-		m2 = arg[1]->data.matrix;
+		m1 = arg[0]->mat.matrix;
+		m2 = arg[1]->mat.matrix;
 		if((matrixw_width(m1) != matrixw_height(m2))) {
 			(*errorout)(_("Can't multiply matricies of wrong sizes"));
 			return copynode_args(n,arg);
 		}
 		GET_NEW_NODE(nn);
 		nn->type = MATRIX_NODE;
-		nn->args = NULL;
-		nn->nargs = 0;
-		nn->data.matrix = matrixw_new();
-		matrixw_set_size(nn->data.matrix,matrixw_width(m2),matrixw_height(m1));
+		nn->mat.matrix = matrixw_new();
+		nn->mat.quoted = arg[0]->mat.quoted || arg[1]->mat.quoted;
+		matrixw_set_size(nn->mat.matrix,matrixw_width(m2),matrixw_height(m1));
 		
 		if(is_matrix_value_only(m1) &&
 		   is_matrix_value_only(m2)) {
-			value_matrix_multiply(nn->data.matrix,m1,m2);
+			value_matrix_multiply(nn->mat.matrix,m1,m2);
 		} else {
-			if(!expensive_matrix_multiply(nn->data.matrix,m1,m2)) {
+			if(!expensive_matrix_multiply(nn->mat.matrix,m1,m2)) {
 				freeargarr(arg,2);
 				freetree(nn);
 				return NULL;
@@ -2487,17 +2607,17 @@ matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
 	int free_m = FALSE;
 
 	if(arg[1]->type != VALUE_NODE ||
-	   mpw_is_complex(arg[1]->data.value) ||
-	   !mpw_is_integer(arg[1]->data.value) ||
-	   (matrixw_width(arg[0]->data.matrix) !=
-	    matrixw_height(arg[0]->data.matrix)) ||
-	   !is_matrix_value_only(arg[0]->data.matrix)) {
+	   mpw_is_complex(arg[1]->val.value) ||
+	   !mpw_is_integer(arg[1]->val.value) ||
+	   (matrixw_width(arg[0]->mat.matrix) !=
+	    matrixw_height(arg[0]->mat.matrix)) ||
+	   !is_matrix_value_only(arg[0]->mat.matrix)) {
 		(*errorout)(_("Powers are defined on (square matrix)^(integer) only"));
 		return copynode_args(n,arg);
 	}
 	
-	m = arg[0]->data.matrix;
-	power = mpw_get_long(arg[1]->data.value);
+	m = arg[0]->mat.matrix;
+	power = mpw_get_long(arg[1]->val.value);
 	if(error_num) {
 		error_num = 0;
 		return copynode_args(n,arg);
@@ -2517,9 +2637,8 @@ matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
 			/*make us a new empty node*/
 			GET_NEW_NODE(nn);
 			nn->type = MATRIX_NODE;
-			nn->args = NULL;
-			nn->nargs = 0;
-			nn->data.matrix = mi;
+			nn->mat.matrix = mi;
+			nn->mat.quoted = arg[0]->mat.quoted;
 			freeargarr(arg,2);
 			return nn;
 		}
@@ -2541,12 +2660,11 @@ matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
 		/*make us a new empty node*/
 		GET_NEW_NODE(nn);
 		nn->type = MATRIX_NODE;
-		nn->args = NULL;
-		nn->nargs = 0;
 		if(free_m)
-			nn->data.matrix = m;
+			nn->mat.matrix = m;
 		else
-			nn->data.matrix = matrixw_copy(m);
+			nn->mat.matrix = matrixw_copy(m);
+		nn->mat.quoted = arg[0]->mat.quoted;
 		freeargarr(arg,2);
 		return nn;
 	}
@@ -2582,18 +2700,17 @@ matrix_pow_op(ETree *n, ETree *arg[],gpointer f)
 	/*make us a new empty node*/
 	GET_NEW_NODE(nn);
 	nn->type = MATRIX_NODE;
-	nn->args = NULL;
-	nn->nargs = 0;
 	if(!res) {
 		if(free_m)
-			nn->data.matrix = m;
+			nn->mat.matrix = m;
 		else
-			nn->data.matrix = matrixw_copy(m);
+			nn->mat.matrix = matrixw_copy(m);
 	} else {
-		nn->data.matrix = res;
+		nn->mat.matrix = res;
 		if(free_m)
 			matrixw_free(m);
 	}
+	nn->mat.quoted = arg[0]->mat.quoted;
 	freeargarr(arg,2);
 	return nn;
 }
@@ -2611,8 +2728,8 @@ matrix_div_op(ETree *n, ETree *arg[],gpointer f)
 		MatrixW *mi;
 		MatrixW *res;
 
-		m1 = arg[0]->data.matrix;
-		m2 = arg[1]->data.matrix;
+		m1 = arg[0]->mat.matrix;
+		m2 = arg[1]->mat.matrix;
 
 		if((matrixw_width(m1) !=
 		    matrixw_height(m1)) ||
@@ -2652,9 +2769,8 @@ matrix_div_op(ETree *n, ETree *arg[],gpointer f)
 
 		GET_NEW_NODE(nn);
 		nn->type = MATRIX_NODE;
-		nn->args = NULL;
-		nn->nargs = 0;
-		nn->data.matrix = res;
+		nn->mat.matrix = res;
+		nn->mat.quoted = 0;
 		freeargarr(arg,2);
 		return nn;
 	} else if(arg[0]->type == MATRIX_NODE) {
@@ -2666,7 +2782,7 @@ matrix_div_op(ETree *n, ETree *arg[],gpointer f)
 		MatrixW *mi;
 		MatrixW *res;
 
-		m = arg[1]->data.matrix;
+		m = arg[1]->mat.matrix;
 
 		if((matrixw_width(m) !=
 		    matrixw_height(m)) ||
@@ -2697,15 +2813,14 @@ matrix_div_op(ETree *n, ETree *arg[],gpointer f)
 			for(j=0;j<matrixw_width(m);j++) {
 				ETree *t = matrixw_set_index(m,i,j);
 				if(t)
-					mpw_mul(t->data.value,t->data.value,
-						arg[0]->data.value);
+					mpw_mul(t->val.value,t->val.value,
+						arg[0]->val.value);
 			}
 
 		GET_NEW_NODE(nn);
 		nn->type = MATRIX_NODE;
-		nn->args = NULL;
-		nn->nargs = 0;
-		nn->data.matrix = m;
+		nn->mat.matrix = m;
+		nn->mat.quoted = 0;
 		freeargarr(arg,2);
 		return nn;
 	}
@@ -2721,7 +2836,7 @@ matrix_1num_op(ETree *n, ETree *arg[], singleopfunc f)
 	ETree *nn;
 	MatrixW *m;
 	mpw_t tmp;
-	m = arg[0]->data.matrix;
+	m = arg[0]->mat.matrix;
 
 	if(!is_matrix_value_only(m)) {
 		(*errorout)(_("Can't operate on a non value-only matrix"));
@@ -2729,22 +2844,21 @@ matrix_1num_op(ETree *n, ETree *arg[], singleopfunc f)
 	}
 	GET_NEW_NODE(nn);
 	nn->type = MATRIX_NODE;
-	nn->args = NULL;
-	nn->nargs = 0;
-	nn->data.matrix = matrixw_new();
-	matrixw_set_size(nn->data.matrix,matrixw_width(m),matrixw_height(m));
+	nn->mat.matrix = matrixw_new();
+	nn->mat.quoted = 0;
+	matrixw_set_size(nn->mat.matrix,matrixw_width(m),matrixw_height(m));
 	mpw_init(tmp);
 	for(i=0;i<matrixw_width(m);i++) {
 		for(j=0;j<matrixw_height(m);j++) {
-			(*f)(tmp,matrixw_index(m,i,j)->data.value);
+			(*f)(tmp,matrixw_index(m,i,j)->val.value);
 			if(error_num==NUMERICAL_MPW_ERROR) {
 				ETree *arg[1];
 				error_num=NO_ERROR;
 				arg[0] = copynode(matrixw_index(m,i,j));
-				matrixw_set_index(nn->data.matrix,i,j) =
+				matrixw_set_index(nn->mat.matrix,i,j) =
 					copynode_args(n,arg);
 			} else if(mpw_sgn(tmp)!=0) {
-				matrixw_set_index(nn->data.matrix,i,j) =
+				matrixw_set_index(nn->mat.matrix,i,j) =
 					makenum_use(tmp);
 				mpw_init(tmp);
 			}
@@ -2761,15 +2875,15 @@ doubleop(ETree *n, ETree *arg[], doubleopfunc f)
 	mpw_t res;
 
 	mpw_init(res);
-	(*f)(res,arg[0]->data.value,arg[1]->data.value);
+	(*f)(res,arg[0]->val.value,arg[1]->val.value);
 	if(error_num==NUMERICAL_MPW_ERROR) {
 		mpw_clear(res);
 		error_num=NO_ERROR;
 		return copynode_args(n,arg);
 	}
 
-	mpw_clear(arg[0]->data.value);
-	memcpy(arg[0]->data.value,res,sizeof(struct _mpw_t));
+	mpw_clear(arg[0]->val.value);
+	memcpy(arg[0]->val.value,res,sizeof(struct _mpw_t));
 
 	freetree(arg[1]);
 
@@ -2782,14 +2896,14 @@ singleop(ETree *n, ETree *arg[], singleopfunc f)
 	mpw_t res;
 
 	mpw_init(res);
-	(*f)(res,arg[0]->data.value);
+	(*f)(res,arg[0]->val.value);
 	if(error_num==NUMERICAL_MPW_ERROR) {
 		mpw_clear(res);
 		error_num=NO_ERROR;
 		return copynode_args(n,arg);
 	}
-	mpw_clear(arg[0]->data.value);
-	memcpy(arg[0]->data.value,res,sizeof(struct _mpw_t));
+	mpw_clear(arg[0]->val.value);
+	memcpy(arg[0]->val.value,res,sizeof(struct _mpw_t));
 
 	return arg[0];
 }
@@ -2801,18 +2915,18 @@ typedef ETree * (*primfunc_t)(ETree *,ETree **,gpointer);
 	ETree *r[2]; 					\
 	ETree *ret;					\
 	if(argeval) {					\
-		switch(evalargs(n,r,TRUE)) {		\
+		switch(evalargs(n->op.args,r,TRUE)) {	\
 		case 1:					\
 			return copynode_args(n,r);	\
 		case 2:					\
 			return NULL;			\
 		}					\
 	} else {					\
-		r[0]=copynode(n->args->data);		\
-		r[1]=n->args->next->data;		\
+		r[0]=copynode(n->op.args->data);	\
+		r[1]=n->op.args->next->data;		\
 		if(r[1]) r[1]=copynode(r[1]);		\
 	}						\
-	switch(arglevel(r,n->nargs)) {			\
+	switch(arglevel(r,n->op.nargs)) {		\
 	case 0: ret = numop(n,r,numfunc);		\
 		return ret;				\
 	case 1: if(matrixfunc) {			\
@@ -2841,7 +2955,7 @@ static ETree *
 transpose_matrix(ETree *n)
 {
 	ETree *r[1];
-	switch(evalargs(n,r,TRUE)) {
+	switch(evalargs(n->op.args,r,TRUE)) {
 	case 1:
 		return copynode_args(n,r);
 	case 2:
@@ -2854,7 +2968,7 @@ transpose_matrix(ETree *n)
 		return copynode_args(n,r);
 	}
 	
-	r[0]->data.matrix->tr = !(r[0]->data.matrix->tr);
+	r[0]->mat.matrix->tr = !(r[0]->mat.matrix->tr);
 	
 	return r[0];
 }
@@ -2866,7 +2980,7 @@ get_element(ETree *n)
 	ETree *ret = NULL;
 	int li,ri; 
 
-	if(n->data.oper==E_GET_ELEMENT) {
+	if(n->op.oper==E_GET_ELEMENT) {
 		if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,TRUE,
 				     &li,&li,&ri,&ri,&ret))
 			return ret;
@@ -2885,13 +2999,13 @@ get_element(ETree *n)
 		return copynode_args(n,arg);
 	}
 
-	if(n->data.oper == E_GET_VELEMENT) {
-		ri = ((li-1)%matrixw_width(m->data.matrix))+1;
-		li = ((li-1)/matrixw_width(m->data.matrix))+1;
+	if(n->op.oper == E_GET_VELEMENT) {
+		ri = ((li-1)%matrixw_width(m->mat.matrix))+1;
+		li = ((li-1)/matrixw_width(m->mat.matrix))+1;
 	}
 	
-	if(matrixw_width(m->data.matrix) < ri ||
-	   matrixw_height(m->data.matrix) < li) {
+	if(matrixw_width(m->mat.matrix) < ri ||
+	   matrixw_height(m->mat.matrix) < li) {
 		ETree *arg[3];
 		(*errorout)(_("Matrix index out of range"));
 		arg[0]=m;
@@ -2903,7 +3017,7 @@ get_element(ETree *n)
 	freetree(ll);
 	freetree(rr);
 	
-	ret = copynode(matrixw_index(m->data.matrix,ri-1,li-1));
+	ret = copynode(matrixw_index(m->mat.matrix,ri-1,li-1));
 
 	freetree(m);
 	
@@ -2920,10 +3034,10 @@ get_region(ETree *n)
 	int new_matrix = FALSE;
 	int do_col,do_row;
 
-	if(n->data.oper == E_GET_REGION) {
+	if(n->op.oper == E_GET_REGION) {
 		do_col = TRUE;
 		do_row = TRUE;
-	} else if(n->data.oper == E_GET_ROW_REGION) {
+	} else if(n->op.oper == E_GET_ROW_REGION) {
 		do_col = FALSE;
 		do_row = TRUE;
 	} else /*E_GET_COL_REGION*/ {
@@ -2951,18 +3065,18 @@ get_region(ETree *n)
 	
 	if(!do_row) {
 		rowfrom = 1;
-		rowto = matrixw_height(m->data.matrix);
+		rowto = matrixw_height(m->mat.matrix);
 	}
 	if(!do_col) {
 		colfrom = 1;
-		colto = matrixw_width(m->data.matrix);
+		colto = matrixw_width(m->mat.matrix);
 	}
 
 	w = colto-colfrom+1;
 	h = rowto-rowfrom+1;
 
-	if(colto > matrixw_width(m->data.matrix) ||
-	   rowto > matrixw_height(m->data.matrix)) {
+	if(colto > matrixw_width(m->mat.matrix) ||
+	   rowto > matrixw_height(m->mat.matrix)) {
 		ETree *arg[3];
 		(*errorout)(_("Index out of range"));
 		arg[0]=m;
@@ -2981,11 +3095,10 @@ get_region(ETree *n)
 	
 	GET_NEW_NODE(ret);
 	ret->type = MATRIX_NODE;
-	ret->args = NULL;
-	ret->nargs = 0;
 
-	ret->data.matrix = matrixw_get_region(m->data.matrix,
-					      colfrom-1,rowfrom-1,w,h);
+	ret->mat.matrix = matrixw_get_region(m->mat.matrix,
+					     colfrom-1,rowfrom-1,w,h);
+	ret->mat.quoted = m->mat.quoted;
 
 	freetree(m);
 	
@@ -2995,18 +3108,18 @@ get_region(ETree *n)
 
 /*note: eval args only applies to primitives*/
 static ETree *
-evaloper(ETree *n, int argeval)
+evaloper(ETree *n, int argeval, int do_ret)
 {
 	ETree *nn;
-	switch(n->data.oper) {
+	switch(n->op.oper) {
 		case E_SEPAR:
-			if(!(nn=evalnode(n->args->data)))
+			if(!(nn=evalnode_full(n->op.args->data,FALSE)))
 				return NULL; /*exception*/
-			freetree(nn);
-			return evalnode(n->args->next->data);
+			if(nn && nn!=EMPTY_RET) freetree(nn);
+			return evalnode_full(n->op.args->next->data,do_ret);
 
 		case E_EQUALS:
-			return equalsop(n);
+			return equalsop(n,do_ret);
 
 		case E_ABS: EVAL_PRIMITIVE(n,singleop,mpw_abs,(primfunc_t)matrix_1num_op,NULL,argeval);
 		case E_PLUS: EVAL_PRIMITIVE(n,doubleop,mpw_add,matrix_addsub_op,string_concat,argeval);
@@ -3038,12 +3151,12 @@ evaloper(ETree *n, int argeval)
 		case E_REGION_SEP:
 			{
 				ETree *arg[2];
-				g_assert(n->args);
-				g_assert(n->args->data);
-				g_assert(n->args->next->data);
-				arg[0] = evalnode(n->args->data);
+				g_assert(n->op.args);
+				g_assert(n->op.args->data);
+				g_assert(n->op.args->next->data);
+				arg[0] = evalnode(n->op.args->data);
 				if(!arg[0]) return NULL;
-				arg[1] = evalnode(n->args->next->data);
+				arg[1] = evalnode(n->op.args->next->data);
 				if(!arg[1]) {
 					freetree(arg[0]);
 					return NULL;
@@ -3061,30 +3174,33 @@ evaloper(ETree *n, int argeval)
 			return get_region(n);
 
 		case E_REFERENCE:
-			return copynode(n);
+			if(do_ret)
+				return copynode(n);
+			else
+				return EMPTY_RET;
 		case E_DEREFERENCE:
 			return derefvarop(n);
 
 		case E_IF_CONS:
 		case E_IFELSE_CONS:
-			return ifop(n);
+			return ifop(n,do_ret);
 		case E_WHILE_CONS:
 		case E_UNTIL_CONS:
 		case E_DOWHILE_CONS:
 		case E_DOUNTIL_CONS:
-			return loopop(n);
+			return loopop(n,do_ret);
 
 		case E_FOR_CONS:
 		case E_FORBY_CONS:
-			return forloop(n);
+			return forloop(n,do_ret);
 
 		case E_FORIN_CONS:
-			return forinloop(n);
+			return forinloop(n,do_ret);
 
 		case E_DIRECTCALL:
-			return funccallop(n,TRUE);
+			return funccallop(n,TRUE,do_ret);
 		case E_CALL:
-			return funccallop(n,FALSE);
+			return funccallop(n,FALSE,do_ret);
 		case E_RETURN:
 			{
 				ETree *l;
@@ -3162,6 +3278,17 @@ evaloper(ETree *n, int argeval)
 	}
 }
 
+#define RET_ERR	\
+	ETree *ret = copynode_args(n,r);	\
+	error_num = 0;				\
+	g_free(r);				\
+	return ret;
+
+#define RET_RES(x) \
+	freeargarr(r,n->comp.nargs);	\
+	g_free(r);			\
+	return makenum_ui((x));
+
 static ETree *
 evalcomp(ETree *n)
 {
@@ -3169,12 +3296,12 @@ evalcomp(ETree *n)
 	ETree **r;
 	ETree **ri;
 	int oper;
-	r = g_new(ETree *,n->nargs);
+	r = g_new(ETree *,n->comp.nargs);
 
-	if(evalargs(n,r,TRUE)==2)
+	if(evalargs(n->comp.args,r,TRUE)==2)
 		return NULL;
 	
-	for(ri=r,li=n->data.comp;li;li=g_list_next(li),ri++) {
+	for(ri=r,li=n->comp.comp;li;li=g_list_next(li),ri++) {
 		int lev;
 		oper = GPOINTER_TO_INT(li->data);
 		lev = arglevel(ri,2);
@@ -3183,76 +3310,46 @@ evalcomp(ETree *n)
 			case E_EQ_CMP:
 				if(!eqlnodes(ri[0],ri[1])) {
 					if(error_num) {
-						ETree *ret = copynode_args(n,r);
-						error_num = 0;
-						g_free(r);
-						return ret;
+						RET_ERR
 					}
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_NE_CMP:
 				if(eqlnodes(ri[0],ri[1])) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				} else if(error_num) {
-					ETree *ret = copynode_args(n,r);
-					error_num = 0;
-					g_free(r);
-					return ret;
+					RET_ERR
 				}
 				break;
 			case E_LT_CMP:
 				if(cmpnodes(ri[0],ri[1])>=0) {
 					if(error_num) {
-						ETree *ret = copynode_args(n,r);
-						error_num = 0;
-						g_free(r);
-						return ret;
+						RET_ERR
 					}
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_GT_CMP:
 				if(cmpnodes(ri[0],ri[1])<=0) {
 					if(error_num) {
-						ETree *ret = copynode_args(n,r);
-						error_num = 0;
-						g_free(r);
-						return ret;
+						RET_ERR
 					}
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_LE_CMP:
 				if(cmpnodes(ri[0],ri[1])>0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				} else if(error_num) {
-					ETree *ret = copynode_args(n,r);
-					error_num = 0;
-					g_free(r);
-					return ret;
+					RET_ERR
 				}
 				break;
 			case E_GE_CMP:
 				if(cmpnodes(ri[0],ri[1])<0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				} else if(error_num) {
-					ETree *ret = copynode_args(n,r);
-					error_num = 0;
-					g_free(r);
-					return ret;
+					RET_ERR
 				}
 				break;
 			default:
@@ -3264,94 +3361,74 @@ evalcomp(ETree *n)
 			case E_EQ_CMP:
 				if(!eqmatrix(ri[0],ri[1],&err)) {
 					if(err) {
-						ETree *ret = copynode_args(n,r);
-						g_free(r);
-						return ret;
+						RET_ERR
 					}
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_NE_CMP:
 				if(eqmatrix(ri[0],ri[1],&err)) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				} else if(err) {
-					ETree *ret = copynode_args(n,r);
-					g_free(r);
-					return ret;
+					RET_ERR
 				}
 				break;
 			default:
+				(*errorout)(_("Cannot compare matrixes"));
 				{
-					ETree *ret = copynode_args(n,r);
-					(*errorout)(_("Cannot compare matrixes"));
-					g_free(r);
-					return ret;
+					RET_ERR
 				}
 			}
 		} else if (lev==2) {
 			switch(oper) {
 			case E_EQ_CMP:
 				if(!eqstring(ri[0],ri[1])) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_NE_CMP:
 				if(eqstring(ri[0],ri[1])) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_LT_CMP:
 				if(cmpstring(ri[0],ri[1])>=0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_GT_CMP:
 				if(cmpstring(ri[0],ri[1])<=0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_LE_CMP:
 				if(cmpstring(ri[0],ri[1])>0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			case E_GE_CMP:
 				if(cmpstring(ri[0],ri[1])<0) {
-					freeargarr(r,n->nargs);
-					g_free(r);
-					return makenum_ui(0);
+					RET_RES(0)
 				}
 				break;
 			default:
 				g_assert_not_reached();
 			}
 		} else {
-			ETree *ret = copynode_args(n,r);
 			(*errorout)(_("Primitives must get numeric/matrix/string arguments"));
-			g_free(r);
-			return ret;
+			{
+				RET_ERR
+			}
 		}
 	}
-	freeargarr(r,n->nargs);
-	return makenum_ui(1);
+	RET_RES(1)
 }
 
+#undef RET_ERR
+#undef RET_RES
+
 ETree *
-evalnode(ETree *n)
+evalnode_full(ETree *n, int do_ret)
 {
 	if(evalnode_hook) {
 		static int i = 0;
@@ -3368,21 +3445,33 @@ evalnode(ETree *n)
 	switch(n->type) {
 	case NULL_NODE:
 	case VALUE_NODE:
-		return copynode(n);
+		if(do_ret)
+			return copynode(n);
+		else
+			return EMPTY_RET;
 	case MATRIX_NODE:
-		return evalmatrix(n);
+		if(n->mat.quoted)
+			return qevalmatrix(n);
+		else
+			return evalmatrix(n);
 	case OPERATOR_NODE:
-		return evaloper(n,TRUE);
+		return evaloper(n,TRUE,do_ret);
 	case IDENTIFIER_NODE:
 		return variableop(n);
 	case STRING_NODE:
 	case FUNCTION_NODE:
-		return copynode(n);
+		if(do_ret)
+			return copynode(n);
+		else
+			return EMPTY_RET;
 	case COMPARISON_NODE:
 		return evalcomp(n);
 	default:
 		(*errorout)(_("Unexpected node!"));
-		return copynode(n);
+		if(do_ret)
+			return copynode(n);
+		else
+			return EMPTY_RET;
 	}
 }
 
@@ -3391,7 +3480,7 @@ int
 isnodetrue(ETree *n, int *bad_node)
 {
 	if(n->type==STRING_NODE) {
-		if(n->data.str && *n->data.str)
+		if(n->str.str && *n->str.str)
 			return TRUE;
 		else 
 			return FALSE;
@@ -3400,7 +3489,7 @@ isnodetrue(ETree *n, int *bad_node)
 		if(bad_node) *bad_node = TRUE;
 		return FALSE;
 	}
-	if(mpw_sgn(n->data.value)!=0)
+	if(mpw_sgn(n->val.value)!=0)
 		return TRUE;
 	else
 		return FALSE;
@@ -3413,7 +3502,7 @@ eval_isnodetrue(ETree *n, int *exception, ETree **errorret)
 	if(exception) *exception = FALSE;
 	if(errorret) *errorret = NULL;
 	if(n->type==STRING_NODE) {
-		if(n->data.str && *n->data.str)
+		if(n->str.str && *n->str.str)
 			return TRUE;
 		else 
 			return FALSE;
@@ -3431,7 +3520,7 @@ eval_isnodetrue(ETree *n, int *exception, ETree **errorret)
 			return FALSE;
 		}
 		if(n->type==STRING_NODE) {
-			if(n->data.str && *n->data.str)
+			if(n->str.str && *n->str.str)
 				return TRUE;
 			else 
 				return FALSE;
@@ -3444,14 +3533,14 @@ eval_isnodetrue(ETree *n, int *exception, ETree **errorret)
 				freetree(m);
 			return FALSE;
 		}
-		if(mpw_sgn(m->data.value)!=0)
+		if(mpw_sgn(m->val.value)!=0)
 			r = TRUE;
 		else
 			r = FALSE;
 		freetree(m);
 		return r;
 	}
-	if(mpw_sgn(n->data.value)!=0)
+	if(mpw_sgn(n->val.value)!=0)
 		return TRUE;
 	else
 		return FALSE;
@@ -3462,16 +3551,14 @@ gather_comparisons(ETree *n)
 {
 	if(!n) return NULL;
 	if(n->type == SPACER_NODE) {
-		ETree *t  = n->args->data;
-		g_list_free(n->args);
-		n->args = NULL;
-		n->nargs = 0;
+		ETree *t = n->sp.arg;
+		n->sp.arg = NULL;
 		freenode(n);
 		return gather_comparisons(t);
 	} else if(n->type==OPERATOR_NODE) {
 		ETree *nn;
 		GList *li;
-		switch(n->data.oper) {
+		switch(n->op.oper) {
 		case E_EQ_CMP:
 		case E_NE_CMP:
 		case E_LT_CMP:
@@ -3480,59 +3567,59 @@ gather_comparisons(ETree *n)
 		case E_GE_CMP:
 			GET_NEW_NODE(nn);
 			nn->type = COMPARISON_NODE;
-			nn->nargs = 0;
-			nn->args = NULL;
-			nn->data.comp = NULL;
+			nn->comp.nargs = 0;
+			nn->comp.args = NULL;
+			nn->comp.comp = NULL;
 			
 			for(;;) {
 				ETree *t;
-				nn->args = g_list_append(nn->args,gather_comparisons(n->args->data));
-				nn->nargs++;
-				nn->data.comp =
-					g_list_append(nn->data.comp,
-						      GINT_TO_POINTER(n->data.oper));
+				nn->comp.args = g_list_append(nn->comp.args,gather_comparisons(n->op.args->data));
+				nn->comp.nargs++;
+				nn->comp.comp =
+					g_list_append(nn->comp.comp,
+						      GINT_TO_POINTER(n->op.oper));
 
-				t = n->args->next->data;
-				g_list_free(n->args);
+				t = n->op.args->next->data;
+				g_list_free(n->op.args);
 				freenode(n);
 				n = t;
 				if(n->type != OPERATOR_NODE ||
-				   (n->data.oper != E_EQ_CMP &&
-				    n->data.oper != E_NE_CMP &&
-				    n->data.oper != E_LT_CMP &&
-				    n->data.oper != E_GT_CMP &&
-				    n->data.oper != E_LE_CMP &&
-				    n->data.oper != E_GE_CMP)) {
-					nn->args = g_list_append(nn->args,gather_comparisons(n));
-					nn->nargs++;
+				   (n->op.oper != E_EQ_CMP &&
+				    n->op.oper != E_NE_CMP &&
+				    n->op.oper != E_LT_CMP &&
+				    n->op.oper != E_GT_CMP &&
+				    n->op.oper != E_LE_CMP &&
+				    n->op.oper != E_GE_CMP)) {
+					nn->comp.args = g_list_append(nn->comp.args,gather_comparisons(n));
+					nn->comp.nargs++;
 					break;
 				}
 			}
 			return nn;
 		default:
-			for(li=n->args;li;li=g_list_next(li))
+			for(li=n->op.args;li;li=g_list_next(li))
 				li->data = gather_comparisons(li->data);
 			return n;
 		}
 	} else if(n->type==MATRIX_NODE) {
 		int i,j;
-		if(!n->data.matrix) return n;
-		for(i=0;i<matrixw_width(n->data.matrix);i++) {
-			for(j=0;j<matrixw_height(n->data.matrix);j++) {
-				ETree *t = matrixw_set_index(n->data.matrix,i,j);
+		if(!n->mat.matrix) return n;
+		for(i=0;i<matrixw_width(n->mat.matrix);i++) {
+			for(j=0;j<matrixw_height(n->mat.matrix);j++) {
+				ETree *t = matrixw_set_index(n->mat.matrix,i,j);
 				if(t) {
-					matrixw_set_index(n->data.matrix,i,j) =
+					matrixw_set_index(n->mat.matrix,i,j) =
 						gather_comparisons(t);
 				}
 			}
 		}
 		return n;
 	} else if(n->type==FUNCTION_NODE) {
-		if(n->data.func->type!=USER_FUNC ||
-		   !n->data.func->data.user)
+		if(n->func.func->type!=USER_FUNC ||
+		   !n->func.func->data.user)
 			return n;
-		n->data.func->data.user =
-			gather_comparisons(n->data.func->data.user);
+		n->func.func->data.user =
+			gather_comparisons(n->func.func->data.user);
 		return n;
 	} else
 		return n;

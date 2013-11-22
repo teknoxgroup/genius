@@ -19,11 +19,11 @@
  * USA.
  */
 
+#include "config.h"
+
 #include <gnome.h>
 #include <gtk/gtk.h>
 #include <zvt/zvtterm.h>
-
-#include "config.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -669,6 +669,7 @@ the_getc(FILE *fp)
 			}
 			if(interrupted) {
 				readbuf = g_array_set_size(readbuf,0);
+				readbufl = 0;
 				return '\n';
 			}
 		}
@@ -739,6 +740,8 @@ catch_interrupts(GtkWidget *w, GdkEvent *e)
 		if(e->key.keyval == GDK_c &&
 		   e->key.state&GDK_CONTROL_MASK) {
 			interrupted = TRUE;
+			readbuf = g_array_set_size(readbuf,0);
+			readbufl = 0;
 			if(in_recursive)
 				gtk_main_quit();
 			return TRUE;
@@ -853,7 +856,7 @@ main(int argc, char *argv[])
 	set_new_errorout(geniuserror);
 	set_new_infoout(geniusinfo);
 
-	file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
+	file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
 	load_compiled_file(file,FALSE);
 	g_free(file);
 
@@ -878,14 +881,13 @@ main(int argc, char *argv[])
 	}
 
 	for(;;) {
-		char *str;
+		ETree *e;
 		rewind_file_info();
-		do
-			str = get_expression(&got_eof);
-		while(interrupted);
-		evalexp(str,NULL,rl_outstream,NULL,"= \e[01;34m",TRUE);
-		g_free(str);
-		fprintf(rl_outstream,"\e[0m");
+		e = get_p_expression();
+		if(e) {
+			evalexp_parsed(e,rl_outstream,NULL,"= \e[01;34m",TRUE);
+			fprintf(rl_outstream,"\e[0m");
+		}
 
 		if(infos) {
 			geniusinfobox(infos->str);

@@ -33,7 +33,19 @@ typedef enum {
 } EFuncType;
 
 typedef struct _EFunc EFunc;
-typedef struct _ETree ETree;
+typedef union _ETree ETree;
+/*typedef struct _ETreeNull ETreeNull;*/
+typedef struct _ETreeValue ETreeValue;
+typedef struct _ETreeMatrix ETreeMatrix;
+typedef struct _ETreeOperator ETreeOperator;
+typedef struct _ETreeIdentifier ETreeIdentifier;
+typedef struct _ETreeString ETreeString;
+typedef struct _ETreeFunction ETreeFunction;
+typedef struct _ETreeComparison ETreeComparison;
+typedef struct _ETreeMatrixRow ETreeMatrixRow;
+/*typedef struct _ETreeMatrixStart ETreeMatrixStart;*/
+/*typedef struct _ETreeExprlistStart ETreeExprlistStart;*/
+typedef struct _ETreeSpacer ETreeSpacer;
 typedef struct _Token Token;
 
 /*not defined here, but needed and we can't include matrixw.h, but
@@ -77,20 +89,85 @@ typedef enum {
 	SPACER_NODE
 } ETreeType;
 
-struct _ETree {
+/*struct _ETreeNull {
 	ETreeType type;
-	union {
-		mpw_t value;
-		int oper;
-		GList *comp;
-		Token *id;
-		char *str;
-		EFunc *func; /*anon function*/
-		MatrixW *matrix;
-		ETree *next; /*this is for keeping a free list*/
-	} data;
+};*/
+
+struct _ETreeValue {
+	ETreeType type;
+	mpw_t value;
+};
+
+struct _ETreeMatrix {
+	ETreeType type;
+	MatrixW *matrix;
+	guint quoted:1;
+};
+
+struct _ETreeOperator {
+	ETreeType type;
+	int oper;
 	int nargs;
 	GList *args;
 };
+
+struct _ETreeIdentifier {
+	ETreeType type;
+	Token *id;
+};
+
+struct _ETreeString {
+	ETreeType type;
+	char *str;
+};
+
+struct _ETreeFunction {
+	ETreeType type;
+	EFunc *func; /*anon function*/
+};
+
+struct _ETreeComparison {
+	ETreeType type;
+	int nargs;
+	GList *args;
+	GList *comp;
+};
+
+struct _ETreeMatrixRow {
+	ETreeType type;
+	int nargs;
+	GList *args;
+};
+
+/*struct _ETreeMatrixStart {
+	ETreeType type;
+};*/
+
+/*struct _ETreeExprlistStart {
+	ETreeType type;
+};*/
+
+struct _ETreeSpacer {
+	ETreeType type;
+	ETree *arg;
+};
+
+union _ETree {
+	ETreeType type;
+	ETree *next; /*for allocation purposes only*/
+	/*ETreeNull null;*/
+	ETreeValue val;
+	ETreeMatrix mat;
+	ETreeOperator op;
+	ETreeIdentifier id;
+	ETreeString str;
+	ETreeFunction func;
+	ETreeComparison comp;
+	ETreeMatrixRow row;
+	/*ETreeMatrixStart mats;*/
+	/*ETreeExprlistStart exps;*/
+	ETreeSpacer sp;
+};
+
 
 #endif

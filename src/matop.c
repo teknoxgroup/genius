@@ -19,6 +19,8 @@
  * USA.
  */
 
+#include "config.h"
+
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -74,7 +76,7 @@ value_matrix_multiply(MatrixW *res, MatrixW *m1, MatrixW *m2)
 			for(k=0;k<matrixw_width(m1);k++) {
 				ETree *l = matrixw_index(m1,k,j);
 				ETree *r = matrixw_index(m2,i,k);
-				mpw_mul(tmp,l->data.value,r->data.value);
+				mpw_mul(tmp,l->val.value,r->val.value);
 				mpw_add(accu,accu,tmp);
 				/*XXX: are there any problems that could occur
 				  here? ... I don't seem to see any, if there
@@ -114,7 +116,7 @@ div_row(MatrixW *m, int row, mpw_t div)
 	for(i=0;i<matrixw_width(m);i++) {
 		ETree *t = matrixw_set_index(m,i,row);
 		if(t)
-			mpw_div(t->data.value,t->data.value,div);
+			mpw_div(t->val.value,t->val.value,div);
 	}
 }
 
@@ -131,13 +133,13 @@ mul_sub_row(MatrixW *m, int row, mpw_t mul, int row2)
 		ETree *t = matrixw_set_index(m,i,row);
 		if(t) {
 			ETree *t2 = matrixw_set_index(m,i,row2);
-			mpw_mul(tmp,t->data.value,mul);
+			mpw_mul(tmp,t->val.value,mul);
 			if(!t2) {
 				mpw_neg(tmp,tmp);
 				matrixw_set_index(m,i,row2) = makenum_use(tmp);
 				mpw_init(tmp);
 			} else {
-				mpw_sub(t2->data.value,t2->data.value,tmp);
+				mpw_sub(t2->val.value,t2->val.value,tmp);
 			}
 		}
 	}
@@ -161,7 +163,7 @@ value_matrix_gauss(MatrixW *m, int reduce, int uppertriang, int stopsing, mpw_pt
 	for(i=0;i<matrixw_width(ret) && d<matrixw_height(ret);i++) {
 		for(j=d;j<matrixw_height(ret);j++) {
 			ETree *t = matrixw_set_index(ret,i,j);
-			if(t && mpw_sgn(t->data.value)!=0)
+			if(t && mpw_sgn(t->val.value)!=0)
 				break;
 		}
 		if(j==matrixw_height(ret)) {
@@ -185,8 +187,8 @@ value_matrix_gauss(MatrixW *m, int reduce, int uppertriang, int stopsing, mpw_pt
 			
 		for(j=d+1;j<matrixw_height(ret);j++) {
 			ETree *t = matrixw_set_index(ret,i,j);
-			if(t && mpw_sgn(t->data.value)!=0) {
-				mpw_div(tmp,t->data.value,piv->data.value);
+			if(t && mpw_sgn(t->val.value)!=0) {
+				mpw_div(tmp,t->val.value,piv->val.value);
 				mul_sub_row(ret,d,tmp,j);
 				if(simul)
 					mul_sub_row(simul,d,tmp,j);
@@ -203,8 +205,8 @@ value_matrix_gauss(MatrixW *m, int reduce, int uppertriang, int stopsing, mpw_pt
 		if(reduce) {
 			for(j=0;j<d;j++) {
 				ETree *t = matrixw_set_index(ret,i,j);
-				if(t && mpw_sgn(t->data.value)!=0) {
-					mpw_div(tmp,t->data.value,piv->data.value);
+				if(t && mpw_sgn(t->val.value)!=0) {
+					mpw_div(tmp,t->val.value,piv->val.value);
 					mul_sub_row(ret,d,tmp,j);
 					if(simul)
 						mul_sub_row(simul,d,tmp,j);
@@ -215,17 +217,17 @@ value_matrix_gauss(MatrixW *m, int reduce, int uppertriang, int stopsing, mpw_pt
 		for(ii=i+1;ii<matrixw_width(ret);ii++) {
 			ETree *t = matrixw_set_index(ret,ii,d);
 			if(t) {
-				mpw_div(t->data.value,
-					t->data.value,
-					piv->data.value);
+				mpw_div(t->val.value,
+					t->val.value,
+					piv->val.value);
 			}
 		}
 		if(detop)
-			mpw_div(detop,detop,piv->data.value);
+			mpw_div(detop,detop,piv->val.value);
 		if(simul)
-			div_row(simul,d,piv->data.value);
+			div_row(simul,d,piv->val.value);
 
-		mpw_set_ui(piv->data.value,1);
+		mpw_set_ui(piv->val.value,1);
 		d++;
 	}
 	
@@ -239,10 +241,10 @@ det2(mpw_t rop, MatrixW *m)
 {
 	mpw_t tmp;
 	mpw_init(tmp);
-	mpw_mul(rop,matrixw_index(m,0,0)->data.value,
-		matrixw_index(m,1,1)->data.value);
-	mpw_mul(tmp,matrixw_index(m,1,0)->data.value,
-		matrixw_index(m,0,1)->data.value);
+	mpw_mul(rop,matrixw_index(m,0,0)->val.value,
+		matrixw_index(m,1,1)->val.value);
+	mpw_mul(tmp,matrixw_index(m,1,0)->val.value,
+		matrixw_index(m,0,1)->val.value);
 	mpw_sub(rop,rop,tmp);
 	mpw_clear(tmp);
 }
@@ -253,39 +255,39 @@ det3(mpw_t rop, MatrixW *m)
 	mpw_t tmp;
 	mpw_init(tmp);
 
-	mpw_mul(rop,matrixw_index(m,0,0)->data.value,
-		matrixw_index(m,1,1)->data.value);
+	mpw_mul(rop,matrixw_index(m,0,0)->val.value,
+		matrixw_index(m,1,1)->val.value);
 	mpw_mul(rop,rop,
-		matrixw_index(m,2,2)->data.value);
+		matrixw_index(m,2,2)->val.value);
 
-	mpw_mul(tmp,matrixw_index(m,1,0)->data.value,
-		matrixw_index(m,2,1)->data.value);
+	mpw_mul(tmp,matrixw_index(m,1,0)->val.value,
+		matrixw_index(m,2,1)->val.value);
 	mpw_mul(tmp,tmp,
-		matrixw_index(m,0,2)->data.value);
+		matrixw_index(m,0,2)->val.value);
 	mpw_add(rop,rop,tmp);
 
-	mpw_mul(tmp,matrixw_index(m,2,0)->data.value,
-		matrixw_index(m,0,1)->data.value);
+	mpw_mul(tmp,matrixw_index(m,2,0)->val.value,
+		matrixw_index(m,0,1)->val.value);
 	mpw_mul(tmp,tmp,
-		matrixw_index(m,1,2)->data.value);
+		matrixw_index(m,1,2)->val.value);
 	mpw_add(rop,rop,tmp);
 
-	mpw_mul(tmp,matrixw_index(m,2,0)->data.value,
-		matrixw_index(m,1,1)->data.value);
+	mpw_mul(tmp,matrixw_index(m,2,0)->val.value,
+		matrixw_index(m,1,1)->val.value);
 	mpw_mul(tmp,tmp,
-		matrixw_index(m,0,2)->data.value);
+		matrixw_index(m,0,2)->val.value);
 	mpw_sub(rop,rop,tmp);
 
-	mpw_mul(tmp,matrixw_index(m,1,0)->data.value,
-		matrixw_index(m,0,1)->data.value);
+	mpw_mul(tmp,matrixw_index(m,1,0)->val.value,
+		matrixw_index(m,0,1)->val.value);
 	mpw_mul(tmp,tmp,
-		matrixw_index(m,2,2)->data.value);
+		matrixw_index(m,2,2)->val.value);
 	mpw_sub(rop,rop,tmp);
 
-	mpw_mul(tmp,matrixw_index(m,0,0)->data.value,
-		matrixw_index(m,2,1)->data.value);
+	mpw_mul(tmp,matrixw_index(m,0,0)->val.value,
+		matrixw_index(m,2,1)->val.value);
 	mpw_mul(tmp,tmp,
-		matrixw_index(m,1,2)->data.value);
+		matrixw_index(m,1,2)->val.value);
 	mpw_sub(rop,rop,tmp);
 
 	mpw_clear(tmp);
@@ -306,7 +308,7 @@ value_matrix_det(mpw_t rop, MatrixW *m)
 	}
 	switch(w) {
 	case 1:
-		mpw_set(rop,matrixw_index(m,0,0)->data.value);
+		mpw_set(rop,matrixw_index(m,0,0)->val.value);
 		break;
 	case 2:
 		det2(rop,m);
@@ -317,7 +319,7 @@ value_matrix_det(mpw_t rop, MatrixW *m)
 	default:
 		mpw_init(tmp);
 		mm = value_matrix_gauss(m,FALSE,TRUE,FALSE,tmp,NULL);
-		mpw_mul(rop,tmp,matrixw_index(mm,0,0)->data.value);
+		mpw_mul(rop,tmp,matrixw_index(mm,0,0)->val.value);
 		mpw_clear(tmp);
 		for(i=1;i<matrixw_width(mm);i++) {
 			ETree *t = matrixw_set_index(mm,i,i);
@@ -326,7 +328,7 @@ value_matrix_det(mpw_t rop, MatrixW *m)
 				mpw_set_ui(rop,0);
 				return TRUE;
 			}
-			mpw_mul(rop,rop,t->data.value);
+			mpw_mul(rop,rop,t->val.value);
 		}
 		matrixw_free(mm);
 		break;
