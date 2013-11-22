@@ -1,4 +1,5 @@
 #!@INTLTOOL_PERL@ -w
+# -*- Mode: perl; indent-tabs-mode: nil; c-basic-offset: 4  -*-
 
 #
 #  The Intltool Message Updater
@@ -29,7 +30,7 @@
 
 ## Release information
 my $PROGRAM = "intltool-update";
-my $VERSION = "0.30";
+my $VERSION = "0.31";
 my $PACKAGE = "intltool";
 
 ## Loaded modules
@@ -832,7 +833,7 @@ sub SubstituteVariable
     {
 	if (/^(\w+)=(.*)$/)
 	{
-	    $varhash{$1} = $2;
+	    ($varhash{$1} = $2) =~  s/^["'](.*)["']$/$1)/;
 	}
     }
     
@@ -856,7 +857,34 @@ sub CONF_Handle_Open
 
     if ($base_dirname =~ /^po(-.+)?$/) 
     {
-	if (-f "../configure.ac") 
+	if (-f "Makevars") 
+	{
+	    my $makefile_source;
+
+	    local (*IN);
+	    open (IN, "<Makevars") || die "can't open Makevars: $!";
+
+	    while (<IN>) 
+	    {
+		if (/^top_builddir[ \t]*=/) 
+		{
+		    $src_dir = $_;
+		    $src_dir =~ s/^top_builddir[ \t]*=[ \t]*([^ \t\n\r]*)/$1/;
+
+		    chomp $src_dir;
+                    if (-f "$src_dir" . "/configure.ac") {
+                        $conf_in = "$src_dir" . "/configure.ac" . "\n";
+                    } else {
+                        $conf_in = "$src_dir" . "/configure.in" . "\n";
+                    }
+		    last;
+		}
+	    }
+	    close IN;
+
+	    $conf_in || die "Cannot find top_builddir in Makevars.";
+	}
+	elsif (-f "../configure.ac") 
 	{
 	    $conf_in = "../configure.ac";
 	} 
@@ -869,7 +897,7 @@ sub CONF_Handle_Open
 	    my $makefile_source;
 
 	    local (*IN);
-	    open IN, "<Makefile" || die "can't open Makefile: $!";
+	    open (IN, "<Makefile") || return;
 
 	    while (<IN>) 
 	    {
@@ -889,7 +917,7 @@ sub CONF_Handle_Open
 	    $conf_in || die "Cannot find top_srcdir in Makefile.";
 	}
 
-	open (CONF, "<$conf_in") || die "can't open $conf_in: $!";
+	open (CONF, "<$conf_in");
     }
     else
     {
@@ -901,19 +929,20 @@ sub CONF_Handle_Open
 
 sub FindPackageName
 {
+    my $version;
+    my $domain = &FindMakevarsDomain;
+    my $name = $domain || "untitled";
+
     &CONF_Handle_Open;
 
     my $conf_source; {
 	local (*IN);
-	open (IN, "<&CONF") || die "can't open configure.in/configure.ac: $!";
+	open (IN, "<&CONF") || return $name;
 	seek (IN, 0, 0);
 	local $/; # slurp mode
 	$conf_source = <IN>;
 	close IN;
     }
-
-    my $name = "untitled";
-    my $version;
 
     # priority for getting package name:
     # 1. GETTEXT_PACKAGE
@@ -947,8 +976,11 @@ sub FindPackageName
     # used in configure.in/ac without the '$'
     $name =~ s/AC_/\$AC_/g;
     $name =~ s/\$\$/\$/g;
-    
+
+    $name = $domain if $domain;
+
     $name = SubstituteVariable ($name);
+    $name =~ s/^["'](.*)["']$/$1/;
 
     return $name if $name;
 }
@@ -958,17 +990,37 @@ sub FindPOTKeywords
 {
 
     my $keywords = "--keyword\=\_ --keyword\=N\_ --keyword\=U\_";
-    my $make_source; { 
+    my $varname = "XGETTEXT_OPTIONS";
+    my $make_source; {
 	local (*IN);
-	open (IN, "<Makefile.in.in") || return $keywords;
+	open (IN, "<Makevars") || (open(IN, "<Makefile.in.in") && ($varname = "XGETTEXT_KEYWORDS")) || return $keywords;
 	seek (IN, 0, 0);
 	local $/; # slurp mode
 	$make_source = <IN>;
 	close IN;
     }
 
-    # \s makes this not work, why?
-    $keywords = $1 if $make_source =~ /^XGETTEXT_KEYWORDS[ ]*=\[?([^\n\]]+)/m;
+    $keywords = $1 if $make_source =~ /^$varname[ ]*=\[?([^\n\]]+)/m;
     
     return $keywords;
+}
+
+sub FindMakevarsDomain
+{
+
+    my $domain = "";
+    my $makevars_source; { 
+	local (*IN);
+	open (IN, "<Makevars") || return $domain;
+	seek (IN, 0, 0);
+	local $/; # slurp mode
+	$makevars_source = <IN>;
+	close IN;
+    }
+
+    $domain = $1 if $makevars_source =~ /^DOMAIN[ ]*=\[?([^\n\]]+)/m;
+    $domain =~ s/^\s+//;
+    $domain =~ s/\s+$//;
+    
+    return $domain;
 }

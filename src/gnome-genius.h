@@ -38,4 +38,10 @@ extern calcstate_t calcstate;
 
 void genius_interrupt_calc (void);
 
+void genius_setup_window_cursor (GtkWidget *win, GdkCursorType type);
+void genius_unsetup_window_cursor (GtkWidget *win);
+
+gboolean genius_ask_question (GtkWidget *parent, const char *question);
+void genius_display_error (GtkWidget *parent, const char *err);
+
 #endif /* GNOME_GENIUS_H_ */

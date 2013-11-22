@@ -1,3 +1,166 @@
+Tue Aug 10 17:30:32 2004  George Lebl <jirka@5z.com>
+
+	* Release 0.7.0
+
+	* genius.spec.in: fixed up for the update-mime-database stuff
+
+Fri Aug 06 17:41:47 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: change some labels to make more sense.  On top view
+	  hide z axis temporarily.  Swap X and Y and rotate a bit to get that
+	  mirror effect fixed.
+
+Fri Aug 06 11:59:39 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: simple rotations of the 3d plot and add labels to
+	  axis.  It still bugs me that the X axis is reversed from what
+	  I would normally want (right to left rather then left to right,
+	  it's a mirror image so it's impossible to fix just by rotation),
+	  oh well.
+
+Thu Aug 05 15:39:17 2004  George Lebl <jirka@5z.com>
+
+	* gtkextra/gtkplot.c: replace sprintf with g_snprintf
+
+Thu Aug 05 02:14:15 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: when plotting surfaces, the expression may return
+	  something which has different number of arguments, so allow
+	  rerunning the function if this happens
+
+Thu Aug 05 01:28:43 2004  George Lebl <jirka@5z.com>
+
+	* gtkextra/Makefile.am: fix building by adding all the needed
+	  include dirs
+
+Thu Aug 05 01:21:03 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: wrap both long description labels on the create
+	  plot dialog and align them left.  Add mnemonics to the notebook
+	  tabs
+
+Thu Aug 05 00:52:15 2004  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: sin, cos, sinh, cosh were wrong for complex arguments
+
+Wed Aug 04 23:07:46 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: make window titles saner
+
+Wed Aug 04 22:33:46 2004  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.[ch], src/graphing.c: some cleanup on the line
+	  plotting stuff, don't draw outside the box, etc...
+
+	* src/graphing.c, src/mpwrap.[ch]: Add surface plotting, only one
+	  function at a time and can take one or two arguments (complex
+	  number or x and y).  Added both a dialog entry method and a
+	  SurfacePlot function
+
+	* configure.in: now it merits to raise version to 0.7.0
+
+Wed Aug 04 17:27:08 2004  George Lebl <jirka@5z.com>
+
+	* gui/gnome-genius.[ch], gui/graphing.c: implement the printing
+	  and ps/eps export at least in a rudimentary way.
+
+	* gui/gnome-genius.[ch]: fix the "file exists" dialogs, they were
+	  reversed on save, and on load the "can't open" dialog was wrong.
+
+Wed Aug 04 17:27:06 2004  George Lebl <jirka@5z.com>
+
+	* gtkextra/*, configure.in: import some files from gtkextra-2 for the
+	  GtkPlot* and friends
+
+	* src/gnome-genius.[ch], src/graphing.c: whack the old graphing
+	  nonsense and use gtkextra gtkplot.  Right now it has no added
+	  functionality over the old plotting, but it looks different.
+	  However we will have PS/EPS export and printing pretty easily
+	  now and further we can now easily also add parametric and surface
+	  plots and flows and such.
+
+Thu Jul 29 09:55:10 2004  George Lebl <jirka@5z.com>
+
+	* src/eval.[ch]: Allocate all memory for GelETree's, and the
+	  various loop structures in long continuous spaces with the
+	  structures aligned properly.  This seems to have little
+	  impact on speed but it has some impact on memory usage, about
+	  20% in a test that uses deep recursion.  As a side effect the
+	  free lists are no longer purged.  Also fix the MEM_DEBUG_FRIENDLY
+	  mode to actually free memory unless the MEM_DEBUG_SUPER_FRIENDLY
+	  is on.
+
+	* configure.in: automatically turn on -O3 for gcc, this seems
+	  to make a very minor dent in performance.  -fomit-frame-pointer
+	  does better, but we really don't want no debugging on this code.
+
+Wed Jul 28 18:26:49 2004  George Lebl <jirka@5z.com>
+
+	* src/Makefile.am: add longtest.gel to EXTRA_DIST
+
+	* src/calc.[ch]: change the way that gel_runexp behaves
+	  to avoid extra copying of whole expressions all the time.
+	  it now eats the expression and thus is consistent with
+	  the other calls such as gel_evalexp_parsed.
+
+	* src/parseutils.c, src/eval.[ch]: plug a small leak
+	  on boolean conversion
+
+	* src/eval.[ch]: Add whole bunch of debugging functionality
+	  especially for debugging memory.  Keep list of new trees
+	  in between expressions to test for memory leaks when
+	  EVAL_DEBUG is defined and we are MEM_DEBUG_FRIENDLY
+
+	* src/eval.c: fix leak in the if operation when the main
+	  tree was WHACKARGed and we'd forget that
+
+Wed Jul 28 16:09:23 2004  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.desktop.in: Move Name/Comment to the end to allow
+	  quicker (perhaps) parsing, add Mime-Type key.
+
+	* lib/statistics/basic.gel: fix StandardDeviation
+
+	* eval.c: fix nargs problem when making binary operation functions
+
+	* calc.c, eval.[ch], genius.c, gnome-genius.c, parse.y, parseutil.[ch],
+	  structs.h:  Fix pushing multiple operator arguments onto the stack
+	  in the correct order.  Compact all the separator operations into
+	  one with many arguments during parsing, this saves copying.  Add a
+	  GE_WHACKARG flag to the stack flags and whack the node after use,
+	  this saves some memory which got wasted by keeping things in memory
+	  because of the separator compactification.  Also make the memory
+	  operations much nicer when MEM_DEBUG_FRIENDLY is defined.
+
+	* src/mpwrap.c: work around a mpfr problem where random values from
+	  mpf_urandomb can be negative sometimes.  Also cache the random
+	  state to avoid reiniting/reseeding it all the time.
+
+	* src/geniustests.txt, src/longtest.gel: add a long test file
+
+Thu Jul 15 16:44:40 2004  George Lebl <jirka@5z.com>
+
+	* src/calc.c, src/compil.c, src/dict.c, src/eval.[ch], src/funclib.c,
+	  src/graphing.c, src/matop.[ch], src/matrixw.[ch], src/mpwrap.[ch],
+	  src/parse.y, src/parseutil.[ch], src/plugin.c, src/structs.h,
+	  src/util.[ch]:  Add native boolean types.  Make all boolean
+	  expressions return these, add the true and false functions and
+	  aliases, add IntegerFromBoolean and IsBoolean functions
+
+	* lib/functions/delta.gel, lib/linear_algebra/linear_algebra.gel,
+	  lib/misc/misc.gel, lib/number_theory/misc.gel,
+	  lib/number_theory/modulus.gel, lib/number_theory/primes.gel:
+	  Update for the boolean types, use where appropriate whack the
+	  old true/false functions.
+
+	* src/geniustests.txt: update tests to expect booleans where
+	  appropriate
+
+	* doc/manual.txt: updates for the booleans and some other cleanups
+	  and updates
+
+	* configure.in: raise version since the compiled format changed.
+
 Mon Jun 14 10:27:59 2004  George Lebl <jirka@5z.com>
 
 	* Release 0.6.1

@@ -91,8 +91,10 @@ GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
+GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
+HAVE_LIB = @HAVE_LIB@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
 INSTOBJEXT = @INSTOBJEXT@
 INTLDEPS = @INTLDEPS@
@@ -120,8 +122,10 @@ INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
+LIB = @LIB@
 LIBTOOL = @LIBTOOL@
 LN_S = @LN_S@
+LTLIB = @LTLIB@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
@@ -163,7 +167,7 @@ plugin_includedir = $(includedir)/genius
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
 
-INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_srcdir)/vicious-extensions				-I$(top_builddir)						-I$(top_builddir)/vicious-extensions				$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
+INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_srcdir)/vicious-extensions				-I$(top_srcdir)/gtkextra					-I$(top_builddir)						-I$(top_builddir)/vicious-extensions				-I$(top_builddir)/gtkextra					$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
 
 
 bin_PROGRAMS = @GNOME_GENIUS@ genius
@@ -175,7 +179,7 @@ EXTRA_PROGRAMS = gnome-genius genius-readline-helper-fifo
 gnome_genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			gnome-genius.c		gnome-genius.h		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
 
 
-gnome_genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lviciousui					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+gnome_genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lviciousui					-L$(top_builddir)/gtkextra			-lgtkextra-genius				-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helper.c
@@ -208,7 +212,7 @@ Desktop_in_files =  	@GNOME_GENIUS_DESKTOP_IN@
 
 Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
-EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	gnome-genius.desktop.in 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in 	genius.lang
+EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	longtest.gel 	gnome-genius.desktop.in 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in 	genius.lang
 
 
 Plugindesc_DATA = test.plugin
@@ -567,10 +571,18 @@ gnome-genius.o: gnome-genius.c ../config.h calc.h genius-i18n.h \
 graphing.o: graphing.c ../config.h ../vicious-extensions/vicious.h \
 	../vicious-extensions/ve-misc.h \
 	../vicious-extensions/ve-config.h \
-	../vicious-extensions/ve-signal.h calc.h genius-i18n.h \
-	structs.h mpwrap.h eval.h util.h dict.h funclib.h matrixw.h \
-	matrix.h compil.h plugin.h geloutput.h gnome-genius.h \
-	graphing.h
+	../vicious-extensions/ve-signal.h ../gtkextra/gtkextra.h \
+	../gtkextra/gtkplot.h ../gtkextra/gtkplotpc.h \
+	../gtkextra/gtkpsfont.h ../gtkextra/gtkplotpolar.h \
+	../gtkextra/gtkplot3d.h ../gtkextra/gtkplotdata.h \
+	../gtkextra/gtkplotsurface.h ../gtkextra/gtkplotdt.h \
+	../gtkextra/gtkplotcsurface.h ../gtkextra/gtkplotcanvas.h \
+	../gtkextra/gtkplotbar.h ../gtkextra/gtkplotbox.h \
+	../gtkextra/gtkplotflux.h ../gtkextra/gtkplotpixmap.h \
+	../gtkextra/gtkplotgdk.h ../gtkextra/gtkplotprint.h \
+	../gtkextra/gtkplotps.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h util.h dict.h funclib.h matrixw.h matrix.h compil.h \
+	plugin.h geloutput.h gnome-genius.h graphing.h
 inter.o: inter.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
 	dict.h plugin.h inter.h
 lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
@@ -600,8 +612,6 @@ plugread.o: plugread.c ../config.h ../vicious-extensions/vicious.h \
 	../vicious-extensions/ve-config.h \
 	../vicious-extensions/ve-signal.h calc.h genius-i18n.h \
 	structs.h mpwrap.h plugin.h plugread.h
-plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
-	mpwrap.h plugin.h plugread.h
 testplugin.lo testplugin.o : testplugin.c ../config.h calc.h \
 	genius-i18n.h structs.h mpwrap.h plug_api.h eval.h dict.h \
 	geloutput.h

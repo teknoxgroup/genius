@@ -1,5 +1,11 @@
 [Desktop Entry]
 Encoding=UTF-8
+Type=Application
+Exec=gnome-genius
+Icon=gnome-calc2.png
+Terminal=false
+Categories=Application;GNOME;Scientific;Math;Office;
+Mime-Type=text/x-genius;
 Name=Genius Math Tool
 Name[ca]=Eina matemàtica Genius
 Name[cs]=Matematický nástroj Genius
@@ -34,8 +40,3 @@ Comment[sr]=Математички алат и калкулатор Геније
 Comment[sr@Latn]=Matematički alat i kalkulator Genije
 Comment[sv]=Matematikverktyget och miniräknaren Genius
 Comment[zh_CN]=Genius 数学工具和计算器
-Type=Application
-Exec=gnome-genius
-Icon=gnome-calc2.png
-Terminal=false
-Categories=Application;GNOME;Scientific;Math;Office;

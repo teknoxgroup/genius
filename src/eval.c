@@ -35,16 +35,11 @@
 #include "compil.h"
 #include "utype.h"
 
-/*#define EVAL_DEBUG 1*/
-
 #ifdef EVAL_DEBUG
 #define EDEBUG(x) puts(x)
 #else
 #define EDEBUG(x) ;
 #endif
-
-/* Note: this won't be completely mem-debug friendly, but only mostly */
-/* #define MEM_DEBUG_FRIENDLY 1 */
 
 extern calcstate_t calcstate;
 
@@ -54,18 +49,32 @@ static GelEvalLoop *free_evl = NULL;
 static GelEvalFor *free_evf = NULL;
 static GelEvalForIn *free_evfi = NULL;
 
+#ifndef MEM_DEBUG_FRIENDLY
+static void _gel_make_free_evl (void);
+static void _gel_make_free_evf (void);
+static void _gel_make_free_evfi (void);
+#endif /* ! MEM_DEBUG_FRIENDLY */
+
 extern GHashTable *uncompiled;
 
 extern gboolean interrupted;
 
 extern char *genius_params[];
 
+#ifdef MEM_DEBUG_FRIENDLY
+static GelCtx *most_recent_ctx = NULL;
+#endif
+
 static inline void
 ge_add_stack_array(GelCtx *ctx)
 {
 	GelEvalStack *newstack;
 	if(!free_stack) {
-		newstack = g_new(GelEvalStack,1);
+#ifdef MEM_DEBUG_FRIENDLY
+		newstack = g_new0 (GelEvalStack, 1);
+#else
+		newstack = g_new (GelEvalStack, 1);
+#endif
 	} else {
 		newstack = free_stack;
 		free_stack = free_stack->next;
@@ -94,7 +103,10 @@ ge_remove_stack_array(GelCtx *ctx)
 
 	/*push it onto the list of free stack entries*/
 #ifdef MEM_DEBUG_FRIENDLY
+	memset (ctx->stack, 0xaa, sizeof (GelEvalStack));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 	g_free (ctx->stack);
+# endif /* !MEM_DEBUG_SUPER_FRIENDLY */
 #else /* MEM_DEBUG_FRIENDLY */
 	ctx->stack->next = free_stack;
 	free_stack = ctx->stack;
@@ -106,6 +118,20 @@ ge_remove_stack_array(GelCtx *ctx)
 	return TRUE;
 }
 
+#ifdef MEM_DEBUG_FRIENDLY
+#define GE_POP_STACK(thectx,pointer,flag) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack ||		\
+	   ge_remove_stack_array(ctx)) {				\
+		(flag) = GPOINTER_TO_INT(*(-- (thectx)->topstack));	\
+		*((thectx)->topstack) = NULL;	 			\
+		(pointer) = *(-- (thectx)->topstack);			\
+		*((thectx)->topstack) = NULL;	 			\
+	} else {							\
+		(flag) = GE_EMPTY_STACK;				\
+		(pointer) = NULL;					\
+	}								\
+}
+#else /* MEM_DEBUG_FRIENDLY */
 #define GE_POP_STACK(thectx,pointer,flag) { \
 	if((thectx)->topstack != (gpointer *)(thectx)->stack ||		\
 	   ge_remove_stack_array(ctx)) {				\
@@ -116,13 +142,14 @@ ge_remove_stack_array(GelCtx *ctx)
 		(pointer) = NULL;					\
 	}								\
 }
+#endif /* MEM_DEBUG_FRIENDLY */
 
-#define GE_PEEK_STACK(ctx,pointer,flag) { \
-	if((ctx)->topstack != (gpointer *)(ctx)->stack) {		\
-		(flag) = GPOINTER_TO_INT(*((ctx)->topstack - 1));	\
-		(pointer) = *((ctx)->topstack - 2);			\
-	} else if((ctx)->stack->next) {					\
-		gpointer *a = (gpointer) &((ctx)->stack->next->next);	\
+#define GE_PEEK_STACK(thectx,pointer,flag) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack) {		\
+		(flag) = GPOINTER_TO_INT(*((thectx)->topstack - 1));	\
+		(pointer) = *((thectx)->topstack - 2);			\
+	} else if((thectx)->stack->next) {				\
+		gpointer *a = (gpointer) &((thectx)->stack->next->next);\
 		(flag) = GPOINTER_TO_INT(*(--a));			\
 		(pointer) = *(--a);					\
 	} else {							\
@@ -131,22 +158,33 @@ ge_remove_stack_array(GelCtx *ctx)
 	}								\
 }
 
-#define GE_BLIND_POP_STACK(ctx) { \
-	if((ctx)->topstack != (gpointer *)(ctx)->stack ||	\
-	   ge_remove_stack_array(ctx)) {			\
-		(ctx)->topstack -= 2;				\
+#ifdef MEM_DEBUG_FRIENDLY
+#define GE_BLIND_POP_STACK(thectx) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack ||	\
+	   ge_remove_stack_array(thectx)) {			\
+		*(-- (thectx)->topstack) = NULL;		\
+		*(-- (thectx)->topstack) = NULL;		\
 	}							\
 }
+#else /* MEM_DEBUG_FRIENDLY */
+#define GE_BLIND_POP_STACK(thectx) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack ||	\
+	   ge_remove_stack_array(thectx)) {			\
+		(thectx)->topstack -= 2;			\
+	}							\
+}
+#endif /* MEM_DEBUG_FRIENDLY */
 
 static void mod_node(GelETree *n, mpw_ptr mod);
 static void mod_matrix (GelMatrixW *m, mpw_ptr mod);
 static inline GelEFunc * get_func_from (GelETree *l, gboolean silent);
+static int branches (int op) G_GNUC_CONST;
 
 
 /*returns the number of args for an operator, or -1 if it takes up till
   exprlist marker or -2 if it takes one more for the first argument*/
-int
-branches(int op)
+static int
+branches (int op)
 {
 	switch(op) {
 		case E_SEPAR: return 2;
@@ -248,12 +286,43 @@ gel_find_pre_function_modulo (GelCtx *ctx)
 	}
 }
 
+/*
+static gboolean
+find_on_stack (GelCtx *ctx, GelETree *etree, int *flag)
+{
+	GelEvalStack *stack = ctx->stack;
+	gpointer *iter = ctx->topstack;
+	gpointer *last = NULL;
+	if ((gpointer)iter == (gpointer)stack) {
+		if (stack->next == NULL)
+			return FALSE;
+		stack = stack->next;
+		iter = &(stack->stack[STACK_SIZE]);
+	}
+	while (TRUE) {
+		last = iter;
+		iter -= 2;
+		if (*iter == etree) {
+			*flag = (int)(*(iter+1));
+			return TRUE;
+		}
+		if ((gpointer)iter == (gpointer)stack) {
+			if (stack->next == NULL)
+				return FALSE;
+			stack = stack->next;
+			iter = &(stack->stack[STACK_SIZE]);
+		}
+	}
+}
+*/
+
 GelETree *
 gel_makenum_null (void)
 {
 	GelETree *n;
 	GET_NEW_NODE (n);
 	n->type = NULL_NODE;
+	n->any.next = NULL;
 	return n;
 }
 
@@ -301,6 +370,7 @@ gel_makenum_ui(unsigned long num)
 	n->type=VALUE_NODE;
 	mpw_init(n->val.value);
 	mpw_set_ui(n->val.value,num);
+	n->any.next = NULL;
 	return n;
 }
 
@@ -312,6 +382,7 @@ gel_makenum_si(long num)
 	n->type=VALUE_NODE;
 	mpw_init(n->val.value);
 	mpw_set_si(n->val.value,num);
+	n->any.next = NULL;
 	return n;
 }
 
@@ -323,6 +394,18 @@ gel_makenum_d (double num)
 	n->type = VALUE_NODE;
 	mpw_init (n->val.value);
 	mpw_set_d (n->val.value, num);
+	n->any.next = NULL;
+	return n;
+}
+
+GelETree *
+gel_makenum_bool (gboolean bool_)
+{
+	GelETree *n;
+	GET_NEW_NODE (n);
+	n->type = BOOL_NODE;
+	n->bool_.bool_ = bool_ ? 1 : 0;
+	n->any.next = NULL;
 	return n;
 }
 
@@ -333,6 +416,7 @@ gel_makenum(mpw_t num)
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	mpw_init_set(n->val.value,num);
+	n->any.next = NULL;
 	return n;
 }
 
@@ -344,6 +428,7 @@ gel_makenum_use(mpw_t num)
 	GET_NEW_NODE(n);
 	n->type=VALUE_NODE;
 	memcpy(n->val.value,num,sizeof(struct _mpw_t));
+	n->any.next = NULL;
 	return n;
 }
 
@@ -376,6 +461,13 @@ gel_makenum_from(GelETree *n, mpw_t num)
 	mpw_init_set(n->val.value,num);
 }
 
+void
+gel_makenum_bool_from (GelETree *n, gboolean bool_)
+{
+	n->type = BOOL_NODE;
+	n->bool_.bool_ = bool_ ? 1 : 0;
+}
+
 /*don't create a new number*/
 void
 gel_makenum_use_from(GelETree *n, mpw_t num)
@@ -390,7 +482,6 @@ freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
 	if(!n)
 		return;
 	switch(n->type) {
-	case NULL_NODE: break;
 	case VALUE_NODE:
 		mpw_clear(n->val.value);
 		break;
@@ -450,8 +541,30 @@ freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
 	default: break;
 	}
 	if(kill) {
+		/*
+		int flag;
+		if (most_recent_ctx != NULL &&
+		    find_on_stack (most_recent_ctx, n, &flag)) {
+			printf ("FOUND ON STACK (%p)!!!! %d\n", n,
+				   flag);
+		}
+		*/
+
 #ifdef MEM_DEBUG_FRIENDLY
+		if (most_recent_ctx != NULL &&
+		    most_recent_ctx->current == n) {
+			printf ("FOUND ON CURRENT (%p)!!!!\n", n);
+		}
+
+# ifdef EVAL_DEBUG
+		printf ("%s WHACKING NODE %p\n", G_STRLOC, n);
+		deregister_tree (n);
+# endif
+
+		memset (n, 0xaa, sizeof (GelETree));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 		g_free (n);
+# endif /* ! MEM_DEBUG_SUPER_FRIENDLY */
 #else
 		/*put onto the free list*/
 		n->any.next = free_trees;
@@ -466,6 +579,14 @@ gel_freetree(GelETree *n)
 	/*printf ("freeing: %p\n", n);*/
 	freetree_full(n,TRUE,TRUE);
 }
+
+void
+gel_emptytree(GelETree *n)
+{
+	/*printf ("freeing: %p\n", n);*/
+	freetree_full(n,TRUE,FALSE);
+}
+
 
 static inline void
 freenode(GelETree *n)
@@ -542,6 +663,11 @@ copynode_to(GelETree *empty, GelETree *o)
 		empty->ut.data = gel_copy_user_variable_data(o->ut.ttype,
 								o->ut.data);
 		break;
+	case BOOL_NODE:
+		empty->type = BOOL_NODE;
+		empty->any.next = o->any.next;
+		empty->bool_.bool_ = o->bool_.bool_;
+		break;
 	case MATRIX_ROW_NODE:
 		empty->type = MATRIX_ROW_NODE;
 		empty->any.next = o->any.next;
@@ -592,12 +718,21 @@ replacenode(GelETree *to, GelETree *from)
 	memcpy(to,from,sizeof(GelETree));
 
 #ifdef MEM_DEBUG_FRIENDLY
+
+# ifdef EVAL_DEBUG
+	printf ("%s WHACKING NODE %p\n", G_STRLOC, from);
+	deregister_tree (from);
+# endif
+
+	memset (from, 0xaa, sizeof (GelETree));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 	g_free (from);
-#else
+# endif
+#else /* MEM_DEBUG_FRIENDLY */
 	/*put onto the free list*/
 	from->any.next = free_trees;
 	free_trees = from;
-#endif
+#endif /* MEM_DEBUG_FRIENDLY */
 	to->any.next = next;
 
 	/*printf ("replaced from: %p\n", from);*/
@@ -612,7 +747,7 @@ copyreplacenode(GelETree *to, GelETree *from)
 }
 
 GelETree *
-makeoperator(int oper, GSList **stack)
+makeoperator (int oper, GSList **stack)
 {
 	GelETree *n;
 	int args;
@@ -620,8 +755,9 @@ makeoperator(int oper, GSList **stack)
 	args = branches(oper);
 	if(args>=0) {
 		int i;
-		for(i=0;i<args;i++) {
-			GelETree *tree = stack_pop(stack);
+		int popargs = args;
+		for (i = 0; i < popargs; i++) {
+			GelETree *tree = stack_pop (stack);
 			if(!tree)  {
 				while(list) {
 					GelETree *a = list->any.next;
@@ -630,8 +766,30 @@ makeoperator(int oper, GSList **stack)
 				}
 				return NULL;
 			}
-			tree->any.next = list;
-			list = tree;
+			/* just reduce the list for separators */
+			if (oper == E_SEPAR &&
+			    tree->type == OPERATOR_NODE &&
+			    tree->op.oper == E_SEPAR) {
+				int extranum = 1;
+				GelETree *last;
+
+				/* there are at least two arguments */
+				last = tree->op.args->any.next;
+				while (last->any.next != NULL) {
+					last = last->any.next;
+					extranum ++;
+				}
+
+				args += extranum;
+
+				last->any.next = list;
+				list = tree->op.args;
+
+				freenode (tree);
+			} else {
+				tree->any.next = list;
+				list = tree;
+			}
 		}
 	} else {
 		int i=0;
@@ -683,7 +841,7 @@ makeoperator(int oper, GSList **stack)
 	
 	n->op.args = list;
 	n->op.nargs = args;
-	
+
 	/*try_to_precalc_op(n);*/
 
 	return n;
@@ -1082,12 +1240,24 @@ funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs)
 
 /*compare nodes, return TRUE if equal
   makes them the same type as a side effect*/
-static int
-eqlnodes(GelETree *l, GelETree *r)
+static gboolean
+eqlnodes (GelETree *l, GelETree *r)
 {
-	int n = mpw_eql(l->val.value,r->val.value);
-	if G_UNLIKELY (error_num) return 0;
-	return n;
+	if (l->type == BOOL_NODE ||
+	    r->type == BOOL_NODE) {
+		gboolean lt = gel_isnodetrue (l, NULL);
+		gboolean rt = gel_isnodetrue (r, NULL);
+		if ((lt && ! rt) ||
+		    ( ! lt && rt)) {
+			return 0;
+		} else {
+			return 1;
+		}
+	} else {
+		gboolean n = mpw_eql(l->val.value,r->val.value);
+		if G_UNLIKELY (error_num) return 0;
+		return n;
+	}
 }
 
 /*compare nodes, return -1 if first one is smaller, 0 if they are
@@ -1125,7 +1295,7 @@ static int
 logicalxorop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	gboolean bad_node = FALSE;
-	gboolean ret = isnodetrue (l, &bad_node) != isnodetrue (r,& bad_node);
+	gboolean ret = gel_isnodetrue (l, &bad_node) != gel_isnodetrue (r,& bad_node);
 
 	if G_UNLIKELY (bad_node || error_num) {
 		error_num = NO_ERROR;
@@ -1133,7 +1303,7 @@ logicalxorop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	}
 	freetree_full (n, TRUE, FALSE);
 
-	gel_makenum_ui_from (n, ret);
+	gel_makenum_bool_from (n, ret);
 
 	return TRUE;
 }
@@ -1142,13 +1312,13 @@ static int
 logicalnotop(GelCtx *ctx, GelETree *n, GelETree *l)
 {
 	gboolean bad_node = FALSE;
-	gboolean ret = !isnodetrue(l,&bad_node);
+	gboolean ret = !gel_isnodetrue(l,&bad_node);
 	if G_UNLIKELY (bad_node || error_num) {
 		error_num = NO_ERROR;
 		return TRUE;
 	}
 	freetree_full(n,TRUE,FALSE);
-	gel_makenum_ui_from (n, ret);
+	gel_makenum_bool_from (n, ret);
 	return TRUE;
 }
 
@@ -1174,27 +1344,31 @@ eqstring(GelETree *a, GelETree *b)
 	return r;
 }
 
-static int
+static gboolean
 eqmatrix(GelETree *a, GelETree *b, int *error)
 {
 	gboolean r = FALSE;
 	int i,j;
 	if(a->type == MATRIX_NODE &&
 	   b->type == MATRIX_NODE) {
-		if G_UNLIKELY (!gel_is_matrix_value_only(a->mat.matrix) ||
-			       !gel_is_matrix_value_only(b->mat.matrix)) {
-			gel_errorout (_("Cannot compare non value-only matrixes"));
+		if G_UNLIKELY (!gel_is_matrix_value_or_bool_only(a->mat.matrix) ||
+			       !gel_is_matrix_value_or_bool_only(b->mat.matrix)) {
+			gel_errorout (_("Cannot compare non value or bool only matrixes"));
 			*error = TRUE;
 			return 0;
 		}
+
 		if G_UNLIKELY (gel_matrixw_width(a->mat.matrix)!=
 			       gel_matrixw_width(b->mat.matrix) ||
 			       gel_matrixw_height(a->mat.matrix)!=
-			       gel_matrixw_height(b->mat.matrix))
+			       gel_matrixw_height(b->mat.matrix)) {
 			r = FALSE;
-		else {
+		} else {
 			GelMatrixW *m1 = a->mat.matrix;
 			GelMatrixW *m2 = b->mat.matrix;
+			gboolean pure_values
+				= (gel_is_matrix_value_only (a->mat.matrix) ||
+				   gel_is_matrix_value_only (b->mat.matrix));
 			
 			r = TRUE;
 
@@ -1203,13 +1377,25 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 					GelETree *t1,*t2;
 					t1 = gel_matrixw_index(m1,i,j);
 					t2 = gel_matrixw_index(m2,i,j);
-					if ( ! mpw_eql (t1->val.value,
-							t2->val.value)) {
-						r = FALSE;
-						break;
+
+					if (pure_values) {
+						if ( ! mpw_eql (t1->val.value,
+								t2->val.value)) {
+							r = FALSE;
+							break;
+						}
+					} else {
+						gboolean t1t = gel_isnodetrue (t1, NULL);
+						gboolean t2t = gel_isnodetrue (t2, NULL);
+						if ((t1t && ! t2t) ||
+						    ( ! t1t && t2t)) {
+							r = FALSE;
+							break;
+						}
 					}
 				}
-				if(!r) break;
+				if ( ! r)
+					break;
 			}
 		}
 	} else if(a->type == MATRIX_NODE) {
@@ -1219,12 +1405,13 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 			r = FALSE;
 		} else {
 			GelETree *t = gel_matrixw_index(m,0,0);
-			if G_UNLIKELY (t->type != VALUE_NODE) {
-				gel_errorout (_("Cannot compare non value-only matrixes"));
+			if G_UNLIKELY (t->type != VALUE_NODE &&
+				       t->type != BOOL_NODE) {
+				gel_errorout (_("Cannot compare non value or bool only matrixes"));
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_eql(t->val.value,b->val.value);
+			r = eqlnodes (t, b);
 		}
 	} else if(b->type == MATRIX_NODE) {
 		GelMatrixW *m = b->mat.matrix;
@@ -1233,12 +1420,13 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 			r = FALSE;
 		} else {
 			GelETree *t = gel_matrixw_index(m,0,0);
-			if G_UNLIKELY (t->type != VALUE_NODE) {
-				gel_errorout (_("Cannot compare non value-only matrixes"));
+			if G_UNLIKELY (t->type != VALUE_NODE &&
+				       t->type != BOOL_NODE) {
+				gel_errorout (_("Cannot compare non value or bool only matrixes"));
 				*error = TRUE;
 				return 0;
 			}
-			r = mpw_eql(t->val.value,a->val.value);
+			r = eqlnodes (t, a);
 		}
 	} else
 		g_assert_not_reached();
@@ -1405,6 +1593,44 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 			return n;
 		}
 		return gel_makenum_use(res);
+	} else if ((rr->type == VALUE_NODE || rr->type == BOOL_NODE) &&
+		   (ll->type == VALUE_NODE || ll->type == BOOL_NODE)) {
+		gboolean lt = gel_isnodetrue (ll, NULL);
+		gboolean rt = gel_isnodetrue (rr, NULL);
+		gboolean res;
+		gboolean got_res = FALSE;
+
+		switch (oper) {
+		case E_PLUS:
+			res = lt || rt;
+			got_res = TRUE;
+			break;
+		case E_MINUS:
+			res = lt || ! rt;
+			got_res = TRUE;
+			break;
+		case E_MUL:
+		case E_ELTMUL:
+			res = lt && rt;
+			got_res = TRUE;
+			break;
+		default: 
+			got_res = FALSE;
+			break;
+		}
+		if G_UNLIKELY ( ! got_res ||
+			       error_num == NUMERICAL_MPW_ERROR) {
+			GET_NEW_NODE(n);
+			n->type = OPERATOR_NODE;
+			n->op.oper = oper;
+			n->op.args = copynode(ll);
+			n->op.args->any.next = copynode(rr);
+			n->op.args->any.next->any.next = NULL;
+			n->op.nargs = 2;
+			error_num = NO_ERROR;
+			return n;
+		}
+		return gel_makenum_bool (res);
 	} else {
 		/*this is the less common case so we can get around with a
 		  wierd thing, we'll just make a new fake node and pretend
@@ -1510,6 +1736,9 @@ matrix_absnegfac_op(GelCtx *ctx, GelETree *n, GelETree *l)
 				default:
 					g_assert_not_reached();
 				}
+			} else if (t->type == BOOL_NODE &&
+				   n->op.oper == E_NEG) {
+				t->bool_.bool_ = ! t->bool_.bool_;
 			} else {
 				GelETree *nn;
 				GET_NEW_NODE(nn);
@@ -1971,22 +2200,28 @@ gel_mod_node (GelCtx *ctx, GelETree *n)
 
 /*return TRUE if node is true (a number node !=0), false otherwise*/
 gboolean
-isnodetrue(GelETree *n, gboolean *bad_node)
+gel_isnodetrue (GelETree *n, gboolean *bad_node)
 {
-	if(n->type==STRING_NODE) {
+	switch (n->type) {
+	case NULL_NODE:
+		return FALSE;
+	case VALUE_NODE:
+		if (mpw_sgn(n->val.value)!=0)
+			return TRUE;
+		else
+			return FALSE;
+	case STRING_NODE:
 		if(n->str.str && *n->str.str)
 			return TRUE;
 		else 
 			return FALSE;
-	}
-	if(n->type!=VALUE_NODE) {
-		if(bad_node) *bad_node = TRUE;
+	case BOOL_NODE:
+		return n->bool_.bool_;
+	default:
+		if (bad_node)
+			*bad_node = TRUE;
 		return FALSE;
-	}
-	if(mpw_sgn(n->val.value)!=0)
-		return TRUE;
-	else
-		return FALSE;
+	} 
 }
 
 static gboolean
@@ -2118,6 +2353,49 @@ numerical_pow (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	return TRUE;
 }
 
+static gboolean
+boolean_add (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	gboolean lt = gel_isnodetrue (l, NULL);
+	gboolean rt = gel_isnodetrue (r, NULL);
+
+	freetree_full (n, TRUE, FALSE);
+	gel_makenum_bool_from (n, lt || rt);
+	return TRUE;
+}
+
+static gboolean
+boolean_sub (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	gboolean lt = gel_isnodetrue (l, NULL);
+	gboolean rt = gel_isnodetrue (r, NULL);
+
+	freetree_full (n, TRUE, FALSE);
+	gel_makenum_bool_from (n, lt || ! rt);
+	return TRUE;
+}
+
+static gboolean
+boolean_mul (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	gboolean lt = gel_isnodetrue (l, NULL);
+	gboolean rt = gel_isnodetrue (r, NULL);
+
+	freetree_full (n, TRUE, FALSE);
+	gel_makenum_bool_from (n, lt && rt);
+	return TRUE;
+}
+
+static gboolean
+boolean_neg (GelCtx *ctx, GelETree *n, GelETree *l)
+{
+	gboolean lt = gel_isnodetrue (l, NULL);
+
+	freetree_full (n, TRUE, FALSE);
+	gel_makenum_bool_from (n, ! lt);
+	return TRUE;
+}
+
 static GelToken *
 get_fake_token (int i)
 {
@@ -2183,7 +2461,7 @@ function_finish_bin_op (GelCtx *ctx, GelETree *n, int nargs, GelETree *la, GelET
 	nn->op.args = la;
 	nn->op.args->any.next = lb;
 	nn->op.args->any.next->any.next = NULL;
-	nn->op.nargs = 1;
+	nn->op.nargs = 2;
 
 	args = NULL;
 	for (i = nargs -1; i >= 0; i--) {
@@ -2404,6 +2682,7 @@ static const GelOper prim_table[E_OPER_LAST] = {
 			 (GelEvalFunc)something_function_bin_op},
 		 {{GO_VALUE|GO_POLYNOMIAL,GO_VALUE|GO_POLYNOMIAL,0},
 			 (GelEvalFunc)polynomial_add_sub_op},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,GO_VALUE|GO_STRING|GO_BOOL,0},(GelEvalFunc)boolean_add},
 	 }},
 	/*E_MINUS*/
 	{{
@@ -2419,6 +2698,7 @@ static const GelOper prim_table[E_OPER_LAST] = {
 			 (GelEvalFunc)function_something_bin_op},
 		 {{GO_VALUE|GO_MATRIX,GO_FUNCTION|GO_IDENTIFIER,0},
 			 (GelEvalFunc)something_function_bin_op},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,GO_VALUE|GO_STRING|GO_BOOL,0},(GelEvalFunc)boolean_sub},
 	 }},
 	/*E_MUL*/
 	{{
@@ -2432,6 +2712,7 @@ static const GelOper prim_table[E_OPER_LAST] = {
 			 (GelEvalFunc)function_something_bin_op},
 		 {{GO_VALUE|GO_MATRIX,GO_FUNCTION|GO_IDENTIFIER,0},
 			 (GelEvalFunc)something_function_bin_op},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,GO_VALUE|GO_STRING|GO_BOOL,0},(GelEvalFunc)boolean_mul},
 	 }},
 	/*E_ELTMUL*/
 	{{
@@ -2445,6 +2726,7 @@ static const GelOper prim_table[E_OPER_LAST] = {
 			 (GelEvalFunc)function_something_bin_op},
 		 {{GO_VALUE|GO_MATRIX,GO_FUNCTION|GO_IDENTIFIER,0},
 			 (GelEvalFunc)something_function_bin_op},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,GO_VALUE|GO_STRING|GO_BOOL,0},(GelEvalFunc)boolean_mul},
 	 }},
 	/*E_DIV*/
 	{{
@@ -2525,6 +2807,7 @@ static const GelOper prim_table[E_OPER_LAST] = {
 		 {{GO_MATRIX,0,0},(GelEvalFunc)matrix_absnegfac_op},
 		 {{GO_FUNCTION|GO_IDENTIFIER,0,0},
 			 (GelEvalFunc)function_uni_op},
+		 {{GO_BOOL,0,0},(GelEvalFunc)boolean_neg},
 	 }},
 	/*E_EXP*/
 	{{
@@ -2609,12 +2892,12 @@ static const GelOper prim_table[E_OPER_LAST] = {
 	/*E_LOGICAL_OR*/ EMPTY_PRIM,
 	/*E_LOGICAL_XOR*/
 	{{
-		 {{GO_VALUE|GO_STRING,GO_VALUE|GO_STRING,0},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,GO_VALUE|GO_STRING|GO_BOOL,0},
 			 (GelEvalFunc)logicalxorop},
 	 }},
 	/*E_LOGICAL_NOT*/
 	{{
-		 {{GO_VALUE|GO_STRING,0,0},(GelEvalFunc)logicalnotop},
+		 {{GO_VALUE|GO_STRING|GO_BOOL,0,0},(GelEvalFunc)logicalnotop},
 		 {{GO_FUNCTION|GO_IDENTIFIER,0,0},
 			 (GelEvalFunc)function_uni_op},
 	 }},
@@ -2651,6 +2934,11 @@ purge_free_lists(void)
 		free_stack = free_stack->next;
 		g_free(evs);
 	}
+	/* FIXME: we should have some sort of compression stuff, but
+	   we allocate these in chunks, so normally we can never free
+	   them again.  We could use the type field to mark things
+	   and then do some compression. */
+#if 0
 	while(free_evl) {
 		GelEvalLoop *evl = free_evl;
 		free_evl = (GelEvalLoop *)free_evl->condition;
@@ -2671,18 +2959,21 @@ purge_free_lists(void)
 		free_trees = free_trees->any.next;
 		g_free(et);
 	}
+#endif
 }
 
 static inline GelEvalLoop *
 evl_new (GelETree *cond, GelETree *body, gboolean is_while, gboolean body_first)
 {
 	GelEvalLoop *evl;
-	if(!free_evl) {
-		evl = g_new(GelEvalLoop,1);
-	} else {
-		evl = free_evl;
-		free_evl = (GelEvalLoop *)free_evl->condition;
-	}
+#ifdef MEM_DEBUG_FRIENDLY
+	evl = g_new0 (GelEvalLoop, 1);
+#else
+	if G_UNLIKELY (free_evl == NULL)
+		_gel_make_free_evl ();
+	evl = free_evl;
+	free_evl = (GelEvalLoop *)free_evl->condition;
+#endif
 	evl->condition = cond;
 	evl->body = body;
 	evl->is_while = is_while ? 1 : 0;
@@ -2694,10 +2985,12 @@ static inline void
 evl_free(GelEvalLoop *evl)
 {
 #ifdef MEM_DEBUG_FRIENDLY
-	memset (evl, 0, sizeof (GelEvalLoop));
+	memset (evl, 0xaa, sizeof (GelEvalLoop));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 	g_free (evl);
+# endif
 #else
-	(GelEvalLoop *)evl->condition = free_evl;
+	evl->condition = (gpointer)free_evl;
 	free_evl = evl;
 #endif
 }
@@ -2720,12 +3013,14 @@ evf_new (GelEvalForType type,
 	 GelToken *id)
 {
 	GelEvalFor *evf;
-	if(!free_evf) {
-		evf = g_new(GelEvalFor,1);
-	} else {
-		evf = free_evf;
-		free_evf = (GelEvalFor *)free_evf->body;
-	}
+#ifdef MEM_DEBUG_FRIENDLY
+	evf = g_new0 (GelEvalFor, 1);
+#else
+	if G_UNLIKELY (free_evf == NULL)
+		_gel_make_free_evf ();
+	evf = free_evf;
+	free_evf = (GelEvalFor *)free_evf->body;
+#endif
 	evf->type = type;
 	evf->x = x;
 	evf->to = to;
@@ -2742,9 +3037,12 @@ static inline void
 evf_free(GelEvalFor *evf)
 {
 #ifdef MEM_DEBUG_FRIENDLY
+	memset (evf, 0xaa, sizeof (GelEvalFor));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 	g_free (evf);
+# endif
 #else
-	(GelEvalFor *)evf->body = free_evf;
+	evf->body = (gpointer)free_evf;
 	free_evf = evf;
 #endif
 }
@@ -2753,12 +3051,14 @@ static inline GelEvalForIn *
 evfi_new (GelEvalForType type, GelMatrixW *mat, GelETree *body, GelETree *orig_body, GelToken *id)
 {
 	GelEvalForIn *evfi;
-	if(!free_evfi) {
-		evfi = g_new(GelEvalForIn,1);
-	} else {
-		evfi = free_evfi;
-		free_evfi = (GelEvalForIn *)free_evfi->body;
-	}
+#ifdef MEM_DEBUG_FRIENDLY
+	evfi = g_new0 (GelEvalForIn, 1);
+#else
+	if G_UNLIKELY (free_evfi == NULL)
+		_gel_make_free_evfi ();
+	evfi = free_evfi;
+	free_evfi = (GelEvalForIn *)free_evfi->body;
+#endif
 	evfi->type = type;
 	evfi->i = evfi->j = 0;
 	evfi->mat = mat;
@@ -2773,9 +3073,12 @@ static inline void
 evfi_free(GelEvalForIn *evfi)
 {
 #ifdef MEM_DEBUG_FRIENDLY
+	memset (evfi, 0xaa, sizeof (GelEvalForIn));
+# ifndef MEM_DEBUG_SUPER_FRIENDLY
 	g_free (evfi);
+# endif
 #else
-	(GelEvalForIn *)evfi->body = free_evfi;
+	evfi->body = (gpointer)free_evfi;
 	free_evfi = evfi;
 #endif
 }
@@ -2972,24 +3275,27 @@ iter_derefvarop(GelCtx *ctx, GelETree *n)
 
 #define RET_RES(x) \
 	freetree_full(n,TRUE,FALSE);	\
-	gel_makenum_ui_from(n,x);		\
+	gel_makenum_bool_from(n,x);	\
 	return;
 
 /*returns 0 if all numeric, 1 if numeric/matrix, 2 if contains string, 3 otherwise*/
 static int
-arglevel (GelETree *r, int cnt)
+arglevel (GelETree *r, int cnt, gboolean bool_ok)
 {
 	int i;
 	int level = 0;
 	for(i=0;i<cnt;i++,r = r->any.next) {
-		if(r->type!=VALUE_NODE) {
-			if(r->type==MATRIX_NODE)
-				level = level<1?1:level;
-			else if(r->type==STRING_NODE)
-				level = 2;
-			else
-				return 3;
-		}
+		if (r->type == VALUE_NODE)
+			continue;
+		if (bool_ok && r->type == BOOL_NODE)
+			continue;
+
+		if(r->type==MATRIX_NODE)
+			level = level<1?1:level;
+		else if(r->type==STRING_NODE)
+			level = 2;
+		else
+			return 3;
 	}
 	return level;
 }
@@ -3004,8 +3310,12 @@ evalcomp(GelETree *n)
 		int oper = GPOINTER_TO_INT(oli->data);
 		gboolean err = FALSE;
 		GelETree *l = ali,*r = ali->any.next;
+		gboolean bool_ok = (oper == E_EQ_CMP ||
+				    oper == E_NE_CMP);
 
-		switch(arglevel(ali,2)) {
+		switch (arglevel (ali,
+				  2,
+				  bool_ok)) {
 		case 0:
 			switch(oper) {
 			case E_EQ_CMP:
@@ -3141,6 +3451,11 @@ static inline void
 ev_free_special_data(GelCtx *ctx, gpointer data, int flag)
 {
 	switch(flag) {
+	case (GE_POST | GE_WHACKARG):
+	case (GE_PRE | GE_WHACKARG):
+		/* WHACKWHACK */
+		gel_freetree (data);
+		break;
 	case GE_FUNCCALL:
 		/*we are crossing a boundary, we need to free a context*/
 		d_popcontext ();
@@ -3188,7 +3503,7 @@ ev_free_special_data(GelCtx *ctx, gpointer data, int flag)
 }
 
 static gboolean
-push_setmod (GelCtx *ctx, GelETree *n)
+push_setmod (GelCtx *ctx, GelETree *n, gboolean whackarg)
 {
 	GelETree *l, *r;
 
@@ -3202,7 +3517,7 @@ push_setmod (GelCtx *ctx, GelETree *n)
 		return FALSE;
 	}
 
-	GE_PUSH_STACK (ctx, n, GE_POST);
+	GE_PUSH_STACK (ctx, n, GE_ADDWHACKARG (GE_POST, whackarg));
 	GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
 
 	ctx->modulo = g_new (struct _mpw_t, 1);
@@ -3210,6 +3525,7 @@ push_setmod (GelCtx *ctx, GelETree *n)
 
 	ctx->post = FALSE;
 	ctx->current = l;
+	ctx->whackarg = FALSE;
 
 	return TRUE;
 }
@@ -3219,26 +3535,41 @@ iter_pop_stack(GelCtx *ctx)
 {
 	gpointer data;
 	int flag;
+	EDEBUG("---- iter_pop_stack ----");
+
+#ifdef MEM_DEBUG_FRIENDLY
+	ctx->current = NULL;
+	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
+#endif
 	
 	for(;;) {
 		GE_POP_STACK(ctx,data,flag);
-		switch(flag) {
+#ifdef EVAL_DEBUG
+		printf ("  ---- stack pop %p %d ----", data, flag);
+#endif
+		switch(flag & GE_MASK) {
 		case GE_EMPTY_STACK:
 			EDEBUG("   POPPED AN EMPTY STACK");
 			ctx->current = NULL;
+			ctx->whackarg = FALSE;
 			return;
 		case GE_PRE:
 			ctx->post = FALSE;
 			ctx->current = data;
+			ctx->whackarg = (flag & GE_WHACKARG);
 #ifdef EVAL_DEBUG
-			printf("   POPPED A PRE NODE(%d)\n",ctx->current->type);
+			printf("   POPPED A PRE NODE(%d) whack %d\n",
+			       ctx->current->type, ctx->whackarg);
 #endif
 			return;
 		case GE_POST:
 			ctx->post = TRUE;
 			ctx->current = data;
+			ctx->whackarg = (flag & GE_WHACKARG);
 #ifdef EVAL_DEBUG
-			printf("   POPPED A POST NODE(%d)\n",ctx->current->type);
+			printf("   POPPED A POST NODE(%d) whack %d\n",
+			       ctx->current->type, ctx->whackarg);
 #endif
 			return;
 		case GE_AND:
@@ -3248,42 +3579,56 @@ iter_pop_stack(GelCtx *ctx)
 				gboolean ret;
 				gboolean bad_node = FALSE;
 				EDEBUG("    POPPED AN OR or AND");
-				ret = isnodetrue(li,&bad_node);
+				ret = gel_isnodetrue(li,&bad_node);
 				if G_UNLIKELY (bad_node || error_num) {
+					int n_flag;
 					EDEBUG("    AND/OR BAD BAD NODE");
 					error_num = NO_ERROR;
-					GE_BLIND_POP_STACK(ctx);
+
+					GE_POP_STACK (ctx, data, n_flag);
+					if (n_flag & GE_WHACKARG) {
+						gel_freetree (data);
+					}
 					break;
 				}
 				if((flag==GE_AND && !ret) ||
 				   (flag==GE_OR && ret)) {
 					int n_flag;
-					GE_PEEK_STACK(ctx,data,n_flag);
-					g_assert(n_flag==GE_POST);
-					freetree_full (data, TRUE, FALSE);
-					if(flag==GE_AND)
-						gel_makenum_ui_from(data,0);
-					else
-						gel_makenum_ui_from(data,1);
+					GE_POP_STACK(ctx,data,n_flag);
+					g_assert((n_flag & GE_MASK) == GE_POST);
+					if (n_flag & GE_WHACKARG) {
+						gel_freetree (data);
+					} else {
+						freetree_full (data, TRUE, FALSE);
+						if(flag==GE_AND)
+							gel_makenum_bool_from(data,0);
+						else
+							gel_makenum_bool_from(data,1);
+					}
 					EDEBUG("    AND/OR EARLY DONE");
 					break;
 				}
 				li = li->any.next;
 				if(!li) {
 					int n_flag;
-					GE_PEEK_STACK(ctx,data,n_flag);
-					g_assert(n_flag==GE_POST);
-					freetree_full (data, TRUE, FALSE);
-					if(flag==GE_AND)
-						gel_makenum_ui_from(data,1);
-					else
-						gel_makenum_ui_from(data,0);
+					GE_POP_STACK(ctx,data,n_flag);
+					g_assert((n_flag & GE_MASK) == GE_POST);
+					if (n_flag & GE_WHACKARG) {
+						gel_freetree (data);
+					} else {
+						freetree_full (data, TRUE, FALSE);
+						if(flag==GE_AND)
+							gel_makenum_bool_from(data,1);
+						else
+							gel_makenum_bool_from(data,0);
+					}
 					EDEBUG("    AND/OR ALL THE WAY DONE");
 					break;
 				}
 				GE_PUSH_STACK(ctx,li,flag);
 				ctx->post = FALSE;
 				ctx->current = li;
+				ctx->whackarg = FALSE;
 				EDEBUG("    JUST PUT THE NEXT ONE");
 				return;
 			}
@@ -3298,10 +3643,16 @@ iter_pop_stack(GelCtx *ctx)
 
 				/*replace the call with the result of
 				  the function*/
-				g_assert(call);
-				if (ctx->modulo != NULL)
-					mod_node (data, ctx->modulo);
-				replacenode(call,data);
+				g_assert (call != NULL);
+				if (flag & GE_WHACKARG) {
+					/* WHACKWHACK */
+					gel_freetree (call);
+					gel_freetree (data);
+				} else {
+					if (ctx->modulo != NULL)
+						mod_node (data, ctx->modulo);
+					replacenode(call,data);
+				}
 			}
 			break;
 		case GE_LOOP_COND:
@@ -3315,10 +3666,10 @@ iter_pop_stack(GelCtx *ctx)
 
 				/*next MUST be the original node*/
 				GE_PEEK_STACK(ctx,n,n_flag);
-				g_assert(n_flag==GE_POST);
+				g_assert ((n_flag & GE_MASK) == GE_POST);
 
 				EDEBUG("    LOOP CONDITION CHECK");
-				ret = isnodetrue(evl->condition,&bad_node);
+				ret = gel_isnodetrue(evl->condition,&bad_node);
 				if G_UNLIKELY (bad_node || error_num) {
 					EDEBUG("    LOOP CONDITION BAD BAD NODE");
 					error_num = NO_ERROR;
@@ -3326,6 +3677,10 @@ iter_pop_stack(GelCtx *ctx)
 					gel_freetree (evl->body);
 					evl_free (evl);
 					GE_BLIND_POP_STACK(ctx);
+					if (n_flag & GE_WHACKARG) {
+						/* WHACKWHACK */
+						gel_freetree (n);
+					}
 					break;
 				}
 				/*check if we should continue the loop*/
@@ -3343,21 +3698,25 @@ iter_pop_stack(GelCtx *ctx)
 						evl->body = copynode (r);
 					ctx->current = evl->body;
 					ctx->post = FALSE;
+					ctx->whackarg = FALSE;
 					GE_PUSH_STACK(ctx,evl,GE_LOOP_LOOP);
 					return;
 				} else {
 					EDEBUG("    LOOP CONDITION NOT MET");
 					/*condition not met, so return the body*/
-					if (evl->body == NULL) {
+					gel_freetree (evl->condition);
+					evl_free (evl);
+					GE_BLIND_POP_STACK (ctx);
+					if (n_flag & GE_WHACKARG) {
+						/* WHACKWHACK */
+						gel_freetree (n);
+					} else if (evl->body == NULL) {
 						EDEBUG("     NULL BODY");
 						freetree_full (n, TRUE, FALSE);
 						n->type = NULL_NODE;
 					} else {
 						replacenode (n, evl->body);
 					}
-					gel_freetree (evl->condition);
-					evl_free (evl);
-					GE_BLIND_POP_STACK (ctx);
 					break;
 				}
 			}
@@ -3370,7 +3729,7 @@ iter_pop_stack(GelCtx *ctx)
 
 				/*next MUST be the original node*/
 				GE_PEEK_STACK(ctx,n,n_flag);
-				g_assert(n_flag==GE_POST);
+				g_assert ((n_flag & GE_MASK) == GE_POST);
 
 				EDEBUG("    LOOP LOOP BODY FINISHED");
 
@@ -3382,6 +3741,7 @@ iter_pop_stack(GelCtx *ctx)
 					evl->condition = copynode (l);
 				ctx->current = evl->condition;
 				ctx->post = FALSE;
+				ctx->whackarg = FALSE;
 				GE_PUSH_STACK(ctx,evl,GE_LOOP_COND);
 				return;
 			}
@@ -3396,7 +3756,7 @@ iter_pop_stack(GelCtx *ctx)
 				if(mpw_cmp(evf->x,evf->to) == -evf->init_cmp) {
 					GelETree *res;
 					GE_POP_STACK(ctx,data,flag);
-					g_assert(flag==GE_POST);
+					g_assert ((flag & GE_MASK) == GE_POST);
 					if (evf->type == GEL_EVAL_FOR) {
 						res = evf->body;
 						evf->body = NULL;
@@ -3431,14 +3791,24 @@ iter_pop_stack(GelCtx *ctx)
 						gel_freetree (evf->body);
 						evf->body = NULL;
 					}
-					if (res->type == VALUE_NODE) {
-						replacenode (data, res);
+					if (res->type == VALUE_NODE ||
+					    res->type == NULL_NODE ||
+					    res->type == BOOL_NODE ||
+					    res->type == STRING_NODE) {
+						if (flag & GE_WHACKARG) {
+							/* WHACKWHACK */
+							gel_freetree (data);
+						} else {
+							replacenode (data, res);
+						}
 						evf_free (evf);
 						break;
 					} else {
 						replacenode (data, res);
 						ctx->current = data;
 						ctx->post = FALSE;
+						ctx->whackarg =
+							(flag & GE_WHACKARG);
 						evf_free (evf);
 						return;
 					}
@@ -3476,11 +3846,13 @@ iter_pop_stack(GelCtx *ctx)
 					GE_PUSH_STACK (ctx, evf, GE_FOR);
 					d_addfunc (d_makevfunc (evf->id,
 								gel_makenum (evf->x)));
-					if (evf->body != NULL)
+					if (evf->body != NULL) {
 						gel_freetree (evf->body);
+					}
 					evf->body = copynode (evf->orig_body);
 					ctx->current = evf->body;
 					ctx->post = FALSE;
+					ctx->whackarg = FALSE;
 					return;
 				}
 			}
@@ -3532,12 +3904,13 @@ iter_pop_stack(GelCtx *ctx)
 					evfi->body = copynode(evfi->orig_body);
 					ctx->current = evfi->body;
 					ctx->post = FALSE;
+					ctx->whackarg = FALSE;
 					return;
 				/*if we are done*/
 				} else {
 					GelETree *res;
 					GE_POP_STACK(ctx,data,flag);
-					g_assert(flag==GE_POST);
+					g_assert ((flag & GE_MASK) == GE_POST);
 					if (evfi->type == GEL_EVAL_FOR) {
 						res = evfi->body;
 						evfi->body = NULL;
@@ -3572,21 +3945,31 @@ iter_pop_stack(GelCtx *ctx)
 						gel_freetree (evfi->body);
 						evfi->body = NULL;
 					}
-					if (res->type == VALUE_NODE) {
-						replacenode (data, res);
-						evfi_free(evfi);
+					if (res->type == VALUE_NODE ||
+					    res->type == NULL_NODE ||
+					    res->type == BOOL_NODE ||
+					    res->type == STRING_NODE) {
+						if (flag & GE_WHACKARG) {
+							/* WHACKWHACK */
+							gel_freetree (data);
+						} else {
+							replacenode (data, res);
+						}
+						evfi_free (evfi);
 						break;
 					} else {
 						replacenode (data, res);
 						ctx->current = data;
 						ctx->post = FALSE;
-						evfi_free(evfi);
+						ctx->whackarg = 
+							(flag & GE_WHACKARG);
+						evfi_free (evfi);
 						return;
 					}
 				}
 			}
 		case GE_MODULOOP:
-			if (push_setmod (ctx, data))
+			if (push_setmod (ctx, data, flag & GE_WHACKARG))
 				return;
 			break;
 		case GE_SETMODULO:
@@ -3604,46 +3987,151 @@ iter_pop_stack(GelCtx *ctx)
 }
 
 /*make first argument the "current",
-  go into "pre" mode and push all other ones, except
-  that it doesn't push the last one, it assumes that
-  there are at least two to push*/
-static inline void
-iter_push_args_no_last(GelCtx *ctx, GelETree *args)
+  go into "pre" mode and push all other ones,
+  and adds the GE_WHACKARG so that we free unused thingies
+  earlier from separators, expects at least two arguments!!!!,
+  else first argument will be whacked */
+static inline GelETree *
+iter_push_args_whack(GelCtx *ctx, GelETree *args, int n)
 {
-	GelETree *li;
+	GelETree *t = args;
+
 	ctx->post = FALSE;
 	ctx->current = args;
+	ctx->whackarg = TRUE;
 
-	/* FIXME: this may (will!) be the wrong order I think */
-	for(li=args->any.next;li->any.next;li=li->any.next) {
-		GE_PUSH_STACK(ctx,li,GE_PRE);
+	switch (n) {
+	case 0:
+	case 1:
+		g_assert_not_reached ();
+	case 2:
+		t = args->any.next;
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE);
+		break;
+	case 3:
+		t = args->any.next->any.next;
+		GE_PUSH_STACK (ctx, args->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE | GE_WHACKARG);
+		break;
+	case 4:
+		t = args->any.next->any.next->any.next;
+		GE_PUSH_STACK (ctx, args->any.next->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next->any.next,
+			       GE_PRE | GE_WHACKARG);
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE | GE_WHACKARG);
+		break;
+	case 5:
+		t = args->any.next->any.next->any.next->any.next;
+		GE_PUSH_STACK (ctx, args->any.next->any.next->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next->any.next->any.next,
+			       GE_PRE | GE_WHACKARG);
+		GE_PUSH_STACK (ctx, args->any.next->any.next,
+			       GE_PRE | GE_WHACKARG);
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE | GE_WHACKARG);
+		break;
+	default:
+		{
+			int i;
+			GelETree *li;
+			GSList *list = NULL, *sli;
+
+			li = args->any.next;
+			for (i = 1; i < n; i++) {
+				list = g_slist_prepend (list, li);
+				li = li->any.next;
+			}
+
+			t = list->data;
+			GE_PUSH_STACK (ctx, t, GE_PRE);
+#ifdef MEM_DEBUG_FRIENDLY
+			list->data = NULL;
+#endif
+
+			for (sli = list->next; sli != NULL; sli = sli->next) {
+				GE_PUSH_STACK (ctx, sli->data,
+					       GE_PRE | GE_WHACKARG);
+#ifdef MEM_DEBUG_FRIENDLY
+				sli->data = NULL;
+#endif
+			}
+			g_slist_free (list);
+		}
+		break;
+	}
+
+	return t;
+}
+
+/* push n of the arguments on the stack */
+static inline void
+pushstack_n_args (GelCtx *ctx, GelETree *args, int n)
+{
+	switch (n) {
+	case 0: break;
+	case 1:
+		GE_PUSH_STACK (ctx, args, GE_PRE);
+		break;
+	case 2:
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args, GE_PRE);
+		break;
+	case 3:
+		GE_PUSH_STACK (ctx, args->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args, GE_PRE);
+		break;
+	case 4:
+		GE_PUSH_STACK (ctx, args->any.next->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args->any.next, GE_PRE);
+		GE_PUSH_STACK (ctx, args, GE_PRE);
+		break;
+	default:
+		{
+			int i;
+			GelETree *li;
+			GSList *list = NULL, *sli;
+
+			li = args;
+			for (i = 0; i < n; i++) {
+				list = g_slist_prepend (list, li);
+				li = li->any.next;
+			}
+
+			for (sli = list; sli != NULL; sli = sli->next) {
+				GE_PUSH_STACK (ctx, sli->data, GE_PRE);
+#ifdef MEM_DEBUG_FRIENDLY
+				sli->data = NULL;
+#endif
+			}
+			g_slist_free (list);
+		}
+		break;
 	}
 }
+
 
 /*make first argument the "current",
   go into "pre" mode and push all other ones*/
 static inline void
-iter_push_args(GelCtx *ctx, GelETree *args)
+iter_push_args(GelCtx *ctx, GelETree *args, int n)
 {
-	GelETree *li;
 	ctx->post = FALSE;
 	ctx->current = args;
+	ctx->whackarg = FALSE;
 
-	/* FIXME: this may (will!) be the wrong order I think */
-	for(li=args->any.next;li;li=li->any.next) {
-		GE_PUSH_STACK(ctx,li,GE_PRE);
-	}
+	pushstack_n_args (ctx, args->any.next, n-1);
 }
 
 /*make first argument the "current",
  *and push all other args.  evaluate with no modulo. */
 static inline void
-iter_push_args_no_modulo (GelCtx *ctx, GelETree *args)
+iter_push_args_no_modulo (GelCtx *ctx, GelETree *args, int n)
 {
-	GelETree *li;
-
 	ctx->post = FALSE;
 	ctx->current = args;
+	ctx->whackarg = FALSE;
+
 	if (ctx->modulo != NULL) {
 		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
 
@@ -3651,20 +4139,18 @@ iter_push_args_no_modulo (GelCtx *ctx, GelETree *args)
 		ctx->modulo = NULL;
 	}
 
-	/* FIXME: this may (will!) be the wrong order I think */
-	for(li=args->any.next;li;li=li->any.next) {
-		GE_PUSH_STACK(ctx,li,GE_PRE);
-	}
+	pushstack_n_args (ctx, args->any.next, n-1);
 }
 
 /*make first argument the "current",
-  push no modulo on the second argument
-  go into "pre" mode and push all other ones*/
+  push no modulo on the second argument */
 static inline void
-iter_push_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
+iter_push_two_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
 {
 	ctx->post = FALSE;
 	ctx->current = args;
+	ctx->whackarg = FALSE;
+
 	if (ctx->modulo != NULL) {
 		mpw_ptr ptr = g_new (struct _mpw_t, 1);
 		mpw_init_set (ptr, ctx->modulo);
@@ -3691,6 +4177,7 @@ matrix_to_be_evaluated(GelMatrixW *m)
 			n = gel_matrixw_set_index(m,x,y);
 			if(n &&
 			   n->type != NULL_NODE &&
+			   n->type != BOOL_NODE &&
 			   n->type != VALUE_NODE &&
 			   n->type != STRING_NODE &&
 			   n->type != USERTYPE_NODE)
@@ -3724,9 +4211,12 @@ iter_push_matrix(GelCtx *ctx, GelETree *n, GelMatrixW *m)
 			t = gel_matrixw_set_index(m,x,y);
 			if(t) {
 				if(!pushed) {
-					GE_PUSH_STACK(ctx,n,GE_POST);
+					GE_PUSH_STACK (ctx, n,
+					   GE_ADDWHACKARG (GE_POST,
+							   ctx->whackarg));
 					ctx->post = FALSE;
 					ctx->current = t;
+					ctx->whackarg = FALSE;
 					pushed = TRUE;
 				} else {
 					GE_PUSH_STACK(ctx,t,GE_PRE);
@@ -3804,7 +4294,7 @@ get_func_from_arg (GelETree *n, gboolean silent)
 }
 
 static gboolean
-iter_funccallop(GelCtx *ctx, GelETree *n)
+iter_funccallop(GelCtx *ctx, GelETree *n, gboolean *repushed)
 {
 	GelEFunc *f;
 	
@@ -3838,12 +4328,16 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 
 		d_addcontext();
 
+		EDEBUG("     USER FUNC CONTEXT PUSHED TO ADD EXTRA DICT");
+
 		/* add extra dictionary stuff */
 		for (li = f->extra_dict; li != NULL; li = li->next) {
 			GelEFunc *func = d_copyfunc (li->data);
 			func->context = d_curcontext ();
 			d_addfunc (func);
 		}
+
+		EDEBUG("     USER FUNC EXTRA DICT ADDED, TO PUSH ARGS ON CONTEXT STACK");
 
 		/*push arguments on context stack*/
 		li = f->named_args;
@@ -3874,6 +4368,8 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 			if (li == NULL)
 				break;
 		}
+
+		EDEBUG("     USER FUNC ABOUT TO HANDLE VARARG");
 
 		if (f->vararg) {
 			if (last_arg == NULL) {
@@ -3907,14 +4403,19 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 			}
 		}
 
+		EDEBUG("     USER FUNC ABOUT TO ENSURE BODY");
+
 		D_ENSURE_USER_BODY (f);
 		
 		/*push self as post AGAIN*/
-		GE_PUSH_STACK(ctx,ctx->current,GE_POST);
+		GE_PUSH_STACK (ctx, ctx->current,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
+		*repushed = TRUE;
 
 		/*the next to be evaluated is the body*/
 		ctx->post = FALSE;
 		ctx->current = copynode(f->data.user);
+		ctx->whackarg = FALSE;
 		/*printf("copying: %p\n", ctx->current);*/
 
 		GE_PUSH_STACK(ctx,ctx->current,GE_FUNCCALL);
@@ -3943,11 +4444,18 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 			GelETree **r;
 			GelETree *li;
 			int i;
+#ifdef MEM_DEBUG_FRIENDLY
+			r = g_new0 (GelETree *, n->op.nargs);
+#else
 			r = g_new (GelETree *, n->op.nargs);
+#endif
 			for(i=0,li=n->op.args->any.next;li;i++,li=li->any.next)
 				r[i] = li;
 			r[i] = NULL;
 			ret = (*f->data.func)(ctx,r,&exception);
+#ifdef MEM_DEBUG_FRIENDLY
+			memset (r, 0xaa, sizeof(GelETree *) * n->op.nargs);
+#endif
 			g_free (r);
 		} else {
 			ret = (*f->data.func)(ctx,NULL,&exception);
@@ -4009,24 +4517,34 @@ iter_returnop(GelCtx *ctx, GelETree *n)
 	/*now take it out of the argument list*/
 	r = n->op.args;
 	n->op.args = NULL;
+#ifdef MEM_DEBUG_FRIENDLY
+	ctx->current = NULL;
+#endif
 	EDEBUG("  RETURN");
 	for(;;) {
 		int flag;
 		gpointer data;
 		GE_POP_STACK(ctx,data,flag);
 		EDEBUG("   POPPED STACK");
-		if(flag == GE_EMPTY_STACK) {
+		if((flag & GE_MASK) == GE_EMPTY_STACK) {
 			EDEBUG("    EMPTY");
 			break;
-		} else if(flag == GE_FUNCCALL) {
+		} else if((flag & GE_MASK) == GE_FUNCCALL) {
 			GelETree *fn;
 			GE_POP_STACK(ctx,fn,flag);
 			g_assert(fn);
 			EDEBUG("    FOUND FUNCCCALL");
 			gel_freetree(data);
-			if (ctx->modulo != NULL)
-				mod_node (r, ctx->modulo);
-			replacenode(fn,r);
+			if (flag & GE_WHACKARG) {
+				EDEBUG("     WHACKING RETURN STUFF");
+				/* WHACKWHACK */
+				gel_freetree (fn);
+				gel_freetree (r);
+			} else {
+				if (ctx->modulo != NULL)
+					mod_node (r, ctx->modulo);
+				replacenode(fn,r);
+			}
 
 			d_popcontext ();
 
@@ -4040,11 +4558,12 @@ iter_returnop(GelCtx *ctx, GelETree *n)
 	  the return value*/
 	ctx->current = NULL;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 	replacenode(ctx->res,r);
 }
 
 static inline void
-iter_forloop (GelCtx *ctx, GelETree *n)
+iter_forloop (GelCtx *ctx, GelETree *n, gboolean *repushed)
 {
 	GelEvalFor *evf;
 	GelEvalForType type = GEL_EVAL_FOR;
@@ -4141,15 +4660,18 @@ iter_forloop (GelCtx *ctx, GelETree *n)
 
 	d_addfunc(d_makevfunc(ident->id.id,gel_makenum(evf->x)));
 	
-	GE_PUSH_STACK(ctx,n,GE_POST);
-	GE_PUSH_STACK(ctx,evf,GE_FOR);
+	GE_PUSH_STACK (ctx, n,
+		       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
+	*repushed = TRUE;
+	GE_PUSH_STACK (ctx, evf, GE_FOR);
 	
 	ctx->current = evf->body;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 }
 
 static inline void
-iter_forinloop(GelCtx *ctx, GelETree *n)
+iter_forinloop(GelCtx *ctx, GelETree *n, gboolean *repushed)
 {
 	GelEvalForIn *evfi;
 	GelEvalForType type = GEL_EVAL_FOR;
@@ -4196,7 +4718,9 @@ iter_forinloop(GelCtx *ctx, GelETree *n)
 		return;
 	}
 
+	/* FIXME: string should go through all the characters I suppose */
 	if G_UNLIKELY (from->type != VALUE_NODE &&
+		       from->type != BOOL_NODE &&
 		       from->type != MATRIX_NODE) {
 		gel_errorout (_("Bad type for 'for in' loop!"));
 		iter_pop_stack(ctx);
@@ -4215,11 +4739,14 @@ iter_forinloop(GelCtx *ctx, GelETree *n)
 		d_addfunc(d_makevfunc(ident->id.id,copynode(from)));
 	}
 	
-	GE_PUSH_STACK(ctx,n,GE_POST);
+	GE_PUSH_STACK (ctx, n,
+		       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
+	*repushed = TRUE;
 	GE_PUSH_STACK(ctx,evfi,GE_FORIN);
 	
 	ctx->current = evfi->body;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 }
 
 static inline void
@@ -4232,24 +4759,27 @@ iter_loop (GelCtx *ctx, GelETree *n, gboolean body_first, gboolean is_while)
 	
 	EDEBUG("   ITER LOOP");
 	
-	GE_PUSH_STACK (ctx, ctx->current, GE_POST);
+	GE_PUSH_STACK (ctx, ctx->current,
+		       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 	if (body_first) {
 		EDEBUG ("    BODY FIRST");
 		evl = evl_new (NULL, copynode (l), is_while, body_first);
 		GE_PUSH_STACK (ctx, evl, GE_LOOP_LOOP);
 		ctx->current = evl->body;
 		ctx->post = FALSE;
+		ctx->whackarg = FALSE;
 	} else {
 		EDEBUG("    CHECK FIRST");
 		evl = evl_new (copynode(l), NULL, is_while, body_first);
 		GE_PUSH_STACK (ctx, evl, GE_LOOP_COND);
 		ctx->current = evl->condition;
 		ctx->post = FALSE;
+		ctx->whackarg = FALSE;
 	}
 }
 
 static inline void
-iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else)
+iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else, gboolean *repushed)
 {
 	GelETree *l,*r,*rr = NULL;
 	gboolean ret;
@@ -4263,7 +4793,7 @@ iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else)
 		GET_LR(n,l,r);
 	}
 	
-	ret = isnodetrue(l,&bad_node);
+	ret = gel_isnodetrue(l,&bad_node);
 	if G_UNLIKELY (bad_node || error_num) {
 		EDEBUG("    IF/IFELSE BAD BAD NODE");
 		error_num = NO_ERROR;
@@ -4272,21 +4802,27 @@ iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else)
 	}
 	
 	if(ret) {
-		EDEBUG("    IF TRUE EVAL BODY");
+#ifdef EVAL_DEBUG
+		printf ("    IF TRUE EVAL BODY n %p l %p r %p\n", n, l, r);
+#endif
 		/*remove from arglist so that it doesn't get freed on
 		  replace node*/
 		n->op.args->any.next = n->op.args->any.next->any.next;
-		replacenode(n,r);
+		replacenode (n, r);
 		ctx->post = FALSE;
-		ctx->current = n;
+		g_assert (ctx->current == n);
+		/* whackarg stays the same */
+		*repushed = TRUE;
 	} else if(has_else) {
 		EDEBUG("    IF FALSE EVAL ELSE BODY");
 		/*remove from arglist so that it doesn't get freed on
 		  replace node*/
 		n->op.args->any.next->any.next = NULL;
-		replacenode(n,rr);
+		replacenode (n, rr);
 		ctx->post = FALSE;
-		ctx->current = n;
+		g_assert (ctx->current == n);
+		/* whackarg stays the same */
+		*repushed = TRUE;
 	} else {
 		EDEBUG("    IF FALSE RETURN NULL");
 		/*just return NULL*/
@@ -4317,9 +4853,13 @@ iter_ifop(GelCtx *ctx, GelETree *n, gboolean has_else)
 		/*pop loop call tree*/			\
 		GE_POP_STACK(ctx,n,flag);		\
 							\
-		/*null the tree*/			\
-		freetree_full(n,TRUE,FALSE);		\
-		n->type = NULL_NODE;			\
+		if (flag & GE_WHACKARG) {		\
+			gel_freetree (n);		\
+		} else {				\
+			/*null the tree*/		\
+			freetree_full(n,TRUE,FALSE);	\
+			n->type = NULL_NODE;		\
+		}					\
 							\
 		/*go on with the computation*/		\
 		iter_pop_stack(ctx);			\
@@ -4336,7 +4876,7 @@ iter_continue_break_op(GelCtx *ctx, gboolean cont)
 		gpointer data;
 		GE_POP_STACK(ctx,data,flag);
 		EDEBUG("   POPPED STACK");
-		switch(flag) {
+		switch(flag & GE_MASK) {
 		case GE_EMPTY_STACK:
 			EDEBUG("    EMPTY");
 			goto iter_continue_break_done;
@@ -4351,9 +4891,14 @@ iter_continue_break_op(GelCtx *ctx, gboolean cont)
 			/*pop the function call*/
 			GE_POP_STACK(ctx,data,flag);
 
-			g_assert(flag == GE_POST);
-			freetree_full(data,TRUE,FALSE);
-			((GelETree *)data)->type = NULL_NODE;
+			g_assert ((flag & GE_MASK) == GE_POST);
+			if (flag & GE_WHACKARG) {
+				/* WHACKWHACK */
+				gel_freetree (data);
+			} else {
+				freetree_full(data,TRUE,FALSE);
+				((GelETree *)data)->type = NULL_NODE;
+			}
 
 			iter_pop_stack(ctx);
 			return;
@@ -4375,6 +4920,7 @@ iter_continue_break_done:
 	/*we were at the top so substitute result for a NULL*/
 	ctx->current = NULL;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 	freetree_full(ctx->res,TRUE,FALSE);
 	ctx->res->type = NULL_NODE;
 }
@@ -4390,17 +4936,21 @@ iter_bailout_op(GelCtx *ctx)
 		gpointer data;
 		GE_POP_STACK(ctx,data,flag);
 		EDEBUG("   POPPED STACK");
-		if(flag == GE_EMPTY_STACK) {
+		if ((flag & GE_MASK) == GE_EMPTY_STACK) {
 			EDEBUG("    EMPTY");
 			break;
-		} else if(flag == GE_FUNCCALL) {
+		} else if ((flag & GE_MASK) == GE_FUNCCALL) {
 			EDEBUG("    FOUND FUNCCCALL");
 			gel_freetree(data);
 
 			d_popcontext ();
 
 			/*pop the function call off the stack*/
-			GE_BLIND_POP_STACK(ctx);
+			GE_POP_STACK(ctx,data,flag);
+			if (flag & GE_WHACKARG) {
+				/* WHACKWHACK */
+				gel_freetree (data);
+			}
 
 			iter_pop_stack(ctx);
 			return;
@@ -4412,6 +4962,7 @@ iter_bailout_op(GelCtx *ctx)
 	  the return value*/
 	ctx->current = NULL;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 }
 
 static int
@@ -4517,7 +5068,7 @@ iter_get_matrix_p(GelETree *m, gboolean *new_matrix)
 	if(m->type == IDENTIFIER_NODE) {
 		GelEFunc *f;
 		if G_UNLIKELY (d_curcontext()==0 &&
-			       m->id.id->protected) {
+			       m->id.id->protected_) {
 			gel_errorout (_("Trying to set a protected id '%s'"),
 				      m->id.id->token);
 			return NULL;
@@ -4578,7 +5129,8 @@ iter_get_matrix_p(GelETree *m, gboolean *new_matrix)
 			gel_errorout (_("Indexed Lvalue not user function"));
 			return NULL;
 		}
-		if G_UNLIKELY (f->data.ref->context==0 && f->data.ref->id->protected) {
+		if G_UNLIKELY (f->data.ref->context == 0 &&
+			       f->data.ref->id->protected_) {
 			gel_errorout (_("Trying to set a protected id '%s'"),
 				      f->data.ref->id->token);
 			return NULL;
@@ -4640,7 +5192,8 @@ iter_equalsop(GelETree *n)
 	}
 
 	if(l->type == IDENTIFIER_NODE) {
-		if G_UNLIKELY (d_curcontext()==0 && l->id.id->protected) {
+		if G_UNLIKELY (d_curcontext() == 0 &&
+			       l->id.id->protected_) {
 			gel_errorout (_("Trying to set a protected id '%s'"),
 				      l->id.id->token);
 			return;
@@ -4684,7 +5237,8 @@ iter_equalsop(GelETree *n)
 			return;
 		}
 
-		if G_UNLIKELY (f->data.ref->context==0 && f->data.ref->id->protected) {
+		if G_UNLIKELY (f->data.ref->context == 0 &&
+			       f->data.ref->id->protected_) {
 			gel_errorout (_("Trying to set a protected id '%s'"),
 				      f->data.ref->id->token);
 			return;
@@ -4916,6 +5470,7 @@ iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
 		GE_PUSH_STACK(ctx,rr,GE_PRE);
 		ctx->post = FALSE;
 		ctx->current = ll;
+		ctx->whackarg = FALSE;
 	} else if(l->op.oper == E_GET_VELEMENT ||
 		  l->op.oper == E_GET_COL_REGION ||
 		  l->op.oper == E_GET_ROW_REGION) {
@@ -4926,9 +5481,11 @@ iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
 		GE_PUSH_STACK(ctx,n->op.args->any.next,GE_PRE);
 		ctx->post = FALSE;
 		ctx->current = ll;
+		ctx->whackarg = FALSE;
 	} else {
 		ctx->post = FALSE;
 		ctx->current = n->op.args->any.next;
+		ctx->whackarg = FALSE;
 	}
 }
 
@@ -5113,6 +5670,7 @@ iter_get_arg(GelETree *n)
 	case FUNCTION_NODE: return GO_FUNCTION;
 	case IDENTIFIER_NODE: return GO_IDENTIFIER;
 	case POLYNOMIAL_NODE: return GO_POLYNOMIAL;
+	case BOOL_NODE: return GO_BOOL;
 	default: return 0;
 	}
 }
@@ -5120,15 +5678,14 @@ iter_get_arg(GelETree *n)
 static char *
 iter_get_arg_name(guint32 arg)
 {
-	static char *value = N_("number");
-	static char *matrix = N_("matrix");
-	static char *string = N_("string");
-	static char *function = N_("function");
 	switch(arg) {
-	case GO_VALUE: return gettext(value);
-	case GO_MATRIX: return gettext(matrix);
-	case GO_STRING: return gettext(string);
-	case GO_FUNCTION: return gettext(function);
+	case GO_VALUE: return _("number");
+	case GO_MATRIX: return _("matrix");
+	case GO_STRING: return _("string");
+	case GO_FUNCTION: return _("function");
+	case GO_IDENTIFIER: return _("identifier");
+	case GO_POLYNOMIAL: return _("polynomial");
+	case GO_BOOL: return _("boolean");
 	default:
 		g_assert_not_reached();
 		return NULL;
@@ -5327,26 +5884,41 @@ iter_operator_pre(GelCtx *ctx)
 	case E_EQUALS:
 	case E_DEFEQUALS:
 		EDEBUG("  EQUALS PRE");
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST,
+					       ctx->whackarg));
 		iter_push_indexes_and_arg(ctx,n);
 		break;
 
 	case E_PARAMETER:
 		EDEBUG("  PARAMETER PRE");
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST,
+					       ctx->whackarg));
 		/* Push third parameter (the value) */
 		ctx->post = FALSE;
 		ctx->current = n->op.args->any.next->any.next;
+		ctx->whackarg = FALSE;
 		break;
 
 	case E_EXP:
 	case E_ELTEXP:
 		EDEBUG("  PUSH US AS POST AND ALL ARGUMENTS AS PRE (no modulo on second)");
-		GE_PUSH_STACK(ctx,n,GE_POST);
-		iter_push_args_no_modulo_on_2 (ctx, n->op.args);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST,
+					       ctx->whackarg));
+		iter_push_two_args_no_modulo_on_2 (ctx, n->op.args);
 		break;
 
 	case E_SEPAR:
+		EDEBUG("  PUSH US AS POST AND ALL ARGUMENTS AS PRE WITH "
+		       " WHACKARGS");
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST,
+					       ctx->whackarg));
+		n->op.args = iter_push_args_whack (ctx, n->op.args, n->op.nargs);
+		break;
+
 	case E_ABS:
 	case E_PLUS:
 	case E_MINUS:
@@ -5374,17 +5946,22 @@ iter_operator_pre(GelCtx *ctx)
 	case E_REGION_SEP:
 	case E_REGION_SEP_BY:
 		EDEBUG("  PUSH US AS POST AND ALL ARGUMENTS AS PRE");
-		GE_PUSH_STACK(ctx,n,GE_POST);
-		iter_push_args (ctx, n->op.args);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST,
+					       ctx->whackarg));
+		iter_push_args (ctx, n->op.args, n->op.nargs);
 		break;
 
 	case E_CALL:
 		EDEBUG("  CHANGE CALL TO DIRECTCALL AND EVAL THE FIRST ARGUMENT");
 		n->op.oper = E_DIRECTCALL;
-		GE_PUSH_STACK (ctx, n, GE_PRE);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_PRE,
+					       ctx->whackarg));
 		/* eval first argument */
 		ctx->current = n->op.args;
 		ctx->post = FALSE;
+		ctx->whackarg = FALSE;
 		break;
 
 	/*in case of DIRECTCALL we don't evaluate the first argument*/
@@ -5393,12 +5970,18 @@ iter_operator_pre(GelCtx *ctx)
 		if(n->op.args->any.next) {
 			GelEFunc *f;
 			EDEBUG("  DIRECT:PUSH US AS POST AND 2nd AND HIGHER ARGS AS PRE");
-			GE_PUSH_STACK(ctx,n,GE_POST);
+			GE_PUSH_STACK (ctx, n,
+				       GE_ADDWHACKARG (GE_POST,
+						       ctx->whackarg));
 			f = get_func_from_arg (n, TRUE /* silent */);
 			if (f != NULL && f->no_mod_all_args)
-				iter_push_args_no_modulo (ctx, n->op.args->any.next);
+				iter_push_args_no_modulo (ctx,
+							  n->op.args->any.next,
+							  n->op.nargs - 1);
 			else
-				iter_push_args (ctx, n->op.args->any.next);
+				iter_push_args (ctx,
+						n->op.args->any.next,
+						n->op.nargs - 1);
 		} else {
 			EDEBUG("  DIRECT:JUST GO TO POST");
 			/*just go to post immediately*/
@@ -5417,17 +6000,21 @@ iter_operator_pre(GelCtx *ctx)
 
 	case E_LOGICAL_AND:
 		EDEBUG("  LOGICAL AND");
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 		GE_PUSH_STACK(ctx,n->op.args,GE_AND);
 		ctx->post = FALSE;
 		ctx->current = n->op.args;
+		ctx->whackarg = FALSE;
 		break;
 	case E_LOGICAL_OR:
 		EDEBUG("  LOGICAL OR");
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 		GE_PUSH_STACK(ctx,n->op.args,GE_OR);
 		ctx->post = FALSE;
 		ctx->current = n->op.args;
+		ctx->whackarg = FALSE;
 		break;
 
 	case E_WHILE_CONS:
@@ -5446,18 +6033,25 @@ iter_operator_pre(GelCtx *ctx)
 	case E_IF_CONS:
 	case E_IFELSE_CONS:
 		EDEBUG("  IF/IFELSE PRE");
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 		ctx->post = FALSE;
 		ctx->current = n->op.args;
+		ctx->whackarg = FALSE;
 		break;
 
 	case E_DEREFERENCE:
 		if(!iter_derefvarop(ctx,n))
 			return FALSE;
-		if ((n->type == VALUE_NODE ||
-		     n->type == MATRIX_NODE) &&
-		    ctx->modulo != NULL)
-			mod_node (n, ctx->modulo);
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		} else {
+			if ((n->type == VALUE_NODE ||
+			     n->type == MATRIX_NODE) &&
+			    ctx->modulo != NULL)
+				mod_node (n, ctx->modulo);
+		}
 		iter_pop_stack(ctx);
 		break;
 
@@ -5467,76 +6061,109 @@ iter_operator_pre(GelCtx *ctx)
 	case E_SUMBY_CONS:
 	case E_PROD_CONS:
 	case E_PRODBY_CONS:
-		GE_PUSH_STACK(ctx,n,GE_POST);
-		iter_push_args_no_last(ctx,n->op.args->any.next);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
+		iter_push_args (ctx, n->op.args->any.next, n->op.nargs - 2);
 		break;
 
 	case E_FORIN_CONS:
 	case E_SUMIN_CONS:
 	case E_PRODIN_CONS:
-		GE_PUSH_STACK(ctx,n,GE_POST);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 		ctx->current = n->op.args->any.next;
 		ctx->post = FALSE;
+		ctx->whackarg = FALSE;
 		break;
 
 	case E_EXCEPTION:
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		}
 		return FALSE;
 
 	case E_BAILOUT:
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		}
 		iter_bailout_op(ctx);
 		break;
 
 	case E_CONTINUE:
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		}
 		iter_continue_break_op(ctx,TRUE);
 		break;
 
 	case E_BREAK:
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		}
 		iter_continue_break_op(ctx,FALSE);
 		break;
 
 	case E_QUOTE:
-		{
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		} else {
 			/* Just replace us with the quoted thing */
 			GelETree *arg = n->op.args;
 			n->op.args = NULL;
 			replacenode (n, arg);
-			iter_pop_stack(ctx);
-			break;
 		}
+		iter_pop_stack(ctx);
+		break;
 
 	case E_REFERENCE:
+		if (ctx->whackarg) {
+			gel_freetree (n);
+			ctx->current = NULL;
+		}
 		iter_pop_stack(ctx);
 		break;
 
 	case E_MOD_CALC:
 		/* Push modulo op, so that we may push the
 		 * first argument once we have gotten a modulo */
-		GE_PUSH_STACK (ctx, n, GE_MODULOOP);
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_MODULOOP, ctx->whackarg));
 		ctx->post = FALSE;
 		ctx->current = n->op.args->any.next;
+		ctx->whackarg = FALSE;
 		break;
 
 	default:
 		gel_errorout (_("Unexpected operator!"));
-		GE_PUSH_STACK(ctx,n,GE_POST);
+#ifdef EVAL_DEBUG
+		printf ("!!!!!!!!!!!!!!!UNEXPECTED_OPERATOR PRE (%p) (%d)\n", n, n->op.oper);
+#endif
+		GE_PUSH_STACK (ctx, n,
+			       GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 		break;
 	}
 	return TRUE;
 }
 
 static gboolean
-iter_operator_post(GelCtx *ctx)
+iter_operator_post (GelCtx *ctx, gboolean *repushed)
 {
 	GelETree *n = ctx->current;
 	GelETree *r;
 	EDEBUG(" OPERATOR POST");
 	switch(n->op.oper) {
 	case E_SEPAR:
-		r = n->op.args->any.next;
-		/*remove from arg list*/
-		n->op.args->any.next = NULL;
-		replacenode(n,r);
-		iter_pop_stack(ctx);
+		/* By now there is only one argument and that
+		   is the last one */
+		r = n->op.args;
+		n->op.args = NULL;
+		replacenode (n, r);
+		iter_pop_stack (ctx);
 		break;
 
 	case E_EQUALS:
@@ -5574,7 +6201,8 @@ iter_operator_post(GelCtx *ctx)
 		      * mod, so this will just make things slower,
 		      * but currently it is needed for correct
 		      * behaviour */
-		     n->type == MATRIX_NODE))
+		     n->type == MATRIX_NODE) &&
+		    ! ctx->whackarg)
 			mod_node (n, ctx->modulo);
 		iter_pop_stack(ctx);
 		break;
@@ -5594,7 +6222,8 @@ iter_operator_post(GelCtx *ctx)
 		      * mod, so this will just make things slower,
 		      * but currently it is needed for correct
 		      * behaviour */
-		     n->type == MATRIX_NODE))
+		     n->type == MATRIX_NODE) &&
+		    ! ctx->whackarg)
 			mod_node (n, ctx->modulo);
 		iter_pop_stack(ctx);
 		break;
@@ -5602,7 +6231,8 @@ iter_operator_post(GelCtx *ctx)
 	case E_MOD_CALC:
 		/* FIXME: maybe we should always replace things here,
 		 * not just for values and matrices */
-		if (n->op.args->type == VALUE_NODE ||
+		if (n->op.args->type == BOOL_NODE ||
+		    n->op.args->type == VALUE_NODE ||
 		    n->op.args->type == MATRIX_NODE ||
 		    /* also replace if we got a E_MOD_CALC oper since
 		     * that can only mean an error occured, and we
@@ -5623,13 +6253,13 @@ iter_operator_post(GelCtx *ctx)
 	case E_SUMBY_CONS:
 	case E_PROD_CONS:
 	case E_PRODBY_CONS:
-		iter_forloop (ctx, n);
+		iter_forloop (ctx, n, repushed);
 		break;
 
 	case E_FORIN_CONS:
 	case E_SUMIN_CONS:
 	case E_PRODIN_CONS:
-		iter_forinloop (ctx, n);
+		iter_forinloop (ctx, n, repushed);
 		break;
 
 	case E_GET_VELEMENT:
@@ -5653,15 +6283,15 @@ iter_operator_post(GelCtx *ctx)
 		break;
 
 	case E_IF_CONS:
-		iter_ifop(ctx,n,FALSE);
+		iter_ifop (ctx, n, FALSE, repushed);
 		break;
 	case E_IFELSE_CONS:
-		iter_ifop(ctx,n,TRUE);
+		iter_ifop (ctx, n, TRUE, repushed);
 		break;
 
 	case E_DIRECTCALL:
 	case E_CALL:
-		if(!iter_funccallop(ctx,n))
+		if ( ! iter_funccallop(ctx, n, repushed))
 			return FALSE;
 		break;
 
@@ -5702,6 +6332,9 @@ iter_operator_post(GelCtx *ctx)
 
 	default:
 		gel_errorout (_("Unexpected operator!"));
+#ifdef EVAL_DEBUG
+		printf ("!!!!!!!!!!!!!!!UNEXPECTED_OPERATOR POST (%p) (%d)\n", n, n->op.oper);
+#endif
 		iter_pop_stack(ctx);
 		break;
 	}
@@ -5781,18 +6414,31 @@ gel_subst_local_vars (GSList *funclist, GelETree *n)
 static gboolean
 iter_eval_etree(GelCtx *ctx)
 {
-	GelETree *n;
+	GelETree *n, *savedn;
+	gboolean whack_saved;
+	gboolean repushed;
+
 	while((n = ctx->current)) {
 		EDEBUG("ITER");
 		if(evalnode_hook) {
 			static int i = 0;
-			if(i++>run_hook_every) {
+			if G_UNLIKELY (i++ > run_hook_every) {
 				(*evalnode_hook)();
-				i=0;
+				i = 0;
 			}
 		}
-		if(interrupted)
+		whack_saved = ctx->whackarg;
+		savedn = n;
+
+		if G_UNLIKELY (interrupted) {
+			if (whack_saved) {
+				gel_freetree (n);
+				ctx->current = NULL;
+			}
 			return FALSE;
+		}
+
+		repushed = FALSE;
 
 		switch(n->type) {
 		case NULL_NODE:
@@ -5825,20 +6471,47 @@ iter_eval_etree(GelCtx *ctx)
 		case OPERATOR_NODE:
 			EDEBUG(" OPERATOR NODE");
 			if(!ctx->post) {
-				if(!iter_operator_pre(ctx))
+				if G_UNLIKELY (!iter_operator_pre(ctx)) {
+					/* WHACKWHACK */
+					/* FIXME: is this needed?
+					 * check if it's possible */
+					if (savedn == ctx->current &&
+					    whack_saved) {
+						ctx->current = NULL;
+						gel_freetree (savedn);
+					}
 					return FALSE;
+				}
+				/* pre either pushes n again or whacks it
+				   itself, in either case we can assume we
+				   are rid of it */
+				repushed = TRUE;
 			} else {
-				if(!iter_operator_post(ctx))
+				if G_UNLIKELY ( ! iter_operator_post
+						    (ctx, &repushed)) {
+					/* WHACKWHACK */
+					if (whack_saved && ! repushed) {
+						gel_freetree (savedn);
+						/* FIXME: is this needed? */
+						if (ctx->current == savedn)
+							ctx->current = NULL;
+					}
 					return FALSE;
+				}
 			}
 			break;
 		case IDENTIFIER_NODE:
 			EDEBUG(" IDENTIFIER NODE");
-			if(!iter_variableop(ctx, n))
+			if G_UNLIKELY (!iter_variableop(ctx, n)) {
+				/* WHACKWHACK */
+				if (whack_saved)
+					gel_freetree (savedn);
 				return FALSE;
+			}
 			if ((n->type == VALUE_NODE ||
 			     n->type == MATRIX_NODE) &&
-			    ctx->modulo != NULL)
+			    ctx->modulo != NULL &&
+			    ! whack_saved)
 				mod_node (n, ctx->modulo);
 			iter_pop_stack(ctx);
 			break;
@@ -5862,8 +6535,13 @@ iter_eval_etree(GelCtx *ctx)
 			EDEBUG(" COMPARISON NODE");
 			if(!ctx->post) {
 				/*if in pre mode, push arguments onto stack*/
-				GE_PUSH_STACK(ctx,n,GE_POST);
-				iter_push_args(ctx,n->comp.args);
+				GE_PUSH_STACK (ctx, n, 
+					       GE_ADDWHACKARG (GE_POST,
+							       ctx->whackarg));
+				iter_push_args(ctx,
+					       n->comp.args,
+					       n->comp.nargs);
+				repushed = TRUE;
 			} else {
 				/*if in post mode evaluate */
 				evalcomp(n);
@@ -5874,10 +6552,31 @@ iter_eval_etree(GelCtx *ctx)
 			EDEBUG(" USERTYPE NODE");
 			iter_pop_stack(ctx);
 			break;
-		default:
-			gel_errorout (_("Unexpected node!"));
+		case BOOL_NODE:
+#ifdef EVAL_DEBUG
+			printf (" BOOL NODE -- %p %s\n", n, n->bool_.bool_ ? "true" : "false");
+#endif
 			iter_pop_stack(ctx);
 			break;
+		default:
+			gel_errorout (_("Unexpected node!"));
+#ifdef EVAL_DEBUG
+			{
+				char *s = gel_string_print_etree (n);
+				printf ("!!!!!!!!!!!!!!!UNEXPECTED_NODE (%p) (%d)\t-> %s\n", n, n->type, s);
+				g_free (s);
+			}
+#endif
+			iter_pop_stack(ctx);
+			break;
+		}
+
+		if (whack_saved &&
+		     ! repushed &&
+		    /* FIXME: why is this needed? */
+		    ctx->current != savedn) {
+			/* WHACKWHACK */
+			gel_freetree (savedn);
 		}
 	}
 	return TRUE;
@@ -5888,18 +6587,25 @@ eval_get_context(void)
 {
 	GelCtx *ctx = g_new0(GelCtx,1);
 	ge_add_stack_array(ctx);
+#ifdef MEM_DEBUG_FRIENDLY
+	most_recent_ctx = ctx;
+#endif
 	return ctx;
 }
 
 void
 eval_free_context(GelCtx *ctx)
 {
+#ifdef MEM_DEBUG_FRIENDLY
+	if (most_recent_ctx == ctx)
+		most_recent_ctx = NULL;
+#endif
 	g_free(ctx->stack);
 	g_free(ctx);
 }
 
 GelETree *
-eval_etree(GelCtx *ctx, GelETree *etree)
+eval_etree (GelCtx *ctx, GelETree *etree)
 {
 	/*level measures any recursion into here such as from
 	  external functions etc, so that we can purge free lists,
@@ -5908,6 +6614,14 @@ eval_etree(GelCtx *ctx, GelETree *etree)
 	int flag;
 	gpointer data;
 
+#ifdef MEM_DEBUG_FRIENDLY
+# ifdef EVAL_DEBUG
+	if (level == 0) {
+		deregister_all_trees ();
+	}
+# endif
+#endif
+
 	if (ctx->modulo != NULL) {
 		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
 		ctx->modulo = NULL;
@@ -5915,14 +6629,17 @@ eval_etree(GelCtx *ctx, GelETree *etree)
 	
 	GE_PUSH_STACK(ctx,ctx->res,GE_RESULT);
 	if(ctx->post) {
-		GE_PUSH_STACK(ctx,ctx->current,GE_POST);
+		GE_PUSH_STACK(ctx,ctx->current,
+			      GE_ADDWHACKARG (GE_POST, ctx->whackarg));
 	} else {
-		GE_PUSH_STACK(ctx,ctx->current,GE_PRE);
+		GE_PUSH_STACK (ctx, ctx->current,
+			       GE_ADDWHACKARG (GE_PRE, ctx->whackarg));
 	}
-	GE_PUSH_STACK(ctx,NULL,GE_EMPTY_STACK);
+	GE_PUSH_STACK (ctx, NULL, GE_EMPTY_STACK);
 	ctx->res = etree;
 	ctx->current = etree;
 	ctx->post = FALSE;
+	ctx->whackarg = FALSE;
 	
 	level++;
 
@@ -5940,12 +6657,15 @@ eval_etree(GelCtx *ctx, GelETree *etree)
 		purge_free_lists();
 	
 	GE_POP_STACK(ctx,ctx->current,flag);
-	g_assert(flag == GE_POST || flag == GE_PRE);
-	ctx->post = (flag == GE_POST);
+	g_assert ((flag & GE_MASK) == GE_POST || (flag & GE_MASK) == GE_PRE);
+	ctx->post = ((flag & GE_MASK) == GE_POST);
+	ctx->whackarg = (flag & GE_WHACKARG);
 	GE_POP_STACK(ctx,ctx->res,flag);
+	flag = (flag & GE_MASK);
 	g_assert(flag == GE_RESULT);
 
 	GE_PEEK_STACK (ctx, data, flag);
+	flag = (flag & GE_MASK);
 	if (flag == GE_SETMODULO) {
 		if (ctx->modulo != NULL) {
 			mpw_clear (ctx->modulo);
@@ -5954,6 +6674,14 @@ eval_etree(GelCtx *ctx, GelETree *etree)
 		ctx->modulo = data;
 		GE_BLIND_POP_STACK (ctx);
 	}
+
+#ifdef MEM_DEBUG_FRIENDLY
+# ifdef EVAL_DEBUG
+	if (level == 0) {
+		print_live_trees ();
+	}
+# endif
+#endif
 
 	return etree;
 }
@@ -6242,6 +6970,60 @@ fixup_num_neg (GelETree *n)
 	}
 }
 
+/* find an identifier */
+gboolean
+eval_find_identifier (GelETree *n, GelToken *tok)
+{
+	if (n == NULL)
+		return FALSE;
+
+	if (n->type == SPACER_NODE) {
+		return eval_find_identifier (n->sp.arg, tok);
+	} else if (n->type == IDENTIFIER_NODE ) {
+		if (n->id.id == tok)
+			return TRUE;
+		else
+			return FALSE;
+	} else if(n->type == OPERATOR_NODE) {
+		GelETree *args = n->op.args;
+		while (args != NULL) {
+			if (eval_find_identifier (args, tok))
+				return TRUE;
+			args = args->any.next;
+		}
+		return FALSE;
+	} else if (n->type == MATRIX_NODE &&
+		   n->mat.matrix != NULL) {
+		int i,j;
+		int w,h;
+		w = gel_matrixw_width (n->mat.matrix);
+		h = gel_matrixw_height (n->mat.matrix);
+		for (i = 0; i < w; i++) {
+			for(j = 0; j < h; j++) {
+				GelETree *t = gel_matrixw_set_index
+					(n->mat.matrix, i, j);
+				if (t != NULL &&
+				    eval_find_identifier (t, tok))
+					return TRUE;
+			}
+		}
+		return FALSE;
+	} else if (n->type == SET_NODE ) {
+		GelETree *ali;
+		for (ali = n->set.items; ali != NULL; ali = ali->any.next) {
+			if (eval_find_identifier (ali, tok))
+				return TRUE;
+		}
+		return FALSE;
+	} else if (n->type == FUNCTION_NODE &&
+		   (n->func.func->type == GEL_USER_FUNC ||
+		    n->func.func->type == GEL_VARIABLE_FUNC) &&
+		   n->func.func->data.user != NULL) {
+		return eval_find_identifier (n->func.func->data.user, tok);
+	}
+	return FALSE;
+}
+
 
 /*this means that it will precalc even complex and float
   numbers*/
@@ -6381,3 +7163,113 @@ try_to_do_precalc(GelETree *n)
 			try_to_do_precalc(n->func.func->data.user);
 	}
 }
+
+#ifndef MEM_DEBUG_FRIENDLY
+/* In tests it seems that this achieves better then 4096 */
+#define GEL_CHUNK_SIZE 4048
+#define ALIGNED_SIZE(t) (sizeof(t) + sizeof (t) % G_MEM_ALIGN)
+void
+_gel_make_free_trees (void)
+{
+	int i;
+	char *p;
+
+	p = g_malloc ((GEL_CHUNK_SIZE / ALIGNED_SIZE (GelETree)) *
+		      ALIGNED_SIZE (GelETree));
+	for (i = 0; i < (GEL_CHUNK_SIZE / ALIGNED_SIZE (GelETree)); i++) {
+		GelETree *t = (GelETree *)p;
+		/*put onto the free list*/
+		t->any.next = free_trees;
+		free_trees = t;
+		p += ALIGNED_SIZE (GelETree);
+	}
+}
+
+static void
+_gel_make_free_evl (void)
+{
+	int i;
+	char *p;
+
+	p = g_malloc ((GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalLoop)) *
+		      ALIGNED_SIZE (GelEvalLoop));
+	for (i = 0; i < (GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalLoop)); i++) {
+		GelEvalLoop *t = (GelEvalLoop *)p;
+		/*put onto the free list*/
+		t->condition = (gpointer)free_evl;
+		free_evl = t;
+		p += ALIGNED_SIZE (GelEvalLoop);
+	}
+}
+
+static void
+_gel_make_free_evf (void)
+{
+	int i;
+	char *p;
+
+	p = g_malloc ((GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalFor)) *
+		      ALIGNED_SIZE (GelEvalFor));
+	for (i = 0; i < (GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalFor)); i++) {
+		GelEvalFor *t = (GelEvalFor *)p;
+		/*put onto the free list*/
+		t->body = (gpointer)free_evf;
+		free_evf = t;
+		p += ALIGNED_SIZE (GelEvalFor);
+	}
+}
+
+static void
+_gel_make_free_evfi (void)
+{
+	int i;
+	char *p;
+
+	p = g_malloc ((GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalForIn)) *
+		      ALIGNED_SIZE (GelEvalForIn));
+	for (i = 0; i < (GEL_CHUNK_SIZE / ALIGNED_SIZE (GelEvalForIn)); i++) {
+		GelEvalForIn *t = (GelEvalForIn *)p;
+		/*put onto the free list*/
+		t->body = (gpointer)free_evfi;
+		free_evfi = t;
+		p += ALIGNED_SIZE (GelEvalForIn);
+	}
+}
+#endif /* ! MEM_DEBUG_FRIENDLY */
+
+#ifdef MEM_DEBUG_FRIENDLY
+# ifdef EVAL_DEBUG
+static GSList *trees_list = NULL;
+void
+register_new_tree (GelETree *n)
+{
+	trees_list = g_slist_prepend (trees_list, n);
+}
+void
+deregister_tree (GelETree *n)
+{
+	trees_list = g_slist_remove (trees_list, n);
+}
+void
+print_live_trees (void)
+{
+	GSList *li;
+	int count = 0;
+	for (li = trees_list; li != NULL; li = li->next) {
+		char *s;
+		GelETree *n = li->data;
+		s = gel_string_print_etree (n);
+		printf ("TREE %p:\t%s\n", n, s);
+		g_free (s);
+		count ++;
+	}
+	printf ("count %d:\n", count);
+}
+void
+deregister_all_trees (void)
+{
+	g_slist_free (trees_list);
+	trees_list = NULL;
+}
+# endif /* EVAL_DEBUG */
+#endif /* MEM_DEBUG_FRIENDLY */

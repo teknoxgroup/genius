@@ -576,7 +576,16 @@ appendoper(GelOutput *gelo, GelETree *n)
 
 	switch(n->op.oper) {
 		case E_SEPAR:
-			append_binaryoper(gelo,";",n); break;
+			gel_output_string (gelo,"(");
+			r = n->op.args;
+			while (r != NULL) {
+				gel_print_etree (gelo, r, FALSE);
+				r = r->any.next;
+				if (r != NULL)
+					gel_output_string (gelo, ";");
+			}
+			gel_output_string (gelo,")");
+			break;
 		case E_EQUALS:
 			append_binaryoper(gelo,"=",n); break;
 		case E_PARAMETER:
@@ -1350,6 +1359,12 @@ gel_print_etree (GelOutput *gelo,
 	case COMPARISON_NODE:
 		appendcomp(gelo,n);
 		break;
+	case BOOL_NODE:
+		if (n->bool_.bool_)
+			gel_output_string (gelo, "true");
+		else
+			gel_output_string (gelo, "false");
+		break;
 	default:
 		gel_errorout (_("Unexpected node!"));
 		gel_output_string(gelo,"(?)");
@@ -1724,7 +1739,7 @@ compile_funcs_in_dict (FILE *outfile, GSList *dict, gboolean is_extra_dict)
 				g_free (s);
 			}
 		}
-		if (func->id->protected)
+		if (func->id->protected_)
 			fprintf (outfile,"P;%s\n",func->id->token);
 	}
 }
@@ -1893,7 +1908,7 @@ load_compiled_fp (const char *file, FILE *fp)
 				continue;
 			}
 			tok = d_intern(p);
-			tok->protected = 1;
+			tok->protected_ = 1;
 			continue;
 		} else if G_UNLIKELY (*p != 'F' && *p != 'V' && *p != 'f' && *p != 'v') {
 			gel_errorout (_("Badly formed record"));
@@ -2851,7 +2866,7 @@ gel_runexp (GelETree *exp)
 	gel_push_file_info(NULL,0);
 
 	ctx = eval_get_context();
-	ret = eval_etree(ctx,copynode(exp));
+	ret = eval_etree (ctx, exp);
 	eval_free_context(ctx);
 
 	gel_pop_file_info();
@@ -2868,6 +2883,7 @@ gel_runexp (GelETree *exp)
 	return ret;
 }
 
+/* 'parsed' is eaten */
 void
 gel_evalexp_parsed (GelETree *parsed,
 		    GelOutput *gelo,
@@ -2878,8 +2894,8 @@ gel_evalexp_parsed (GelETree *parsed,
 	
 	if (parsed == NULL)
 		return;
+	/* gel_runexp eats the 'parsed' */
 	ret = gel_runexp (parsed);
-	gel_freetree (parsed);
 	if (ret == NULL)
 		return;
 

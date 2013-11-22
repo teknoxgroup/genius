@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -140,7 +140,7 @@ gp_prepare_push_region_sep (void)
 
 /*pops the last expression, pushes a marker
   entry and puts the last expression back*/
-int
+gboolean
 gp_push_marker(GelETreeType markertype)
 {
 	GelETree * last_expr = stack_pop(&evalstack);
@@ -324,4 +324,32 @@ gp_push_null(void)
 	tree->type = NULL_NODE;
 
 	stack_push(&evalstack,tree);
+}
+
+void
+gp_convert_identifier_to_bool (void)
+{
+	GelETree *val;
+
+	val = stack_peek (&evalstack);
+	if (val == NULL ||
+	    val->type != IDENTIFIER_NODE) {
+		/**/g_warning ("NO IDENTIFIER TO CONVERT TO TRY TO CONVERT BOOL");
+		return;
+	}
+	if (val->id.id == NULL ||
+	    val->id.id->token == NULL)
+		return;
+
+	if (strcmp (val->id.id->token, "true") == 0 ||
+	     strcmp (val->id.id->token, "True") == 0 ||
+	     strcmp (val->id.id->token, "TRUE") == 0) {
+		gel_emptytree (val);
+		gel_makenum_bool_from (val, TRUE);
+	} else if (strcmp (val->id.id->token, "false") == 0 ||
+		   strcmp (val->id.id->token, "False") == 0 ||
+		   strcmp (val->id.id->token, "FALSE") == 0) {
+		gel_emptytree (val);
+		gel_makenum_bool_from (val, FALSE);
+	}
 }

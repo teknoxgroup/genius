@@ -1,7 +1,7 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.6.1)
+AM_INIT_AUTOMAKE(genius,0.7.0)
 
 dnl make sure we keep ACLOCAL_FLAGS around for maintainer builds to work
 AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS")
@@ -23,6 +23,9 @@ GTKSOURCEVIEW_REQUIRED=0.3.0
 dnl ===============================================================================
 
 AC_PROG_CC
+if test "x$GCC" = xyes ; then
+	CFLAGS="$CFLAGS -O3"
+fi
 AC_ISC_POSIX
 AC_HEADER_STDC
 AM_PROG_LEX
@@ -40,7 +43,7 @@ GETTEXT_PACKAGE=genius
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ko nl no pt pt_BR sr sr@Latn sv pl zh_CN"
+ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ko nl no pt pt_BR sq sr sr@Latn sv pl zh_CN"
 AM_GLIB_GNU_GETTEXT
 
 dnl ===============================================================================
@@ -131,6 +134,7 @@ Note:
 
   VICIOUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED libgnomeui-2.0 >= $LIBGNOMEUI_REQUIRED libglade-2.0 >= $LIBGLADE_REQUIRED"
   VICIOUS_GNOME_LIBS="libviciousui.a libviciousui-gnome.a libviciousui-minimal.a libvicious-gnome.a"
+  GTKEXTRA_LIBS="libgtkextra-genius.a"
   
   GNOME_GENIUS=gnome-genius
   GENIUS_READLINE_HELPER_FIFO=genius-readline-helper-fifo
@@ -140,6 +144,7 @@ else
   use_gtksourceview=no
   VICIOUS_MODULES="glib-2.0 >= $GLIB_REQUIRED gmodule-2.0 >= $GLIB_REQUIRED"
   VICIOUS_GNOME_LIBS=
+  GTKEXTRA_LIBS=
   GENIUS_CFLAGS="$GENIUS_NOGUI_CFLAGS"
   GENIUS_LIBS="$GENIUS_NOGUI_LIBS"
   GNOME_GENIUS=
@@ -148,6 +153,7 @@ else
 fi
 
 AC_SUBST(VICIOUS_GNOME_LIBS)
+AC_SUBST(GTKEXTRA_LIBS)
 AC_SUBST(GENIUS_CFLAGS)
 AC_SUBST(GENIUS_LIBS)
 AC_SUBST(GNOME_GENIUS)
@@ -186,7 +192,7 @@ if test "$GCC" = "yes" -a "$set_more_warnings" != "no"; then
 	warning_flags="-Wall -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Werror"
 	CFLAGS="$warning_flags $CFLAGS"
 
-	for option in -Wsign-promo -Wno-sign-compare; do
+	for option in -Wno-sign-compare; do
 		SAVE_CFLAGS="$CFLAGS"
 		CFLAGS="$CFLAGS $option"
 		AC_MSG_CHECKING([whether gcc understands $option])
@@ -238,6 +244,7 @@ lib/sets/Makefile
 lib/number_theory/Makefile
 lib/statistics/Makefile
 vicious-extensions/Makefile
+gtkextra/Makefile
 po/Makefile.in
 ])
 

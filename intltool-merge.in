@@ -1,4 +1,5 @@
 #!@INTLTOOL_PERL@ -w
+# -*- Mode: perl; indent-tabs-mode: nil; c-basic-offset: 4  -*-
 
 #
 #  The Intltool Message Merger
@@ -34,7 +35,7 @@
 ## Release information
 my $PROGRAM = "intltool-merge";
 my $PACKAGE = "intltool";
-my $VERSION = "0.30";
+my $VERSION = "0.31";
 
 ## Loaded modules
 use strict; 
@@ -598,280 +599,183 @@ sub ba_merge_translations
 
 ## XML (non-bonobo-activation) merge code
 
-sub parseTree
+
+# Process tag attributes
+#   Only parameter is a HASH containing attributes -> values mapping
+sub getAttributeString
 {
-    my $fh        = shift;
-    my $ref       = shift;
-    my $depth     = shift || 0;
-    my $language  = shift || "";
-    my $not_cdata = 0;
-    my $has_children;
+    my $sub = shift;
+    my $do_translate = shift || 0;
+    my $language = shift || "";
+    my $result = "";
+    foreach my $e (reverse(sort(keys %{ $sub }))) {
+	my $key    = $e;
+	my $string = $sub->{$e};
+	my $quote = '"';
+	
+	$string =~ s/^[\s]+//;
+	$string =~ s/[\s]+$//;
+	
+	if ($string =~ /^'.*'$/)
+	{
+	    $quote = "'";
+	}
+	$string =~ s/^['"]//g;
+	$string =~ s/['"]$//g;
 
-    $entered_tag[$depth + 1] = 0;
-
-    # Check to see if this is not a CDATA element.
-    #
-    foreach my $sub (@{ $ref }) {
-        if (ref $sub eq 'ARRAY') {
-            $not_cdata = 1;
-        }
+	if ($do_translate && $key =~ /^_/) {
+	    $key =~ s|^_||g;
+	    if ($language) {
+		
+		# Handle translation
+		#
+		my $decode_string = entity_decode($string);
+		my $translation = $translations{$language, $decode_string};
+		if ($translation) {
+		    $translation = entity_encode($translation);
+		    $string = $translation;
+		}
+	    }
+	}
+	
+	$result .= " $key=$quote$string$quote";
     }
+    return $result;
+}
 
-    foreach my $sub (@{ $ref }) {
+# Returns a translatable string from XML node, it works on contents of every node in XML::Parser tree
+#   doesn't support nesting of translatable tags (i.e. <_blah>this <_doh>doesn't</_doh> work</_blah> -- besides
+#   can you define the correct semantics for this?)
+#
 
-        # Handle empty nodes.
-        #
-        if (! $sub) {
-            next;
-        }
+sub getXMLstring
+{
+    my $ref = shift;
+    my @list = @{ $ref };
+    my $result = "";
 
-        if (ref $sub eq 'ARRAY') {
+    my $count = scalar(@list);
+    my $attrs = $list[0];
+    my $index = 1;
+    while ($index < $count) {
+	my $type = $list[$index];
+	my $content = $list[$index+1];
+        if (! $type ) {
+	    # We've got CDATA
+	    if ($content) {
+		# lets strip the whitespace here, and *ONLY* here
+		$content =~ s/\s+/ /gs;
+		$result .= ($content);
+	    } else {
+		#print "no cdata content when expected it\n"; # is this possible, is this ok?
+		# what to do if this happens?
+		# Did I mention that I hate XML::Parser tree style?
+	    }
+	} else {
+	    # We've got another element
+	    $result .= "<$type";
+	    $result .= getAttributeString($attrs, 0); # no nested translatable elements
+	    if ($content) {
+		my $subresult = getXMLstring($content);
+		if ($subresult) {
+		    $result .= ">".$subresult . "</$type>";
+		} else {
+		    $result .= "/>";
+		}
+	    } else {
+		$result .= "/>";
+	    }
+	}
+	$index += 2;
+    }
+    return $result;
+}
 
-            # Process subnodes
-            #
-            $has_children = 0;
+sub traverse
+{
+    my $fh = shift; 
+    my $nodename = shift;
+    my $content = shift;
+    my $language = shift || "";
 
-            # Check to see if current tag has any elements that need to be translated.
-            #
-            if ($translation_depth == -1) {
-                foreach my $subsub (@{ $sub } ) {
-                    if (ref $subsub eq 'HASH') {
-                        foreach my $e (reverse(keys %{ $subsub })) {
-                            if ($e =~ /^_/) {
-                                $translation_depth = $depth;
-                            }
-                        }
-                    } elsif (ref $subsub eq 'ARRAY') {
-                        $has_children = 1;
-                    }
-                }
-            }
+    if (!$nodename) {
+	if ($content =~ /^[\s]*$/) {
+	    $leading_space .= $content;
+	}
+	print $fh $content;
+    } else {
+	# element
+	my @all = @{ $content };
+	my $attrs = shift @all;
+	my $outattr = getAttributeString($attrs, 1, $language);
+	my $translate = 0;
 
-            my $current_tag = pop(@tag_stack);
-            push @tag_stack, $current_tag;
-            @translation_strings = ();
+	if ($nodename =~ /^_/) {
+	    $translate = 1;
+	    $nodename =~ s/^_//;
+	}
+	my $lookup = '';
+	print $fh "<$nodename$outattr";
+	if ($translate) {
+	    $lookup = getXMLstring($content);
+	    $lookup =~ s/^\s+//s;
+	    $lookup =~ s/\s+$//s;
 
-            $must_end_tag = $depth;
-            print $fh "<", $current_tag;
-
-            parseTree($fh, $sub, $depth + 1, $language);
-
-            # Close any open tags
-            #
-            if ($must_end_tag != -1) {
-                if ($must_end_tag < $depth) {
-                    print $fh ">";
+	    if ($lookup) {
+                my $translation = $translations{$language, $lookup};
+                if ($MULTIPLE_OUTPUT && $translation) {
+                    print $fh " xml:lang=\"", $language, "\"";
+                    print $fh ">", $translation, "</$nodename>";
+                    return; # this means there will be no same translation with xml:lang="$language"...
+                            # if we want them both, just remove this "return"
                 } else {
-                    print $fh " />";
-                        pop(@tag_stack);
-                    if ($depth == $translation_depth) {
-                        $translation_depth = -1;
-                    }
+                    print $fh ">$lookup</$nodename>";
                 }
-                $must_end_tag = -1;
-            }
-
-            # Add ending tag(s), if needed
-            #
-            if ($entered_tag[$depth + 1] == 1) {
-                while ($last_depth > $depth) {
-                    $last_depth--;
+	    } else {
+		print $fh "/>";
+	    }
+	    
  
-                    print $fh "</", pop(@tag_stack), ">";
-                }
-            }
-            $last_depth = $depth;
-
-            # If beginning a translation block, then process for each language.
-            #
-            if ($translation_depth == $depth) {
-                my $do_language;
-
-                # Skip languages that do not have translations.  Since we only
-                # do this check when $translation_depth == $depth, it will never
-                # happen for nodes inside a node with a translated element.
-                #
-                for my $lang (sort keys %po_files_by_lang) {
-                    if ($has_children == 1) {
-                        $do_language = 1;
-                    } else {
-                        # Skip this language if there is no translation
-                        #
-                        $do_language = 0;
-                        foreach my $string (@translation_strings) {
-                            my $decode_string = entity_decode($string);
-                            my $translation = $translations{$lang, $decode_string};
-                            if ($translation) {
-                                $do_language = 1;
-                                last;
-                            }
-                        }
-                    }
-
-                    if ($do_language == 0) {
-                       next;
-                    }
-
-                    print $fh "\n";
-                    $leading_space =~ s/.*\n//g;
-                    print $fh $leading_space;
+	    for my $lang (sort keys %po_files_by_lang) {
                     if ($MULTIPLE_OUTPUT && $lang ne "$language") {
                         next;
                     }
-
-                    print $fh "<", $current_tag, " xml:lang=\"", $lang, "\"";
-                    $must_end_tag = $depth;
-
-                    parseTree($fh, $sub, $depth + 1, $lang);
-
-                    # Close any open tags
-                    #
-                    if ($must_end_tag != -1) {
-                        if ($must_end_tag < $depth) {
-                            print $fh ">";
-                        } else {
-                            print $fh " />";
-                            pop(@tag_stack);
-                            if ($depth == $translation_depth) {
-                                $translation_depth = -1;
-                            }
-                        }
-                        $must_end_tag = -1;
-                    }
-
-                    # Add ending tag(s), if needed
-                    #
-                    if ($entered_tag[$depth + 1] == 1) {
-                        while ($last_depth > $depth + 1) {
-                            $last_depth--;
-     
-                            print $fh "</", pop(@tag_stack), ">";
-                        }
-                        print $fh "</", $current_tag, ">";
-                    }
-                }
-                $translation_depth = -1;
-                $last_depth = $depth;
-            }
-            $leading_space = "";
-
-        } elsif (ref $sub eq 'HASH') {
-
-            # Process tag elements
-            #
-            foreach my $e (reverse(keys %{ $sub })) {
-                my $key    = $e;
-                my $string = $sub->{$e};
-                my $quote = '"';
-
-                $string =~ s/^[\s]+//;
-                $string =~ s/[\s]+$//;
-
-                if ($string =~ /^'.*'$/)
-                {
-                   $quote = "'";
-                }
-                $string =~ s/^['"]//g;
-                $string =~ s/['"]$//g;
-
-                if ($key =~ /^_/) {
-                    $key =~ s|^_||g;
-
-                    if ($language) {
+		    if ($lang) {
 
                         # Handle translation
                         #
-                        my $decode_string = entity_decode($string);
-                        my $translation = $translations{$language, $decode_string};
+			my $localattrs = getAttributeString($attrs, 1, $lang);
+                        my $decode_string = ($lookup); #entity_decode($lookup);
+                        my $translation = $translations{$lang, $decode_string};
                         if ($translation) {
-                            $translation = entity_encode($translation);
-                            $string = $translation;
-                        }
+                            $translation = ($translation);
+			    print $fh "\n";
+			    $leading_space =~ s/.*\n//g;
+			    print $fh $leading_space;
+ 			    print $fh "<", $nodename, " xml:lang=\"", $lang, "\"", $localattrs;
+			    print $fh ">", $translation , "</$nodename>";
+			}
                     }
-                }
+	    }
 
-                print $fh " $key=$quote$string$quote";
-            }
-
-        } else {
-
-            # Handle tags and CDATA values
-
-            # Mark parent tag as having been entered.
-            #
-            $entered_tag[$depth] = 1;
-
-            # The last_depth flag allows us to determine if this tag should be
-            # closed with "/>" or ">"
-            #
-            $last_depth = $depth;
-
-            # Close any open tags
-            #
-            if ($must_end_tag != -1) {
-                if ($must_end_tag < $depth) {
-                    print $fh ">";
-                } else {
-                    print $fh " />";
-                    pop(@tag_stack);
-                }
-                $must_end_tag = -1;
-            }
-
-            if ($sub =~ /^[\s]*$/) {
-                $leading_space .= $sub;
-                print $fh $sub;
-            } elsif ($not_cdata) {
-
-                # Handle tags
-                #
-                my $temp_tag = $sub;
-
-                # Display key
-                #
-                if ($sub =~ /^_/) {
-
-                    $temp_tag =~ s|^_||g;
-
-                    if ($translation_depth == -1) {
-                        $translation_depth = $depth;
-                    }
-                }
-
-                # Push the tag on the stack, it will get handled when the ARRAY
-                # for this tag is processed.
-                #
-                push(@tag_stack, $temp_tag);
-
-            } else {
-
-                # Handle CDATA
-                #
-                my $string = $sub;
-
-                $string =~ s/\s+/ /g;
-                $string =~ s/^ //;
-                $string =~ s/ $//;
-
-                push(@translation_strings, $string);
-
-                # Display CDATA
-                #
-                if ($language) {
-
-                    # Handle translation
-                    #
-                    my $decode_string = entity_decode($string);
-                    my $translation = $translations{$language, $decode_string};
-                    if ($translation) {
-                        $translation = entity_encode($translation);
-                        $string = $translation;
-                    }
-                }
-
-                print $fh $string;
-            }
-        }
+	} else {
+	    my $count = scalar(@all);
+	    if ($count > 0) {
+		print $fh ">";
+	    } else {
+		print $fh "/>";
+	    }
+	    my $index = 0;
+	    while ($index < $count) {
+		my $type = $all[$index];
+		my $rest = $all[$index+1];
+		traverse($fh, $type, $rest, $language);
+		$index += 2;
+	    }
+	    if ($count > 0) {
+		print $fh "</$nodename>";
+	    }
+	}
     }
 }
 
@@ -990,6 +894,17 @@ sub print_header
     }
 }
 
+sub parseTree
+{
+    my $fh        = shift;
+    my $ref       = shift;
+    my $language  = shift || "";
+
+    my $name = shift @{ $ref };
+    my $cont = shift @{ $ref };
+    traverse($fh, $name, $cont, $language);
+}
+
 sub xml_merge_output
 {
     my $source;
@@ -1002,7 +917,7 @@ sub xml_merge_output
             open OUTPUT, ">$lang/$OUTFILE" or die "Cannot open $lang/$OUTFILE: $!\n";
             my $tree = readXml($FILE);
             print_header($FILE, \*OUTPUT);
-            parseTree(\*OUTPUT, $tree, 0, $lang);
+            parseTree(\*OUTPUT, $tree, $lang);
             close OUTPUT;
             print "CREATED $lang/$OUTFILE\n" unless $QUIET_ARG;
         }
@@ -1010,7 +925,7 @@ sub xml_merge_output
     open OUTPUT, ">$OUTFILE" or die "Cannot open $OUTFILE: $!\n";
     my $tree = readXml($FILE);
     print_header($FILE, \*OUTPUT);
-    parseTree(\*OUTPUT, $tree, 0);
+    parseTree(\*OUTPUT, $tree);
     close OUTPUT;
     print "CREATED $OUTFILE\n" unless $QUIET_ARG;
 }

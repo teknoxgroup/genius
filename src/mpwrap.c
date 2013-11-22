@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <limits.h>
+#include <locale.h>
 #include "calc.h"
 #include "util.h"
 
@@ -3058,27 +3059,47 @@ mpwl_euler_constant (MpwRealNum *rop)
 }
 
 /* Random state stuff: FIXME: this is evil */
-static unsigned long randstate_seed = 0;
+/* static unsigned long randstate_seed = 0; */
+static gmp_randstate_t rand_state;
+static gboolean rand_state_inited = FALSE;
+
+static inline void
+init_randstate (void)
+{
+	if G_UNLIKELY ( ! rand_state_inited) {
+		gmp_randinit_default (rand_state);
+		gmp_randseed_ui (rand_state, g_random_int ());
+		rand_state_inited = TRUE;
+	}
+}
 
 static void
 mpwl_rand (MpwRealNum *rop)
 {
-	gmp_randstate_t rand_state;
-	gmp_randinit_default (rand_state);
-	randstate_seed ^= g_random_int ();
-	gmp_randseed_ui (rand_state, randstate_seed);
+	init_randstate();
+
 	mpwl_clear (rop);
 	mpwl_init_type (rop, MPW_FLOAT);
+
 	mpf_urandomb (rop->data.fval, rand_state, default_mpf_prec);
-	gmp_randclear (rand_state);
+	if G_UNLIKELY (mpf_sgn (rop->data.fval) < 0) {
+		/* FIXME: GMP/MPFR bug */
+		mpf_neg (rop->data.fval, rop->data.fval);
+		/* FIXME: WHAT THE HELL IS GOING ON! */
+		if (mpf_cmp_ui (rop->data.fval, 1L) > 0) {
+			gel_errorout ("Can't recover from a GMP problem.  Random function "
+				      "is not returning values in [0,1)");
+		}
+	}
 }
 
 static void
 mpwl_randint (MpwRealNum *rop, MpwRealNum *op)
 {
-	gmp_randstate_t rand_state;
 	long range;
 	int ex;
+
+	init_randstate();
 
 	if G_UNLIKELY (op->type != MPW_INTEGER) {
 		gel_errorout (_("Can't make random integer from a non-integer"));
@@ -3102,10 +3123,6 @@ mpwl_randint (MpwRealNum *rop, MpwRealNum *op)
 		return;
 	}
 
-	gmp_randinit_default (rand_state);
-	randstate_seed ^= g_random_int ();
-	gmp_randseed_ui (rand_state, randstate_seed);
-
 	if (op == rop) {
 		mpz_t z;
 		mpz_init_set (z, op->data.ival);
@@ -3118,7 +3135,6 @@ mpwl_randint (MpwRealNum *rop, MpwRealNum *op)
 		mpwl_init_type (rop, MPW_INTEGER);
 		mpz_urandomm (rop->data.ival, rand_state, op->data.ival);
 	}
-	gmp_randclear (rand_state);
 }
 
 static void
@@ -3876,6 +3892,16 @@ mpw_set_d(mpw_ptr rop,double d)
 	MAKE_REAL(rop);
 	MAKE_COPY(rop->r);
 	mpwl_set_d(rop->r,d);
+}
+
+void
+mpw_set_d_complex (mpw_ptr rop, double real, double imag)
+{
+	MAKE_COPY (rop->r);
+	MAKE_COPY (rop->i);
+	rop->type = MPW_COMPLEX;
+	mpwl_set_d (rop->r, real);
+	mpwl_set_d (rop->i, imag);
 }
 
 void
@@ -4966,8 +4992,8 @@ mpw_sin(mpw_ptr rop,mpw_ptr op)
 		mpwl_cosh(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_cos(rop->i,i);
-		mpwl_sinh(&t,r);
+		mpwl_cos(rop->i,r);
+		mpwl_sinh(&t,i);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
@@ -5002,9 +5028,9 @@ mpw_cos(mpw_ptr rop,mpw_ptr op)
 		mpwl_cosh(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_sin(rop->i,i);
+		mpwl_sin(rop->i,r);
 		mpwl_neg(rop->i,rop->i);
-		mpwl_sinh(&t,r);
+		mpwl_sinh(&t,i);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
@@ -5039,8 +5065,8 @@ mpw_sinh(mpw_ptr rop,mpw_ptr op)
 		mpwl_cos(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_cosh(rop->i,i);
-		mpwl_sin(&t,r);
+		mpwl_cosh(rop->i,r);
+		mpwl_sin(&t,i);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
@@ -5075,8 +5101,8 @@ mpw_cosh(mpw_ptr rop,mpw_ptr op)
 		mpwl_cos(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_sinh(rop->i,i);
-		mpwl_sin(&t,r);
+		mpwl_sinh(rop->i,r);
+		mpwl_sin(&t,i);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
@@ -5274,17 +5300,17 @@ mpw_cmp_ui(mpw_ptr op, unsigned long int i)
 	}
 }
 
-int
+gboolean
 mpw_eql(mpw_ptr op1, mpw_ptr op2)
 {
 	return (mpwl_cmp(op1->r,op2->r)==0 && mpwl_cmp(op1->i,op2->i)==0);
 }
 
-int
+gboolean 
 mpw_eql_ui(mpw_ptr op, unsigned long int i)
 {
-	if(op->type==MPW_REAL) {
-		return mpwl_cmp_ui(op->r,i);
+	if (op->type == MPW_REAL) {
+		return mpwl_cmp_ui (op->r, i) == 0;
 	} else {
 		return FALSE;
 	}

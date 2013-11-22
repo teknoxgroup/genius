@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -233,7 +233,8 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	PROD ident IN expr DO expr { PUSH_ACT(E_PRODIN_CONS); }
 	|	IF expr THEN expr %prec LOWER_THEN_ELSE	{ PUSH_ACT(E_IF_CONS); }
 	|	IF expr THEN expr ELSE expr { PUSH_ACT(E_IFELSE_CONS); }
-	|	ident
+	|	ident			{ gp_convert_identifier_to_bool ();
+					  /* convert true/false to bool */}
 	|	'`' ident		{ PUSH_ACT(E_QUOTE); }
 	|	'&' ident		{ PUSH_ACT(E_REFERENCE); }
 	|	deref

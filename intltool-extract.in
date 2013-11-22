@@ -32,7 +32,7 @@
 ## Release information
 my $PROGRAM      = "intltool-extract";
 my $PACKAGE      = "intltool";
-my $VERSION      = "0.30";
+my $VERSION      = "0.31";
 
 ## Loaded modules
 use strict; 
@@ -277,8 +277,8 @@ sub type_xml {
             s/^ //;
             s/ $//;
         }
-        $messages{entity_decode_minimal($_)} = [];
-        $comments{entity_decode_minimal($_)} = $1 if (defined($1));
+        $messages{$_} = [];
+        $comments{$_} = $1 if (defined($1));
     }
 }
 

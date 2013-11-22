@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
 
 #ifndef EVAL_H
 #define EVAL_H
+
+/* #define EVAL_DEBUG 1 */
+/* Note: this won't be completely mem-debug friendly, but only mostly */
+/* #define MEM_DEBUG_FRIENDLY 1 */
+/* #define MEM_DEBUG_SUPER_FRIENDLY 1 */
 
 #include "mpwrap.h"
 
@@ -98,7 +103,6 @@ enum {
 };
 
 
-
 /*table of operators, at least the primitive types*/
 enum {
 	GO_VALUE=1<<0,
@@ -107,6 +111,7 @@ enum {
 	GO_FUNCTION=1<<3,
 	GO_POLYNOMIAL=1<<4,
 	GO_IDENTIFIER=1<<5,
+	GO_BOOL=1<<6,
 };
 typedef gboolean (*GelEvalFunc)(GelCtx *ctx, GelETree *n, ...);
 /*primitive operations can be like this*/
@@ -115,7 +120,7 @@ struct _GelOperPrim {
 	guint32 arg[3]; /*bitmap of allowable types for arguments*/
 	GelEvalFunc evalfunc;
 };
-#define OP_TABLE_LEN 9
+#define OP_TABLE_LEN 10
 typedef struct _GelOper GelOper;
 struct _GelOper {
 	GelOperPrim prim[OP_TABLE_LEN];
@@ -127,6 +132,7 @@ GelETree * gel_makenum_use(mpw_t num); /*don't create a new number*/
 GelETree * gel_makenum_ui(unsigned long num);
 GelETree * gel_makenum_si(long num);
 GelETree * gel_makenum_d (double num);
+GelETree * gel_makenum_bool (gboolean bool_);
 GelETree * gel_makenum_null(void);
 GelETree * gel_makenum_identifier (GelToken *id);
 GelETree * gel_makenum_string (const char *str);
@@ -140,17 +146,15 @@ void gel_makenum_from(GelETree *n, mpw_t num);
 void gel_makenum_use_from(GelETree *n, mpw_t num); /*don't create a new number*/
 void gel_makenum_ui_from(GelETree *n, unsigned long num);
 void gel_makenum_si_from(GelETree *n, long num);
+void gel_makenum_bool_from (GelETree *n, gboolean bool_);
 void gel_makenum_null_from(GelETree *n);
-
-/*returns the number of args for an operator, or -1 if it takes up till
-  exprlist marker -2 if it takes 1 past the marker for the first argument*/
-int branches(int op) G_GNUC_CONST;
 
 /*copy a node*/
 GelETree * copynode(GelETree *o);
 
 /*functions for reclaiming memory*/
 void gel_freetree(GelETree *n);
+void gel_emptytree(GelETree *n);
 
 /* you need to get, then free an evaluation context*/
 GelCtx * eval_get_context(void);
@@ -160,7 +164,7 @@ GelETree * eval_etree(GelCtx *ctx, GelETree *etree);
 
 /*return TRUE if node is true (a number node !=0, or nonempty string),
   false otherwise*/
-int isnodetrue(GelETree *n, int *bad_node);
+int gel_isnodetrue(GelETree *n, int *bad_node);
 
 /*call a function (arguments should have already been evaluated)*/
 GelETree * funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
@@ -176,6 +180,9 @@ void replace_equals (GelETree *n, gboolean in_expression);
 void replace_exp (GelETree *n);
 void fixup_num_neg (GelETree *n);
 void try_to_do_precalc(GelETree *n);
+
+/* find an identifier */
+gboolean eval_find_identifier (GelETree *n, GelToken *tok);
 
 /* return a list of used local functions (copies of) */
 GSList * gel_subst_local_vars (GSList *, GelETree *n);
@@ -208,14 +215,36 @@ mpw_ptr gel_find_pre_function_modulo (GelCtx *ctx);
 
 extern GelETree *free_trees;
 
-#define GET_NEW_NODE(n) {				\
-	if(!free_trees)					\
-		n = g_new(GelETree,1);			\
-	else {						\
-		n = free_trees;				\
-		free_trees = free_trees->any.next;	\
-	}						\
+
+#ifdef MEM_DEBUG_FRIENDLY
+
+# ifdef EVAL_DEBUG
+void register_new_tree (GelETree *n);
+void deregister_tree (GelETree *n);
+void print_live_trees (void);
+void deregister_all_trees (void);
+#  define GET_NEW_NODE(n) {				\
+	n = g_new0 (GelETree, 1);			\
+	printf ("%s NEW NODE %p\n", G_STRLOC, n);	\
+	register_new_tree (n);				\
 }
+# else /* EVAL_DEBUG */
+
+#  define GET_NEW_NODE(n) {				\
+	n = g_new0 (GelETree, 1);			\
+}
+# endif /* EVAL_DEBUG */
+
+#else /* MEM_DEBUG_FRIENDLY */
+
+void _gel_make_free_trees (void);
+# define GET_NEW_NODE(n) {				\
+	if G_UNLIKELY (free_trees == NULL)		\
+		_gel_make_free_trees ();		\
+	n = free_trees;					\
+	free_trees = free_trees->any.next;		\
+}
+#endif
 
 extern GelEFunc *_internal_ln_function;
 extern GelEFunc *_internal_exp_function;
