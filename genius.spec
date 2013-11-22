@@ -1,4 +1,4 @@
-%define  ver     0.5.1
+%define  ver     0.5.2
 %define  rel     1
 %define  prefix  /usr
 
@@ -50,5 +50,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %{prefix}/bin/*
 %{prefix}/share/locale/*/*/*
-%{prefix}/share/genius/*
-%{prefix}/share/apps/Utilities/*
+%{prefix}/share/genius
+%{prefix}/lib/genius
+%{prefix}/include/genius
+%{prefix}/share/applications/*

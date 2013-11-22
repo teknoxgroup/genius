@@ -136,7 +136,6 @@ YACC = @YACC@
 cxxflags_set = @cxxflags_set@
 l = @l@
 
-Utilitiesdir = $(datadir)/apps/Utilities
 Librarydir = $(datadir)/genius/gel
 Plugindescdir = $(datadir)/genius/plugins
 
@@ -147,10 +146,12 @@ plugin_includedir = $(includedir)/genius
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
 
-INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_builddir)						$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
+INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_builddir)						$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
 
 
-bin_PROGRAMS = gnome-genius genius genius-readline-helper
+bin_PROGRAMS = gnome-genius genius
+
+libexec_PROGRAMS = genius-readline-helper-fifo
 
 gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
@@ -158,11 +159,11 @@ gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		uti
 gnome_genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_readline_helper_SOURCES =   	genius_lists.c				genius-readline-helper.c
+genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helper.c
 
 
 # FIXME: no need for so many libs
-genius_readline_helper_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_readline_helper_fifo_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
@@ -171,7 +172,7 @@ genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h
 genius_LDADD =  	-lm						@GMP_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-plugin_include_HEADERS =  	plug_api.h		structs.h		calc.h			eval.h
+plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			eval.h
 
 
 plugin_LTLIBRARIES = libtestplugin.la
@@ -183,11 +184,13 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES =  $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop test.plugin.in # lib.gel 
+Desktopdir = $(datadir)/applications
+Desktop_in_files =  	gnome-genius.desktop.in	
 
-Utilities_DATA = gnome-genius.desktop
+Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
-# Library_DATA = lib.gel lib.cgel
+EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in
+
 
 Plugindesc_DATA = test.plugin
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
@@ -201,9 +204,9 @@ LIBS = @LIBS@
 libtestplugin_la_LDFLAGS = 
 libtestplugin_la_LIBADD = 
 libtestplugin_la_OBJECTS =  testplugin.lo
-bin_PROGRAMS =  gnome-genius$(EXEEXT) genius$(EXEEXT) \
-genius-readline-helper$(EXEEXT)
-PROGRAMS =  $(bin_PROGRAMS)
+bin_PROGRAMS =  gnome-genius$(EXEEXT) genius$(EXEEXT)
+libexec_PROGRAMS =  genius-readline-helper-fifo$(EXEEXT)
+PROGRAMS =  $(bin_PROGRAMS) $(libexec_PROGRAMS)
 
 gnome_genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) \
 gnome-genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) \
@@ -221,17 +224,17 @@ plugread_nongnome.$(OBJEXT) parse.$(OBJEXT) genius_lists.$(OBJEXT) \
 utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
-genius_readline_helper_OBJECTS =  genius_lists.$(OBJEXT) \
+genius_readline_helper_fifo_OBJECTS =  genius_lists.$(OBJEXT) \
 genius-readline-helper.$(OBJEXT)
-genius_readline_helper_DEPENDENCIES = 
-genius_readline_helper_LDFLAGS = 
+genius_readline_helper_fifo_DEPENDENCIES = 
+genius_readline_helper_fifo_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DATA =  $(Plugindesc_DATA) $(Utilities_DATA)
+DATA =  $(Desktop_DATA) $(Plugindesc_DATA)
 
 HEADERS =  $(plugin_include_HEADERS)
 
@@ -242,8 +245,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES) $(genius_readline_helper_SOURCES)
-OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS) $(genius_readline_helper_OBJECTS)
+SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES) $(genius_readline_helper_fifo_SOURCES)
+OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS) $(genius_readline_helper_fifo_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -353,6 +356,31 @@ uninstall-binPROGRAMS:
 	  rm -f $(DESTDIR)$(bindir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
 	done
 
+mostlyclean-libexecPROGRAMS:
+
+clean-libexecPROGRAMS:
+	-test -z "$(libexec_PROGRAMS)" || rm -f $(libexec_PROGRAMS)
+
+distclean-libexecPROGRAMS:
+
+maintainer-clean-libexecPROGRAMS:
+
+install-libexecPROGRAMS: $(libexec_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(libexecdir)
+	@list='$(libexec_PROGRAMS)'; for p in $$list; do \
+	  if test -f $$p; then \
+	    echo " $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`"; \
+	    $(LIBTOOL)  --mode=install $(INSTALL_PROGRAM) $$p $(DESTDIR)$(libexecdir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	  else :; fi; \
+	done
+
+uninstall-libexecPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	list='$(libexec_PROGRAMS)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(libexecdir)/`echo $$p|sed 's/$(EXEEXT)$$//'|sed '$(transform)'|sed 's/$$/$(EXEEXT)/'`; \
+	done
+
 gnome-genius$(EXEEXT): $(gnome_genius_OBJECTS) $(gnome_genius_DEPENDENCIES)
 	@rm -f gnome-genius$(EXEEXT)
 	$(LINK) $(gnome_genius_LDFLAGS) $(gnome_genius_OBJECTS) $(gnome_genius_LDADD) $(LIBS)
@@ -361,9 +389,9 @@ genius$(EXEEXT): $(genius_OBJECTS) $(genius_DEPENDENCIES)
 	@rm -f genius$(EXEEXT)
 	$(LINK) $(genius_LDFLAGS) $(genius_OBJECTS) $(genius_LDADD) $(LIBS)
 
-genius-readline-helper$(EXEEXT): $(genius_readline_helper_OBJECTS) $(genius_readline_helper_DEPENDENCIES)
-	@rm -f genius-readline-helper$(EXEEXT)
-	$(LINK) $(genius_readline_helper_LDFLAGS) $(genius_readline_helper_OBJECTS) $(genius_readline_helper_LDADD) $(LIBS)
+genius-readline-helper-fifo$(EXEEXT): $(genius_readline_helper_fifo_OBJECTS) $(genius_readline_helper_fifo_DEPENDENCIES)
+	@rm -f genius-readline-helper-fifo$(EXEEXT)
+	$(LINK) $(genius_readline_helper_fifo_LDFLAGS) $(genius_readline_helper_fifo_OBJECTS) $(genius_readline_helper_fifo_LDADD) $(LIBS)
 .l.c:
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) $< && mv $(LEX_OUTPUT_ROOT).c $@
 .y.c:
@@ -373,6 +401,25 @@ genius-readline-helper$(EXEEXT): $(genius_readline_helper_OBJECTS) $(genius_read
 	else :; fi
 parse.h: parse.c
 
+
+install-DesktopDATA: $(Desktop_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(Desktopdir)
+	@list='$(Desktop_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Desktopdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Desktopdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(Desktopdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(Desktopdir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-DesktopDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(Desktop_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(Desktopdir)/$$p; \
+	done
 
 install-PlugindescDATA: $(Plugindesc_DATA)
 	@$(NORMAL_INSTALL)
@@ -391,25 +438,6 @@ uninstall-PlugindescDATA:
 	@$(NORMAL_UNINSTALL)
 	list='$(Plugindesc_DATA)'; for p in $$list; do \
 	  rm -f $(DESTDIR)$(Plugindescdir)/$$p; \
-	done
-
-install-UtilitiesDATA: $(Utilities_DATA)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(Utilitiesdir)
-	@list='$(Utilities_DATA)'; for p in $$list; do \
-	  if test -f $(srcdir)/$$p; then \
-	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Utilitiesdir)/$$p"; \
-	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Utilitiesdir)/$$p; \
-	  else if test -f $$p; then \
-	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(Utilitiesdir)/$$p"; \
-	    $(INSTALL_DATA) $$p $(DESTDIR)$(Utilitiesdir)/$$p; \
-	  fi; fi; \
-	done
-
-uninstall-UtilitiesDATA:
-	@$(NORMAL_UNINSTALL)
-	list='$(Utilities_DATA)'; for p in $$list; do \
-	  rm -f $(DESTDIR)$(Utilitiesdir)/$$p; \
 	done
 
 install-plugin_includeHEADERS: $(plugin_include_HEADERS)
@@ -510,8 +538,8 @@ plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugin.h \
 	plugread.h
 plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
 	mpwrap.h plugin.h plugread.h
-testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h calc.h \
-	structs.h mpwrap.h geloutput.h
+testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h eval.h \
+	mpwrap.h structs.h calc.h dict.h geloutput.h
 util.o: util.c ../config.h util.h
 utype.o: utype.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
 	util.h funclib.h matrix.h matrixw.h matop.h compil.h utype.h
@@ -524,18 +552,19 @@ check-am: all-am
 check: check-am
 installcheck-am:
 installcheck: installcheck-am
-install-exec-am: install-binPROGRAMS
+install-exec-am: install-binPROGRAMS install-libexecPROGRAMS
 install-exec: install-exec-am
 
-install-data-am: install-pluginLTLIBRARIES install-PlugindescDATA \
-		install-UtilitiesDATA install-plugin_includeHEADERS
+install-data-am: install-pluginLTLIBRARIES install-DesktopDATA \
+		install-PlugindescDATA install-plugin_includeHEADERS
 install-data: install-data-am
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
 uninstall-am: uninstall-pluginLTLIBRARIES uninstall-binPROGRAMS \
-		uninstall-PlugindescDATA uninstall-UtilitiesDATA \
+		uninstall-libexecPROGRAMS uninstall-DesktopDATA \
+		uninstall-PlugindescDATA \
 		uninstall-plugin_includeHEADERS
 uninstall: uninstall-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
@@ -544,7 +573,8 @@ install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(plugindir) $(DESTDIR)$(bindir) \
-		$(DESTDIR)$(Plugindescdir) $(DESTDIR)$(Utilitiesdir) \
+		$(DESTDIR)$(libexecdir) $(DESTDIR)$(Desktopdir) \
+		$(DESTDIR)$(Plugindescdir) \
 		$(DESTDIR)$(plugin_includedir)
 
 
@@ -561,18 +591,20 @@ maintainer-clean-generic:
 	-test -z "lexercparsehparsec$(BUILT_SOURCES)" || rm -f lexerc parseh parsec $(BUILT_SOURCES)
 mostlyclean-am:  mostlyclean-pluginLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-binPROGRAMS \
-		mostlyclean-tags mostlyclean-generic
+		mostlyclean-libexecPROGRAMS mostlyclean-tags \
+		mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
 clean-am:  clean-pluginLTLIBRARIES clean-compile clean-libtool \
-		clean-binPROGRAMS clean-tags clean-generic \
-		mostlyclean-am
+		clean-binPROGRAMS clean-libexecPROGRAMS clean-tags \
+		clean-generic mostlyclean-am
 
 clean: clean-am
 
 distclean-am:  distclean-pluginLTLIBRARIES distclean-compile \
-		distclean-libtool distclean-binPROGRAMS distclean-tags \
+		distclean-libtool distclean-binPROGRAMS \
+		distclean-libexecPROGRAMS distclean-tags \
 		distclean-generic clean-am
 	-rm -f libtool
 
@@ -580,7 +612,8 @@ distclean: distclean-am
 
 maintainer-clean-am:  maintainer-clean-pluginLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
-		maintainer-clean-binPROGRAMS maintainer-clean-tags \
+		maintainer-clean-binPROGRAMS \
+		maintainer-clean-libexecPROGRAMS maintainer-clean-tags \
 		maintainer-clean-generic distclean-am
 	@echo "This command is intended for maintainers to use;"
 	@echo "it deletes files that may require special tools to rebuild."
@@ -594,8 +627,11 @@ mostlyclean-compile distclean-compile clean-compile \
 maintainer-clean-compile mostlyclean-libtool distclean-libtool \
 clean-libtool maintainer-clean-libtool mostlyclean-binPROGRAMS \
 distclean-binPROGRAMS clean-binPROGRAMS maintainer-clean-binPROGRAMS \
-uninstall-binPROGRAMS install-binPROGRAMS uninstall-PlugindescDATA \
-install-PlugindescDATA uninstall-UtilitiesDATA install-UtilitiesDATA \
+uninstall-binPROGRAMS install-binPROGRAMS mostlyclean-libexecPROGRAMS \
+distclean-libexecPROGRAMS clean-libexecPROGRAMS \
+maintainer-clean-libexecPROGRAMS uninstall-libexecPROGRAMS \
+install-libexecPROGRAMS uninstall-DesktopDATA install-DesktopDATA \
+uninstall-PlugindescDATA install-PlugindescDATA \
 uninstall-plugin_includeHEADERS install-plugin_includeHEADERS tags \
 mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
 distdir info-am info dvi-am dvi check check-am installcheck-am \
@@ -605,10 +641,7 @@ installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
-# MOSTLYCLEANFILES = lib.cgel
-
-# lib.cgel: lib.gel genius
-#	$(top_builddir)/src/genius --compile lib.gel > temp.cgel && mv -f temp.cgel lib.cgel
+@INTLTOOL_DESKTOP_RULE@
 
 parse.h: parse.y
 	$(YACC) $(YFLAGS) $<

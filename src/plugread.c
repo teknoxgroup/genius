@@ -31,8 +31,8 @@
 #include "plugin.h"
 #include "plugread.h"
 
-plugin_t *
-readplugin(char *dir_name,char *file_name)
+GelPlugin *
+gel_readplugin (const char *dir_name, const char *file_name)
 {
 	char *p;
 	char *name;
@@ -40,8 +40,9 @@ readplugin(char *dir_name,char *file_name)
 	char *copyright;
 	char *author;
 	char *description;
-	int gui;
-	plugin_t *plg;
+	gboolean gui;
+	gboolean hide;
+	GelPlugin *plg;
 
 	p = g_strconcat("=",dir_name,"/",file_name,
 			"=/Genius Plugin/",NULL);
@@ -52,7 +53,8 @@ readplugin(char *dir_name,char *file_name)
 	copyright = gnome_config_get_translated_string("Copyright");
 	author = gnome_config_get_string("Author");
 	description = gnome_config_get_translated_string("Description");
-	gui = gnome_config_get_bool("GUI");
+	gui = gnome_config_get_bool("GUI=false");
+	hide = gnome_config_get_bool("Hide=false");
 	gnome_config_pop_prefix();
 	p = g_strconcat("=",dir_name,"/",file_name,
 			"=",NULL);
@@ -66,7 +68,7 @@ readplugin(char *dir_name,char *file_name)
 		g_free(description);
 		return NULL;
 	}
-	plg = g_new0(plugin_t,1);
+	plg = g_new0 (GelPlugin, 1);
 	plg->name = name;
 	plg->base = g_strdup(file_name);
 	p = strstr(plg->base,".plugin");
@@ -76,5 +78,6 @@ readplugin(char *dir_name,char *file_name)
 	plg->author = author;
 	plg->description = description;
 	plg->gui = gui;
+	plg->hide = hide;
 	return plg;
 }

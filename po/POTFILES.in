@@ -6,3 +6,7 @@ src/mpwrap.c
 src/genius.c
 src/matop.c
 src/compil.c
+src/funclib.c
+src/gnome-genius.desktop.in.h
+src/plugin.c
+src/testplugin.c

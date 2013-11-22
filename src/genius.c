@@ -74,7 +74,6 @@ calcstate_t curstate={
 	10
 	};
 	
-extern calc_error_t error_num;
 extern int got_eof;
 extern int parenth_depth;
 
@@ -90,7 +89,7 @@ puterror(const char *s)
 {
 	char *file;
 	int line;
-	get_file_info(&file,&line);
+	gel_get_file_info(&file,&line);
 	if(file)
 		fprintf(stderr,"%s:%d: %s\n",file,line,s);
 	else if(line>0)
@@ -108,8 +107,8 @@ calc_puterror(const char *s)
 	total_errors_printed++;
 }
 
-static void
-printout_error_num_and_reset(void)
+void
+gel_printout_infos (void)
 {
 	if(errors_printed-curstate.max_errors > 0)
 		fprintf(stderr,_("Too many errors! (%d followed)\n"),
@@ -151,9 +150,9 @@ set_state(calcstate_t state)
 	if (state.full_expressions ||
 	    state.output_style == GEL_OUTPUT_LATEX ||
 	    state.output_style == GEL_OUTPUT_TROFF)
-		gel_output_set_line_length(main_out, 0, NULL);
+		gel_output_set_length_limit (main_out, FALSE);
 	else
-		gel_output_set_line_length(main_out, 80, get_term_width);
+		gel_output_set_length_limit (main_out, TRUE);
 }
 
 static void
@@ -259,9 +258,22 @@ main(int argc, char *argv[])
 		}
 	}
 
-	read_plugin_list();
+	{
+		/* FIXME: use this for option parsing,
+		 * we really only need gnome-program for
+		 * gnome_config, perhaps we should switch to
+		 * ve-config anyway */
+		char *fakeargv[] = { argv[0], NULL };
+		gnome_program_init ("genius", VERSION, 
+				    LIBGNOME_MODULE /* module_info */,
+				    1, fakeargv,
+				    /* GNOME_PARAM_POPT_TABLE, options, */
+				    NULL);
+	}
 
-	if(do_compile)
+	gel_read_plugin_list();
+
+	if (do_compile)
 		be_quiet = TRUE;
 	inter = isatty(0) && !files && !do_compile;
 	/*interactive mode, print welcome message*/
@@ -269,7 +281,8 @@ main(int argc, char *argv[])
 		printf(_("Genius %s\n"
 			 "%s\n"
 			 "This is free software with ABSOLUTELY NO WARRANTY.\n"
-			 "For details type `warranty'.\n\n"),
+			 "For license details type `warranty'.\n"
+			 "For help type 'manual' or 'help'.\n\n"),
 		       VERSION,
 		       COPYRIGHT_STRING);
 		be_quiet = FALSE;
@@ -294,46 +307,62 @@ main(int argc, char *argv[])
 	d_singlecontext ();
 
 	if(!do_compile) {
+		/*
+		 * Read main library
+		 */
 		if (access ("../lib/lib.cgel", F_OK) == 0) {
 			/*try the library file in the current/../lib directory*/
-			load_compiled_file (NULL, "../lib/lib.cgel",FALSE);
+			gel_load_compiled_file (NULL, "../lib/lib.cgel", FALSE);
 		} else {
-			load_compiled_file (NULL, LIBRARY_DIR "/gel/lib.cgel", FALSE);
+			gel_load_compiled_file (NULL,
+						LIBRARY_DIR "/gel/lib.cgel",
+						FALSE);
 		}
 
+		/*
+		 * Read init files
+		 */
 		file = g_strconcat(g_getenv("HOME"),"/.geniusinit",NULL);
 		if(file)
-			load_file(NULL, file, FALSE);
+			gel_load_file(NULL, file, FALSE);
 		g_free(file);
 
-		load_file (NULL, "geniusinit.gel", FALSE);
+		gel_load_file (NULL, "geniusinit.gel", FALSE);
+
+		/*
+		 * Restore plugins
+		 */
+		gel_restore_plugins ();
 	}
 
-	if(files) {
+	if (files != NULL) {
 		GSList *t;
 		do {
 			fp = fopen(files->data,"r");
-			push_file_info(files->data,1);
+			gel_push_file_info(files->data,1);
 			t = files;
 			files = g_slist_remove_link(files,t);
 			g_slist_free_1(t);
 			if(!fp) {
-				pop_file_info();
+				gel_pop_file_info();
 				puterror(_("Can't open file"));
 			}
 		} while(!fp && files);
-		if(!fp && !files)
+		if(!fp && !files) {
+			if ( ! do_compile)
+				gel_save_plugins ();
 			return 0;
+		}
 	} else {
 		fp = stdin;
-		push_file_info(NULL,1);
+		gel_push_file_info(NULL,1);
 	}
 	my_yy_open(fp);
 	if(inter && use_readline) {
 		init_inter();
 	}
 
-	printout_error_num_and_reset();
+	gel_printout_infos ();
 	
 	rl_event_hook = nop;
 
@@ -341,21 +370,21 @@ main(int argc, char *argv[])
 		for(;;) {
 			if(inter && use_readline) /*use readline mode*/ {
 				GelETree *e;
-				rewind_file_info();
+				gel_rewind_file_info();
 				line_len_cache = -1;
 				e = get_p_expression();
 				line_len_cache = -1;
-				if(e) evalexp_parsed(e,main_out,"= ",TRUE);
+				if(e) gel_evalexp_parsed(e,main_out,"= ",TRUE);
 				line_len_cache = -1;
 			} else {
 				line_len_cache = -1;
-				evalexp(NULL, fp, main_out, NULL, FALSE, NULL);
+				gel_evalexp(NULL, fp, main_out, NULL, FALSE, NULL);
 				line_len_cache = -1;
 				if(interrupted)
 					got_eof = TRUE;
 			}
 			if(inter)
-				printout_error_num_and_reset();
+				gel_printout_infos ();
 
 			if(got_eof) {
 				if(inter)
@@ -370,24 +399,26 @@ main(int argc, char *argv[])
 			/*fclose(fp);*/
 			do {
 				fp = fopen(files->data,"r");
-				push_file_info(files->data,1);
+				gel_push_file_info(files->data,1);
 				t = files;
 				files = g_slist_remove_link(files,t);
 				g_slist_free_1(t);
 				if(!fp) {
-					pop_file_info();
+					gel_pop_file_info();
 					puterror(_("Can't open file"));
 				}
 			} while(!fp && files);
 			if(!fp && !files) {
 				if(do_compile) {
-					push_file_info(NULL,0);
-					compile_all_user_funcs(stdout);
-					pop_file_info();
+					gel_push_file_info(NULL,0);
+					gel_compile_all_user_funcs(stdout);
+					gel_pop_file_info();
 					/* if we have gotten errors then
 					   signal by returning a 1 */
 					if(total_errors_printed)
 						return 1;
+				} else {
+					gel_save_plugins ();
 				}
 				return 0;
 			}
@@ -396,20 +427,22 @@ main(int argc, char *argv[])
 			break;
 	}
 
-	printout_error_num_and_reset();
+	gel_printout_infos ();
 	
 	my_yy_close(fp);
 	/*if(fp != stdin)
 		fclose(fp);*/
 	
 	if(do_compile) {
-		push_file_info(NULL,0);
-		compile_all_user_funcs(stdout);
-		pop_file_info();
+		gel_push_file_info(NULL,0);
+		gel_compile_all_user_funcs(stdout);
+		gel_pop_file_info();
 		/* if we have gotten errors then
 		   signal by returning a 1 */
 		if(total_errors_printed)
 			return 1;
+	} else {
+		gel_save_plugins ();
 	}
 
 	return 0;

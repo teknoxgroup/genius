@@ -26,11 +26,13 @@ typedef struct _GelPluginInfo GelPluginInfo;
 struct _GelPluginInfo {
 	void (*open)(void); /*open the plugin (this happens every
 			      time the user selects the menuitem)*/
-	int (*save_state)(char *prefix); /*save state using gnome_config
-					   in this file, and return TRUE
-					   if genius should reload this
-					   plugin next time*/
-	void (*restore_state)(char *prefix);
+
+	gboolean (*save_state) (const char *unique_id);
+			    /* return TRUE if genius should reload this
+			       plugin next time.  Note that the unique id
+			       can be used if ever multiple sessions are
+			       implemented */
+	void (*restore_state) (const char *unique_id);
 };
 
 /*this is here to avoid "prototype warnings", this is a function which the

@@ -28,13 +28,19 @@
 #include "geloutput.h"
 
 
-static int
-get_cur_len (GelOutput *gelo)
+int
+gel_output_get_columns (GelOutput *gelo)
 {
 	if (gelo->line_length_get != NULL)
 		return gelo->line_length_get(gelo);
 	else
 		return gelo->line_length;
+}
+
+void
+gel_output_set_length_limit (GelOutput *gelo, gboolean length_limit)
+{
+	gelo->length_limit = length_limit;
 }
 
 static void
@@ -71,7 +77,7 @@ gel_output_putchar(GelOutput *gelo, char ch, gboolean limit, int ll)
 static void
 gel_output_print_string (GelOutput *gelo, const char *string, gboolean limit)
 {
-	int ll = get_cur_len (gelo);
+	int ll;
 	const char *p;
 
 	if (gelo->output_type == GEL_OUTPUT_BLACK_HOLE) {
@@ -80,9 +86,15 @@ gel_output_print_string (GelOutput *gelo, const char *string, gboolean limit)
 			gelo->notify (gelo);
 		return;
 	}
-	
-	if (ll <= 0)
+
+	if (limit && gelo->length_limit) {
+		ll = gel_output_get_columns (gelo);	
+		if (ll <= 0)
+			limit = FALSE;
+	} else {
+		ll = 0;
 		limit = FALSE;
+	}
 
 	for (p = string; *p != '\0'; p++) {
 		if (*p=='\n') {
@@ -172,6 +184,7 @@ gel_output_new (void)
 	gelo->no_notify = 0;
 	gelo->output_type = GEL_OUTPUT_FILE;
 	gelo->outfp = stdout;
+	gelo->length_limit = TRUE;
 
 	return gelo;
 }

@@ -43,6 +43,10 @@ extern int got_eof;
 static int matrix_entry = 0;
 static GSList *matrix_entry_stack = NULL;
 
+/* Ugly warning avoiding */
+#ifdef FLEX_SCANNER
+int yylex(void);
+#endif
 
 #define NO_RET {return_ret = FALSE;}
 #define DO_RET { \
@@ -407,10 +411,10 @@ null		{ DO_RET; return '.'; }
 			return NUMBER;
 		}
 		
-\\\n		{ incr_file_info(); }
+\\\n		{ gel_incr_file_info(); }
 		
 [\t ]*\n	{ 
-			incr_file_info();
+			gel_incr_file_info();
 			if(matrix_entry) {
 				return NEXTROW;
 			} else if(return_ret) {
@@ -461,3 +465,12 @@ null		{ DO_RET; return '.'; }
 
 int my_yyinput(void);
 int my_yyinput(void) { return input(); }
+
+/* avoid unused warnings, kind of bogus */
+#ifdef FLEX_SCANNER
+void fake_fake_fake (void);
+void fake_fake_fake (void) {
+	 yy_flex_realloc (NULL, 0);
+	 yyunput (0, NULL);
+}
+#endif

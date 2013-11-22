@@ -37,7 +37,6 @@
 #include "matop.h"
 #include "geloutput.h"
 
-extern calc_error_t error_num;
 extern int got_eof;
 extern calcstate_t calcstate;
 
@@ -51,13 +50,19 @@ int numprimes = 0;
 
 static mpw_t e_cache;
 static int e_iscached = FALSE;
+static mpw_t golden_ratio_cache;
+static int golden_ratio_iscached = FALSE;
 
 void
-gel_break_fp_caches(void)
+gel_break_fp_caches (void)
 {
-	if(e_iscached) {
+	if (e_iscached) {
 		e_iscached = FALSE;
-		mpw_clear(e_cache);
+		mpw_clear (e_cache);
+	}
+	if (golden_ratio_iscached) {
+		golden_ratio_iscached = FALSE;
+		mpw_clear (golden_ratio_cache);
 	}
 }
 
@@ -83,6 +88,39 @@ get_nonnegative_integer (mpw_ptr z, const char *funcname)
 		return -1;
 	}
 	return i;
+}
+
+static GelETree *
+manual_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	GString *str;
+	FILE *fp;
+
+	str = g_string_new (NULL);
+
+	fp = fopen ("../doc/manual.txt", "r");
+	if (fp == NULL)
+		fp = fopen (LIBRARY_DIR "/manual.txt", "r");
+
+	if (fp != NULL) {
+		char buf[256];
+		while (fgets (buf, sizeof(buf), fp) != NULL) {
+			g_string_append (str, buf);
+		}
+
+		fclose (fp);
+	} else {
+		g_string_append (str,
+				 _("Cannot locate the manual"));
+	}
+
+	(*infoout) (str->str);
+	error_num = IGNORE_ERROR;
+	if(exception) *exception = TRUE; /*raise exception*/
+
+	g_string_free (str, TRUE);
+
+	return NULL;
 }
 
 static GelETree *
@@ -845,25 +883,40 @@ atan_op(GelCtx *ctx, GelETree * * a, int *exception)
 static GelETree *
 e_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
-	if(e_iscached)
-		return gel_makenum(e_cache);
+	if (e_iscached)
+		return gel_makenum (e_cache);
 
-	mpw_init(e_cache);
-	mpw_set_ui(e_cache,1);
-	mpw_exp(e_cache,e_cache);
+	mpw_init (e_cache);
+	mpw_set_ui (e_cache,1);
+	mpw_exp (e_cache, e_cache);
 	e_iscached = TRUE;
-	return gel_makenum(e_cache);
+	return gel_makenum (e_cache);
 }
 
 /*pi function (or pi variable or whatever)*/
 static GelETree *
-pi_op(GelCtx *ctx, GelETree * * a, int *exception)
+pi_op (GelCtx *ctx, GelETree * * a, int *exception)
 {
 	mpw_t fr; 
-	mpw_init(fr);
-	mpw_pi(fr);
+	mpw_init (fr);
+	mpw_pi (fr);
 
-	return gel_makenum_use(fr);
+	return gel_makenum_use (fr);
+}
+
+static GelETree *
+GoldenRatio_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	if (golden_ratio_iscached)
+		return gel_makenum (golden_ratio_cache);
+
+	mpw_init (golden_ratio_cache);
+	mpw_set_ui (golden_ratio_cache, 5);
+	mpw_sqrt (golden_ratio_cache, golden_ratio_cache);
+	mpw_add_ui (golden_ratio_cache, golden_ratio_cache, 1);
+	mpw_div_ui (golden_ratio_cache, golden_ratio_cache, 2);
+	golden_ratio_iscached = TRUE;
+	return gel_makenum (golden_ratio_cache);
 }
 
 static GelETree *
@@ -2089,7 +2142,6 @@ is_prime(unsigned long testnum)
 	return 1;
 }
 
-
 static GelETree *
 prime_op(GelCtx *ctx, GelETree * * a, int *exception)
 {
@@ -2140,6 +2192,125 @@ prime_op(GelCtx *ctx, GelETree * * a, int *exception)
 		return NULL;
 	}
 	return gel_makenum_ui(g_array_index(primes,unsigned long,num-1));
+}
+
+static GelETree *
+NextPrime_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_t ret;
+
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],NextPrime_op,"NextPrime");
+
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[0]->val.value) ||
+	   !mpw_is_integer(a[0]->val.value)) {
+		(*errorout)(_("NextPrime: argument not an integer"));
+		return NULL;
+	}
+
+	mpw_init (ret);
+	mpw_nextprime (ret, a[0]->val.value);
+	if (error_num != NO_ERROR) {
+		mpw_clear (ret);
+		/* eek! should not happen */
+		error_num = NO_ERROR;
+		return NULL;
+	}
+	return gel_makenum_use (ret);
+}
+
+static GelETree *
+LucasNumber_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_t ret;
+
+	if(a[0]->type==MATRIX_NODE)
+		return apply_func_to_matrix(ctx,a[0],LucasNumber_op,"LucasNumber");
+
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[0]->val.value) ||
+	   !mpw_is_integer(a[0]->val.value)) {
+		(*errorout)(_("LucasNumber: argument not an integer"));
+		return NULL;
+	}
+
+	mpw_init (ret);
+	mpw_lucnum (ret, a[0]->val.value);
+	if (error_num != NO_ERROR) {
+		mpw_clear (ret);
+		error_num = NO_ERROR;
+		return NULL;
+	}
+	return gel_makenum_use (ret);
+}
+
+static GelETree *
+IsPrimeProbability_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	int ret;
+
+	if (a[0]->type == MATRIX_NODE ||
+	    a[1]->type == MATRIX_NODE)
+		return apply_func_to_matrixen (ctx, a[0], a[1],
+					       IsPrimeProbability_op,
+					       "IsPrimeProbability");
+
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[0]->val.value) ||
+	   !mpw_is_integer(a[0]->val.value)) {
+		(*errorout)(_("IsPrimeProbability: argument not an integer"));
+		return NULL;
+	}
+
+	if(a[1]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[1]->val.value) ||
+	   !mpw_is_integer(a[1]->val.value)) {
+		(*errorout)(_("IsPrimeProbability: argument not an integer"));
+		return NULL;
+	}
+
+	ret = mpw_probab_prime_p (a[0]->val.value, a[1]->val.value);
+	if (error_num != NO_ERROR) {
+		error_num = NO_ERROR;
+		return NULL;
+	}
+	return gel_makenum_ui (ret);
+}
+
+static GelETree *
+ModInvert_op(GelCtx *ctx, GelETree * * a, int *exception)
+{
+	mpw_t ret;
+
+	if (a[0]->type == MATRIX_NODE ||
+	    a[1]->type == MATRIX_NODE)
+		return apply_func_to_matrixen (ctx, a[0], a[1],
+					       ModInvert_op,
+					       "ModInvert");
+
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[0]->val.value) ||
+	   !mpw_is_integer(a[0]->val.value)) {
+		(*errorout)(_("ModInvert: argument not an integer"));
+		return NULL;
+	}
+
+	if(a[1]->type!=VALUE_NODE ||
+	   mpw_is_complex (a[1]->val.value) ||
+	   !mpw_is_integer(a[1]->val.value)) {
+		(*errorout)(_("ModInvert: argument not an integer"));
+		return NULL;
+	}
+
+	mpw_init (ret);
+	mpw_invert (ret, a[0]->val.value, a[1]->val.value);
+	if (error_num != NO_ERROR) {
+		mpw_clear (ret);
+		error_num = NO_ERROR;
+		return NULL;
+	}
+	return gel_makenum_use (ret);
 }
 
 static void
@@ -3236,22 +3407,6 @@ get_IntegerOutputBase (void)
 	return gel_makenum_ui(calcstate.integer_output_base);
 }
 
-static void
-add_named_args (GelEFunc *f, const char *args)
-{
-	int i;
-	char **s;
-
-	if (args == NULL || args[0] == '\0')
-		return;
-       
-	s = g_strsplit (args, ",", -1);
-	for (i = 0; s[i] != NULL; i++) {
-		f->named_args = g_slist_append (f->named_args, d_intern (s[i]));
-	}
-	g_strfreev (s);
-}
-
 /*add the routines to the dictionary*/
 void
 gel_funclib_addall(void)
@@ -3278,12 +3433,12 @@ gel_funclib_addall(void)
 	/* FIXME: add more help fields */
 #define FUNC(name,args,argn,category,desc) \
 	f = d_addfunc (d_makebifunc (d_intern ( #name ), name ## _op, args)); \
-	add_named_args (f, argn); \
+	d_add_named_args (f, argn); \
 	add_category ( #name , category); \
 	add_description ( #name , desc);
 #define VFUNC(name,args,argn,category,desc) \
 	f = d_addfunc (d_makebifunc (d_intern ( #name ), name ## _op, args)); \
-	add_named_args (f, argn); \
+	d_add_named_args (f, argn); \
 	f->vararg = TRUE; \
 	add_category ( #name , category); \
 	add_description ( #name , desc);
@@ -3306,6 +3461,7 @@ gel_funclib_addall(void)
 	d_addfunc_global (d_makevfunc (id, gel_makenum_null()));
 
 
+	FUNC (manual, 0, "", "basic", _("Displays the user manual"));
 	FUNC (warranty, 0, "", "basic", _("Gives the warranty information"));
 	FUNC (exit, 0, "", "basic", _("Exits the program"));
 	ALIAS (quit, 0, exit);
@@ -3355,6 +3511,7 @@ gel_funclib_addall(void)
 
 	FUNC (pi, 0, "", "constants", _("The number pi"));
 	FUNC (e, 0, "", "constants", _("The natural number e"));
+	FUNC (GoldenRatio, 0, "", "constants", _("The Golden Ratio"));
 
 	FUNC (sqrt, 1, "x", "numeric", _("The square root"));
 	FUNC (exp, 1, "x", "numeric", _("The exponential function"));
@@ -3379,6 +3536,11 @@ gel_funclib_addall(void)
 	FUNC (IsPerfectSquare, 1, "n", "number_theory", _("Check a number for being a perfect square"));
 	FUNC (IsPerfectPower, 1, "n", "number_theory", _("Check a number for being any perfect power (a^b)"));
 	FUNC (prime, 1, "n", "number_theory", _("Return the n'th prime (up to a limit)"));
+
+	FUNC (NextPrime, 1, "n", "number_theory", _("Returns the least prime greater than n (if n is positive)"));
+	FUNC (LucasNumber, 1, "n", "number_theory", _("Returns the n'th Lucas number"));
+	FUNC (IsPrimeProbability, 2, "n,reps", "number_theory", _("Returns 0 if composite, 1 if probably prime, 2 if definately prime"));
+	FUNC (ModInvert, 2, "n,m", "number_theory", _("Returns inverse of n mod m"));
 
 	VFUNC (max, 2, "a,args", "numeric", _("Returns the maximum of arguments or matrix"));
 	VALIAS (Max, 2, max);
@@ -3460,19 +3622,20 @@ gel_funclib_addall(void)
 	_internal_ln_function = d_makeufunc(d_intern("<internal>ln"),
 					    /*FIXME:this is not the correct 
 					      function*/
-					    parseexp("error(\"ln not finished\")",
-						     NULL, FALSE, FALSE,
-						     NULL, NULL),
+					    gel_parseexp("error(\"ln not finished\")",
+							 NULL, FALSE, FALSE,
+							 NULL, NULL),
 					    g_slist_append(NULL,d_intern("x")),1,
 					    NULL);
 	_internal_exp_function = d_makeufunc(d_intern("<internal>exp"),
-					     parseexp("s = float(x^0); "
-						      "fact = 1; "
-						      "for i = 1 to 100 do "
-						      "(fact = fact * x / i; "
-						      "s = s + fact) ; s",
-						      NULL, FALSE, FALSE,
-						      NULL, NULL),
+					     gel_parseexp
+					       ("s = float(x^0); "
+						"fact = 1; "
+						"for i = 1 to 100 do "
+						"(fact = fact * x / i; "
+						"s = s + fact) ; s",
+						NULL, FALSE, FALSE,
+						NULL, NULL),
 					     g_slist_append(NULL,d_intern("x")),1,
 					     NULL);
 	/*protect EVERYthing up to this point*/

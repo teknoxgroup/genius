@@ -1,3 +1,187 @@
+Mon Feb 10 08:57:04 2003  George Lebl <jirka@5z.com>
+
+	* Release 0.5.2
+
+Mon Feb 10 08:16:59 2003  George Lebl <jirka@5z.com>
+
+	* configure.in, Makefile.am, po/POTFILES.in: Fixed gettext/intltool
+	  stuff to be correct and actually should work now, add missing files
+
+Sun Feb 09 19:23:11 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.c: be consistent with which parentheis are printed in
+	  latex mode since I always use [] and not () because I think that
+	  looks neater, and since genius is my program I can make it
+	  print whatever I want.  And damn is this nice for typing homework :)
+
+Fri Jan 31 09:29:36 2003  George Lebl <jirka@5z.com>
+
+	* src/funclib.c: no need to mod after ref or rref since those will
+	  in fact be handled by after function moding.
+
+Wed Jan 29 14:01:54 2003  George Lebl <jirka@5z.com>
+
+	* src/eval.[ch], src/funclib.c: mod matrices after gauss (gauss is
+	  too stupid to mod ... no pun intended).  Allow negative powers
+	  of matrices and division in mod mode.
+
+	* src/geniustests.txt: add some more tests
+
+	* doc/manual.txt: update a bit
+
+Wed Jan 29 10:20:57 2003  George Lebl <jirka@5z.com>
+
+	* src/Makefile.am, src/gnome-genius.desktop.in: updated the
+	  .desktop to be correct, add categories and install in the
+	  vfolder location and all that good stuff
+
+Mon Jan 27 14:30:40 2003  George Lebl <jirka@5z.com>
+
+	* doc/manual.txt: a small update
+
+Mon Jan 27 14:13:43 2003  George Lebl <jirka@5z.com>
+
+	* configure.in, Makefile.am, doc/Makefile.am, doc/manual.txt,
+	  README:  Move the manual to doc/manual.txt and install that
+	  in the data directory
+
+	* src/calc.c, src/funclib.c, src/gnome-genius.c, src/genius.c:
+	  add manual function to display manual, improve initial message,
+	  info boxes in gui version now use textview and open up being
+	  rather large, also always use the infobox for menuitems even if
+	  console info printing is selected.
+
+	* lib/calculus/limits.gel, lib/calculus/sums_products.gel, 
+	  lib/linear_algebra/misc.gel, lib/number_theory/factoring.gel,
+	  lib/number_theory/modulus.gel, lib/statistics/basic.gel:
+	  Some naming fixes and a whole bunch of new help strings
+	  
+	* src/calc.[ch], src/eval.c, src/mpwrap.c, src/funclib.c,
+	  src/genius.c, src/gnome-genius.c, src/matop.c:
+	  Rename error var type to GeniusError, on protected id set
+	  tell us which id was it.
+
+	* src/calc.c: don't display Ans as undocumented and add some initial
+	  info to help and translate some strings
+
+	* src/geniustests.txt: add some more tests
+
+	* src/calc.h: up year in copyright string
+
+Sun Jan 26 12:40:49 2003  George Lebl <jirka@5z.com>
+
+	* src/parse.y: fix precedence of function definition to be FUNCTION
+	  and not EQUALS
+
+Sat Jan 25 15:59:58 2003  George Lebl <jirka@5z.com>
+
+	* lib/equation_solving/find_root.gel, lib/misc/misc.gel:  A bit of
+	  renaming and add some help strings
+
+	* src/calc.c, src/geloutput.[ch], src/genius.c, src/gnome-genius.c,
+	  src/structs.h:  Fixup help output a bit, and can get column count
+	  of an output even if full expressions is true 
+
+	* configure.in: raise version
+
+Sat Jan 25 15:14:18 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel, src/eval.c, src/funclib.c,
+	  src/mpwrap.[ch]:  Use gmp functions to implement NextPrime,
+	  IsPrimeProbability, LucasNumber and ModInvert.  Also implement
+	  modular inversion when we encounter a ration in modular mode
+	  and fix bug with pushing the modulus.
+
+	* src/geniustests.txt: more tests
+
+Fri Jan 24 14:16:08 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/modulus.gel: add implementation of EulerPhi
+
+	* lib/number_theory/primes.gel: some parameter checking
+
+Thu Jan 09 15:38:45 2003  George Lebl <jirka@5z.com>
+
+	* src/geloutput.[ch], src/calc.c: fix help output a bit to
+	  obey terminal size
+
+	* lib/combinatorics/factorial,gel: add Subfactorial
+
+	* lib/combinatorics/misc.gel: whack some unimplemented functions
+
+	* src/funclib.c: add GoldenRatio
+
+	* src/gnome-genius.c: actually use the font we set
+
+Thu Jan 09 11:14:19 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.[ch], src/funclib.c, src/genius.c, src/gnome-genius.c,
+	  src/inter.c, src/lexer.l, src/mpwrap.[ch], src/testplugin.c:
+	  Some internal cleanup, prefix some functions with gel_, add
+	  a general printout infos function.  Whack the help entry in the
+	  menu since there is no help, and add a warranty item that runs
+	  the warranty function.  Also fix the hiding of the plugins menu.
+
+Thu Jan 09 10:40:42 2003  George Lebl <jirka@5z.com>
+
+	* src/plugread.c, src/plugin.h, src/gnome-genius.c,
+	  src/test.plugin.in:  Add a Hide= entry in the plugin description
+	  and if true don't show the plugin in the gui.  Also if the
+	  plugin menu is empty, then hide the whole toplevel menu.
+
+Wed Jan 08 13:37:09 2003  George Lebl <jirka@5z.com>
+
+	* src/Makefile.am, src/gnome-genius.c: move the helper program
+	  to libexec
+
+	* src/plugin.[ch], src/plug_api.h, src/Makefile.am,
+	  src/gnome-genius.c, src/calc.c, src/plugread.[ch],
+	  src/testplugin.c, src/genius.c: attempt to make the plugin
+	  stuff a bit more usable and implement the save state and
+	  restore state
+
+	* src/calc.c, src/inter.c: use nicer colors on gui version
+
+	* src/gnome-genius.c: fix saving of preferences, port the
+	  error/info dialog to new gtk
+
+	* src/eval.c, src/mpwrap.c, src/matrixw.c, src/lexer.l,
+	  src/parse.y: fix warnings
+
+	* configure.in: properly enable warnings
+
+Tue Jan 07 18:05:08 2003  George Lebl <jirka@5z.com>
+
+	* src/plug_api.h: minor fixes and a note about the state functions
+	  not really working
+
+	* src/testplugin.c: implement some more functionality including
+	  adding functions etc...
+
+	* src/gnome-genius.c: some delete/bs fiddling, still not working
+	  right for me though.  Also changed the logic for the fifo
+	  creation
+
+	* src/calc.c: fix plugin command to avoid an infinite input loop
+
+Tue Jan 07 16:28:34 2003  George Lebl <jirka@5z.com>
+
+	* configure.in: require vte since libzvt is broken and all that
+
+	* src/calc.c: fix green color in help
+
+	* src/genius-readline-helper.c, src/gnome-genius.c: port to vte
+	  since libzvt is just giving me fits and we'll all use vte 
+	  sooner or later
+
+	* src/Makefile.am, src/gnome-genius.c: rename the readline helper
+	  to avoid a hang in case we find an old readline helper hanging
+	  around
+
+Fri Jan 03 11:27:21 2003  George Lebl <jirka@5z.com>
+
+	* Release 0.5.1
+
 Fri Jan 03 11:23:38 2003  George Lebl <jirka@5z.com>
 
 	* configure.in: increase version and fixup

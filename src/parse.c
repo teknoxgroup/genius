@@ -92,8 +92,12 @@ extern gboolean pwd_command;
 extern gboolean ls_command;
 extern char *load_plugin;
 
+/* prototype for yylex */
+int yylex(void);
+void yyerror(char *);
 
-#line 50 "parse.y"
+
+#line 54 "parse.y"
 #ifndef YYSTYPE
 typedef union {
 	mpw_t val;
@@ -224,17 +228,17 @@ static const short yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined. */
 static const short yyrline[] =
 {
-       0,   117,   118,   119,   120,   121,   122,   123,   124,   125,
-     126,   127,   128,   129,   130,   133,   134,   135,   137,   138,
-     139,   140,   141,   142,   143,   144,   145,   146,   147,   148,
-     149,   150,   152,   153,   154,   155,   156,   157,   159,   160,
-     161,   162,   167,   168,   169,   170,   171,   172,   173,   174,
-     176,   184,   185,   186,   187,   188,   189,   196,   201,   202,
-     203,   204,   205,   206,   207,   208,   209,   210,   211,   212,
-     213,   214,   215,   216,   217,   218,   219,   220,   221,   222,
-     224,   225,   227,   228,   229,   231,   232,   233,   234,   235,
-     236,   237,   238,   239,   240,   242,   243,   246,   249,   255,
-     265,   270,   275,   285,   286,   289,   290,   293,   294
+       0,   121,   122,   123,   124,   125,   126,   127,   128,   129,
+     130,   131,   132,   133,   134,   137,   138,   139,   141,   142,
+     143,   144,   145,   146,   147,   148,   149,   150,   151,   152,
+     153,   154,   156,   157,   158,   159,   160,   161,   163,   164,
+     165,   166,   171,   172,   173,   174,   175,   176,   177,   178,
+     180,   188,   189,   190,   191,   192,   193,   200,   205,   206,
+     207,   208,   209,   210,   211,   212,   213,   214,   215,   216,
+     217,   218,   219,   220,   221,   222,   223,   224,   225,   226,
+     228,   229,   231,   232,   233,   235,   236,   237,   238,   239,
+     240,   241,   242,   243,   244,   246,   247,   250,   253,   259,
+     269,   274,   279,   289,   290,   293,   294,   297,   298
 };
 #endif
 
@@ -353,10 +357,10 @@ static const short yypact[] =
        6,     6,     6,   105,   -13,-32768,   -17,-32768,   -16,   632,
       44,    76,    48,  1866,  1758,  1758,  1268,  1308,  1350,  1390,
     1432,  1472,  1758,  1758,  1718,-32768,   802,  1638,    36,-32768,
-  -32768,-32768,    -5,   842,-32768,   560,-32768,-32768,  1866,    94,
+  -32768,-32768,    -5,   842,-32768,   560,-32768,-32768,  1678,    94,
      632,-32768,   632,   632,   632,   632,   632,   632,   632,-32768,
-  -32768,-32768,-32768,   882,   632,  1866,  1758,  1018,  1758,  1060,
-    1758,  1102,  1758,-32768,  1866,   632,   632,   632,   632,   632,
+  -32768,-32768,-32768,   882,   632,  1678,  1758,  1018,  1758,  1060,
+    1758,  1102,  1758,-32768,  1678,   632,   632,   632,   632,   632,
      632,  1758,  1514,  1758,  1556,  1758,  1598,   632,   632,   632,
     1758,  1758,  1758,   136,   138,-32768
 };
@@ -1481,200 +1485,200 @@ yyreduce:
   switch (yyn) {
 
 case 1:
-#line 117 "parse.y"
+#line 121 "parse.y"
 { YYACCEPT; }
     break;
 case 2:
-#line 118 "parse.y"
+#line 122 "parse.y"
 { gel_command = GEL_LOADFILE; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 3:
-#line 119 "parse.y"
+#line 123 "parse.y"
 { gel_command = GEL_LOADFILE_GLOB; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 4:
-#line 120 "parse.y"
+#line 124 "parse.y"
 { gel_command = GEL_CHANGEDIR; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 5:
-#line 121 "parse.y"
+#line 125 "parse.y"
 { gel_command = GEL_LS; YYACCEPT; }
     break;
 case 6:
-#line 122 "parse.y"
+#line 126 "parse.y"
 { gel_command = GEL_LS_ARG; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 7:
-#line 123 "parse.y"
+#line 127 "parse.y"
 { gel_command = GEL_HELP; YYACCEPT; }
     break;
 case 8:
-#line 124 "parse.y"
+#line 128 "parse.y"
 { gel_command = GEL_HELP_ARG; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 9:
-#line 125 "parse.y"
+#line 129 "parse.y"
 { gel_command = GEL_PWD; YYACCEPT; }
     break;
 case 10:
-#line 126 "parse.y"
+#line 130 "parse.y"
 { gel_command = GEL_LOADPLUGIN; gel_command_arg = yyvsp[-1].id; YYACCEPT; }
     break;
 case 11:
-#line 127 "parse.y"
+#line 131 "parse.y"
 { YYACCEPT; }
     break;
 case 12:
-#line 128 "parse.y"
+#line 132 "parse.y"
 { gp_push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; }
     break;
 case 13:
-#line 129 "parse.y"
+#line 133 "parse.y"
 { return_ret = TRUE; yyclearin; YYABORT; }
     break;
 case 14:
-#line 130 "parse.y"
+#line 134 "parse.y"
 { return_ret = TRUE; }
     break;
 case 15:
-#line 133 "parse.y"
+#line 137 "parse.y"
 { PUSH_ACT(E_SEPAR); }
     break;
 case 16:
-#line 134 "parse.y"
+#line 138 "parse.y"
 { PUSH_ACT(E_MOD_CALC); }
     break;
 case 17:
-#line 135 "parse.y"
+#line 139 "parse.y"
 { gp_push_null(); PUSH_ACT(E_SEPAR);
 					  gp_push_spacer(); }
     break;
 case 18:
-#line 137 "parse.y"
+#line 141 "parse.y"
 { gp_push_spacer(); }
     break;
 case 19:
-#line 138 "parse.y"
+#line 142 "parse.y"
 { PUSH_ACT(E_EQUALS); }
     break;
 case 20:
-#line 139 "parse.y"
+#line 143 "parse.y"
 { PUSH_ACT(E_ABS); }
     break;
 case 21:
-#line 140 "parse.y"
+#line 144 "parse.y"
 { PUSH_ACT(E_PLUS); }
     break;
 case 22:
-#line 141 "parse.y"
+#line 145 "parse.y"
 { PUSH_ACT(E_MINUS); }
     break;
 case 23:
-#line 142 "parse.y"
+#line 146 "parse.y"
 { PUSH_ACT(E_MUL); }
     break;
 case 24:
-#line 143 "parse.y"
+#line 147 "parse.y"
 { PUSH_ACT(E_ELTMUL); }
     break;
 case 25:
-#line 144 "parse.y"
+#line 148 "parse.y"
 { PUSH_ACT(E_DIV); }
     break;
 case 26:
-#line 145 "parse.y"
+#line 149 "parse.y"
 { PUSH_ACT(E_ELTDIV); }
     break;
 case 27:
-#line 146 "parse.y"
+#line 150 "parse.y"
 { PUSH_ACT(E_BACK_DIV); }
     break;
 case 28:
-#line 147 "parse.y"
+#line 151 "parse.y"
 { PUSH_ACT(E_ELT_BACK_DIV); }
     break;
 case 29:
-#line 148 "parse.y"
+#line 152 "parse.y"
 { PUSH_ACT(E_MOD); }
     break;
 case 30:
-#line 149 "parse.y"
+#line 153 "parse.y"
 { PUSH_ACT(E_ELTMOD); }
     break;
 case 31:
-#line 150 "parse.y"
+#line 154 "parse.y"
 { PUSH_ACT(E_CMP_CMP); }
     break;
 case 32:
-#line 152 "parse.y"
+#line 156 "parse.y"
 { PUSH_ACT(E_EQ_CMP); }
     break;
 case 33:
-#line 153 "parse.y"
+#line 157 "parse.y"
 { PUSH_ACT(E_NE_CMP); }
     break;
 case 34:
-#line 154 "parse.y"
+#line 158 "parse.y"
 { PUSH_ACT(E_LT_CMP); }
     break;
 case 35:
-#line 155 "parse.y"
+#line 159 "parse.y"
 { PUSH_ACT(E_GT_CMP); }
     break;
 case 36:
-#line 156 "parse.y"
+#line 160 "parse.y"
 { PUSH_ACT(E_LE_CMP); }
     break;
 case 37:
-#line 157 "parse.y"
+#line 161 "parse.y"
 { PUSH_ACT(E_GE_CMP); }
     break;
 case 38:
-#line 159 "parse.y"
+#line 163 "parse.y"
 { PUSH_ACT(E_LOGICAL_AND); }
     break;
 case 39:
-#line 160 "parse.y"
+#line 164 "parse.y"
 { PUSH_ACT(E_LOGICAL_OR); }
     break;
 case 40:
-#line 161 "parse.y"
+#line 165 "parse.y"
 { PUSH_ACT(E_LOGICAL_XOR); }
     break;
 case 41:
-#line 162 "parse.y"
+#line 166 "parse.y"
 { PUSH_ACT(E_LOGICAL_NOT); }
     break;
 case 42:
-#line 167 "parse.y"
+#line 171 "parse.y"
 { PUSH_ACT(E_FACT); }
     break;
 case 43:
-#line 168 "parse.y"
+#line 172 "parse.y"
 { PUSH_ACT(E_DBLFACT); }
     break;
 case 44:
-#line 169 "parse.y"
+#line 173 "parse.y"
 { PUSH_ACT(E_CONJUGATE_TRANSPOSE); }
     break;
 case 45:
-#line 170 "parse.y"
+#line 174 "parse.y"
 { PUSH_ACT(E_TRANSPOSE); }
     break;
 case 46:
-#line 171 "parse.y"
+#line 175 "parse.y"
 { PUSH_ACT(E_NEG); }
     break;
 case 48:
-#line 173 "parse.y"
+#line 177 "parse.y"
 { PUSH_ACT(E_EXP); }
     break;
 case 49:
-#line 174 "parse.y"
+#line 178 "parse.y"
 { PUSH_ACT(E_ELTEXP); }
     break;
 case 50:
-#line 176 "parse.y"
+#line 180 "parse.y"
 {
 				if (gp_prepare_push_region_sep ()) {
 					PUSH_ACT(E_REGION_SEP_BY);
@@ -1684,31 +1688,31 @@ case 50:
 					}
     break;
 case 51:
-#line 184 "parse.y"
+#line 188 "parse.y"
 { PUSH_ACT(E_GET_VELEMENT); }
     break;
 case 52:
-#line 185 "parse.y"
+#line 189 "parse.y"
 { PUSH_ACT(E_GET_ELEMENT); }
     break;
 case 53:
-#line 186 "parse.y"
+#line 190 "parse.y"
 { PUSH_ACT(E_GET_ROW_REGION); }
     break;
 case 54:
-#line 187 "parse.y"
+#line 191 "parse.y"
 { PUSH_ACT(E_GET_COL_REGION); }
     break;
 case 55:
-#line 188 "parse.y"
+#line 192 "parse.y"
 { if(!gp_push_matrix(FALSE)) {SYNTAX_ERROR;} }
     break;
 case 56:
-#line 189 "parse.y"
+#line 193 "parse.y"
 { if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;} }
     break;
 case 57:
-#line 196 "parse.y"
+#line 200 "parse.y"
 {
 			if(!gp_push_matrix_row()) {SYNTAX_ERROR;}
 			if(!gp_push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;}
@@ -1716,165 +1720,165 @@ case 57:
 					}
     break;
 case 58:
-#line 201 "parse.y"
+#line 205 "parse.y"
 {SYNTAX_ERROR;}
     break;
 case 59:
-#line 202 "parse.y"
+#line 206 "parse.y"
 {SYNTAX_ERROR;}
     break;
 case 60:
-#line 203 "parse.y"
+#line 207 "parse.y"
 { PUSH_ACT(E_WHILE_CONS); }
     break;
 case 61:
-#line 204 "parse.y"
+#line 208 "parse.y"
 { PUSH_ACT(E_UNTIL_CONS); }
     break;
 case 62:
-#line 205 "parse.y"
+#line 209 "parse.y"
 { PUSH_ACT(E_DOWHILE_CONS); }
     break;
 case 63:
-#line 206 "parse.y"
+#line 210 "parse.y"
 { PUSH_ACT(E_DOUNTIL_CONS); }
     break;
 case 64:
-#line 207 "parse.y"
+#line 211 "parse.y"
 { PUSH_ACT(E_FOR_CONS); }
     break;
 case 65:
-#line 208 "parse.y"
+#line 212 "parse.y"
 { PUSH_ACT(E_FORBY_CONS); }
     break;
 case 66:
-#line 209 "parse.y"
+#line 213 "parse.y"
 { PUSH_ACT(E_FORIN_CONS); }
     break;
 case 67:
-#line 210 "parse.y"
+#line 214 "parse.y"
 { PUSH_ACT(E_SUM_CONS); }
     break;
 case 68:
-#line 211 "parse.y"
+#line 215 "parse.y"
 { PUSH_ACT(E_SUMBY_CONS); }
     break;
 case 69:
-#line 212 "parse.y"
+#line 216 "parse.y"
 { PUSH_ACT(E_SUMIN_CONS); }
     break;
 case 70:
-#line 213 "parse.y"
+#line 217 "parse.y"
 { PUSH_ACT(E_PROD_CONS); }
     break;
 case 71:
-#line 214 "parse.y"
+#line 218 "parse.y"
 { PUSH_ACT(E_PRODBY_CONS); }
     break;
 case 72:
-#line 215 "parse.y"
+#line 219 "parse.y"
 { PUSH_ACT(E_PRODIN_CONS); }
     break;
 case 73:
-#line 216 "parse.y"
+#line 220 "parse.y"
 { PUSH_ACT(E_IF_CONS); }
     break;
 case 74:
-#line 217 "parse.y"
+#line 221 "parse.y"
 { PUSH_ACT(E_IFELSE_CONS); }
     break;
 case 76:
-#line 219 "parse.y"
+#line 223 "parse.y"
 { PUSH_ACT(E_QUOTE); }
     break;
 case 77:
-#line 220 "parse.y"
+#line 224 "parse.y"
 { PUSH_ACT(E_REFERENCE); }
     break;
 case 79:
-#line 222 "parse.y"
+#line 226 "parse.y"
 { gp_push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_DIRECTCALL); }
     break;
 case 80:
-#line 224 "parse.y"
+#line 228 "parse.y"
 { PUSH_ACT(E_DIRECTCALL); }
     break;
 case 81:
-#line 225 "parse.y"
+#line 229 "parse.y"
 { gp_push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_DIRECTCALL); }
     break;
 case 82:
-#line 227 "parse.y"
+#line 231 "parse.y"
 { PUSH_ACT(E_DIRECTCALL); }
     break;
 case 83:
-#line 228 "parse.y"
+#line 232 "parse.y"
 { PUSH_ACT(E_CALL); }
     break;
 case 84:
-#line 229 "parse.y"
+#line 233 "parse.y"
 { gp_push_marker_simple(EXPRLIST_START_NODE);
 					  PUSH_ACT(E_CALL); }
     break;
 case 85:
-#line 231 "parse.y"
+#line 235 "parse.y"
 { PUSH_ACT(E_EQUALS); }
     break;
 case 89:
-#line 235 "parse.y"
+#line 239 "parse.y"
 { PUSH_ACT(E_RETURN); }
     break;
 case 90:
-#line 236 "parse.y"
+#line 240 "parse.y"
 { PUSH_ACT(E_BAILOUT); }
     break;
 case 91:
-#line 237 "parse.y"
+#line 241 "parse.y"
 { PUSH_ACT(E_EXCEPTION); }
     break;
 case 92:
-#line 238 "parse.y"
+#line 242 "parse.y"
 { PUSH_ACT(E_CONTINUE); }
     break;
 case 93:
-#line 239 "parse.y"
+#line 243 "parse.y"
 { PUSH_ACT(E_BREAK); }
     break;
 case 94:
-#line 240 "parse.y"
+#line 244 "parse.y"
 { stack_push(&evalstack,
 						     gel_makenum_use(yyvsp[0].val)); }
     break;
 case 95:
-#line 242 "parse.y"
+#line 246 "parse.y"
 { PUSH_STRING(yyvsp[0].id); }
     break;
 case 96:
-#line 243 "parse.y"
+#line 247 "parse.y"
 { gp_push_null(); }
     break;
 case 97:
-#line 246 "parse.y"
+#line 250 "parse.y"
 { PUSH_ACT(E_DEREFERENCE); }
     break;
 case 98:
-#line 249 "parse.y"
+#line 253 "parse.y"
 {
 				PUSH_IDENTIFIER(yyvsp[0].id);
 				g_free(yyvsp[0].id);
 					}
     break;
 case 99:
-#line 255 "parse.y"
+#line 259 "parse.y"
 {
 			gp_prepare_push_param (FALSE);
 			PUSH_ACT (E_PARAMETER);
 		}
     break;
 case 100:
-#line 265 "parse.y"
+#line 269 "parse.y"
 {
 			if ( ! gp_push_func (FALSE /* vararg */)) {
 				SYNTAX_ERROR;
@@ -1882,7 +1886,7 @@ case 100:
 						}
     break;
 case 101:
-#line 270 "parse.y"
+#line 274 "parse.y"
 {
 			if ( ! gp_push_func (TRUE /* vararg */)) {
 				SYNTAX_ERROR;
@@ -1890,7 +1894,7 @@ case 101:
 							}
     break;
 case 102:
-#line 275 "parse.y"
+#line 279 "parse.y"
 {
 			if ( ! gp_push_marker (EXPRLIST_START_NODE)) {
 				SYNTAX_ERROR;
@@ -1901,19 +1905,19 @@ case 102:
 					}
     break;
 case 104:
-#line 286 "parse.y"
-{ if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
-    break;
-case 106:
 #line 290 "parse.y"
 { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
+case 106:
+#line 294 "parse.y"
+{ if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
+    break;
 case 107:
-#line 293 "parse.y"
+#line 297 "parse.y"
 { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} }
     break;
 case 108:
-#line 294 "parse.y"
+#line 298 "parse.y"
 { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} if(!gp_push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
     break;
 }
@@ -2149,5 +2153,5 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 297 "parse.y"
+#line 301 "parse.y"
 

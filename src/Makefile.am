@@ -1,4 +1,3 @@
-Utilitiesdir = $(datadir)/apps/Utilities
 Librarydir = $(datadir)/genius/gel
 Plugindescdir = $(datadir)/genius/plugins
 
@@ -13,6 +12,7 @@ INCLUDES = \
         -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
 	-DG_LOG_DOMAIN=\"Genius\"				\
 	-DDATADIR=\""$(datadir)"\"				\
+	-DLIBEXECDIR=\""$(libexecdir)"\"			\
 	-DICONDIR=\""$(datadir)/pixmaps/genius"\"		\
 	-DLIBRARY_DIR=\""$(datadir)/genius/"\"			\
 	-I$(srcdir)						\
@@ -24,7 +24,9 @@ INCLUDES = \
 	$(EXTRA_WARNING_CFLAGS)
 
 
-bin_PROGRAMS = gnome-genius genius genius-readline-helper
+bin_PROGRAMS = gnome-genius genius
+
+libexec_PROGRAMS = genius-readline-helper-fifo
 
 gnome_genius_SOURCES = 	\
 	calc.c		\
@@ -77,12 +79,12 @@ gnome_genius_LDADD = \
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
-genius_readline_helper_SOURCES = \
+genius_readline_helper_fifo_SOURCES = \
  	genius_lists.c			\
 	genius-readline-helper.c
 
 # FIXME: no need for so many libs
-genius_readline_helper_LDADD = \
+genius_readline_helper_fifo_LDADD = \
 	-lm					\
 	$(GENIUS_LIBS)				\
 	@READLINE_LIB@				\
@@ -142,8 +144,15 @@ genius_LDADD = \
 
 plugin_include_HEADERS = \
 	plug_api.h	\
+	geloutput.h	\
+	mpwrap.h	\
 	structs.h	\
-	calc.h		\
+	matrix.h	\
+	matrixw.h	\
+	matop.h		\
+	compil.h	\
+	utype.h		\
+	dict.h		\
 	eval.h
 
 plugin_LTLIBRARIES = libtestplugin.la
@@ -156,18 +165,21 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 
 CLEANFILES += $(BUILT_SOURCES)
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop test.plugin.in # lib.gel 
+Desktopdir = $(datadir)/applications
+Desktop_in_files = \
+	gnome-genius.desktop.in	
+Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
-Utilities_DATA = gnome-genius.desktop
+@INTLTOOL_DESKTOP_RULE@
 
-# Library_DATA = lib.gel lib.cgel
+EXTRA_DIST = \
+	geniustest.pl \
+	geniustests.txt \
+	$(Desktop_in_files) \
+	$(Desktop_DATA) \
+	test.plugin.in
 
 Plugindesc_DATA = test.plugin
-
-# MOSTLYCLEANFILES = lib.cgel
-
-# lib.cgel: lib.gel genius
-#	$(top_builddir)/src/genius --compile lib.gel > temp.cgel && mv -f temp.cgel lib.cgel
 
 parse.h: parse.y
 	$(YACC) $(YFLAGS) $<

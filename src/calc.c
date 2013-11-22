@@ -92,7 +92,7 @@ GHashTable *uncompiled = NULL;
 GSList *evalstack=NULL;
 
 /*error .. global as well*/
-calc_error_t error_num = NO_ERROR;
+GeniusError error_num = NO_ERROR;
 int got_eof = FALSE;
 
 /*the current state of the calculator*/
@@ -268,6 +268,7 @@ get_undocumented (void)
 		GelHelp *help;
 		if(f->id == NULL ||
 		   f->id->token == NULL ||
+		   strcmp (f->id->token, "Ans") == 0 ||
 		   strcmp (f->id->token, "ni") == 0 ||
 		   strcmp (f->id->token, "shrubbery") == 0)
 			continue;
@@ -454,14 +455,14 @@ whack_help (const char *func)
 }
 
 void
-push_file_info(char *file,int line)
+gel_push_file_info(char *file,int line)
 {
 	curfile = g_slist_prepend(curfile,file?g_strdup(file):NULL);
 	curline = g_slist_prepend(curline,GINT_TO_POINTER(line));
 }
 
 void
-pop_file_info(void)
+gel_pop_file_info(void)
 {
 	GSList *li;
 	g_assert(curfile && curline);
@@ -476,7 +477,7 @@ pop_file_info(void)
 }
 
 void
-incr_file_info(void)
+gel_incr_file_info(void)
 {
 	int i;
 	
@@ -488,7 +489,7 @@ incr_file_info(void)
 }
 
 void
-rewind_file_info(void)
+gel_rewind_file_info(void)
 {
 	if(!curline)
 		return;
@@ -497,7 +498,7 @@ rewind_file_info(void)
 }
 
 void
-get_file_info(char **file, int *line)
+gel_get_file_info (char **file, int *line)
 {
 	if(!curline || !curfile) {
 		*file = NULL;
@@ -1005,7 +1006,7 @@ appendmatrix_latex (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 	int i, j;
 	if (nice)
 		gel_output_string (gelo, "\n");
-	gel_output_string (gelo, "\\left( \\begin{array}{");
+	gel_output_string (gelo, "\\left[ \\begin{array}{");
 	for (i = 0; i < gel_matrixw_width (m); i++)
 		gel_output_string (gelo, "r");
 	gel_output_string (gelo, "}");
@@ -1027,7 +1028,7 @@ appendmatrix_latex (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 			gel_output_string (gelo, " ");
 	}
 	
-	gel_output_string (gelo, "\\end{array} \\right)");
+	gel_output_string (gelo, "\\end{array} \\right]");
 }
 
 static void
@@ -1365,7 +1366,7 @@ addparenth(char *s)
 }
 
 void
-compile_all_user_funcs(FILE *outfile)
+gel_compile_all_user_funcs(FILE *outfile)
 {
 	GSList *funcs;
 	GSList *li;
@@ -1516,7 +1517,7 @@ load_compiled_fp(const char *file, FILE *fp)
 		GSList *li = NULL;
 		int type;
 
-		incr_file_info();
+		gel_incr_file_info();
 
 		p=strchr(buf,'\n');
 		if(p) *p='\0';
@@ -1692,7 +1693,7 @@ load_compiled_fp(const char *file, FILE *fp)
 			g_slist_free(li);
 			goto continue_reading;
 		}
-		incr_file_info();
+		gel_incr_file_info();
 		p=strchr(b2,'\n');
 		if(p) *p='\0';
 
@@ -1730,7 +1731,7 @@ continue_reading:	;
 }
 
 void
-load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
+gel_load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
 	char *newfile;
@@ -1739,9 +1740,9 @@ load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
 	else
 		newfile = g_strdup (file);
 	if((fp = fopen(newfile,"r"))) {
-		push_file_info(newfile,1);
+		gel_push_file_info(newfile,1);
 		load_compiled_fp(newfile,fp);
-		pop_file_info();
+		gel_pop_file_info();
 	} else if (warn) {
 		char buf[256];
 		g_snprintf(buf,256,_("Can't open file: '%s'"), newfile);
@@ -1751,10 +1752,18 @@ load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
 }
 
 static void
+do_cyan (void)
+{
+	if (genius_is_gui) {
+		gel_output_full_string (main_out, "\e[1;36m");
+	}
+}
+
+static void
 do_blue (void)
 {
 	if (genius_is_gui) {
-		gel_output_full_string (main_out, "\e[01;34m");
+		gel_output_full_string (main_out, "\e[1;34m");
 	}
 }
 
@@ -1762,7 +1771,7 @@ static void
 do_green (void)
 {
 	if (genius_is_gui) {
-		gel_output_full_string (main_out, "\e[0:32m");
+		gel_output_full_string (main_out, "\e[0;32m");
 	}
 }
 
@@ -1797,6 +1806,40 @@ make_function_with_aliases (const char *func, GSList *aliases)
 }
 
 static void
+print_description (int start, const char *desc)
+{
+	int ll = gel_output_get_columns (main_out) - start - 3;
+	char **words;
+	int i;
+	int cur;
+
+	if (ll <= 5) {
+		gel_output_printf_full (main_out, FALSE,
+					"%s\n", desc);
+		return;
+	}
+
+	words = g_strsplit (desc, " ", -1);
+	cur = 0;
+	for (i = 0; words[i] != NULL; i++) {
+		int len = strlen (words[i]);
+		if (cur != 0 && cur + len >= ll) {
+			cur = 0;
+			gel_output_full_string
+				(main_out, "\n                       ");
+		} else if (cur != 0) {
+			gel_output_full_string (main_out, " ");
+			cur++;
+		}
+		gel_output_full_string (main_out, words[i]);
+		cur += len;
+	}
+	g_strfreev (words);
+
+	gel_output_full_string (main_out, "\n");
+}
+
+static void
 print_function_help (GelHelp *help)
 {
 	if (help->aliasfor == NULL) {
@@ -1804,23 +1847,24 @@ print_function_help (GelHelp *help)
 		int len;
 		f = make_function_with_aliases (help->func, help->aliases);
 		len = strlen (f);
-		do_blue ();
-		if (len <= 20)
+		do_cyan ();
+		/*if (len <= 20)*/
 			gel_output_printf_full (main_out, FALSE,
 						"%-20s", f);
-		else
+		/*else
 			gel_output_printf_full (main_out, FALSE,
-						"%-20s", help->func);
+						"%-20s", help->func);*/
 		g_free (f);
 		do_black ();
 		gel_output_full_string (main_out, " - ");
 		do_green ();
 		if (help->description != NULL)
-			gel_output_printf_full (main_out, FALSE,
-						"%s\n", help->description);
+			print_description (MAX (20, len),
+					   help->description);
 		else
 			gel_output_full_string (main_out, "\n");
 		/* if we didn't fit aliases on one line */
+		/*
 		if (len > 20 && help->aliases != NULL) {
 			GSList *li;
 			GString *gs = g_string_new (_("Aliases for "));
@@ -1834,13 +1878,14 @@ print_function_help (GelHelp *help)
 						"%s\n", gs->str);
 			g_string_free (gs, TRUE);
 		}
+		*/
 	}
 }
 
 static void
 print_command_help (const char *cmd)
 {
-	do_blue ();
+	do_cyan ();
 	gel_output_printf_full (main_out, FALSE, "%-20s", cmd);
 	do_black ();
 	gel_output_full_string (main_out, " - ");
@@ -1878,9 +1923,21 @@ full_help (void)
 
 	gel_output_push_nonotify (main_out);
 
+	do_green ();
+	gel_output_full_string (main_out,
+				_("\nFor a manual on using Genius and the GEL language type:\n"));
+	do_black ();
+	gel_output_full_string (main_out, _("  manual\n"));
+
+	do_green ();
+	gel_output_full_string (main_out,
+				_("\nFor help on a specific function type:\n"));
+	do_black ();
+	gel_output_full_string (main_out, _("  help FunctionName\n"));
+
 	do_black ();
 	gel_output_full_string (main_out,
-				"\nCommands:\n");
+				_("\nCommands:\n"));
 	for (i = 0; genius_toplevels[i] != NULL; i++)
 		print_command_help (genius_toplevels[i]);
 
@@ -1923,18 +1980,19 @@ full_help (void)
 	if (functions != NULL) {
 		GString *gs = g_string_new (NULL);
 		int len = 0;
+		int line_len = gel_output_get_columns (main_out);
 
 		do_black ();
 
 		gel_output_full_string (main_out,
 					_("\nUndocumented:\n"));
-		do_blue ();
+		do_cyan ();
 
 		for (fli = functions; fli != NULL; fli = fli->next) {
 			char *f = fli->data;
 			int flen = strlen (f);
 
-			if (len + flen + 1 > 78 && len > 0) {
+			if (len + flen + 1 > line_len-2 && len > 0) {
 				gel_output_printf_full (main_out, FALSE, "%s\n",
 							gs->str);
 				g_string_truncate (gs, 0);
@@ -1992,7 +2050,7 @@ help_on (const char *text)
 
 	if (help->aliasfor) {
 		gel_output_printf_full (main_out, FALSE,
-					"%s is an alias for %s\n",
+					_("%s is an alias for %s\n"),
 					text, help->aliasfor);
 		help_on (help->aliasfor);
 		do_black ();
@@ -2000,7 +2058,7 @@ help_on (const char *text)
 		return;
 	}
 
-	do_blue ();
+	do_cyan ();
 
 	f = d_lookup_global (d_intern (text));
 	if (f == NULL) {
@@ -2067,7 +2125,7 @@ load_fp(FILE *fp, char *dirprefix)
 {
 	my_yy_open(fp);
 	while(1) {
-		evalexp(NULL, fp, NULL, NULL, FALSE, dirprefix);
+		gel_evalexp(NULL, fp, NULL, NULL, FALSE, dirprefix);
 		if(got_eof) {
 			got_eof = FALSE;
 			break;
@@ -2080,7 +2138,7 @@ load_fp(FILE *fp, char *dirprefix)
 }
 
 void
-load_file (const char *dirprefix, const char *file, gboolean warn)
+gel_load_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
 	char *newfile;
@@ -2093,9 +2151,9 @@ load_file (const char *dirprefix, const char *file, gboolean warn)
 
 	if((fp = fopen(newfile,"r"))) {
 		char *dir = g_dirname(newfile);
-		push_file_info(newfile,1);
+		gel_push_file_info(newfile,1);
 		load_fp(fp, dir);
-		pop_file_info();
+		gel_pop_file_info();
 		g_free(dir);
 		got_eof = oldgeof;
 	} else if (warn) {
@@ -2108,7 +2166,7 @@ load_file (const char *dirprefix, const char *file, gboolean warn)
 }
 
 void
-load_guess_file (const char *dirprefix, const char *file, gboolean warn)
+gel_load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
 	char *newfile;
@@ -2121,7 +2179,7 @@ load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 
 	if((fp = fopen(newfile,"r"))) {
 		char buf[6];
-		push_file_info(newfile,1);
+		gel_push_file_info(newfile,1);
 		if(fgets(buf,6,fp) &&
 		   strncmp(buf,"CGEL ",5)==0) {
 			rewind(fp);
@@ -2132,7 +2190,7 @@ load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 			load_fp(fp, dir);
 			g_free(dir);
 		}
-		pop_file_info();
+		gel_pop_file_info();
 		got_eof = oldgeof;
 	} else if (warn) {
 		char buf[256];
@@ -2223,7 +2281,7 @@ do_exec_commands (const char *dirprefix)
 	case GEL_LOADFILE:
 		while (evalstack)
 			gel_freetree (stack_pop (&evalstack));
-		load_file (dirprefix, arg, TRUE);
+		gel_load_file (dirprefix, arg, TRUE);
 		ret = TRUE;
 		break;
 	case GEL_LOADFILE_GLOB:
@@ -2231,7 +2289,7 @@ do_exec_commands (const char *dirprefix)
 		while (evalstack)
 			gel_freetree (stack_pop (&evalstack));
 		for (li = list; li != NULL; li = li->next) {
-			load_guess_file (dirprefix, li->data, TRUE);
+			gel_load_guess_file (dirprefix, li->data, TRUE);
 			if (interrupted)
 				break;
 		}
@@ -2253,19 +2311,20 @@ do_exec_commands (const char *dirprefix)
 	case GEL_LOADPLUGIN:
 		g_strstrip (arg);
 
-		for(li=plugin_list;li;li=g_slist_next(li)) {
-			plugin_t *plg = li->data;
-			if(strcmp(plg->base,arg)==0) {
-				open_plugin(plg);
+		for (li = gel_plugin_list; li != NULL; li = li->next) {
+			GelPlugin *plg = li->data;
+			if (strcmp (plg->base, arg)==0) {
+				gel_open_plugin (plg);
 				break;
 			}
 		}
-		if(!li) {
+		if (li == NULL) {
 			char *p = g_strdup_printf(_("Cannot open plugin '%s'!"),
 						  arg);
 			(*errorout)(p);
 			g_free(p);
 		}
+		ret = TRUE;
 		break;
 	case GEL_LS:
 		dir = opendir (".");
@@ -2278,7 +2337,12 @@ do_exec_commands (const char *dirprefix)
 					continue;
 				if (stat (de->d_name, &s) == 0 &&
 				    S_ISDIR (s.st_mode)) {
+					if (genius_is_gui)
+						do_blue ();
 					gel_output_string (main_out, de->d_name);
+					if (genius_is_gui)
+						do_black ();
+
 					gel_output_string (main_out, "/\n");
 				}
 			}
@@ -2290,7 +2354,15 @@ do_exec_commands (const char *dirprefix)
 					continue;
 				if (stat (de->d_name, &s) == 0 &&
 				     ! S_ISDIR (s.st_mode)) {
+					char *ext = strchr (de->d_name, '.');
+					if (genius_is_gui &&
+					    ext != NULL &&
+					    strcmp (ext, ".gel") == 0) {
+						do_green ();
+					}
 					gel_output_string (main_out, de->d_name);
+					if (genius_is_gui)
+						do_black ();
 					gel_output_string (main_out, "\n");
 				}
 			}
@@ -2306,7 +2378,11 @@ do_exec_commands (const char *dirprefix)
 			struct stat s;
 			if (stat (li->data, &s) == 0 &&
 			    S_ISDIR (s.st_mode)) {
+				if (genius_is_gui)
+					do_blue ();
 				gel_output_string (main_out, li->data);
+				if (genius_is_gui)
+					do_black ();
 				gel_output_string (main_out, "/\n");
 			}
 		}
@@ -2315,7 +2391,15 @@ do_exec_commands (const char *dirprefix)
 			struct stat s;
 			if (stat (li->data, &s) == 0 &&
 			    ! S_ISDIR (s.st_mode)) {
+				char *ext = strchr (li->data, '.');
+				if (genius_is_gui &&
+				    ext != NULL &&
+				    strcmp (ext, ".gel") == 0) {
+					do_green ();
+				}
 				gel_output_string (main_out, li->data);
+				if (genius_is_gui)
+					do_black ();
 				gel_output_string (main_out, "\n");
 			}
 		}
@@ -2349,7 +2433,7 @@ do_exec_commands (const char *dirprefix)
 }
 
 GelETree *
-parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean testparse,
+gel_parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean testparse,
 	 gboolean *finished, const char *dirprefix)
 {
 	int stacklen;
@@ -2456,7 +2540,7 @@ parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean testpar
 }
 
 GelETree *
-runexp(GelETree *exp)
+gel_runexp (GelETree *exp)
 {
 	static int busy = FALSE;
 	GelETree *ret;
@@ -2471,13 +2555,13 @@ runexp(GelETree *exp)
 
 	error_num = NO_ERROR;
 	
-	push_file_info(NULL,0);
+	gel_push_file_info(NULL,0);
 
 	ctx = eval_get_context();
 	ret = eval_etree(ctx,copynode(exp));
 	eval_free_context(ctx);
 
-	pop_file_info();
+	gel_pop_file_info();
 
 	busy = FALSE;
 
@@ -2492,15 +2576,19 @@ runexp(GelETree *exp)
 }
 
 void
-evalexp_parsed(GelETree *parsed, GelOutput *gelo,
-	       const char *prefix, gboolean pretty)
+gel_evalexp_parsed (GelETree *parsed,
+		    GelOutput *gelo,
+		    const char *prefix,
+		    gboolean pretty)
 {
 	GelETree *ret;
 	
-	if(!parsed) return;
-	ret = runexp(parsed);
-	gel_freetree(parsed);
-	if(!ret) return;
+	if (parsed == NULL)
+		return;
+	ret = gel_runexp (parsed);
+	gel_freetree (parsed);
+	if (ret == NULL)
+		return;
 
 	if(ret->type != NULL_NODE && gelo) {
 		if(prefix) {
@@ -2537,12 +2625,16 @@ evalexp_parsed(GelETree *parsed, GelOutput *gelo,
 }
 
 void
-evalexp (const char *str, FILE *infile, GelOutput *gelo,
-	 const char *prefix, gboolean pretty, const char *dirprefix)
+gel_evalexp (const char *str,
+	     FILE *infile,
+	     GelOutput *gelo,
+	     const char *prefix,
+	     gboolean pretty,
+	     const char *dirprefix)
 {
 	GelETree *parsed;
-	parsed = parseexp (str, infile, TRUE, FALSE, NULL, dirprefix);
-	evalexp_parsed (parsed, gelo, prefix, pretty);
+	parsed = gel_parseexp (str, infile, TRUE, FALSE, NULL, dirprefix);
+	gel_evalexp_parsed (parsed, gelo, prefix, pretty);
 }
 
 /*just to make the compiler happy*/

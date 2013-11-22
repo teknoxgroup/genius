@@ -27,8 +27,8 @@
 #include "plugin.h"
 #include "plugread.h"
 
-plugin_t *
-readplugin(char *dir_name,char *file_name)
+GelPlugin *
+gel_readplugin (const char *dir_name, const char *file_name)
 {
 	char buf[1024];
 	FILE *fp;
@@ -38,8 +38,9 @@ readplugin(char *dir_name,char *file_name)
 	char *copyright = NULL;
 	char *author = NULL;
 	char *description = NULL;
-	int gui = FALSE;
-	plugin_t *plg;
+	gboolean gui = FALSE;
+	gboolean hide = FALSE;
+	GelPlugin *plg;
 	p = g_strconcat(dir_name,"/",file_name,NULL);
 	fp = fopen(p,"r");
 	g_free(p);
@@ -62,7 +63,9 @@ readplugin(char *dir_name,char *file_name)
 		else if(strcmp(buf,"Description")==0)
 			description = g_strdup(g_strstrip(p));
 		else if(strcmp(buf,"GUI")==0)
-			gui = strcmp(g_strstrip(p),"true")==0;
+			gui = g_ascii_strcasecmp(g_strstrip(p),"true")==0;
+		else if(strcmp(buf,"Hide")==0)
+			hide = g_ascii_strcasecmp(g_strstrip(p),"true")==0;
 	}
 	fclose(fp);
 	
@@ -74,7 +77,7 @@ readplugin(char *dir_name,char *file_name)
 		g_free(description);
 		return NULL;
 	}
-	plg = g_new0(plugin_t,1);
+	plg = g_new0 (GelPlugin, 1);
 	plg->name = name;
 	plg->file = file;
 	plg->base = g_strdup(file_name);
@@ -84,5 +87,6 @@ readplugin(char *dir_name,char *file_name)
 	plg->author = author;
 	plg->description = description;
 	plg->gui = gui;
+	plg->hide = hide;
 	return plg;
 }

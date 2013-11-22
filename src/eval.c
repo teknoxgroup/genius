@@ -45,7 +45,6 @@
 #define EDEBUG(x) ;
 #endif
 
-extern calc_error_t error_num;
 extern calcstate_t calcstate;
 
 GelETree *free_trees = NULL;
@@ -133,6 +132,9 @@ ge_remove_stack_array(GelCtx *ctx)
 		(ctx)->topstack -= 2;				\
 	}							\
 }
+
+static void mod_node(GelETree *n, mpw_ptr mod);
+static void mod_matrix (GelMatrixW *m, mpw_ptr mod);
 
 
 /*returns the number of args for an operator, or -1 if it takes up till
@@ -1112,6 +1114,62 @@ cmpstringop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	return TRUE;
 }
 
+static gboolean
+mod_integer_rational (mpw_t num, mpw_t mod)
+{
+	if (mpw_is_complex (num)) {
+		/* also on rationals but as integers */
+		(*errorout)(_("Modulo arithmetic only works on integers"));
+		return FALSE;
+	} else if (mpw_is_integer (num)) {
+		mpw_mod (num, num, mod);
+		if (mpw_sgn (num) < 0)
+			mpw_add (num, mod, num);
+		if (error_num != 0)
+			return FALSE;
+		else
+			return TRUE;
+	} else if (mpw_is_rational (num)) {
+		mpw_t n, d;
+		mpw_init (n);
+		mpw_init (d);
+		mpw_numerator (n, num);
+		mpw_denominator (d, num);
+
+		mpw_mod (n, n, mod);
+		if (mpw_sgn (n) < 0)
+			mpw_add (n, mod, n);
+
+		mpw_mod (d, d, mod);
+		if (mpw_sgn (d) < 0)
+			mpw_add (d, mod, d);
+
+		if (error_num != 0) {
+			mpw_clear (n);
+			mpw_clear (d);
+			return FALSE;
+		}
+
+		mpw_invert (num, d, mod);
+		if (error_num != 0) {
+			mpw_clear (n);
+			mpw_clear (d);
+			return FALSE;
+		}
+		mpw_mul (num, num, n);
+		mpw_mod (num, num, mod);
+
+		if (error_num != 0)
+			return FALSE;
+		else
+			return TRUE;
+	} else {
+		/* also on rationals but as integers */
+		(*errorout)(_("Modulo arithmetic only works on integers"));
+		return FALSE;
+	}
+}
+
 static GelETree *
 op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 	      gboolean no_push)
@@ -1152,14 +1210,8 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 		default: g_assert_not_reached();
 		}
 		if (ctx->modulo != NULL) {
-			if (mpw_is_complex (res) ||
-			    ! mpw_is_integer (res)) {
-				(*errorout)(_("Modulo arithmetic only works on integers"));
+			if ( ! mod_integer_rational (res, ctx->modulo)) {
 				error_num = NUMERICAL_MPW_ERROR;
-			} else {
-				mpw_mod (res, res, ctx->modulo);
-				if (mpw_sgn (res) < 0)
-					mpw_add (res, ctx->modulo, res);
 			}
 		}
 		if(error_num==NUMERICAL_MPW_ERROR) {
@@ -1171,7 +1223,7 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 			n->op.args->any.next->any.next = NULL;
 			n->op.nargs = 2;
 			mpw_clear(res);
-			error_num=NO_ERROR;
+			error_num = NO_ERROR;
 			return n;
 		}
 		return gel_makenum_use(res);
@@ -1454,13 +1506,6 @@ matrix_pow_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 			return TRUE;
 		}
 
-		/* FIXME: eeeek, must handle modulo case here */
-		if (ctx->modulo != NULL) {
-			(*errorout)(_("Negative matrix powers in modulo mode not yet implemented"));
-			gel_matrixw_free (mi);
-			return TRUE;
-		}
-		
 		m = gel_matrixw_copy(m);
 		if(!gel_value_matrix_gauss(m,TRUE,FALSE,TRUE,NULL,mi)) {
 			(*errorout)(_("Matrix appears singular and can't be inverted"));
@@ -1471,6 +1516,10 @@ matrix_pow_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		gel_matrixw_free(m);
 		m = mi;
 		free_m = TRUE;
+
+		/* Mod if in modulo mode */
+		if (ctx->modulo != NULL)
+			mod_matrix (m, ctx->modulo);
 
 		power = -power;
 	}
@@ -1553,12 +1602,6 @@ pure_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		return TRUE;
 	}
 
-	/* FIXME: this because of gauss */
-	if (ctx->modulo != NULL) {
-		(*errorout)(_("Matrix division not implemented in modulo mode"));
-		return TRUE;
-	}
-
 	mi = gel_matrixw_new();
 	gel_matrixw_set_size(mi,gel_matrixw_width(m1),
 			 gel_matrixw_height(m1));
@@ -1581,6 +1624,10 @@ pure_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		return TRUE;
 	}
 	gel_matrixw_free(toinvert);
+
+	/* Mod if in modulo mode */
+	if (ctx->modulo != NULL)
+		mod_matrix (mi, ctx->modulo);
 
 	if(n->op.oper == E_BACK_DIV)
 		m1 = mi;
@@ -1621,12 +1668,6 @@ value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		return TRUE;
 	}
 
-	/* FIXME: this because of gauss */
-	if (ctx->modulo != NULL) {
-		(*errorout)(_("Matrix division not implemented in modulo mode"));
-		return TRUE;
-	}
-
 	mi = gel_matrixw_new();
 	gel_matrixw_set_size(mi,gel_matrixw_width(m),
 			 gel_matrixw_height(m));
@@ -1645,6 +1686,10 @@ value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	}
 	gel_matrixw_free(m);
 	m = mi;
+
+	/* Mod if in modulo mode */
+	if (ctx->modulo != NULL)
+		mod_matrix (mi, ctx->modulo);
 
 	for(i=0;i<gel_matrixw_width(m);i++)
 		for(j=0;j<gel_matrixw_width(m);j++) {
@@ -1679,35 +1724,53 @@ polynomial_add_sub_op (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 }
 
 static void
-mod_node(GelETree *n, mpw_ptr mod)
+mod_matrix (GelMatrixW *m, mpw_ptr mod)
 {
-	if(n->type == VALUE_NODE) {
-		if (mpw_is_complex (n->val.value) ||
-		    ! mpw_is_integer (n->val.value)) {
-			(*errorout)(_("Modulo arithmetic only works on integers"));
-			return;
-		}
-		mpw_mod(n->val.value,n->val.value,mod);
-		if(error_num) { /*FIXME: for now ignore errors in moding*/
-			error_num = 0;
-		}
-		if(mpw_sgn(n->val.value)<0)
-			mpw_add(n->val.value,mod,n->val.value);
-	} else if(n->type == MATRIX_NODE) {
-		int i,j;
-		int w,h;
-		if(!n->mat.matrix) return;
-		w = gel_matrixw_width(n->mat.matrix);
-		h = gel_matrixw_height(n->mat.matrix);
-		for(i=0;i<w;i++) {
-			for(j=0;j<h;j++) {
-				GelETree *t = gel_matrixw_set_index(n->mat.matrix,i,j);
-				if (t != NULL) {
-					mod_node(t,mod);
-				}
+	int i,j;
+	int w,h;
+
+	/*make us a private copy!*/
+	gel_matrixw_make_private(m);
+
+	w = gel_matrixw_width (m);
+	h = gel_matrixw_height (m);
+	for (i = 0; i < w; i++) {
+		for (j = 0; j < h; j++) {
+			GelETree *t = gel_matrixw_set_index (m, i, j);
+			if (t != NULL) {
+				mod_node (t, mod);
 			}
 		}
 	}
+}
+
+static void
+mod_node (GelETree *n, mpw_ptr mod)
+{
+	if(n->type == VALUE_NODE) {
+		if ( ! mod_integer_rational (n->val.value, mod)) {
+			GelETree *nn;
+			GET_NEW_NODE(nn);
+			nn->type = OPERATOR_NODE;
+			nn->op.oper = E_MOD_CALC;
+			nn->op.args = copynode (n);
+			nn->op.args->any.next = gel_makenum (mod);
+			nn->op.args->any.next->any.next = NULL;
+			nn->op.nargs = 2;
+			error_num = NO_ERROR;
+			replacenode (n, nn);
+		}
+	} else if(n->type == MATRIX_NODE) {
+		if (n->mat.matrix != NULL)
+			mod_matrix (n->mat.matrix, mod);
+	}
+}
+
+void
+gel_mod_node (GelCtx *ctx, GelETree *n)
+{
+	if (ctx->modulo != NULL)
+		mod_node (n, ctx->modulo);
 }
 
 /*return TRUE if node is true (a number node !=0), false otherwise*/
@@ -2935,11 +2998,14 @@ iter_push_args(GelCtx *ctx, GelETree *args)
 static inline void
 iter_push_args_no_modulo_on_2 (GelCtx *ctx, GelETree *args)
 {
-	GelETree *li;
 	ctx->post = FALSE;
 	ctx->current = args;
 	if (ctx->modulo != NULL) {
-		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+		/* FIXME: perhaps we can just clear ctx->modulo here */
+		mpw_ptr ptr = g_new (struct _mpw_t, 1);
+		mpw_init_set (ptr, ctx->modulo);
+
+		GE_PUSH_STACK (ctx, ptr, GE_SETMODULO);
 	}
 	GE_PUSH_STACK(ctx, args->any.next, GE_PRE);
 	g_assert (args->any.next->any.next == NULL);
@@ -3723,7 +3789,11 @@ iter_get_matrix_p(GelETree *m, gboolean *new_matrix)
 		GelEFunc *f;
 		if(d_curcontext()==0 &&
 		   m->id.id->protected) {
-			(*errorout)(_("Trying to set a protected id"));
+			char *err = g_strdup_printf
+				(_("Trying to set a protected id '%s'"),
+				 m->id.id->token);
+			(*errorout)(err);
+			g_free (err);
 			return NULL;
 		}
 		f = d_lookup_local(m->id.id);
@@ -3783,7 +3853,11 @@ iter_get_matrix_p(GelETree *m, gboolean *new_matrix)
 			return NULL;
 		}
 		if(f->data.ref->context==0 && f->data.ref->id->protected) {
-			(*errorout)(_("Trying to set a protected id"));
+			char *err = g_strdup_printf
+				(_("Trying to set a protected id '%s'"),
+				 f->data.ref->id->token);
+			(*errorout)(err);
+			g_free (err);
 			return NULL;
 		}
 		D_ENSURE_USER_BODY (f->data.ref);
@@ -3844,7 +3918,11 @@ iter_equalsop(GelETree *n)
 
 	if(l->type == IDENTIFIER_NODE) {
 		if(d_curcontext()==0 && l->id.id->protected) {
-			(*errorout)(_("Trying to set a protected id"));
+			char *err = g_strdup_printf
+				(_("Trying to set a protected id '%s'"),
+				 l->id.id->token);
+			(*errorout)(err);
+			g_free (err);
 			return;
 		}
 		if (l->id.id->parameter) {
@@ -3886,7 +3964,11 @@ iter_equalsop(GelETree *n)
 		}
 
 		if(f->data.ref->context==0 && f->data.ref->id->protected) {
-			(*errorout)(_("Trying to set a protected id"));
+			char *err = g_strdup_printf
+				(_("Trying to set a protected id '%s'"),
+				 f->data.ref->id->token);
+			(*errorout)(err);
+			g_free (err);
 			return;
 		}
 		
@@ -4645,6 +4727,10 @@ iter_operator_pre(GelCtx *ctx)
 	case E_DEREFERENCE:
 		if(!iter_derefvarop(ctx,n))
 			return FALSE;
+		if ((n->type == VALUE_NODE ||
+		     n->type == MATRIX_NODE) &&
+		    ctx->modulo != NULL)
+			mod_node (n, ctx->modulo);
 		iter_pop_stack(ctx);
 		break;
 
@@ -4779,7 +4865,12 @@ iter_operator_post(GelCtx *ctx)
 		/* FIXME: maybe we should always replace things here,
 		 * not just for values and matrices */
 		if (n->op.args->type == VALUE_NODE ||
-		    n->op.args->type == MATRIX_NODE) {
+		    n->op.args->type == MATRIX_NODE ||
+		    /* also replace if we got a E_MOD_CALC oper since
+		     * that can only mean an error occured, and we
+		     * don't want to duplicate the mod */
+		    (n->op.args->type == OPERATOR_NODE &&
+		     n->op.args->op.oper == E_MOD_CALC)) {
 			GelETree *t = n->op.args;
 			gel_freetree (n->op.args->any.next);
 			n->op.args = NULL;
@@ -5007,6 +5098,10 @@ iter_eval_etree(GelCtx *ctx)
 			EDEBUG(" IDENTIFIER NODE");
 			if(!iter_variableop(ctx, n))
 				return FALSE;
+			if ((n->type == VALUE_NODE ||
+			     n->type == MATRIX_NODE) &&
+			    ctx->modulo != NULL)
+				mod_node (n, ctx->modulo);
 			iter_pop_stack(ctx);
 			break;
 		case STRING_NODE:
@@ -5075,8 +5170,10 @@ eval_etree(GelCtx *ctx, GelETree *etree)
 	int flag;
 	gpointer data;
 
-	if (ctx->modulo != NULL)
+	if (ctx->modulo != NULL) {
 		GE_PUSH_STACK (ctx, ctx->modulo, GE_SETMODULO);
+		ctx->modulo = NULL;
+	}
 	
 	GE_PUSH_STACK(ctx,ctx->res,GE_RESULT);
 	if(ctx->post) {
