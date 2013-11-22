@@ -214,6 +214,10 @@ int mpw_cmp(mpw_ptr op1, mpw_ptr op2);
 int mpw_cmp_ui(mpw_ptr op, unsigned long int i);
 
 gboolean mpw_eql(mpw_ptr op1, mpw_ptr op2);
+
+/* must also be of same type! */
+gboolean mpw_symbolic_eql(mpw_ptr op1, mpw_ptr op2);
+
 gboolean mpw_eql_ui(mpw_ptr op, unsigned long int i);
 
 void mpw_fac_ui(mpw_ptr rop,unsigned long int i);
@@ -272,6 +276,7 @@ void mpw_trunc(mpw_ptr rop, mpw_ptr op);
 long mpw_get_long(mpw_ptr op);
 /*try to get a double representation of the number*/
 double mpw_get_double(mpw_ptr op);
+void mpw_get_complex_double(mpw_ptr op, double *r, double *i);
 
 void mpw_denominator(mpw_ptr rop, mpw_ptr op);
 void mpw_numerator(mpw_ptr rop, mpw_ptr op);

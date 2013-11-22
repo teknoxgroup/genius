@@ -1,4 +1,5 @@
 char *fake = N_("Compose two functions");
+char *fake = N_("Compose a function with itself n times, passing x as argument, and returning x if n == 0");
 char *fake = N_("Make a string");
 char *fake = N_("Tolerance of the Chop function");
 char *fake = N_("How many iterations to try to find the limit for continuity and limits");
@@ -172,6 +173,7 @@ char *fake = N_("Calculate the nth triangular number");
 char *fake = N_("Calculate combinations (binomial coefficient)");
 char *fake = N_("Calculate permutations");
 char *fake = N_("Integration of f by Composite Simpson's Rule on the interval [a,b] with the number of steps calculated by the fourth derivative bound and the desired tolerance");
+char *fake = N_("Attempt to calculate derivative by trying first symbolically and then numerically");
 char *fake = N_("Try to calculate an infinite product for a single parameter function");
 char *fake = N_("Try to calculate an infinite product for a double parameter function with func(arg,n)");
 char *fake = N_("Try to calculate an infinite sum for a single parameter function");
@@ -231,3 +233,6 @@ char *fake = N_("Returns true if the element x is in the set X (where X is a vec
 char *fake = N_("Returns a set where every element of X appears only once");
 char *fake = N_("Returns a set theoretic difference X-Y (X and Y are vectors pretending to be sets)");
 char *fake = N_("Returns a set theoretic union of X and Y (X and Y are vectors pretending to be sets)");
+char *fake = N_("Attempt to symbolically differentiate a function n times");
+char *fake = N_("Attempt to symbolically differentiate a function n times quietly and return null on failure");
+char *fake = N_("Attempt to construct the taylor approximation function around x0 to the nth degree.");

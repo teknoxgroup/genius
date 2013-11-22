@@ -1,3 +1,56 @@
+2005-07-22  Adam Weinberger  <adamw@gnome.org>
+
+	* POTFILES.in: Sort; add missing files.
+	* en_CA.po: Updated Canadian English translation.
+
+2005-07-10  Miloslav Trmac  <mitr@volny.cz>
+
+	* cs.po: Updated Czech translation.
+
+2005-07-03  Adam Weinberger  <adamw@gnome.org>
+
+	* en_CA.po: Updated Canadian English translation.
+
+Sun Jul 03 15:27:32 2005  George Lebl <jirka@5z.com>
+
+	* src/POTFILES.in: added src/symbolic.c
+
+2005-06-23  Adam Weinberger  <adamw@gnome.org>
+
+	* en_CA.po: Updated Canadian English translation.
+
+2005-06-17  Adam Weinberger  <adamw@gnome.org>
+
+	* en_CA.po: Updated Canadian English translation.
+
+2005-05-17  Francisco Javier F. Serrador  <serrador@cvs.gnome.org>
+
+	* es.po: Updated Spanish translation by Jorge Gonzalez.
+
+2005-05-07  Francisco Javier F. Serrador  <serrador@cvs.gnome.org>
+
+	* es.po:  Updated Spanish  translation by Jorge Gonzalez
+
+2005-04-30  Francisco Javier F. Serrador  <serrador@cvs.gnome.org>
+
+	* es.po: Updated Spanish  translation by Jorge Gonzalez
+
+2005-04-22  Francisco Javier F. Serrador  <serrador@cvs.gnome.org>
+
+	* es.po: Updated Spanish translation by Jorge Gonzalez
+
+2005-04-21  Gareth Owen  <gowen@gnome.org>
+
+	* en_GB.po: Added British English translation
+
+2005-04-01  Steve Murphy  <murf@e-tools.com>
+
+        * rw.po: Added Kinyarwanda translation.
+
+2005-03-26  Miloslav Trmac  <mitr@volny.cz>
+
+	* cs.po: Updated Czech translation.
+
 2005-03-24  Adam Weinberger  <adamw@gnome.org>
 
 	* en_CA.po: Updated Canadian English translation.

@@ -72,25 +72,27 @@
      TRANSPOSE = 298,
      ELTELTDIV = 299,
      ELTELTMUL = 300,
-     ELTELTEXP = 301,
-     ELTELTMOD = 302,
-     DOUBLEFACT = 303,
-     EQ_CMP = 304,
-     NE_CMP = 305,
-     CMP_CMP = 306,
-     LT_CMP = 307,
-     GT_CMP = 308,
-     LE_CMP = 309,
-     GE_CMP = 310,
-     LOGICAL_XOR = 311,
-     LOGICAL_OR = 312,
-     LOGICAL_AND = 313,
-     LOGICAL_NOT = 314,
-     LOWER_THEN_ELSE = 315,
-     MOD = 316,
-     ELTELTBACKDIV = 317,
-     UPLUS = 318,
-     UMINUS = 319
+     ELTELTPLUS = 301,
+     ELTELTMINUS = 302,
+     ELTELTEXP = 303,
+     ELTELTMOD = 304,
+     DOUBLEFACT = 305,
+     EQ_CMP = 306,
+     NE_CMP = 307,
+     CMP_CMP = 308,
+     LT_CMP = 309,
+     GT_CMP = 310,
+     LE_CMP = 311,
+     GE_CMP = 312,
+     LOGICAL_XOR = 313,
+     LOGICAL_OR = 314,
+     LOGICAL_AND = 315,
+     LOGICAL_NOT = 316,
+     LOWER_THEN_ELSE = 317,
+     MOD = 318,
+     ELTELTBACKDIV = 319,
+     UPLUS = 320,
+     UMINUS = 321
    };
 #endif
 #define STARTTOK 258
@@ -136,25 +138,27 @@
 #define TRANSPOSE 298
 #define ELTELTDIV 299
 #define ELTELTMUL 300
-#define ELTELTEXP 301
-#define ELTELTMOD 302
-#define DOUBLEFACT 303
-#define EQ_CMP 304
-#define NE_CMP 305
-#define CMP_CMP 306
-#define LT_CMP 307
-#define GT_CMP 308
-#define LE_CMP 309
-#define GE_CMP 310
-#define LOGICAL_XOR 311
-#define LOGICAL_OR 312
-#define LOGICAL_AND 313
-#define LOGICAL_NOT 314
-#define LOWER_THEN_ELSE 315
-#define MOD 316
-#define ELTELTBACKDIV 317
-#define UPLUS 318
-#define UMINUS 319
+#define ELTELTPLUS 301
+#define ELTELTMINUS 302
+#define ELTELTEXP 303
+#define ELTELTMOD 304
+#define DOUBLEFACT 305
+#define EQ_CMP 306
+#define NE_CMP 307
+#define CMP_CMP 308
+#define LT_CMP 309
+#define GT_CMP 310
+#define LE_CMP 311
+#define GE_CMP 312
+#define LOGICAL_XOR 313
+#define LOGICAL_OR 314
+#define LOGICAL_AND 315
+#define LOGICAL_NOT 316
+#define LOWER_THEN_ELSE 317
+#define MOD 318
+#define ELTELTBACKDIV 319
+#define UPLUS 320
+#define UMINUS 321
 
 
 
@@ -166,7 +170,7 @@ typedef union YYSTYPE {
 	char *id;
 } YYSTYPE;
 /* Line 1275 of yacc.c.  */
-#line 170 "y.tab.h"
+#line 174 "y.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

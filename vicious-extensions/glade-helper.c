@@ -113,7 +113,7 @@ glade_helper_load_widget (const char *file, const char *widget,
 	    ! G_TYPE_CHECK_INSTANCE_TYPE (w, expected_type)) {
 		glade_helper_bad_interface (xml->filename != NULL ?
 					      xml->filename :
-					      _("(memory buffer"),
+					      _("(memory buffer)"),
 					    widget,
 					    expected_type);
 		exit (1);
@@ -135,7 +135,7 @@ glade_helper_get (GladeXML *xml, const char *widget, GType expected_type)
 	    ! G_TYPE_CHECK_INSTANCE_TYPE (w, expected_type)) {
 		glade_helper_bad_interface (xml->filename != NULL ?
 					      xml->filename :
-					      _("(memory buffer"),
+					      _("(memory buffer)"),
 					    widget,
 					    expected_type);
 		exit (1);
@@ -155,7 +155,7 @@ glade_helper_get_clist (GladeXML *xml, const char *widget,
 	if (GTK_CLIST (w)->columns != expected_columns) {
 		glade_helper_bad_columns (xml->filename != NULL ?
 					    xml->filename :
-					    _("(memory buffer"),
+					    _("(memory buffer)"),
 					  widget,
 					  expected_type,
 					  expected_columns);
@@ -192,7 +192,7 @@ glade_helper_bad_interface (const char *filename, const char *widget,
 				 GTK_BUTTONS_OK,
 				 FALSE /* markup */,
 				 _("Cannot load user interface"),
-				 _("An error occurred while loading the user "
+				 _("An error occurred while loading user "
 				   "interface element %s%s from file %s.  "
 				   "Possibly the glade interface description was "
 				   "corrupted.  "

@@ -1,7 +1,7 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.7.3)
+AM_INIT_AUTOMAKE(genius,0.7.4)
 
 dnl make sure we keep ACLOCAL_FLAGS around for maintainer builds to work
 AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS")
@@ -47,7 +47,7 @@ GETTEXT_PACKAGE=genius
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ja ko nl no pa pt pt_BR sq sr sr@Latn sv pl zh_CN"
+ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ja ko nl no pa pl pt pt_BR rw sq sr sr@Latn sv zh_CN"
 AM_GLIB_GNU_GETTEXT
 
 dnl ===============================================================================
@@ -141,6 +141,11 @@ use_gnome="$enableval",use_gnome=yes)
 PKG_CHECK_MODULES(GENIUS_NOGUI, glib-2.0 >= $GLIB_REQUIRED gmodule-2.0 >= $GLIB_REQUIRED)
 AC_SUBST(GENIUS_NOGUI_CFLAGS)
 AC_SUBST(GENIUS_NOGUI_LIBS)
+
+# glib
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED)
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
 
 GENIUS_MODULES="gtk+-2.0 >= $GTK_REQUIRED libgnome-2.0 >= $LIBGNOME_REQUIRED libgnomeui-2.0 >= $LIBGNOMEUI_REQUIRED vte >= $VTE_REQUIRED gtksourceview-1.0 >= $GTKSOURCEVIEW_REQUIRED libglade-2.0 >= $LIBGLADE_REQUIRED"
 GENIUS_MODULES_NOSRCVIEW="gtk+-2.0 >= $GTK_REQUIRED libgnome-2.0 >= $LIBGNOME_REQUIRED libgnomeui-2.0 >= $LIBGNOMEUI_REQUIRED vte >= $VTE_REQUIRED libglade-2.0 >= $LIBGLADE_REQUIRED"
@@ -276,6 +281,7 @@ lib/misc/Makefile
 lib/sets/Makefile
 lib/number_theory/Makefile
 lib/statistics/Makefile
+lib/symbolic/Makefile
 vicious-extensions/Makefile
 gtkextra/Makefile
 pixmaps/Makefile

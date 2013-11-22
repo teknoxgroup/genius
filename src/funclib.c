@@ -32,6 +32,7 @@
 #include "eval.h"
 #include "dict.h"
 #include "funclib.h"
+#include "symbolic.h"
 #include "matrix.h"
 #include "matrixw.h"
 #include "matop.h"
@@ -65,6 +66,11 @@ GelEFunc *Re_function = NULL;
 GelEFunc *Im_function = NULL;
 /* GelEFunc *ErrorFunction_function = NULL; */
 /* GelEFunc *RiemannZeta_function = NULL; */
+GelEFunc *pi_function = NULL;
+GelEFunc *e_function = NULL;
+GelEFunc *GoldenRatio_function = NULL;
+GelEFunc *Gravity_function = NULL;
+GelEFunc *EulerConstant_function = NULL;
 
 /*maximum number of primes to precalculate and store*/
 #define MAXPRIMES 30000
@@ -1170,6 +1176,14 @@ static GelETree *
 IsFunction_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	if (a[0]->type == FUNCTION_NODE)
+		return gel_makenum_bool (1);
+	else
+		return gel_makenum_bool (0);
+}
+static GelETree *
+IsFunctionOrIdentifier_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	if (a[0]->type == FUNCTION_NODE || a[0]->type == IDENTIFIER_NODE)
 		return gel_makenum_bool (1);
 	else
 		return gel_makenum_bool (0);
@@ -3456,18 +3470,15 @@ ptf_makenew_term(mpw_t mul, GelToken *id, int power)
 {
 	GelETree *n;
 	
-	/* we do the zero power the same as >1 so
-	 * that we get an x^0 term.  This may seem
-	 * pointless but it allows evaluating matrices
-	 * as it will make the constant term act like
-	 * c*I(n) */
-	if (mpw_cmp_ui(mul,1)==0) {
+	if (power == 0) {
+		return gel_makenum (mul);
+	} else if (mpw_eql_ui (mul, 1)) {
 		n = ptf_makenew_power(id,power);
 	} else {
 		GET_NEW_NODE(n);
 		n->type = OPERATOR_NODE;
 		n->op.oper = E_MUL;
-		n->op.args = gel_makenum(mul);
+		n->op.args = gel_makenum (mul);
 		n->op.args->any.next = ptf_makenew_power(id,power);
 		n->op.args->any.next->any.next = NULL;
 		n->op.nargs = 2;
@@ -4678,12 +4689,17 @@ gel_funclib_addall(void)
 	ALIAS (arctan, 1, atan);
 
 	FUNC (pi, 0, "", "constants", N_("The number pi"));
+	pi_function = f;
 	FUNC (e, 0, "", "constants", N_("The natural number e"));
+	e_function = f;
 	FUNC (GoldenRatio, 0, "", "constants", N_("The Golden Ratio"));
+	GoldenRatio_function = f;
 	FUNC (Gravity, 0, "", "constants", N_("Free fall acceleration"));
+	Gravity_function = f;
 	FUNC (EulerConstant, 0, "", "constants",
 	      N_("Euler's Constant gamma"));
 	ALIAS (gamma, 0, EulerConstant);
+	EulerConstant_function = f;
 
 	/* FIXME: need to handle complex values */
 	/*
@@ -4812,6 +4828,7 @@ gel_funclib_addall(void)
 	FUNC (IsString, 1, "arg", "basic", N_("Check if argument is a text string"));
 	FUNC (IsMatrix, 1, "arg", "basic", N_("Check if argument is a matrix"));
 	FUNC (IsFunction, 1, "arg", "basic", N_("Check if argument is a function"));
+	FUNC (IsFunctionOrIdentifier, 1, "arg", "basic", N_("Check if argument is a function or an identifier"));
 	FUNC (IsFunctionRef, 1, "arg", "basic", N_("Check if argument is a function reference"));
 
 	FUNC (IsComplex, 1, "num", "numeric", N_("Check if argument is a complex (non-real) number"));
@@ -4872,6 +4889,9 @@ gel_funclib_addall(void)
 						NULL, NULL),
 					     g_slist_append(NULL,d_intern("x")),1,
 					     NULL);
+
+	gel_add_symbolic_functions ();
+
 	/*protect EVERYthing up to this point*/
-	d_protect_all();
+	d_protect_all ();
 }

@@ -85,7 +85,9 @@ GENIUS_NOGUI_CFLAGS = @GENIUS_NOGUI_CFLAGS@
 GENIUS_NOGUI_LIBS = @GENIUS_NOGUI_LIBS@
 GENIUS_READLINE_HELPER_FIFO = @GENIUS_READLINE_HELPER_FIFO@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
+GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
@@ -195,7 +197,7 @@ libviciousui_minimal_a_SOURCES =  	$(libvicious_a_SOURCES) 	ve-miscui.c		ve-misc
 test_ve_config_SOURCES =  	test-ve-config.c
 
 
-test_ve_config_LDADD =  	$(VICIOUS_LIBS)					$(INTLLIBS)					-L$(top_builddir)/vicious-extensions		-lvicious
+test_ve_config_LDADD =  	$(VICIOUS_LIBS)					$(INTLLIBS)					$(GLIB_LIBS)					-L$(top_builddir)/vicious-extensions		-lvicious
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h

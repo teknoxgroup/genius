@@ -1,3 +1,158 @@
+Fri Jul 22 10:12:09 2005  George Lebl <jirka@5z.com>
+
+	* Release 0.7.4
+
+Thu Jul 21 16:56:44 2005  George Lebl <jirka@5z.com>
+
+	* help/C/gel-function-list.xml: minor fix
+
+	* help/C/genius.txt: generate
+
+Thu Jul 21 16:54:09 2005  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add parametric plots, add LinePlotParametric and
+	  LinePlotCParametric
+
+	* src/mpwrap.[ch]: add mpw_get_complex_double
+
+	* help/C/gel-function-list.xml: add LinePlotParametric and
+	  LinePlotCParametric
+
+Fri Jun 24 17:39:48 2005  George Lebl <jirka@5z.com>
+
+	* src/symbolic.c, src/geniustests.txt: allow differentiation of
+	  E_CALL's where first arg is a function, not an identifier, for
+	  example this is what we get on SymbolicDerivative(sin*cos)
+
+Fri Jun 24 17:21:22 2005  George Lebl <jirka@5z.com>
+
+	* src/symbolic.c, src/eval.c, src/geniustests.txt: Some more
+	  simplification special casing, doing several tan derivatives is
+	  now much faster and results in shorter answers, yay.  Also run
+	  the evalnode hook so that we can interrupt a symbolic derivation
+	  which is taking too long.
+
+Fri Jun 24 16:23:01 2005  George Lebl <jirka@5z.com>
+
+	* src/longtest.gel: add many derivative tests
+
+	* src/funclib.c: add IsFunctionOrIdentifier
+
+	* lib/calculus/differentiation.gel: accept identifiers for all
+	  functions and not just functions
+
+	* help/C/gel-function-list.xml: add IsFunctionOrIdentifier
+
+	* src/eval.c: Allow identifier + string to make a string
+
+	* src/symbolic.c: fix some derivative definitions
+
+	* src/eval.c: fixup nargs when creating new operator nodes in
+	  simplification
+
+Fri Jun 24 15:42:09 2005  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: add symbolic equality (respects types)
+
+	* src/eval.[ch]: further simplification of multiplication and
+	  addition, still crap, but lesser crap now.  I need to make this
+	  more general and nicer.
+
+Wed Jun 22 13:19:39 2005  George Lebl <jirka@5z.com>
+
+	* src/eval.[ch], src/symbolic.c: Add more aggressive "simplification"
+	  and use it on the result of derivation (for example multiplication
+	  by 1 or addition of 0 and such are now whacked)
+
+Fri Jun 17 09:56:34 2005  George Lebl <jirka@5z.com>
+
+	* src/parse.y: fix precedence of .+ and .- and also move 'call' in
+	  precedence further to the top to bind more closely then =
+	  make things like "x = f call (x)" work as you would expect.
+
+	* lib/misc/misc.gel: add ComposePower
+
+	* help/C/gel-functions-list.xml: add ComposePower docs
+
+	* src/eval.c: in try_to_do_precalc, whack all double negations
+
+	* src/symbolic.c: fix derivation of divisions, and make ln have
+	  derivative of "x^-1" rather then "1/x" as we can take multiple
+	  derivatives better there since we have no real simplification
+
+Thu Jun 16 18:14:39 2005  George Lebl <jirka@5z.com>
+
+	* lib/symbolic/differentiation.gel:  Add SymbolicNthDerivative,
+	  SymbolicNthDerivativeTry, SymbolicTaylorApproximationFunction
+
+	* configure.in, help/C/gel-function-list.xml, help/C/genius.xml:
+	  Document the above
+
+	* src/geniustests.txt: add some tests
+
+Thu Jun 16 17:40:29 2005  George Lebl <jirka@5z.com>
+
+	* configure.in: raise version number
+
+	* src/complil.c: compile symbolic_id and id for function nodes and
+	  symbolic_id for global functions.
+
+	* src/lexer.l, src/calc.c, src/eval.[ch], src/parse.y: SYNTAX CHANGE:
+	  there is now an elt by elt addition and subtraction (.+ and .-)
+	  which act like the old +,- when adding scalar to a matrix.  The +,-
+	  now interpret A+x as A+x*I if A is a square matrix, and elt by elt
+	  if A is a vector (row or column), else they error out.
+
+	* src/funclib.c: the PolyToFunction now does 1 instead of x^0, since
+	  this now works correctly for matrices.
+
+	* src/lexer.l, src/calc.c, src/parse.y: make evalstack into
+	  gel_parsestack since the naming was totally off
+
+	* src/dict.h: on decompilation errors don't assert crash, just give
+	  null as the function body.
+
+	* src/geniustests.txt: add some tests and fix some old ones with
+	  respect to the above syntax change.
+
+Wed Jun 15 09:09:20 2005  George Lebl <jirka@5z.com>
+
+	* src/symbolic.c, src/calc.[ch], src/dict.c, src/eval.c,
+	  src/structs.h:  Fixup symbolic derivation to work inside functions,
+	  preserve a "symbolic id" for the symbolic derivation when setting
+	  variables to functions.  Also add SymbolicDerivativeTry function
+	  to try symbolic derivative quietly.
+
+	* src/geniustests.txt: add tests
+
+	* lib/calculus/differentiation.gel: Add Derivative function which
+	  tries symbolic first and numerical as a backup
+
+	* help/C/gelfunction-list.xml: add SymbolicDerivativeTry and
+	  Derivative
+
+Tue Jun 14 10:23:51 2005  George Lebl <jirka@5z.com>
+
+	* src/symbolic.[ch], src/eval.[ch]: Add a primitive
+	  SymbolicDerivative function.  Doesn't yet even get even all the
+	  simple cases (such as functions with more then one argument) but
+	  should be semi usable for simple things.  Of course there is no
+	  simplification of expressions in genius so things can get wild a
+	  bit.
+
+	* src/graphing.c, src/funclib.c: adjustments because of the above
+
+	* src/calc.c: remove an extra parenthesis in function printing
+	  output.
+
+	* src/geniustests.txt: add tests for SymbolicDerivative
+
+	* help/C/gel-function-list.xml: Add SymbolicDerivative blurb
+
+2005-04-01  Steve Murphy  <murf@e-tools.com>
+
+        * configure.in: Added "rw" to ALL_LINGUAS.
+
 Thu Mar 24 10:17:35 2005  George Lebl <jirka@5z.com>
 
 	* Release 0.7.3

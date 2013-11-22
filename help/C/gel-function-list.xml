@@ -66,7 +66,23 @@ To get help on a specific function from the console type:
          <term>Compose</term>
          <listitem>
           <synopsis>Compose (f,g)</synopsis>
-          <para>Compose two functions</para>
+          <para>Compose two functions and return a function that is the composition of f and g.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-ComposePower">
+         <term>ComposePower</term>
+         <listitem>
+          <synopsis>ComposePower (f,n,x)</synopsis>
+          <para>Compose a function with itself n times, passing x as argument, and returning x if n == 0.
+		Examples:
+          <screen><prompt>genius></prompt> <userinput>function f(x) = x^2 ;</userinput>
+<prompt>genius></prompt> <userinput>ComposePower (f,3,7)</userinput>
+= 5764801
+<prompt>genius></prompt> <userinput>f(f(f(7)))</userinput>
+= 5764801
+</screen>
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -113,6 +129,14 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>IsFunction (arg)</synopsis>
           <para>Check if argument is a function</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsFunctionOrIdentifier">
+         <term>IsFunctionOrIdentifier</term>
+         <listitem>
+          <synopsis>IsFunctionOrIdentifier (arg)</synopsis>
+          <para>Check if argument is a function or identifier</para>
          </listitem>
         </varlistentry>
 
@@ -3046,6 +3070,14 @@ number is specified) of the given size returned.  For example
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-Derivative">
+         <term>Derivative</term>
+         <listitem>
+          <synopsis>Derivative (f,x0)</synopsis>
+          <para>Attempt to calculate derivative by trying first symbolically and then numerically.</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-InfiniteProduct">
          <term>InfiniteProduct</term>
          <listitem>
@@ -3749,6 +3781,67 @@ number is specified) of the given size returned.  For example
       </variablelist>
     </sect1>
 
+    <sect1 id="genius-gel-function-list-symbolic">
+      <title>Symbolic Operations</title>
+      <variablelist>
+        <varlistentry id="gel-function-SymbolicDerivative">
+         <term>SymbolicDerivative</term>
+         <listitem>
+          <synopsis>SymbolicDerivative (f)</synopsis>
+          <para>Attempt to symbolically differentiate the function f, where f is a function of one variable.</para>
+          <para>
+	    Examples:
+          <screen><prompt>genius></prompt> <userinput>SymbolicDerivative(sin)</userinput>
+<prompt>genius></prompt> <userinput>(`(x)=cos(x))</userinput>
+<prompt>genius></prompt> <userinput>SymbolicDerivative(`(x)=7*x^2)</userinput>
+<prompt>genius></prompt> <userinput>(`(x)=(7*(2*x)))</userinput>
+</screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SymbolicDerivativeTry">
+         <term>SymbolicDerivativeTry</term>
+         <listitem>
+          <synopsis>SymbolicDerivativeTry (f)</synopsis>
+          <para>Attempt to symbolically differentiate the function f, where f is a function of one variable, returns null if unsuccessful but is silent.
+	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SymbolicNthDerivative">
+         <term>SymbolicNthDerivative</term>
+         <listitem>
+          <synopsis>SymbolicNthDerivative (f,n)</synopsis>
+          <para>Attempt to symbolically differentiate a function n times.
+	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SymbolicNthDerivativeTry">
+         <term>SymbolicNthDerivativeTry</term>
+         <listitem>
+          <synopsis>SymbolicNthDerivativeTry (f,n)</synopsis>
+	  <para>Attempt to symbolically differentiate a function n times quietly and return null on failure
+	  (See <link linkend="gel-function-SymbolicNthDerivative">SymbolicNthDerivative</link>)
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SymbolicTaylorApproximationFunction">
+         <term>SymbolicTaylorApproximationFunction</term>
+         <listitem>
+          <synopsis>SymbolicTaylorApproximationFunction (f,x0,n)</synopsis>
+	  <para>Attempt to construct the taylor approximation function around x0 to the nth degree.
+	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+          </para>
+         </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect1>
+
     <sect1 id="genius-gel-function-list-plotting">
       <title>Plotting</title>
       <variablelist>
@@ -3809,6 +3902,34 @@ number is specified) of the given size returned.  For example
           <screen><prompt>genius></prompt> <userinput>LinePlotDrawLine(0,0,1,1,"color","blue","thickness",3)</userinput>
 <prompt>genius></prompt> <userinput>LinePlotDrawLine([0,0;1,-1;-1,-1])</userinput>
 </screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-LinePlotParametric">
+         <term>LinePlotParametric</term>
+         <listitem>
+          <synopsis>LinePlotParametric (xfunc,yfunc,...)</synopsis>
+          <synopsis>LinePlotParametric (xfunc,yfunc,t1,t2,tinc)</synopsis>
+          <synopsis>LinePlotParametric (xfunc,yfunc,t1,t2,tinc,x1,x2,y1,y2)</synopsis>
+          <para>
+	    Plot a parametric function with a line.  First come the functions
+for x and y then optionally the t limits as t1,t2,tinc, then optionally the
+limits as x1,x2,y1,y2.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-LinePlotCParametric">
+         <term>LinePlotCParametric</term>
+         <listitem>
+          <synopsis>LinePlotCParametric (func,...)</synopsis>
+          <synopsis>LinePlotCParametric (func,t1,t2,tinc)</synopsis>
+          <synopsis>LinePlotCParametric (func,t1,t2,tinc,x1,x2,y1,y2)</synopsis>
+          <para>
+	    Plot a parametric complex valued function with a line.  First comes
+the function that returns x+iy then optionally the t limits as t1,t2,tinc, then
+optionally the limits as x1,x2,y1,y2.
           </para>
          </listitem>
         </varlistentry>

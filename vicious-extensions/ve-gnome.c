@@ -96,19 +96,37 @@ ve_find_file (const char *filename, const GList *directories)
 
 /**
  * ve_i18n_get_language_list:
- * @category_name: Name of category to look up, e.g. %"LC_MESSAGES".
+ * @ignored: Not used anymore (Historically: Name of category to look
+ *                 up, e.g. %"LC_MESSAGES").
  * 
- * This computes a list of language strings that the user wants.  It searches in
- * the standard environment variables to find the list, which is sorted in order
- * from most desirable to least desirable.  The `C' locale is appended to the
- * list if it does not already appear (other routines depend on this
- * behaviour). If @category_name is %NULL, then %LC_ALL is assumed.
+ * Computes a list of applicable locale names, which can be used to e.g.
+ * construct locale-dependent filenames or search paths. The returned list is
+ * sorted from most desirable to least desirable and always contains the
+ * default locale "C".
  * 
  * Return value: the list of languages, this list should not be freed as it is
- * owned by gnome-i18n.
+ * owned by ve.
  **/
 const GList *
 ve_i18n_get_language_list (const gchar *category_name)
 {
-	return gnome_i18n_get_language_list (category_name);
+	static GStaticRecMutex lang_list_lock = G_STATIC_REC_MUTEX_INIT;
+	static GList *list = NULL;
+	const char * const* langs;
+	int i;
+
+	g_static_rec_mutex_lock (&lang_list_lock);
+
+	if (list == NULL) {
+		langs = g_get_language_names ();
+		for (i = 0; langs[i] != NULL; i++) {
+			list = g_list_prepend (list, g_strdup(langs[i]));
+		}
+
+		list = g_list_reverse (list);
+	}
+
+	g_static_rec_mutex_unlock (&lang_list_lock);
+
+	return list;
 }

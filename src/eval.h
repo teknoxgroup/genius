@@ -39,7 +39,9 @@ enum {
 	E_PARAMETER,
 	E_ABS,
 	E_PLUS,
+	E_ELTPLUS,
 	E_MINUS,
+	E_ELTMINUS,
 	E_MUL,
 	E_ELTMUL,
 	E_DIV,
@@ -153,6 +155,8 @@ void gel_makenum_null_from(GelETree *n);
 /*copy a node*/
 GelETree * copynode(GelETree *o);
 
+void gel_replacenode (GelETree *to, GelETree *from, gboolean copy);
+
 /*functions for reclaiming memory*/
 void gel_freetree(GelETree *n);
 void gel_emptytree(GelETree *n);
@@ -183,10 +187,17 @@ GelETree * gather_comparisons(GelETree *n);
 void replace_equals (GelETree *n, gboolean in_expression);
 void replace_exp (GelETree *n);
 void fixup_num_neg (GelETree *n);
-void try_to_do_precalc(GelETree *n);
+/* careful precalculation */
+void try_to_do_precalc (GelETree *n);
+/* aggressive precalculation/simplification */
+void gel_simplify (GelETree *n);
+/* is the tree semantically the same? */
+gboolean gel_is_tree_same (GelETree *l, GelETree *r);
 
 /* find an identifier */
-gboolean eval_find_identifier (GelETree *n, GelToken *tok);
+gboolean eval_find_identifier (GelETree *n,
+			       GelToken *tok,
+			       gboolean funcbody);
 
 char * gel_similar_possible_ids (const char *id);
 

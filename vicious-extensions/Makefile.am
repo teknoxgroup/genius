@@ -77,5 +77,6 @@ test_ve_config_SOURCES = \
 test_ve_config_LDADD = \
 	$(VICIOUS_LIBS)				\
 	$(INTLLIBS)				\
+	$(GLIB_LIBS)				\
 	-L$(top_builddir)/vicious-extensions	\
 	-lvicious

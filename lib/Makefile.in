@@ -85,7 +85,9 @@ GENIUS_NOGUI_CFLAGS = @GENIUS_NOGUI_CFLAGS@
 GENIUS_NOGUI_LIBS = @GENIUS_NOGUI_LIBS@
 GENIUS_READLINE_HELPER_FIFO = @GENIUS_READLINE_HELPER_FIFO@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
+GLIB_CFLAGS = @GLIB_CFLAGS@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
+GLIB_LIBS = @GLIB_LIBS@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
@@ -157,7 +159,7 @@ YACC = @YACC@
 l = @l@
 
 Librarydir = $(datadir)/genius/gel
-SUBDIRS = calculus combinatorics equation_solving functions 	linear_algebra misc number_theory statistics sets
+SUBDIRS = calculus combinatorics equation_solving functions 	linear_algebra misc number_theory statistics sets symbolic
 
 
 Library_DATA = lib.cgel loader.gel
