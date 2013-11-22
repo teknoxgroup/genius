@@ -1,7 +1,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 1999-08-30 22:15+0200\n"
 "Last-Translator: GNOME PL Team\n"
 "Language-Team: Polish <gnomepl@pandora.info.bielsko.pl>\n"

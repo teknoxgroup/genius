@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 2003-08-30 14:23+0800\n"
 "Last-Translator: Mai Hao Hui <mhh@ricetons.com>\n"
 "Language-Team: zh_CN <i18n-translation@lists.linux.net.cn>\n"

@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius.HEAD\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 2003-08-23 15:38+0300\n"
 "Last-Translator: Mətin Əmirov <metin@karegen.com>\n"
 "Language-Team: Azerbaijani <gnome@azitt.com>\n"

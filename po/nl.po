@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Genius cvs\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 2003-11-11 12:28+0100\n"
 "Last-Translator: Tino Meinen <a.t.meinen@chello.nl>\n"
 "Language-Team: Dutch <vertaling@nl.linux.org>\n"

@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius.HEAD\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 2003-08-30 20:49+0200\n"
 "Last-Translator: Francisco Javier F. Serrador <serrador@arrakis.es>\n"
 "Language-Team: Spanish <traductores@es.gnome.org>\n"

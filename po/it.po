@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "Last-Translator: Tristan Tarrant <ttarrant@suntlc.etnoteam.it>\n"
 "Content-Type: text/plain; charset=iso-8859-1\n"
 "Date: 1998-02-23 15:09:38+0100\n"

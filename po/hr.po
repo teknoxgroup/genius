@@ -4,7 +4,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius 0\n"
-"POT-Creation-Date: 2003-12-31 12:11-0800\n"
+"POT-Creation-Date: 2003-12-31 14:47-0800\n"
 "PO-Revision-Date: 2003-12-30 20:45+CET\n"
 "Last-Translator: auto\n"
 "Language-Team: Croatian <lokalizacija@linux.hr>\n"
