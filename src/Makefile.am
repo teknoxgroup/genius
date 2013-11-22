@@ -4,7 +4,7 @@ Librarydir = $(datadir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @READLINE_SUPPORT@ @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
+CFLAGS += @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
 
 
 INCLUDES = \
@@ -24,7 +24,6 @@ gnome_genius_SOURCES = 	\
 	eval.c		\
 	eval.h		\
 	gnome-genius.c	\
-	gnome-genius.h	\
 	util.c		\
 	util.h		\
 	dict.c		\
@@ -52,6 +51,7 @@ gnome_genius_LDADD = \
 	@GMP_LIB@ \
 	@LEXLIB@ \
 	$(INTLLIBS) \
+	@ZVT_LIBS@ \
 	@READLINE_LIB@
 
 genius_SOURCES = 	\

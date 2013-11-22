@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNOME-utils 0.13\n"
-"POT-Creation-Date: 1999-05-01 04:13-0700\n"
+"POT-Creation-Date: 1999-05-06 00:26-0700\n"
 "PO-Revision-Date: 1998-09-03 05:33:03+0900\n"
 "Last-Translator: Sung-Hyun Nam <namsh@lgic.co.kr>\n"
 "Language-Team: Korean <ko@li.org>\n"
@@ -13,71 +13,112 @@ msgstr ""
 "Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/gnome-genius.c:257 src/gnome-genius.c:456
+#: src/gnome-genius.c:188 src/gnome-genius.c:543
 msgid "GnomENIUS Calculator"
 msgstr "GnomENIUS 계산기"
 
 #. another comments
-#: src/gnome-genius.c:262
+#: src/gnome-genius.c:193
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
-#: src/gnome-genius.c:364
+#: src/gnome-genius.c:311
 msgid "GnomENIUS Calculator setup"
 msgstr "GnomENIUS 계산기 환경설정"
 
-#: src/gnome-genius.c:374
-msgid "General"
-msgstr "일반"
-
-#. options area
-#: src/gnome-genius.c:377
-msgid "Preferences"
+#: src/gnome-genius.c:317
+msgid "Output"
 msgstr ""
 
-#: src/gnome-genius.c:384
-msgid "Full (exact) answers"
-msgstr "전체 (정확한) 대답"
+#: src/gnome-genius.c:320
+msgid "Number output options"
+msgstr ""
 
-#: src/gnome-genius.c:393
+#: src/gnome-genius.c:330
+msgid "Maximum digits to output (0=unlimited)"
+msgstr ""
+
+#: src/gnome-genius.c:350
 msgid "Results as floats"
 msgstr ""
 
-#: src/gnome-genius.c:402
+#: src/gnome-genius.c:358
 msgid "Floats in scientific notation"
 msgstr ""
 
-#: src/gnome-genius.c:430
-msgid "Show _Numpad"
+#: src/gnome-genius.c:367
+msgid "Error/Info output options"
 msgstr ""
 
-#: src/gnome-genius.c:430
-msgid "Show the number pad"
+#: src/gnome-genius.c:375
+msgid "Display errors in a dialog"
 msgstr ""
 
-#: src/gnome-genius.c:431
+#: src/gnome-genius.c:383
+msgid "Display information messages in a dialog"
+msgstr ""
+
+#: src/gnome-genius.c:395
+msgid "Precision"
+msgstr ""
+
+#: src/gnome-genius.c:398
+msgid "Floating point precision"
+msgstr ""
+
+#: src/gnome-genius.c:405
+msgid ""
+"NOTE: The floating point precision might not take effect\n"
+"for all numbers immediately, only new numbers calculated\n"
+"and new variables will be affected."
+msgstr ""
+
+#: src/gnome-genius.c:414
+msgid "Floating point precision (bits)"
+msgstr ""
+
+#: src/gnome-genius.c:438
+msgid "Terminal"
+msgstr ""
+
+#: src/gnome-genius.c:441
+msgid "Terminal options"
+msgstr ""
+
+#: src/gnome-genius.c:450
+msgid "Scrollback lines"
+msgstr ""
+
+#: src/gnome-genius.c:473
+msgid "Font:"
+msgstr ""
+
+#: src/gnome-genius.c:511
+msgid "_Interrupt"
+msgstr ""
+
+#: src/gnome-genius.c:511 src/gnome-genius.c:531
+msgid "Interrupt current calculation"
+msgstr ""
+
+#: src/gnome-genius.c:523
 #, fuzzy
-msgid "Show _Scientific"
-msgstr "공학용"
+msgid "_Calculator"
+msgstr "계산기"
 
-#: src/gnome-genius.c:431
-#, fuzzy
-msgid "Show the scientific pad"
-msgstr "공학용"
-
-#: src/gnome-genius.c:568
-msgid "Display"
-msgstr "표시"
-
-#. numpad
-#: src/gnome-genius.c:607
-msgid "Numpad"
+#: src/gnome-genius.c:531
+msgid "Interrupt"
 msgstr ""
 
-#. scientific
-#: src/gnome-genius.c:638
-msgid "Scientific"
-msgstr "공학용"
+#: src/genius.c:230 src/gnome-genius.c:851
+#, c-format
+msgid ""
+"Genius %s\n"
+"Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
+"This is free software with ABSOLUTELY NO WARRANTY.\n"
+"For details type `warranty'.\n"
+"\n"
+msgstr ""
 
 #: src/eval.c:656
 msgid "Wrong argument type as matrix index"
@@ -263,7 +304,7 @@ msgstr ""
 msgid "Called 'break' outside of a loop"
 msgstr ""
 
-#: src/calc.c:434 src/eval.c:3113
+#: src/calc.c:483 src/eval.c:3113
 msgid "Unexpected operator!"
 msgstr ""
 
@@ -271,64 +312,64 @@ msgstr ""
 msgid "Cannot compare matrixes"
 msgstr ""
 
-#: src/calc.c:585 src/eval.c:3330
+#: src/calc.c:634 src/eval.c:3337
 msgid "Unexpected node!"
 msgstr ""
 
-#: src/eval.c:3386
+#: src/eval.c:3393
 msgid "Could not evaluate predicate into a numeric boolean value!"
 msgstr ""
 
-#: src/calc.c:401 src/calc.c:408
+#: src/calc.c:450 src/calc.c:457
 msgid "Bad identifier for function node!"
 msgstr ""
 
-#: src/calc.c:505
+#: src/calc.c:554
 msgid "NULL tree!"
 msgstr ""
 
-#: src/calc.c:544
+#: src/calc.c:593
 msgid "NULL function!"
 msgstr ""
 
 #. variable and reference functions should
 #. never be in the etree
-#: src/calc.c:576
+#: src/calc.c:625
 msgid "Unexpected function type!"
 msgstr ""
 
-#: src/calc.c:723
+#: src/calc.c:765
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
 msgstr ""
 
-#: src/calc.c:761 src/calc.c:767 src/calc.c:775 src/calc.c:781 src/calc.c:788
-#: src/calc.c:797 src/calc.c:803 src/calc.c:812
+#: src/calc.c:798 src/calc.c:807 src/calc.c:812 src/calc.c:818 src/calc.c:826
+#: src/calc.c:832 src/calc.c:839 src/calc.c:848 src/calc.c:854 src/calc.c:863
 msgid "Badly formed record"
 msgstr ""
 
-#: src/calc.c:764
+#: src/calc.c:801
 msgid "Record out of place"
 msgstr ""
 
-#: src/calc.c:823
+#: src/calc.c:874
 msgid "Missing value for function"
 msgstr ""
 
-#: src/calc.c:847 src/calc.c:873
+#: src/calc.c:904 src/calc.c:952 src/calc.c:979
 #, c-format
 msgid "Can't open file: '%s'"
 msgstr ""
 
-#: src/calc.c:1002
+#: src/calc.c:1121
 msgid "ERROR: Probably corrupt stack!"
 msgstr "에러: 스택이 깨진 것 같음!"
 
-#: src/calc.c:1113
+#: src/calc.c:1232
 msgid "ERROR: "
 msgstr "에러: "
 
-#: src/calc.c:1113
+#: src/calc.c:1232
 msgid " before '"
 msgstr ""
 
@@ -336,104 +377,100 @@ msgstr ""
 msgid "Stack underflow!"
 msgstr "스택 아래넘침!"
 
-#: src/mpwrap.c:496
+#: src/mpwrap.c:526
 msgid "Number too large to compute exponential!"
 msgstr ""
 
-#: src/mpwrap.c:2042
+#: src/mpwrap.c:2071
 msgid "Can't do modulo of floats or rationals!"
 msgstr ""
 
-#: src/mpwrap.c:2081
+#: src/mpwrap.c:2110
 msgid "Can't do GCD of floats or rationals!"
 msgstr ""
 
-#: src/mpwrap.c:2112
+#: src/mpwrap.c:2141
 msgid "Can't get jacobi symbols of floats or rationals!"
 msgstr ""
 
-#: src/mpwrap.c:2143
+#: src/mpwrap.c:2172
 msgid "Can't get legendre symbols of floats or rationals!"
 msgstr ""
 
-#: src/mpwrap.c:2161
+#: src/mpwrap.c:2190
 msgid "perfect_square: can't work on non-integers!"
 msgstr ""
 
-#: src/mpwrap.c:2205
+#: src/mpwrap.c:2234
 msgid "Can't do factorials of rationals or floats!"
 msgstr ""
 
-#: src/mpwrap.c:2211
+#: src/mpwrap.c:2240
 msgid "Number too large to compute factorial!"
 msgstr ""
 
-#: src/mpwrap.c:2216 src/mpwrap.c:2223
+#: src/mpwrap.c:2245 src/mpwrap.c:2252
 msgid "Can't do factorials of negative numbers!"
 msgstr ""
 
-#: src/mpwrap.c:2484
+#: src/mpwrap.c:2513
 msgid "0^0 is undefined"
 msgstr ""
 
-#: src/mpwrap.c:3216 src/mpwrap.c:4029 src/mpwrap.c:4041
+#: src/mpwrap.c:3256 src/mpwrap.c:4069 src/mpwrap.c:4081
 msgid "Can't compare complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3425 src/mpwrap.c:3440 src/mpwrap.c:3491 src/mpwrap.c:3514
-#: src/mpwrap.c:3527 src/mpwrap.c:3572
+#: src/mpwrap.c:3465 src/mpwrap.c:3480 src/mpwrap.c:3531 src/mpwrap.c:3554
+#: src/mpwrap.c:3567 src/mpwrap.c:3612
 msgid "Division by zero!"
 msgstr ""
 
-#: src/mpwrap.c:3581
+#: src/mpwrap.c:3621
 msgid "Can't modulo complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3594
+#: src/mpwrap.c:3634
 msgid "Can't GCD complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3606
+#: src/mpwrap.c:3646
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3618
+#: src/mpwrap.c:3658
 msgid "Can't get legendre symbols complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3628
+#: src/mpwrap.c:3668
 msgid "perfect_square: can't work on complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:3721
+#: src/mpwrap.c:3761
 msgid "ln: can't take logarithm of 0"
 msgstr ""
 
-#: src/mpwrap.c:4079
+#: src/mpwrap.c:4119
 msgid "Can't make factorials of complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4256 src/mpwrap.c:4267 src/mpwrap.c:4278
+#: src/mpwrap.c:4296 src/mpwrap.c:4307 src/mpwrap.c:4318
 msgid "Can't determine type of a complex number"
 msgstr ""
 
-#: src/mpwrap.c:4359
+#: src/mpwrap.c:4399
 msgid "Can't convert complex number into integer"
 msgstr ""
 
-#: src/mpwrap.c:4365
+#: src/mpwrap.c:4405
 msgid "Can't convert real number to integer"
 msgstr ""
 
-#: src/mpwrap.c:4369
+#: src/mpwrap.c:4409
 msgid "Integer too large for this operation"
 msgstr ""
 
-#: src/genius.c:143
-msgid "Genius "
-msgstr ""
-
-#: src/genius.c:177 src/genius.c:220
+#: src/genius.c:268 src/genius.c:313
 msgid "Can't open file"
 msgstr ""
 
@@ -444,6 +481,26 @@ msgstr ""
 #: src/compil.c:367 src/compil.c:373
 msgid "Bad tree record when decompiling"
 msgstr ""
+
+#~ msgid "General"
+#~ msgstr "일반"
+
+#~ msgid "Full (exact) answers"
+#~ msgstr "전체 (정확한) 대답"
+
+#, fuzzy
+#~ msgid "Show _Scientific"
+#~ msgstr "공학용"
+
+#, fuzzy
+#~ msgid "Show the scientific pad"
+#~ msgstr "공학용"
+
+#~ msgid "Display"
+#~ msgstr "표시"
+
+#~ msgid "Scientific"
+#~ msgstr "공학용"
 
 #~ msgid "Make floats integers (e.g. 10.0=10)"
 #~ msgstr "실수로 변환 (가령 10.0=10)"
@@ -459,9 +516,6 @@ msgstr ""
 
 #~ msgid "About..."
 #~ msgstr "이 프로그램은..."
-
-#~ msgid "Calculator"
-#~ msgstr "계산기"
 
 #~ msgid "View"
 #~ msgstr "보기"

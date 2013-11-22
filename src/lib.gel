@@ -37,6 +37,7 @@ function apply_over_matrix2(a,b,func) = (
 )
 
 
+sethelp("sum","Sum up values of a function");
 function sum(start,end,func) = (
 	if(not is_value(start) or not is_value(end)) then
 		(error("sum: start,end arguments not values");bailout)
@@ -48,6 +49,7 @@ function sum(start,end,func) = (
 	while (start<=end) do (r = r + func(start); start=start+1);
 	r
 )
+sethelp("prod","Multiply together values of a function");
 function prod(start,end,func) = (
 	if(not is_value(start) or not is_value(end)) then
 		(error("prod: start,end arguments not values");bailout)
@@ -59,6 +61,7 @@ function prod(start,end,func) = (
 	while (start<=end) do (r = r * func(start); start=start+1);
 	r
 )
+sethelp("nPr","Calculate permutations");
 function nPr(n,r) = (
 	if(is_matrix(n) or is_matrix(r)) then
 		return apply_over_matrix2(n,r,nPr)
@@ -81,6 +84,7 @@ function nPr(n,r) = (
 		ret
 	)
 )
+sethelp("nCr","Calculate combinations");
 function nCr(n,r) = (
 	if(is_matrix(n) or is_matrix(r)) then
 		return apply_over_matrix2(n,r,nCr)
@@ -105,6 +109,7 @@ function nCr(n,r) = (
 )
 
 # return the fibbonachi number, calculated using an iterative method
+sethelp("fib","Calculate n'th fibbonachi number");
 function fib(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,fib)

@@ -40,6 +40,10 @@
 #include <stdio.h>
 #include "calc.h"
 #include "util.h"
+#include "dict.h"
+
+#include <readline/readline.h>
+#include <readline/history.h>
 
 /*Globals:*/
 
@@ -48,11 +52,13 @@ calcstate_t curstate={
 	256,
 	0,
 	FALSE,
-	FALSE
+	FALSE,
+	TRUE
 	};
 	
 extern calc_error_t error_num;
 extern int got_eof;
+extern int parenth_depth;
 
 static void
 puterror(char *s)
@@ -66,6 +72,85 @@ puterror(char *s)
 		fprintf(stderr,"line %d: %s\n",line,s);
 	else
 		fprintf(stderr,"%s\n",s);
+}
+
+static int addtoplevels = FALSE;
+static char *toplevels[] = {
+	"load",
+	NULL
+};
+static char *operators[] = {
+	"not","and","xor","or","while","until","for","do","to","by","in","if",
+	"then","else","define","function","call","return","bailout","exception",
+	"continue","break","null",
+	NULL
+};
+
+
+static char *
+command_generator (char *text, int state)
+{
+	static int oi,ti,len;
+	static GList *fli;
+
+	if(!state) {
+		oi = 0;
+		if(addtoplevels)
+			ti = 0;
+		else
+			ti = -1;
+		len = strlen (text);
+		fli = d_getcontext();
+	}
+	
+	while(ti>=0 && toplevels[ti]) {
+		char *s = toplevels[ti++];
+		if(strncmp(s,text,len)==0)
+			return strdup(s);
+	}
+
+	while(operators[oi]) {
+		char *s = operators[oi++];
+		if(strncmp(s,text,len)==0)
+			return strdup(s);
+	}
+
+	while(fli) {
+		EFunc *f = fli->data;
+		fli = g_list_next(fli);
+		if(!f->id || !f->id->token)
+			continue;
+		if(strncmp(f->id->token,text,len)==0)
+			return strdup(f->id->token);
+	}
+
+	return NULL;
+}
+
+static char **
+tab_completion (char *text, int start, int end)
+{
+	char *p;
+	for(p=rl_line_buffer;*p==' ' || *p=='\t';p++)
+		;
+	if(parenth_depth==0 &&
+	   (strncmp(p,"load ",5)==0 ||
+	    strncmp(p,"load\t",5)==0)) {
+		return NULL;
+	}
+
+	if (parenth_depth==0)
+		addtoplevels = TRUE;
+	else
+		addtoplevels = FALSE;
+
+	return completion_matches (text, command_generator);
+}
+
+static void
+set_state(calcstate_t state)
+{
+	curstate = state;
 }
 
 int
@@ -85,6 +170,8 @@ main(int argc, char *argv[])
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 	textdomain(PACKAGE);
 #endif
+
+	statechange_hook = set_state;
 
 	for(i=1;i<argc;i++) {
 		int val;
@@ -121,17 +208,17 @@ main(int argc, char *argv[])
 				fprintf(stderr,"Unknown argument '%s'!\n\n",
 					argv[i]);
 			}
-			puts("Genius "VERSION" usage:\n\n"
-			     "genius [options] [files]\n\n"
-			     "\t--precision=num   \tFloating point precision [256]\n"
-			     "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
-			     "\t--[no]floatresult \tAll results as floats [OFF]\n"
-			     "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
-			     "\t--[no]readline    \tUse readline even if it is available [ON]\n"
-			     "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
-			     "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
-			     "\t                  \t(always on when compiling) [OFF]\n"
-			     );
+			printf("Genius %s usage:\n\n"
+			       "genius [options] [files]\n\n"
+			       "\t--precision=num   \tFloating point precision [256]\n"
+			       "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
+			       "\t--[no]floatresult \tAll results as floats [OFF]\n"
+			       "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
+			       "\t--[no]readline    \tUse readline even if it is available [ON]\n"
+			       "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
+			       "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
+			       "\t                  \t(always on when compiling) [OFF]\n\n",
+			      VERSION);
 			exit(1);
 		}
 	}
@@ -140,27 +227,31 @@ main(int argc, char *argv[])
 	inter = isatty(0) && !files && !do_compile;
 	/*interactive mode, print welcome message*/
 	if(inter) {
-		puts(_("Genius "VERSION"\n"
+		printf(_("Genius %s\n"
 		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
 		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
-		     "For details type `warranty'.\n"));
+		     "For details type `warranty'.\n\n"),VERSION);
 		signal(SIGINT,SIG_IGN);
 		curstate.do_interrupts = TRUE;
 		be_quiet = FALSE;
 	} else
 		curstate.do_interrupts = FALSE;
+
+	set_new_calcstate(curstate);
+	set_new_errorout(puterror);
+	set_new_infoout(puterror);
 	
 	if(!do_compile) {
 		file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
-		load_compiled_file(file,curstate,puterror,FALSE);
+		load_compiled_file(file,FALSE);
 		g_free(file);
 
 		/*try the library file in the current directory*/
-		load_compiled_file("lib.cgel",curstate,puterror,FALSE);
+		load_compiled_file("lib.cgel",FALSE);
 
 		file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
 		if(file)
-			load_file(file,curstate,puterror,FALSE);
+			load_file(file,FALSE);
 		g_free(file);
 	}
 
@@ -183,21 +274,23 @@ main(int argc, char *argv[])
 		fp = stdin;
 		push_file_info(NULL,1);
 	}
+	if(inter && use_readline) {
+		rl_readline_name = "Genius";
+		rl_attempted_completion_function =
+			(CPPFunction *)tab_completion;
+	}
+
 	for(;;) {
-		while(1/*!feof(fp)*/) {
-#ifdef WITH_READLINE_SUPPORT
+		for(;;) {
 			if(inter && use_readline) /*use readline mode*/ {
 				rewind_file_info();
-				evalexp(NULL,NULL,stdout,"= ",curstate,puterror,TRUE);
+				evalexp(NULL,NULL,stdout,NULL,"= ",TRUE);
 			} else {
-#endif
 				if(be_quiet)
-					g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
+					evalexp(NULL,fp,NULL,NULL,NULL,FALSE);
 				else
-					evalexp(NULL,fp,stdout,NULL,curstate,puterror,FALSE);
-#ifdef WITH_READLINE_SUPPORT
+					evalexp(NULL,fp,stdout,NULL,NULL,FALSE);
 			}
-#endif
 
 			if(got_eof) {
 				if(inter)
@@ -223,7 +316,7 @@ main(int argc, char *argv[])
 			if(!fp && !files) {
 				if(do_compile) {
 					push_file_info(NULL,0);
-					compile_all_user_funcs(stdout,puterror);
+					compile_all_user_funcs(stdout);
 					pop_file_info();
 				}
 				return 0;
@@ -237,7 +330,7 @@ main(int argc, char *argv[])
 	
 	if(do_compile) {
 		push_file_info(NULL,0);
-		compile_all_user_funcs(stdout,puterror);
+		compile_all_user_funcs(stdout);
 		pop_file_info();
 	}
 

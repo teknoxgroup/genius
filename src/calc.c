@@ -32,10 +32,9 @@
 #include <string.h>
 #include <math.h>
 #include <glib.h>
-#ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #include <readline/history.h>
-#endif
+#include <readline/tilde.h>
 
 #include "calc.h"
 #include "eval.h"
@@ -65,6 +64,13 @@ extern int inexception;
 extern GSList *inloop;
 extern char *loadfile;
 extern char *loadfile_glob;
+void (*evalnode_hook)(void) = NULL;
+int run_hook_every = 1000;
+void (*statechange_hook)(calcstate_t) = NULL;
+
+static GHashTable *funcdesc = NULL;
+
+FILE *outputfp = NULL;
 
 GHashTable *uncompiled = NULL;
 
@@ -76,10 +82,11 @@ calc_error_t error_num = NO_ERROR;
 int got_eof = FALSE;
 
 /*the current state of the calculator*/
-calcstate_t calcstate;
+calcstate_t calcstate = {0};
 
 /*error reporting function*/
 void (*errorout)(char *)=NULL;
+void (*infoout)(char *)=NULL;
 
 char *loadfile = NULL;
 char *loadfile_glob = NULL;
@@ -88,6 +95,48 @@ int interrupted = FALSE;
 
 static GList *curfile = NULL;
 static GList *curline = NULL;
+
+void
+add_description(char *func, char *desc)
+{
+	char *origkey;
+	char *origdesc;
+	char *p;
+	
+	/*kill \n's \r's and ;'s (for compiled parsing purposes)
+	  and cap the entry at 80*/
+	desc = g_strdup(desc);
+	if((p=strchr(desc,'\n')))
+		*p = '\0';
+	if((p=strchr(desc,'\r')))
+		*p = '\0';
+	if(strlen(desc)>80) 
+		desc[81]='\0';
+
+	if(!funcdesc)
+		funcdesc = g_hash_table_new(g_str_hash,g_str_equal);
+	
+	if(g_hash_table_lookup_extended(funcdesc,func,
+					(gpointer *)&origkey,
+					(gpointer *)&origdesc)) {
+		g_free(origdesc);
+		g_hash_table_insert(funcdesc,origkey,g_strdup(desc));
+	} else
+		g_hash_table_insert(funcdesc,g_strdup(func),g_strdup(desc));
+	g_free(desc);
+}
+
+char *
+get_description(char *func)
+{
+	char *s;
+	if(!funcdesc)
+		return "";
+	
+	s = g_hash_table_lookup(funcdesc,func);
+	if(s) return s;
+	else return "";
+}
 
 void
 push_file_info(char *file,int line)
@@ -663,17 +712,16 @@ addparenth(char *s)
 }
 
 void
-compile_all_user_funcs(FILE *outfile, void (*errorfunc)(char *))
+compile_all_user_funcs(FILE *outfile)
 {
 	GList *funcs;
-	errorout = errorfunc;
 	fprintf(outfile,"CGEL "VERSION"\n");
 	funcs = d_getcontext();
 	for(funcs=g_list_last(funcs);funcs;funcs=g_list_previous(funcs)) {
 		EFunc *func = funcs->data;
-		GString *gs;
 		char *body;
 		GList *li;
+		char *d;
 
 		if((func->type!=USER_FUNC &&
 		    func->type!=VARIABLE_FUNC) ||
@@ -688,190 +736,248 @@ compile_all_user_funcs(FILE *outfile, void (*errorfunc)(char *))
 			body = g_strdup(g_hash_table_lookup(uncompiled,func->id));
 			g_assert(body);
 		}
-		gs = g_string_new(NULL);
 		if(func->type==USER_FUNC) {
-			g_string_sprintfa(gs,"F;%d;%s;%d",(int)strlen(body),func->id->token,(int)func->nargs);
+			fprintf(outfile,"F;%d;%s;%d",(int)strlen(body),func->id->token,(int)func->nargs);
 			for(li=func->named_args;li;li=g_list_next(li)) {
 				Token *tok = li->data;
-				g_string_sprintfa(gs,";%s",tok->token);
+				fprintf(outfile,";%s",tok->token);
 			}
 		} else /*VARIABLE_FUNC*/ {
-			g_string_sprintfa(gs,"V;%d;%s",(int)strlen(body),func->id->token);
+			fprintf(outfile,"V;%d;%s",(int)strlen(body),func->id->token);
 		}
-		fprintf(outfile,"%s\n",gs->str);
-		g_string_free(gs,TRUE);
 
-		fprintf(outfile,"%s\n",body);
+		fprintf(outfile,"\n%s\n",body);
 		g_free(body);
+		d = get_description(func->id->token);
+		if(*d)
+			fprintf(outfile,"D;%s;%s\n",func->id->token,d);
 	}
 }
 
-void
-load_compiled_file(char *file, calcstate_t state, void (*errorfunc)(char *), int warn)
+static void
+load_compiled_fp(char *file, FILE *fp)
 {
-	FILE *fp;
-	push_file_info(NULL,0);
-	if((fp = fopen(file,"r"))) {
-		char buf[4096];
-		
-		if(!fgets(buf,4096,fp)) {
-			pop_file_info();
-			return;
-		}
-		if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
-			char buf[256];
-			g_snprintf(buf,256,_("File '%s' is a wrong version of GEL"),file);
-			(*errorfunc)(buf);
-			pop_file_info();
-			return;
-		}
+	char buf[4096];
 
-		/*init the context stack and clear out any stale dictionaries
-		  except the global one, if this is the first time called it
-		  will also register the builtin routines with the global
-		  dictionary*/
-		d_singlecontext();
-	
-		errorout=errorfunc;
+	if(!fgets(buf,4096,fp))
+		return;
+	if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
+		g_snprintf(buf,4096,_("File '%s' is a wrong version of GEL"),file);
+		(*errorout)(buf);
+		return;
+	}
 
-		error_num=NO_ERROR;
+	/*init the context stack and clear out any stale dictionaries
+	  except the global one, if this is the first time called it
+	  will also register the builtin routines with the global
+	  dictionary*/
+	d_singlecontext();
 
-		/*set the state variable for calculator*/
-		calcstate=state;
+	error_num=NO_ERROR;
 
-		mpw_init_mp();
-		mpw_set_default_prec(state.float_prec);
+	/*if we this was set, then the mp library was initialized for
+	  sure*/
+	g_assert(calcstate.float_prec>0);
 
-		errorout = errorfunc;
-		while(fgets(buf,4096,fp)) {
-			char *p;
-			char *b2;
-			Token *tok;
-			/*ETree *val;*/
-			int size,nargs;
-			int i;
-			GList *li = NULL;
-			int type;
+	while(fgets(buf,4096,fp)) {
+		char *p;
+		char *b2;
+		Token *tok;
+		int size,nargs;
+		int i;
+		GList *li = NULL;
+		int type;
 
-			p=strchr(buf,'\n');
-			if(p) *p='\0';
+		incr_file_info();
 
-			p = strtok(buf,";");
-			if(!p) {
-				g_snprintf(buf,256,_("Badly formed record"));
-				continue;
-			} else if(*p == 'T') {
-				g_snprintf(buf,256,_("Record out of place"));
-				continue;
-			} else if(*p != 'F' && *p != 'V') {
-				g_snprintf(buf,256,_("Badly formed record"));
-				continue;
-			}
-			type = *p=='F'?USER_FUNC:VARIABLE_FUNC;
+		p=strchr(buf,'\n');
+		if(p) *p='\0';
 
-			/*size*/
+		p = strtok(buf,";");
+		if(!p) {
+			(*errorout)(_("Badly formed record"));
+			continue;
+		} else if(*p == 'T') {
+			(*errorout)(_("Record out of place"));
+			continue;
+		} else if(*p == 'D') {
+			char *d;
 			p = strtok(NULL,";");
 			if(!p) {
-				g_snprintf(buf,256,_("Badly formed record"));
+				(*errorout)(_("Badly formed record"));
 				continue;
 			}
-			size = -1;
-			sscanf(p,"%d",&size);
+			d = strtok(NULL,";");
+			if(!d) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			add_description(p,d);
+			continue;
+		} else if(*p != 'F' && *p != 'V') {
+			(*errorout)(_("Badly formed record"));
+			continue;
+		}
+		type = *p=='F'?USER_FUNC:VARIABLE_FUNC;
+
+		/*size*/
+		p = strtok(NULL,";");
+		if(!p) {
+			(*errorout)(_("Badly formed record"));
+			continue;
+		}
+		size = -1;
+		sscanf(p,"%d",&size);
+		if(size==-1) {
+			(*errorout)(_("Badly formed record"));
+			continue;
+		}
+
+		/*id*/
+		p = strtok(NULL,";");
+		if(!p) {
+			(*errorout)(_("Badly formed record"));
+			continue;
+		}
+		tok = d_intern(p);
+
+		if(type == USER_FUNC) {
+			/*nargs*/
+			p = strtok(NULL,";");
+			if(!p) {
+				(*errorout)(_("Badly formed record"));
+				continue;
+			}
+			nargs = -1;
+			sscanf(p,"%d",&nargs);
 			if(size==-1) {
-				g_snprintf(buf,256,_("Badly formed record"));
+				(*errorout)(_("Badly formed record"));
 				continue;
 			}
 
-			/*id*/
-			p = strtok(NULL,";");
-			if(!p) {
-				g_snprintf(buf,256,_("Badly formed record"));
-				continue;
-			}
-			tok = d_intern(p);
-
-			if(type == USER_FUNC) {
-				/*nargs*/
+			/*argument names*/
+			li = NULL;
+			for(i=0;i<nargs;i++) {
 				p = strtok(NULL,";");
 				if(!p) {
-					g_snprintf(buf,256,_("Badly formed record"));
-					continue;
+					(*errorout)(_("Badly formed record"));
+					g_list_free(li);
+					goto continue_reading;
 				}
-				nargs = -1;
-				sscanf(p,"%d",&nargs);
-				if(size==-1) {
-					g_snprintf(buf,256,_("Badly formed record"));
-					continue;
-				}
-
-				/*argument names*/
-				li = NULL;
-				for(i=0;i<nargs;i++) {
-					p = strtok(NULL,";");
-					if(!p) {
-						g_snprintf(buf,256,_("Badly formed record"));
-						g_list_free(li);
-						goto continue_reading;
-					}
-					li = g_list_append(li,d_intern(p));
-				}
+				li = g_list_append(li,d_intern(p));
 			}
-
-			/*the value*/
-			b2 = g_new(char,size+2);
-			if(!fgets(b2,size+2,fp)) {
-				g_snprintf(buf,256,_("Missing value for function"));
-				g_free(b2);
-				g_list_free(li);
-				break;
-			}
-			p=strchr(b2,'\n');
-			if(p) *p='\0';
-			/*val = decompile_tree(b2);
-			if(!val) {
-				g_list_free(li);
-				continue;
-			}*/
-			if(!uncompiled)
-				uncompiled = g_hash_table_new(NULL,NULL);
-			g_hash_table_insert(uncompiled,tok,b2);
-			if(type == USER_FUNC)
-				d_addfunc(d_makeufunc(tok,NULL,li,nargs));
-			else /*VARIABLE_FUNC*/
-				d_addfunc(d_makevfunc(tok,NULL));
-continue_reading:	;
 		}
-		fclose(fp);
+
+		/*the value*/
+		b2 = g_new(char,size+2);
+		if(!fgets(b2,size+2,fp)) {
+			(*errorout)(_("Missing value for function"));
+			g_free(b2);
+			g_list_free(li);
+			goto continue_reading;
+		}
+		incr_file_info();
+		p=strchr(b2,'\n');
+		if(p) *p='\0';
+		if(!uncompiled)
+			uncompiled = g_hash_table_new(NULL,NULL);
+		g_hash_table_insert(uncompiled,tok,b2);
+		if(type == USER_FUNC)
+			d_addfunc(d_makeufunc(tok,NULL,li,nargs));
+		else /*VARIABLE_FUNC*/
+			d_addfunc(d_makevfunc(tok,NULL));
+continue_reading:	;
+	}
+	fclose(fp);
+}
+
+void
+load_compiled_file(char *file, int warn)
+{
+	FILE *fp;
+	if((fp = fopen(file,"r"))) {
+		push_file_info(file,1);
+		load_compiled_fp(file,fp);
+		pop_file_info();
 	} else if(warn) {
 		char buf[256];
 		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
-		(*errorfunc)(buf);
+		(*errorout)(buf);
 	}
-	pop_file_info();
 }
 
 void
-load_file(char *file, calcstate_t state, void (*errorfunc)(char *), int warn)
+set_new_calcstate(calcstate_t state)
+{
+	if(calcstate.float_prec != state.float_prec) {
+		mpw_init_mp(); /*just in case we haven't yet*/
+		mpw_set_default_prec(state.float_prec);
+		break_fp_caches();
+	}
+	/*set the state variable for calculator*/
+	calcstate=state;
+
+	/*if the calling process already knows, who cares,
+	  but call it anyway*/
+	if(statechange_hook)
+		(*statechange_hook)(state);
+}
+
+static void
+load_fp(FILE *fp)
+{
+	while(1) {
+		evalexp(NULL,fp,NULL,NULL,NULL,FALSE);
+		if(got_eof) {
+			got_eof = FALSE;
+			break;
+		}
+	}
+	fclose(fp);
+}
+
+void
+load_file(char *file, int warn)
 {
 	FILE *fp;
 	int oldgeof = got_eof;
 	got_eof = FALSE;
 	if((fp = fopen(file,"r"))) {
 		push_file_info(file,1);
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,state,errorfunc,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
+		load_fp(fp);
 		pop_file_info();
-		fclose(fp);
 		got_eof = oldgeof;
 	} else if(warn) {
 		char buf[256];
 		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
-		(*errorfunc)(buf);
+		(*errorout)(buf);
+		got_eof = oldgeof;
+	}
+}
+
+void
+load_guess_file(char *file, int warn)
+{
+	FILE *fp;
+	int oldgeof = got_eof;
+	got_eof = FALSE;
+	if((fp = fopen(file,"r"))) {
+		char buf[6];
+		push_file_info(file,1);
+		if(fgets(buf,6,fp) &&
+		   strncmp(buf,"CGEL ",5)==0) {
+			rewind(fp);
+			load_compiled_fp(file,fp);
+		} else {
+			rewind(fp);
+			load_fp(fp);
+		}
+		pop_file_info();
+		got_eof = oldgeof;
+	} else if(warn) {
+		char buf[256];
+		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
+		(*errorout)(buf);
 		got_eof = oldgeof;
 	}
 }
@@ -883,14 +989,31 @@ interrupt(int x)
 	signal(SIGINT,SIG_IGN);
 }
 
-char *
-evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
-	calcstate_t state,void (*errorfunc)(char *),int pretty)
+void
+set_new_errorout(void (*func)(char *))
 {
-	char * p;
+	errorout = func;
+}
+
+void
+set_new_infoout(void (*func)(char *))
+{
+	infoout = func;
+}
+
+
+void
+evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+{
 	int stacklen;
 	ETree *ret;
 	int willquit = FALSE;
+	
+	if(!outputfp)
+		outputfp=stdout;
+	
+	if(outstring)
+		*outstring = NULL;
 	
 	/*init the context stack and clear out any stale dictionaries
 	  except the global one, if this is the first time called it
@@ -898,16 +1021,12 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 	  dictionary*/
 	d_singlecontext();
 	
-	errorout=errorfunc;
-
 	error_num=NO_ERROR;
-
-	/*set the state variable for calculator*/
-	calcstate=state;
-
-	mpw_init_mp();
-	mpw_set_default_prec(state.float_prec);
 	
+	/*if we this was set, then the mp library was initialized for
+	  sure*/
+	g_assert(calcstate.float_prec>0);
+
 	first_tok = STARTTOK;
 
 	use_readline = FALSE;
@@ -917,12 +1036,11 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		if(str) {
 			write(lex_fd[1],str,strlen(str));
 		}
-#ifdef WITH_READLINE_SUPPORT
 	 	else {
 			char *s = readline("genius> ");
 			if(!s) {
 				got_eof = TRUE;
-				return NULL;
+				return;
 			}
 			if(*s)
 				add_history(s);
@@ -930,7 +1048,6 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 			free(s);
 			use_readline = TRUE;
 		}
-#endif
 		write(lex_fd[1],"\n",1);
 		close(lex_fd[1]);
 	} else
@@ -957,9 +1074,9 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		loadfile=NULL;
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		load_file(file,state,errorfunc,TRUE);
+		load_file(file,TRUE);
 		g_free(file);
-		return NULL;
+		return;
 	}
 
 	if(loadfile_glob) {
@@ -974,33 +1091,35 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		while(f) {
 			glob(f,GLOB_NOSORT|GLOB_NOCHECK,NULL,&gs);
 			for(i=0;i<gs.gl_pathc;i++) {
-				load_file(gs.gl_pathv[i],state,errorfunc,TRUE);
+				char *s = tilde_expand_word(gs.gl_pathv[i]);
+				load_guess_file(s,TRUE);
+				free(s);
 			}
 			globfree(&gs);
 			f = strtok(NULL,"\t ");
 		}
 		free(flist);
-		return NULL;
+		return;
 	}
 	
 	/*catch parsing errors*/
 	if(error_num!=NO_ERROR) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		return NULL;
+		return;
 	}
 	
 	stacklen = g_list_length(evalstack);
 	
 	if(stacklen==0)
-		return NULL;
+		return;
 
 	/*stack is supposed to have only ONE entry*/
 	if(stacklen!=1) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
 		(*errorout)(_("ERROR: Probably corrupt stack!"));
-		return NULL;
+		return;
 	}
 	evalstack->data = gather_comparisons(evalstack->data);
 
@@ -1018,10 +1137,10 @@ for(;;) {
 	interrupted = FALSE;
 	if(inloop) g_slist_free(inloop);
 	inloop = g_slist_prepend(NULL,GINT_TO_POINTER(0));
-	if(state.do_interrupts)
+	if(calcstate.do_interrupts)
 		signal(SIGINT,interrupt);
 	ret = evalnode(evalstack->data);
-	if(state.do_interrupts)
+	if(calcstate.do_interrupts)
 		signal(SIGINT,SIG_IGN);
 	g_slist_free(inloop);
 	inloop = NULL;
@@ -1049,31 +1168,31 @@ for(;;) {
 
 	/*catch evaluation errors*/
 	if(!ret)
-		return NULL;
+		return;
 	if(error_num!=NO_ERROR) {
 		freetree(ret);
-		return NULL;
+		return;
 	}
 
-	p = NULL;
-	if(ret->type != NULL_NODE) {
+	if(ret->type != NULL_NODE && (outstring || outfile)) {
 		GString *gs = NULL;
-		if(!outfile)
+		if(outstring)
 			gs = g_string_new(NULL);
 		if(prefix) {
 			if(outfile)
 				fputs(prefix,outfile);
-			else
+			if(outstring)
 				g_string_append(gs,prefix);
 		}
 		if(pretty)
 			pretty_print_etree(gs,outfile,ret);
 		else
 			print_etree(gs,outfile,ret);
-		if(outfile) {
+		if(outfile)
 			fputc('\n',outfile);
-		} else {
-			p = gs->str;
+
+		if(outstring) {
+			*outstring = gs->str;
 			g_string_free(gs,FALSE);
 		}
 	}
@@ -1100,7 +1219,7 @@ for(;;) {
 	} else
 		d_addfunc(d_makevfunc(d_intern("Ans"),ret));
 
-	return p;
+	return;
 }
 
 /*just to make the compiler happy*/

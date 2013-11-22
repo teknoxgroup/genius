@@ -62,11 +62,15 @@ char * addparenth(char *s);
   evaluate the xpression string and give back a string with the
   result, expression is in str or if str is NULL then in infd,
   pretty will use pretty_print_etree*/
-char * evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
-	       calcstate_t state,void (*errorfunc)(char *), int pretty);
-void compile_all_user_funcs(FILE *outfile, void (*errorfunc)(char *));
-void load_compiled_file(char *file, calcstate_t state, void (*errorfunc)(char *),int warn);
-void load_file(char *file, calcstate_t state, void (*errorfunc)(char *),int warn);
+void evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty);
+
+void compile_all_user_funcs(FILE *outfile);
+void load_compiled_file(char *file, int warn);
+void load_file(char *file, int warn);
+void load_guess_file(char *file, int warn);
+void set_new_calcstate(calcstate_t state);
+void set_new_errorout(void (*func)(char *));
+void set_new_infoout(void (*func)(char *));
 
 /*This is for file/line info for errors*/
 void push_file_info(char *file,int line);
@@ -74,5 +78,13 @@ void pop_file_info(void);
 void incr_file_info(void);
 void rewind_file_info(void);
 void get_file_info(char **file, int *line);
+
+extern FILE *outputfp;
+extern void (*evalnode_hook)(void);
+extern int run_hook_every;
+extern void (*statechange_hook)(calcstate_t);
+
+void add_description(char *func, char *desc);
+char *get_description(char *func);
 
 #endif

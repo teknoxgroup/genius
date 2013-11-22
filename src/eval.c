@@ -3306,6 +3306,13 @@ evalcomp(ETree *n)
 ETree *
 evalnode(ETree *n)
 {
+	if(evalnode_hook) {
+		static int i = 0;
+		if(i++>run_hook_every) {
+			(*evalnode_hook)();
+			i=0;
+		}
+	}
 	if(interrupted)
 		return NULL;
 	if(!n)

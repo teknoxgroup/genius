@@ -18,128 +18,87 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
-#include <config.h>
+
 #include <gnome.h>
 #include <gtk/gtk.h>
+#include <zvt/zvtterm.h>
+
+#include "config.h"
 
 #include <string.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
-
-#include "gnome-genius.h"
+#include <stdio.h>
 #include "calc.h"
 #include "util.h"
+#include "dict.h"
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
+#define d(x) ;
 
 /*Globals:*/
+
+/* default font (from zvtterm.c) */
+#define DEFAULT_FONT "-misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso8859-1"
 
 /*calculator state*/
 calcstate_t curstate={
 	256,
-	12,
+	0,
 	FALSE,
 	FALSE,
-	TRUE /*handle interrupts*/
-        };
-
+	FALSE /*handle interrupts*/
+	};
+	
 extern calc_error_t error_num;
 extern int got_eof;
+extern int parenth_depth;
+extern int interrupted;
 
-/*static int base=10;*/
-static GtkWidget *history; /*history list (CList) */
-static GtkWidget *entry;
 static GtkWidget *setupdialog = NULL;
+static GtkWidget *window = NULL;
+static GtkWidget *zvt = NULL;
+static GString *errors=NULL;
+static GString *infos=NULL;
+static int chpid = 0;
 
-static GList *answers=NULL; /*FIXME: this should be an array I guess*/
+typedef struct {
+	int error_box;
+	int info_box;
+	int scrollback;
+	char *font;
+} geniussetup_t;
 
-static GtkWidget *numframe, *sciframe,*optframe;
+geniussetup_t cursetup = {
+	FALSE,
+	TRUE,
+	1000,
+	NULL
+};
 
-static char *errors=NULL;
-static char *config_defaults[] = { "/genius/view/numpad=true",
-	                           "/genius/view/scientific=false" };
+static int torl[2];
+static int fromrl[2];
 
-static GdkColor rescol;
-
-static void set_properties (void);
-
-/* show/hide frame */
-static void
-showhide(GtkWidget * widget,gpointer * data)
-{
-	GtkWidget *frm=NULL;
-
-	switch((long int)data) {
-		case 1: frm=numframe; break;
-		case 2: frm=sciframe; break;
-		case 3: frm=optframe; break;
-	}
-
-	if(GTK_CHECK_MENU_ITEM(widget)->active)
-		gtk_widget_show(frm);
-	else
-		gtk_widget_hide(frm);
-}
-
-/*get the string from entry and make a new string (g_malloc) */
-/*PLUS ONE! .. the string can be appended by one character!*/
-static char *
-getentry(GtkWidget* e)
-{
-	char *pt,*text;
-
-	pt=gtk_entry_get_text(GTK_ENTRY(e));
-	text=(char *)g_malloc(strlen(pt)+2);
-	strcpy(text,pt);
-	return text;
-}
-
-
-/* add the key's label to entry in data */
-static void
-addkey(gchar c)
-{
-	char *t;
-	int curpos;
-
-	curpos=GTK_EDITABLE(entry)->current_pos;
-
-	t=getentry(entry);
-	shiftstr(&t[curpos],1);
-	t[curpos]=c;
-	gtk_entry_set_text(GTK_ENTRY(entry),t);
-	gtk_entry_set_position(GTK_ENTRY(entry),curpos+1);
-	g_free(t);
-}
-
-/* add the key's label to entry in data without borders */
-static void
-addkeycbnb(GtkWidget * widget, gpointer * data)
-{
-	char *p;
-	int i;
-	gtk_label_get(GTK_LABEL(GTK_BUTTON(widget)->child),&p);
-	for(i=1;i<strlen(p)-1;i++)
-		addkey(p[i]);
-}
-
-/* add the key's label to entry in data */
-static void
-addkeycb(GtkWidget * widget, gpointer * data)
-{
-	char *p;
-	int i;
-	gtk_label_get(GTK_LABEL(GTK_BUTTON(widget)->child),&p);
-	for(i=0;i<strlen(p);i++)
-		addkey(p[i]);
-}
+/*used inside rl_getc*/
+static int need_quitting = FALSE;
+static int in_recursive = FALSE;
 
 /*display a message in a messagebox*/
 static void
 geniuserrorbox(char *s)
 {
 	GtkWidget *mb;
-
+	
 	mb=gnome_message_box_new(s,GNOME_MESSAGE_BOX_ERROR,
 				 GNOME_STOCK_BUTTON_OK,NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(mb),
+				     GTK_WINDOW(window));
 
 	gtk_widget_show(mb);
 }
@@ -158,101 +117,73 @@ geniuserror(char *s)
 		str = g_strdup_printf("line %d: %s",line,s);
 	else
 		str = g_strdup(s);
-	if(errors) {
-		errors=my_realloc(errors,strlen(errors)+1,
-			strlen(errors)+1+strlen(str)+1);
-		strcat(errors,"\n");
-		strcat(errors,str);
+	
+	if(cursetup.error_box) {
+		if(errors) {
+			g_string_append_c(errors,'\n');
+			g_string_append(errors,str);
+		} else {
+			errors = g_string_new(str);
+		}
 	} else {
-		errors=g_malloc(strlen(str)+1);
-		strcpy(errors,str);
+		fprintf(rl_outstream,"\e[01;31m%s\e[0m\n",str);
 	}
+
 	g_free(str);
 }
 
+/*display a message in a messagebox*/
 static void
-history_select_row(GtkCList * clist,
-		   gint row,
-		   gint column,
-		   GdkEventButton * event)
+geniusinfobox(char *s)
 {
-	char *t;
+	GtkWidget *mb;
+	
+	mb=gnome_message_box_new(s,GNOME_MESSAGE_BOX_INFO,
+				 GNOME_STOCK_BUTTON_OK,NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(mb),
+				     GTK_WINDOW(window));
 
-	t = (char *)g_list_nth(answers,row)->data;
-
-	if(!t) return;
-
-	gtk_entry_set_text(GTK_ENTRY(entry),t);
+	gtk_widget_show(mb);
 }
 
-/* parse and evaluate the xpression and get answer and stick it down
-  the history list*/
+/*get info message*/
 static void
-dorun(GtkWidget * widget, gpointer * data)
+geniusinfo(char *s)
 {
-	char *t[2];
-	char *o[2];
-	int newrow;
-	static int width = 0;
-
-	push_file_info(NULL,1);
-
-	t[1]=getentry(entry);
-	if(!t[1] || t[1][0]=='\0')
-		return;
-	t[1]=addparenth(t[1]); /*add missing parenthesis*/
-	o[1]=evalexp(t[1],NULL,NULL,NULL,curstate,geniuserror,FALSE);
-
-	pop_file_info();
-
-	if(errors) {
-		geniuserrorbox(errors);
-		g_free(errors);
-		errors=NULL;
+	char *file;
+	int line;
+	char *str;
+	get_file_info(&file,&line);
+	if(file)
+		str = g_strdup_printf("%s:%d: %s",file,line,s);
+	else if(line>0)
+		str = g_strdup_printf("line %d: %s",line,s);
+	else
+		str = g_strdup(s);
+	
+	if(cursetup.info_box) {
+		if(infos) {
+			g_string_append_c(infos,'\n');
+			g_string_append(infos,str);
+		} else {
+			infos = g_string_new(str);
+		}
+	} else {
+		fprintf(rl_outstream,"\e[0;32m%s\e[0m\n",str);
 	}
-	
-	if(got_eof)
-		gtk_main_quit();
-	if(!o[1])
-		return;
 
-	answers = g_list_append(answers,g_strdup(t[1]));
-	t[0]="";
-	gtk_clist_append(GTK_CLIST(history),t);
-
-	if(width<gdk_string_width(GTK_WIDGET(history)->style->font,t[1]))
-		width = gdk_string_width(GTK_WIDGET(history)->style->font,t[1]);
-	g_free(t[1]);
-
-
-	answers = g_list_append(answers,g_strdup(o[1]));
-	o[0]="=";
-	newrow=gtk_clist_append(GTK_CLIST(history),o);
-	gtk_clist_set_background(GTK_CLIST(history),newrow,&rescol);
-
-	if(width<gdk_string_width(GTK_WIDGET(history)->style->font,o[1]))
-		width = gdk_string_width(GTK_WIDGET(history)->style->font,o[1]);
-	
-	g_free(o[1]);
-
-	gtk_clist_moveto(GTK_CLIST(history),newrow-1,-1,0.0,1.0);
-	gtk_clist_set_column_width(GTK_CLIST(history),1,width);
-	gtk_clist_set_column_width(GTK_CLIST(history),0,
-		gdk_string_width(GTK_WIDGET(history)->style->font,"= "));
-
-	/*clear the input box*/
-	gtk_entry_set_text(GTK_ENTRY(entry),"");
+	g_free(str);
 }
 
 /*about box*/
 static void
-aboutcb(GtkWidget * widget, gpointer * data)
+aboutcb(GtkWidget * widget, gpointer data)
 {
 	GtkWidget *mb;
-	gchar *authors[] = {
-	  "George Lebl (jirka@5z.com)",
-          NULL
-          };
+	char *authors[] = {
+		"George Lebl (jirka@5z.com)",
+		NULL
+	};
 
 	mb=gnome_about_new(_("GnomENIUS Calculator"), VERSION,
 			     /* copyright notice */
@@ -261,164 +192,309 @@ aboutcb(GtkWidget * widget, gpointer * data)
 			     /* another comments */
 			     _("The Gnome calculator style edition of genius"),
 			     NULL);
+	gtk_window_set_transient_for(GTK_WINDOW(mb),
+				     GTK_WINDOW(window));
 			   
 	gtk_widget_show(mb);
 }
 
+static void
+set_properties (void)
+{
+	gnome_config_set_string("/genius/properties/font", cursetup.font?
+				cursetup.font:DEFAULT_FONT);
+	gnome_config_set_int("/genius/properties/scrollback", cursetup.scrollback);
+	gnome_config_set_bool("/genius/properties/error_box", cursetup.error_box);
+	gnome_config_set_bool("/genius/properties/info_box", cursetup.info_box);
+	gnome_config_set_bool("/genius/properties/max_digits", 
+			      (curstate.max_digits == 0) ? TRUE : FALSE);
+	gnome_config_set_bool("/genius/properties/results_as_floats",
+			     curstate.results_as_floats);
+	gnome_config_set_bool("/genius/properties/scientific_notation",
+			     curstate.scientific_notation);
+	
+	gnome_config_sync();
+}
+
 /* quit */
 static void
-quitapp(GtkWidget * widget, gpointer * data)
+quitapp(GtkWidget * widget, gpointer data)
 {
 	set_properties();
+	need_quitting = TRUE;
 	gtk_main_quit();
 }
 
 /*exact answer callback*/
 static void
-exactanscb(GtkWidget * widget, gpointer * data)
+intspincb(GtkAdjustment *adj, int *data)
 {
-	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*(int *)data=0;
-	else
-		*(int *)data=12;
-
-	gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
+	*data=adj->value;
+	if(setupdialog)
+		gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
 }
 
 /*option callback*/
 static void
-optioncb(GtkWidget * widget, gpointer * data)
+optioncb(GtkWidget * widget, int *data)
 {
 	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*(int *)data=TRUE;
+		*data=TRUE;
 	else
-		*(int *)data=FALSE;
+		*data=FALSE;
 	
-	gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
+	if(setupdialog)
+		gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
 }
 
-/*keypress event handler*/
-static gint
-windowkeypress(GtkWidget *widget, GdkEventKey *event)
+static void
+fontsetcb(GnomeFontPicker *gfp, gchar *font_name, char **font)
 {
-	char key=*(event->string);
-
-	/*FIXME: should use accelerators for this!*/
-	if(key==3 || key==24) /* ^C || ^X */
-		quitapp(NULL,NULL);
-	else if(!GTK_WIDGET_HAS_FOCUS(entry) &&
-		strchr("\t\v ",key)==NULL)
-		gtk_widget_grab_focus(entry);
-
-	if(key=='\r' ||
-		key=='\n')
-		dorun(NULL,NULL);
-
-	return TRUE;
+	g_free(*font);
+	*font = g_strdup(font_name);
+	if(setupdialog)
+		gnome_property_box_changed(GNOME_PROPERTY_BOX(setupdialog));
 }
 
-static gint 
-setupdialog_destroy(GtkWidget *widget, gpointer data)
-{
-	if (setupdialog) {
-		setupdialog = NULL;
-	}
-	return FALSE; /* We didn't handle the event; PropertyBox should
-			 do the destroy. */
-}
+
+static calcstate_t tmpstate={0};
+static geniussetup_t tmpsetup={0};
 
 static void
 do_setup(GtkWidget *widget, gint page, gpointer data)
 {
-  if (page == -1) {     /* Just finished global apply */
-    curstate = *((calcstate_t *) data);
-  }
+	if (page == -1) {     /* Just finished global apply */
+		g_free(cursetup.font);
+		cursetup = tmpsetup;
+		if(tmpsetup.font)
+			cursetup.font = g_strdup(tmpsetup.font);
+		curstate = tmpstate;
+
+		set_new_calcstate(curstate);
+		zvt_term_set_scrollback(ZVT_TERM(zvt),cursetup.scrollback);
+		zvt_term_set_font_name(ZVT_TERM(zvt),cursetup.font?
+				       cursetup.font:DEFAULT_FONT);
+	}
 }
 
-static gint
+static void
 destroy_setup(GtkWidget *widget, gpointer data)
 {
 	setupdialog = NULL;
-	return FALSE;
 }
 
 static void
 setup_calc(GtkWidget *widget, gpointer data)
 {
-	GtkWidget *all_boxes;
-	GtkWidget *box, *boxt;
-	GtkWidget *w, *wt;
+	GtkWidget *hbox,*frame;
+	GtkWidget *box;
+	GtkWidget *b, *w;
+	GtkAdjustment *adj;
 
-	static calcstate_t tmpstate;
-	
 	if (setupdialog) {
+		gtk_widget_show_now(GTK_WIDGET(setupdialog));
 		gdk_window_raise(GTK_WIDGET(setupdialog)->window);
 		return;
 	}
 	
 	tmpstate = curstate;
+	g_free(tmpsetup.font);
+	tmpsetup = cursetup;
+	if(cursetup.font)
+		tmpsetup.font = g_strdup(cursetup.font);
 	
 	setupdialog = gnome_property_box_new();
+	gtk_window_set_transient_for(GTK_WINDOW(setupdialog),
+				     GTK_WINDOW(window));
 	
-	GTK_WINDOW(setupdialog)->position = GTK_WIN_POS_MOUSE;
-	gtk_window_set_title(GTK_WINDOW(setupdialog), _("GnomENIUS Calculator setup"));
-	gtk_signal_connect(GTK_OBJECT(setupdialog),
-			   "delete_event",
-			   GTK_SIGNAL_FUNC(setupdialog_destroy),
-			   0);
+	gtk_window_set_title(GTK_WINDOW(setupdialog),
+			     _("GnomENIUS Calculator setup"));
 	
-	all_boxes = gtk_vbox_new(FALSE, GNOME_PAD);
-	gtk_widget_show(all_boxes);
+	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
 	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
-				       all_boxes,
-				       gtk_label_new(_("General")));
+				       hbox,
+				       gtk_label_new(_("Output")));
 
-	/*options area*/
-	optframe=gtk_frame_new(_("Preferences"));
-	box=gtk_vbox_new(FALSE,0);
-	boxt=gtk_hbox_new(FALSE,0);
 	
-	boxt = gtk_table_new(2, 2, TRUE);
-	gtk_box_pack_start(GTK_BOX(box),boxt,TRUE,TRUE,5);
-	gtk_widget_show(boxt);
-	w=gtk_check_button_new_with_label(_("Full (exact) answers"));
-	gtk_signal_connect(GTK_OBJECT(w), "toggled",
-		   GTK_SIGNAL_FUNC(exactanscb),&tmpstate.max_digits);
-	gtk_table_attach_defaults(GTK_TABLE(boxt), GTK_WIDGET(w), 0, 1, 0, 1);
-	gtk_widget_show(w);
-	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w),
-				    (tmpstate.max_digits == 0) ?
-				    TRUE : FALSE);
-	
+	frame=gtk_frame_new(_("Number output options"));
+	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	box=gtk_vbox_new(FALSE,GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
+	gtk_container_add(GTK_CONTAINER(frame),box);
+
+
+	b=gtk_hbox_new(FALSE,GNOME_PAD);
+	gtk_box_pack_start(GTK_BOX(box),b,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(b),
+		   gtk_label_new(_("Maximum digits to output (0=unlimited)")),
+		   FALSE,FALSE,0);
+	adj = (GtkAdjustment *)gtk_adjustment_new(tmpstate.max_digits,
+						  0,
+						  256,
+						  1,
+						  5,
+						  0);
+	w = gtk_spin_button_new(adj,1.0,0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(w),TRUE);
+	gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON(w),
+					   GTK_UPDATE_ALWAYS);
+	gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(w),
+					  TRUE);
+	gtk_widget_set_usize(w,80,0);
+	gtk_box_pack_start(GTK_BOX(b),w,FALSE,FALSE,0);
+	gtk_signal_connect(GTK_OBJECT(adj),"value_changed",
+			   GTK_SIGNAL_FUNC(intspincb),&tmpstate.max_digits);
+
+
 	w=gtk_check_button_new_with_label(_("Results as floats"));
-	gtk_signal_connect(GTK_OBJECT(w), "toggled",
-		   GTK_SIGNAL_FUNC(optioncb),
-		   (gpointer *)&tmpstate.results_as_floats);
-	gtk_table_attach_defaults(GTK_TABLE(boxt), GTK_WIDGET(w), 0, 1, 1, 2);
-	gtk_widget_show(w);
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
 	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
 				    tmpstate.results_as_floats);
-	
-	w=gtk_check_button_new_with_label(_("Floats in scientific notation"));
 	gtk_signal_connect(GTK_OBJECT(w), "toggled",
 		   GTK_SIGNAL_FUNC(optioncb),
-		   (gpointer *)&tmpstate.scientific_notation);
-	gtk_table_attach_defaults(GTK_TABLE(boxt), GTK_WIDGET(w), 1, 2, 1, 2);
-	gtk_widget_show(w);
+		   (gpointer)&tmpstate.results_as_floats);
+	
+	w=gtk_check_button_new_with_label(_("Floats in scientific notation"));
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
 	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
 				    tmpstate.scientific_notation);
+	gtk_signal_connect(GTK_OBJECT(w), "toggled",
+		   GTK_SIGNAL_FUNC(optioncb),
+		   (gpointer)&tmpstate.scientific_notation);
 
-	gtk_container_add(GTK_CONTAINER(optframe),box);
-	gtk_widget_show(box);
-	gtk_box_pack_start(GTK_BOX(all_boxes),optframe,FALSE,FALSE,5);
-	gtk_widget_show(optframe);
-		
+
+	frame=gtk_frame_new(_("Error/Info output options"));
+	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	box=gtk_vbox_new(FALSE,GNOME_PAD);
+	gtk_container_add(GTK_CONTAINER(frame),box);
+
+	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
+	
+
+	w=gtk_check_button_new_with_label(_("Display errors in a dialog"));
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
+	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
+				    tmpsetup.error_box);
+	gtk_signal_connect(GTK_OBJECT(w), "toggled",
+		   GTK_SIGNAL_FUNC(optioncb),
+		   (gpointer)&tmpsetup.error_box);
+
+	w=gtk_check_button_new_with_label(_("Display information messages in a dialog"));
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
+	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
+				    tmpsetup.info_box);
+	gtk_signal_connect(GTK_OBJECT(w), "toggled",
+		   GTK_SIGNAL_FUNC(optioncb),
+		   (gpointer)&tmpsetup.info_box);
+
+	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
+	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
+				       hbox,
+				       gtk_label_new(_("Precision")));
+
+	
+	frame=gtk_frame_new(_("Floating point precision"));
+	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	box=gtk_vbox_new(FALSE,GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
+	gtk_container_add(GTK_CONTAINER(frame),box);
+	
+	gtk_box_pack_start(GTK_BOX(box), gtk_label_new(
+		_("NOTE: The floating point precision might not take effect\n"
+		  "for all numbers immediately, only new numbers calculated\n"
+		  "and new variables will be affected.")),
+			   FALSE,FALSE,0);
+
+
+	b=gtk_hbox_new(FALSE,GNOME_PAD);
+	gtk_box_pack_start(GTK_BOX(box),b,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(b),
+		   gtk_label_new(_("Floating point precision (bits)")),
+		   FALSE,FALSE,0);
+	adj = (GtkAdjustment *)gtk_adjustment_new(tmpstate.float_prec,
+						  60,
+						  16384,
+						  1,
+						  10,
+						  0);
+	w = gtk_spin_button_new(adj,1.0,0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(w),TRUE);
+	gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON(w),
+					   GTK_UPDATE_ALWAYS);
+	gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(w),
+					  TRUE);
+	gtk_widget_set_usize(w,80,0);
+	gtk_box_pack_start(GTK_BOX(b),w,FALSE,FALSE,0);
+	gtk_signal_connect(GTK_OBJECT(adj),"value_changed",
+			   GTK_SIGNAL_FUNC(intspincb),&tmpstate.float_prec);
+
+
+	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
+	gnome_property_box_append_page(GNOME_PROPERTY_BOX(setupdialog),
+				       hbox,
+				       gtk_label_new(_("Terminal")));
+
+	
+	frame=gtk_frame_new(_("Terminal options"));
+	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
+	box=gtk_vbox_new(FALSE,GNOME_PAD);
+	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
+	gtk_container_add(GTK_CONTAINER(frame),box);
+	
+	b=gtk_hbox_new(FALSE,GNOME_PAD);
+	gtk_box_pack_start(GTK_BOX(box),b,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(b),
+		   gtk_label_new(_("Scrollback lines")),
+		   FALSE,FALSE,0);
+	adj = (GtkAdjustment *)gtk_adjustment_new(tmpsetup.scrollback,
+						  50,
+						  10000,
+						  1,
+						  10,
+						  0);
+	w = gtk_spin_button_new(adj,1.0,0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(w),TRUE);
+	gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON(w),
+					   GTK_UPDATE_ALWAYS);
+	gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(w),
+					  TRUE);
+	gtk_widget_set_usize(w,80,0);
+	gtk_box_pack_start(GTK_BOX(b),w,FALSE,FALSE,0);
+	gtk_signal_connect(GTK_OBJECT(adj),"value_changed",
+			   GTK_SIGNAL_FUNC(intspincb),&tmpsetup.scrollback);
+	
+	
+	b=gtk_hbox_new(FALSE,GNOME_PAD);
+	gtk_box_pack_start(GTK_BOX(box),b,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(b),
+		   gtk_label_new(_("Font:")),
+		   FALSE,FALSE,0);
+	
+        w = gnome_font_picker_new();
+	gnome_font_picker_set_font_name(GNOME_FONT_PICKER(w),
+					tmpsetup.font?tmpsetup.font:
+					DEFAULT_FONT);
+        gnome_font_picker_set_mode(GNOME_FONT_PICKER(w),GNOME_FONT_PICKER_MODE_FONT_INFO);
+        gtk_box_pack_start(GTK_BOX(b),w,TRUE,TRUE,0);
+        gtk_signal_connect(GTK_OBJECT(w),"font_set",
+                           GTK_SIGNAL_FUNC(fontsetcb),
+			   &tmpsetup.font);
+
+
 	gtk_signal_connect(GTK_OBJECT(setupdialog), "apply",
-			   GTK_SIGNAL_FUNC(do_setup), (gpointer *) &tmpstate);	
+			   GTK_SIGNAL_FUNC(do_setup), NULL);	
 	gtk_signal_connect(GTK_OBJECT(setupdialog), "destroy",
 			   GTK_SIGNAL_FUNC(destroy_setup), NULL);
-	gtk_widget_show(all_boxes);
-	gtk_widget_show(setupdialog);
+	gtk_widget_show_all(setupdialog);
+}
+
+static void
+interrupt_calc(GtkWidget *widget, gpointer data)
+{
+	interrupted = TRUE;
 }
 
 static GnomeUIInfo file_menu[] = {
@@ -427,9 +503,12 @@ static GnomeUIInfo file_menu[] = {
 };
 
 static GnomeUIInfo settings_menu[] = {  
-	GNOMEUIINFO_TOGGLEITEM_DATA(N_("Show _Numpad"),N_("Show the number pad"),showhide, (gpointer)1, NULL),
-	GNOMEUIINFO_TOGGLEITEM_DATA(N_("Show _Scientific"),N_("Show the scientific pad"),showhide, (gpointer)2, NULL),
 	GNOMEUIINFO_MENU_PREFERENCES_ITEM(setup_calc,NULL),
+	GNOMEUIINFO_END,
+};
+
+static GnomeUIInfo calc_menu[] = {  
+	GNOMEUIINFO_ITEM_STOCK(N_("_Interrupt"),N_("Interrupt current calculation"),interrupt_calc,GNOME_STOCK_MENU_STOP),
 	GNOMEUIINFO_END,
 };
 
@@ -441,10 +520,18 @@ static GnomeUIInfo help_menu[] = {
   
 static GnomeUIInfo genius_menu[] = {
 	GNOMEUIINFO_MENU_FILE_TREE(file_menu),
+	GNOMEUIINFO_SUBTREE(N_("_Calculator"),calc_menu),
 	GNOMEUIINFO_MENU_SETTINGS_TREE(settings_menu),
 	GNOMEUIINFO_MENU_HELP_TREE(help_menu),
 	GNOMEUIINFO_END,
 };
+
+/* toolbar */
+static GnomeUIInfo toolbar[] = {
+	GNOMEUIINFO_ITEM_STOCK(N_("Interrupt"),N_("Interrupt current calculation"),interrupt_calc,GNOME_STOCK_PIXMAP_STOP),
+	GNOMEUIINFO_END,
+};
+
 
 #define ELEMENTS(x) (sizeof (x) / sizeof (x [0]))
 
@@ -468,15 +555,20 @@ create_main_window(void)
 static void
 get_properties (void)
 {
-	gboolean tmp;
 	gchar buf[256];
-        long i;
-	
-	for (i = 0; i < 2; i++) {
-		tmp = gnome_config_get_bool(config_defaults[i]);
-		GTK_CHECK_MENU_ITEM (settings_menu[i].widget)->active = tmp;
-		showhide(GTK_WIDGET(settings_menu[i].widget), (gpointer *) (i + 1));
-	}
+
+	g_snprintf(buf,256,"/genius/properties/font=%s",
+		   cursetup.font?cursetup.font:DEFAULT_FONT);
+	cursetup.font = gnome_config_get_string(buf);
+	g_snprintf(buf,256,"/genius/properties/scrollback=%d",
+		   cursetup.scrollback);
+	cursetup.scrollback = gnome_config_get_int(buf);
+	g_snprintf(buf,256,"/genius/properties/error_box=%s",
+		   (cursetup.error_box)?"true":"false");
+	cursetup.error_box = gnome_config_get_bool(buf);
+	g_snprintf(buf,256,"/genius/properties/info_box=%s",
+		   (cursetup.info_box)?"true":"false");
+	cursetup.info_box = gnome_config_get_bool(buf);
 	
 	g_snprintf(buf,256,"/genius/properties/max_digits=%s",
 		   (curstate.max_digits == 0)?"true":"false");
@@ -489,69 +581,199 @@ get_properties (void)
 	curstate.scientific_notation = gnome_config_get_bool(buf);
 }
 
-static void
-set_properties (void)
+static int addtoplevels = FALSE;
+static char *toplevels[] = {
+	"load",
+	NULL
+};
+static char *operators[] = {
+	"not","and","xor","or","while","until","for","do","to","by","in","if",
+	"then","else","define","function","call","return","bailout","exception",
+	"continue","break","null",
+	NULL
+};
+
+
+static char *
+command_generator (char *text, int state)
 {
-	gnome_config_set_bool("/genius/properties/max_digits", 
-			      (curstate.max_digits == 0) ? TRUE : FALSE);
-	gnome_config_set_bool("/genius/properties/results_as_floats",
-			     curstate.results_as_floats);
-	gnome_config_set_bool("/genius/properties/scientific_notation",
-			     curstate.scientific_notation);
+	static int oi,ti,len;
+	static GList *fli;
+
+	if(!state) {
+		oi = 0;
+		if(addtoplevels)
+			ti = 0;
+		else
+			ti = -1;
+		len = strlen (text);
+		fli = d_getcontext();
+	}
 	
-	if(GTK_CHECK_MENU_ITEM(settings_menu[0].widget)->active) 
-		gnome_config_set_bool("/genius/view/numpad",  TRUE);
-	else
-		gnome_config_set_bool("/genius/view/numpad",  FALSE);
-	
-	if(GTK_CHECK_MENU_ITEM(settings_menu[1].widget)->active)
-		gnome_config_set_bool("/genius/view/scientific",  TRUE);
-	else
-		gnome_config_set_bool("/genius/view/scientific",  FALSE);
-	
-	gnome_config_sync();
+	while(ti>=0 && toplevels[ti]) {
+		char *s = toplevels[ti++];
+		if(strncmp(s,text,len)==0)
+			return strdup(s);
+	}
+
+	while(operators[oi]) {
+		char *s = operators[oi++];
+		if(strncmp(s,text,len)==0)
+			return strdup(s);
+	}
+
+	while(fli) {
+		EFunc *f = fli->data;
+		fli = g_list_next(fli);
+		if(!f->id || !f->id->token)
+			continue;
+		if(strncmp(f->id->token,text,len)==0)
+			return strdup(f->id->token);
+	}
+
+	return NULL;
 }
 
-/*
- * Kind of a long main but all the gui stuff is here and that I guess
- * should be kept in one place
- */
+static char **
+tab_completion (char *text, int start, int end)
+{
+	char *p;
+	for(p=rl_line_buffer;*p==' ' || *p=='\t';p++)
+		;
+	if(parenth_depth==0 &&
+	   (strncmp(p,"load ",5)==0 ||
+	    strncmp(p,"load\t",5)==0)) {
+		return NULL;
+	}
+
+	if (parenth_depth==0)
+		addtoplevels = TRUE;
+	else
+		addtoplevels = FALSE;
+
+	return completion_matches (text, command_generator);
+}
+
+/*stolen from xchat*/
+static void
+term_change_pos(GtkWidget *widget)
+{
+	if(widget && widget->window)
+		gtk_widget_queue_draw(widget);
+}
+
+static GArray *readbuf=NULL;
+static int readbufl = 0;
+
+static int
+the_getc(FILE *fp)
+{
+	for(;;) {
+		if(readbufl==0) {
+			in_recursive = TRUE;
+			gtk_main();
+			in_recursive = FALSE;
+			if(need_quitting) {
+				gtk_exit(0);
+			}
+		}
+		if(readbufl>0) {
+			int r = g_array_index(readbuf,char,0);
+			readbuf = g_array_remove_index(readbuf,0);
+			readbufl--;
+			return r;
+		}
+	}
+}
+
+static void
+feed_to_zvt(gpointer data, gint source, GdkInputCondition condition)
+{
+	int size;
+	char buf[256];
+	while((size = read(source,buf,256))>0) {
+		/*do our own crlf translation*/
+		char *s;
+		int i,sz;
+		for(i=0,sz=0;i<size;i++,sz++)
+			if(buf[i]=='\n') sz++;
+		s = g_new(char,sz);
+		for(i=0,sz=0;i<size;i++,sz++) {
+			if(buf[i]=='\n') {
+				s[sz++] = buf[i];
+				s[sz] = '\r';
+			} else s[sz] = buf[i];
+		}
+		zvt_term_feed(ZVT_TERM(zvt),s,sz);
+		g_free(s);
+	}
+}
+
+static void
+get_new_buffer(gpointer data, gint source, GdkInputCondition condition)
+{
+	int size;
+	char buf[256];
+	while((size = read(source,buf,256))>0) {
+		if(!readbuf)
+			readbuf = g_array_new(FALSE,FALSE,sizeof(char));
+		readbuf = g_array_append_vals(readbuf,buf,size);
+		readbufl+=size;
+	}
+	if(readbufl>0 && in_recursive)
+		gtk_main_quit();
+}
+
+static void
+set_state(calcstate_t state)
+{
+	curstate = state;
+}
+
+static void
+check_events(void)
+{
+	if(gtk_events_pending())
+		gtk_main_iteration();
+}
+
+static int
+catch_interrupts(GtkWidget *w, GdkEvent *e)
+{
+	if(e->type == GDK_KEY_PRESS) {
+		if(e->key.keyval == GDK_c &&
+		   e->key.state&GDK_CONTROL_MASK) {
+			interrupted = TRUE;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
 int
 main(int argc, char *argv[])
 {
-	GtkWidget *window;
-	GtkWidget *w; /*widget temp variable*/
-	GtkWidget *box,*boxm,*boxh,*boxt;
-	GtkWidget *frame;
-	GtkWidget *table;
+	GtkWidget *hbox;
+	GtkWidget *w;
 	GtkTooltips *tips;
 	char *file;
-	FILE *fp;
-
-	/*numpad button labels*/
-	char *numpad[5][4]={
-		{" ( "," ) "," ^ "," % "},
-		{" 7 "," 8 "," 9 "," / "},
-		{" 4 "," 5 "," 6 "," * "},
-		{" 1 "," 2 "," 3 "," - "},
-		{" 0 "," . "," ~ "," + "}
-	};
+	char buf[256];
 	
-	/*scientific*/
-	char *scientific[4][3]={
-		{" sin "," cos "," tan "},
-		{" pi "," e ", NULL},
-		{" is_complex "," Re "," Im "},
-		{" round "," sqrt ", " ! "}
-	};
-	int x,y;
+	pipe(torl);
+	pipe(fromrl);
 
-	signal(SIGINT,SIG_IGN);
+	signal(SIGCHLD,SIG_IGN);
+	
+	evalnode_hook = check_events;
+	statechange_hook = set_state;
 
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 	textdomain(PACKAGE);
-
+	
 	gnome_init("genius", NULL, argc, argv);
+
+	/*read gnome_config parameters */
+	get_properties();
 	
         /*set up the top level window*/
 	window=create_main_window();
@@ -560,114 +782,46 @@ main(int argc, char *argv[])
 	tips=gtk_tooltips_new();
 
 	/*the main box to put everything in*/
-	boxm=gtk_vbox_new(FALSE,0);
-
-
-	boxh=gtk_hbox_new(FALSE,0);
+	hbox=gtk_hbox_new(FALSE,0);
 	
-	frame=gtk_frame_new(_("Display"));
-	box=gtk_vbox_new(FALSE,0);
-
-	w = gtk_scrolled_window_new(NULL,NULL);
-	gtk_widget_show(w);
-	gtk_widget_set_usize(w,200,100);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(w),
-				       GTK_POLICY_AUTOMATIC,
-				       GTK_POLICY_ALWAYS);
-	gtk_box_pack_start(GTK_BOX(box),w,TRUE,TRUE,0);
-	history=gtk_clist_new(2);
-	gtk_widget_show(history);
-	gtk_container_add(GTK_CONTAINER(w),history);
-	gtk_signal_connect(GTK_OBJECT(history), "select_row",
-                      GTK_SIGNAL_FUNC(history_select_row), NULL);
-
-	boxt=gtk_hbox_new(FALSE,0);
-	entry=gtk_entry_new();
-	gtk_box_pack_start(GTK_BOX(boxt),entry,TRUE,TRUE,0);
-	gtk_widget_show(entry);
-	w=gtk_button_new_with_label(" = ");
-	gtk_signal_connect(GTK_OBJECT(w), "clicked",
-		GTK_SIGNAL_FUNC(dorun), entry);
-	gtk_box_pack_start(GTK_BOX(boxt),w,FALSE,FALSE,0);
-	gtk_widget_show(w);
-	gtk_box_pack_start(GTK_BOX(box),boxt,FALSE,FALSE,0);
-	gtk_widget_show(boxt);
-
-
-
-	gtk_container_add(GTK_CONTAINER(frame),box);
-	gtk_widget_show(box);
-	gtk_box_pack_start(GTK_BOX(boxh),frame,TRUE,TRUE,0);
-	gtk_widget_show(frame);
-
-
-
-
-	/*numpad*/
-	frame=gtk_frame_new(_("Numpad"));
-	table=gtk_table_new(7,6,0);
-	gtk_table_set_col_spacings(GTK_TABLE(table),5);
-	gtk_table_set_row_spacings(GTK_TABLE(table),5);
-	for(x=0;x<4;x++) {
-		for(y=0;y<5;y++) {
-			w=gtk_button_new_with_label(numpad[y][x]);
-			if(numpad[y][x][1]>='0' ||
-			   numpad[y][x][1]<='9')  {
-				gtk_signal_connect(GTK_OBJECT(w), "clicked",
-						   GTK_SIGNAL_FUNC(addkeycbnb), NULL);
-			} else {
-				gtk_signal_connect(GTK_OBJECT(w), "clicked",
-						   GTK_SIGNAL_FUNC(addkeycb), NULL);
-			}
-			gtk_table_attach_defaults(GTK_TABLE(table),w,
-				x+1,x+2,y+1,y+2);
-			gtk_widget_show(w);
-		}
-	}
-
-
-	gtk_container_add(GTK_CONTAINER(frame),table);
-	gtk_widget_show(table);
+	fcntl(torl[0],F_SETFL,O_NONBLOCK);
+	gtk_input_add_full(torl[0],GDK_INPUT_READ,get_new_buffer,NULL,NULL,NULL);
+	fcntl(fromrl[0],F_SETFL,O_NONBLOCK);
+	gtk_input_add_full(fromrl[0],GDK_INPUT_READ,feed_to_zvt,NULL,NULL,NULL);
 	
-	numframe = gtk_alignment_new (0.0, 1.0, 0.0, 0.0);
-	gtk_container_add (GTK_CONTAINER (numframe), frame);
-	gtk_widget_show (frame);
-	gtk_box_pack_start(GTK_BOX(boxh),numframe, FALSE, FALSE,0);
+	zvt = zvt_term_new_with_size(80,20);
 
-	/*scientific*/
-	sciframe=gtk_frame_new(_("Scientific"));
-	gtk_box_pack_start(GTK_BOX(boxh),sciframe,FALSE,FALSE,0);
+	zvt_term_set_scrollback(ZVT_TERM(zvt),cursetup.scrollback);
+	zvt_term_set_font_name(ZVT_TERM(zvt),cursetup.font?
+			       cursetup.font:DEFAULT_FONT);
 
-	table=gtk_table_new(6,5,0);
-	gtk_table_set_col_spacings(GTK_TABLE(table),5);
-	gtk_table_set_row_spacings(GTK_TABLE(table),5);
-	for(x=0;x<3;x++) {
-		for(y=0;y<4;y++) {
-			if(scientific[y][x]) {
-				w=gtk_button_new_with_label(scientific[y][x]);
-				gtk_signal_connect(GTK_OBJECT(w), "clicked",
-						   GTK_SIGNAL_FUNC(addkeycb), NULL);
-				gtk_table_attach_defaults(GTK_TABLE(table),w,
-							  x+1,x+2,y+1,y+2);
-				gtk_widget_show(w);
-			}
-		}
-	}
-	gtk_container_add(GTK_CONTAINER(sciframe),table);
-	gtk_widget_show(table);
+	zvt_term_set_shadow_type (ZVT_TERM (zvt), GTK_SHADOW_IN);
+	zvt_term_set_blink (ZVT_TERM (zvt), TRUE);
+	zvt_term_set_bell (ZVT_TERM (zvt), TRUE);
+	zvt_term_set_scroll_on_keystroke (ZVT_TERM (zvt), TRUE);
+	zvt_term_set_scroll_on_output (ZVT_TERM (zvt), FALSE);
+	zvt_term_set_background (ZVT_TERM (zvt), NULL, 0, 0);
+	zvt_term_set_wordclass (ZVT_TERM (zvt), "-A-Za-z0-9/_:.,?+%=");
 	
+	ZVT_TERM(zvt)->vx->vt.keyfd = torl[1];
+	gtk_signal_connect(GTK_OBJECT(zvt),"event",
+			   GTK_SIGNAL_FUNC(catch_interrupts),
+			   NULL);
 
-	gtk_box_pack_start(GTK_BOX(boxm),boxh,TRUE,TRUE,5);
-	gtk_widget_show(boxh);
-
-	/*set up the keypress handler*/
-	gtk_signal_connect(GTK_OBJECT(window), "key_press_event",
-                      GTK_SIGNAL_FUNC(windowkeypress), NULL);
-	gtk_widget_set_events(window, GDK_KEY_PRESS_MASK);
+	gtk_signal_connect_object(GTK_OBJECT(window),"configure_event",
+				  GTK_SIGNAL_FUNC(term_change_pos),
+				  GTK_OBJECT(zvt));
+	
+	gtk_box_pack_start(GTK_BOX(hbox),zvt,TRUE,TRUE,0);
+	
+	w = gtk_vscrollbar_new (GTK_ADJUSTMENT (ZVT_TERM (zvt)->adjustment));
+	gtk_box_pack_start(GTK_BOX(hbox),w,FALSE,FALSE,0);
 
 	/*set up the menu*/
         gnome_app_create_menus(GNOME_APP(window), genius_menu);
-	
+	/*set up the toolbar*/
+	gnome_app_create_toolbar (GNOME_APP(window), toolbar);
+
 	/*setup appbar*/
 	w = gnome_appbar_new(FALSE, TRUE, GNOME_PREFERENCES_USER);
 	gnome_app_set_statusbar(GNOME_APP(window), w);
@@ -677,40 +831,80 @@ main(int argc, char *argv[])
 				     genius_menu);
 
 
-	/*read gnome_config parameters */
-	
 	/*set up the main window*/
-	gnome_app_set_contents(GNOME_APP(window), boxm);
+	gnome_app_set_contents(GNOME_APP(window), hbox);
 	gtk_container_border_width(
 		GTK_CONTAINER(GNOME_APP(window)->contents),5);
 
-	get_properties();
-
-	gtk_widget_show(boxm);
-	gtk_widget_show(window);
-
-	gdk_color_white(gtk_widget_get_colormap(history),&rescol);
+	gtk_widget_show_all(window);
 	
+	
+	rl_readline_name = "Genius";
+	rl_instream = fdopen(torl[0],"r");
+	rl_outstream = fdopen(fromrl[1],"w");
+	rl_getc_function = the_getc;
+	rl_attempted_completion_function = (CPPFunction *)tab_completion;
+	
+	outputfp = rl_outstream;
+
+	fprintf(outputfp,
+		_("Genius %s\n"
+		  "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
+		  "This is free software with ABSOLUTELY NO WARRANTY.\n"
+		  "For details type `warranty'.\n\n"),VERSION);
+
+	set_new_calcstate(curstate);
+	set_new_errorout(geniuserror);
+	set_new_infoout(geniusinfo);
+
 	file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
-	load_compiled_file(file,curstate,geniuserror,FALSE);
+	load_compiled_file(file,FALSE);
 	g_free(file);
 
 	/*try the library file in the current directory*/
-	load_compiled_file("lib.cgel",curstate,geniuserror,FALSE);
+	load_compiled_file("lib.cgel",FALSE);
 	
 	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
 	if(file)
-		load_file(file,curstate,geniuserror,FALSE);
+		load_file(file,FALSE);
 	g_free(file);
 
+	if(infos) {
+		geniusinfobox(infos->str);
+		g_string_free(infos,TRUE);
+		infos=NULL;
+	}
+
 	if(errors) {
-		geniuserrorbox(errors);
+		geniuserrorbox(errors->str);
 		g_free(errors);
 		errors=NULL;
 	}
 
-	gtk_widget_grab_focus(entry);
-	gtk_main();
+	for(;;) {
+		rewind_file_info();
+		evalexp(NULL,NULL,rl_outstream,NULL,"= \e[01;34m",TRUE);
+		fprintf(rl_outstream,"\e[0m");
+
+		if(infos) {
+			geniusinfobox(infos->str);
+			g_string_free(infos,TRUE);
+			infos=NULL;
+		}
+
+		if(errors) {
+			geniuserrorbox(errors->str);
+			g_string_free(errors,TRUE);
+			errors=NULL;
+		}
+
+		if(got_eof) {
+			fprintf(rl_outstream,"\n");
+			got_eof = FALSE;
+			break;
+		}
+	}
+
 
 	return 0;
 }

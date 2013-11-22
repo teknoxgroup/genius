@@ -1,3 +1,81 @@
+Thu May 06 00:26:37 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.1
+
+Tue May 04 02:05:00 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c: add some terminal options and make ^C do
+	  interrupt of calculations
+
+1999-05-03  Havoc Pennington  <hp@pobox.com>
+
+	* configure.in: Check for termcap, then use -ltermcap in the
+	readline check only if termcap was found (some readlines don't 
+	require -ltermcap apparently)
+
+Mon May 03 00:46:15 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c: minor cleanup and maybe fix a segfault
+
+Sun May 02 23:43:31 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c: add new options for max digits and precision
+
+	* src/genius.c: set calcstate_hook
+
+	* src/mpwrap.c: nicer pi calculation and some sanity checks plus
+	  removing of caches if precision changed
+
+	* src/funclib.c: add functions for changing calcstate and dumping
+	  cached vars when precision changes
+
+	* src/calc.c: add the abitily to change precision and some fixes
+	  to initialization
+
+	* README: updated with new functions
+
+Sun May 02 20:10:38 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c: more work on the ui, don't start new processes
+	  anymore, just set the fd for the terminal so that the terminal
+	  writes everything into readline directly without a need for
+	  an external process
+
+	* src/calc.[ch]: added infoout function for information messages,
+	  changed evalexp interface to be more sane, load and save the
+	  help documentation database for the functions that are being
+	  stored (and only those)
+
+	* src/funclib.c: use infoout for warranty and such
+
+	* configure.in: raise version and fix readline check to work with
+	  readline 4.0
+
+Sun May 02 12:56:12 1999  George Lebl  <jirka@5z.com>
+
+	* src/{genius.c,gnome-genius.c}: add a missing \n and put colors
+	  inside gnome-genius and add an option on where to write errors
+
+Sun May 02 02:18:09 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c: the start of the promised overhaul
+	  of the gui version, now uses zvt and so behaves somewhat
+	  like the command line version but with gui config
+
+	* src/calc.[ch]: hooks for checking for events inside evalnode,
+	  way to set parameters while in evaluation, online function
+	  documentation stuff
+
+	* src/funclib.c: document a bunch of routines with the new
+	  descriptions, and add help and sethelp functions
+
+	* src/calc.c: do tilde expansion using readline's functions
+
+	* configure.in,src/{lexer.l,calc.c,genius.c}: readline is now
+	  required to compile genius
+
+	* README: updated for the help functions
+
 Sat May 01 04:13:42 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.4.0

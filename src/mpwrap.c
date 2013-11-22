@@ -44,6 +44,9 @@ static MpwRealNum *zero = NULL;
 static MpwRealNum *one = NULL;
 
 static mpf_ptr pi_mpf = NULL;
+static mpf_ptr atan_0_2_mpf;
+
+static int default_mpf_prec = 0;
 
 #define MAKE_CPLX_OPS(THE_op,THE_r,THE_i) {		\
 	if(rop==THE_op) {				\
@@ -344,6 +347,11 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 	mpz_t q;
 	unsigned long int i;
 	int negate=TRUE;
+	int prec;
+	
+	prec = 6*4 + mpf_get_prec(op);
+
+	mpf_set_default_prec(prec);
 
 	/*special case*/
 	if(mpf_cmp_ui(op,0)==0) {
@@ -380,7 +388,7 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 
 	mpf_mul(xsq,xsq,xsq);
 
-	for(i=1;;i+=2) {
+	for(i=1;i<ULONG_MAX;i+=2) {
 		mpf_mul(top,top,xsq);
 		/*this assumes that SHRT_MAX^2 can fit in an ulong*/
 		if(i<SHRT_MAX) {
@@ -409,14 +417,20 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 	mpf_set(rop,fres);
 
 	mpf_clear(fres);
+
+	mpf_set_default_prec(default_mpf_prec);
 }
 
 /*get the value for pi*/
 void
 mympf_pi(mpf_ptr rop)
 {
-	mpf_t fr2;
-	mpf_t frt;
+	mpf_t foldres;
+	mpf_t bottom;
+	mpf_t bottom2;
+	mpf_t top;
+	int negate = TRUE;
+	unsigned long i;
 
 	if(pi_mpf) {
 		if(rop) mpf_set(rop,pi_mpf);
@@ -425,29 +439,45 @@ mympf_pi(mpf_ptr rop)
 	
 	pi_mpf = g_new(__mpf_struct,1);
 
-	/*
-	 * Newton's method: Xn+1 = Xn - f(Xn)/f'(Xn)
-	 */
-	
-	mpf_init(pi_mpf);
-	mpf_init(fr2);
-	mpf_init(frt);
-	mpf_set_d(pi_mpf,3.14159265358979323846); /*use quite a precise guess
-						    as the initial one*/
-	for(;;) {
-		mympf_sin(fr2,pi_mpf,FALSE,FALSE);
+	default_mpf_prec += 6*4;
+	mpf_set_default_prec(default_mpf_prec);
 
-		mympf_cos(frt,pi_mpf,FALSE,FALSE);
-		mpf_div(fr2,fr2,frt);
-		mpf_neg(fr2,fr2);
-		mpf_add(fr2,fr2,pi_mpf);
-		
-		if(mpf_cmp(fr2,pi_mpf)==0)
+	mpf_init(bottom);
+	mpf_set_ui(bottom,1);
+	mpf_init(bottom2);
+	mpf_set_ui(bottom2,1);
+	
+	mpf_init(top);
+	mpf_sqrt_ui(top,3);
+	mpf_mul_ui(top,top,2);
+
+	mpf_init(pi_mpf);
+	mpf_init(foldres);
+	mpf_set(foldres,top);
+
+	for(i=1;i<ULONG_MAX;i+=2) {
+		mpf_add_ui(bottom,bottom,2);
+		mpf_mul_ui(bottom2,bottom2,3);
+		mpf_mul(pi_mpf,bottom,bottom2);
+		mpf_div(pi_mpf,top,pi_mpf);
+		if(negate)
+			mpf_sub(pi_mpf,foldres,pi_mpf);
+		else
+			mpf_add(pi_mpf,foldres,pi_mpf);
+		negate= !negate;
+
+		if(mpf_cmp(foldres,pi_mpf)==0)
 			break;
-		mpf_set(pi_mpf,fr2);
+		mpf_set(foldres,pi_mpf);
 	}
-	mpf_clear(fr2);
-	mpf_clear(frt);
+	
+	mpf_clear(top);
+	mpf_clear(bottom);
+	mpf_clear(bottom2);
+	mpf_clear(foldres);
+
+	default_mpf_prec -= 6*4;
+	mpf_set_default_prec(default_mpf_prec);
 
 	if(rop) mpf_set(rop,pi_mpf);
 }
@@ -800,8 +830,6 @@ static void
 mympf_arctan(mpf_ptr rop,mpf_ptr op)
 {
 	int negate = FALSE;
-	int cached_0_2 = FALSE;
-	static mpf_t atan_0_2;
 	if(mpf_sgn(op)<0) {
 		mpf_neg(op,op);
 		negate = TRUE;
@@ -828,13 +856,14 @@ mympf_arctan(mpf_ptr rop,mpf_ptr op)
 			
 			mpf_clear(tmp2);
 
-			if(!cached_0_2) {
-				mpf_init_set_d(atan_0_2,0.2);
-				mympf_arctan_bottom(atan_0_2,atan_0_2);
+			if(!atan_0_2_mpf) {
+				atan_0_2_mpf = g_new(__mpf_struct,1);
+				mpf_init_set_d(atan_0_2_mpf,0.2);
+				mympf_arctan_bottom(atan_0_2_mpf,atan_0_2_mpf);
 			}
 			
 			mympf_arctan_bottom(rop,tmp);
-			mpf_add(rop,rop,atan_0_2);
+			mpf_add(rop,rop,atan_0_2_mpf);
 		}
 		mpf_clear(tmp);
 	}
@@ -3085,6 +3114,17 @@ void
 mpw_set_default_prec(unsigned long int i)
 {
 	mpf_set_default_prec(i);
+	if(atan_0_2_mpf) {
+		mpf_clear(atan_0_2_mpf);
+		g_free(atan_0_2_mpf);
+		atan_0_2_mpf = NULL;
+	}
+	if(pi_mpf) {
+		mpf_clear(pi_mpf);
+		g_free(pi_mpf);
+		pi_mpf = NULL;
+	}
+	default_mpf_prec = i;
 }
 
 /*initialize a number*/

@@ -30,15 +30,13 @@
 #include "calc.h"
 #include "parse.h"
 #include "util.h"
-#ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #include <readline/history.h>
-#endif
 
 int lex_fd[2];
 int first_tok = STARTTOK;
 int return_ret = FALSE;
-static int parenth_depth = 0;
+int parenth_depth = 0;
 int use_readline = FALSE;
 int lex_init = TRUE;
 extern evalstack_t evalstack;
@@ -53,7 +51,6 @@ static int matrix_entry=0;
 		return_ret = FALSE; \
 }
 
-#ifdef WITH_READLINE_SUPPORT
 #define NEXT_LINE {							\
 	while(use_readline) {						\
 		char *s = readline("      > ");				\
@@ -82,9 +79,6 @@ static int matrix_entry=0;
 		break;							\
 	}								\
 }
-#else
-#define NEXT_LINE ;
-#endif
 
 %}
 
@@ -105,6 +99,19 @@ static int matrix_entry=0;
 %}
 
 #.*$		; /*comment, ignore*/
+
+^[ 	]*load[ 	]+<([^>]|\\>)*>[ 	]*$ {
+			char *s;
+			char *end;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'<')+1; /*find the beginning*/
+			end=strrchr(yytext,'>'); /*find the end*/
+			s = unescape_string(s,end,NULL);
+			yylval.id = g_strconcat(LIBRARY_DIR,"/",s,NULL);
+			g_free(s);
+			DO_RET;
+			return LOADFILE;
+		}
 
 ^[ 	]*load[ 	]+\"([^"]|\\\")*\"[ 	]*$ {
 			char *s;

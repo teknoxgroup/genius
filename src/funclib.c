@@ -41,20 +41,35 @@
 #include "matop.h"
 
 extern void (*errorout)(char *);
+extern void (*infoout)(char *);
 extern calc_error_t error_num;
 extern int got_eof;
+extern calcstate_t calcstate;
 
 /*maximum number of primes to precalculate and store*/
 #define MAXPRIMES 100000
 GArray *primes = NULL;
 int numprimes = 0;
 
+static mpw_t e_cache;
+static int e_iscached = FALSE;
+
+void
+break_fp_caches(void)
+{
+	if(e_iscached) {
+		e_iscached = FALSE;
+		mpw_clear(e_cache);
+	}
+}
+
 extern ETree *free_trees;
 
 static ETree *
 warranty_op(ETree * * a, int *exception)
 {
-	(*errorout)(_("Genius "VERSION"\n"
+	char *p;
+	p = g_strdup_printf(_("Genius %s\n"
 		    "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n\n"
 		    "    This program is free software; you can redistribute it and/or modify\n"
 		    "    it under the terms of the GNU General Public License as published by\n"
@@ -69,7 +84,9 @@ warranty_op(ETree * * a, int *exception)
 		    "    You should have received a copy of the GNU General Public License\n"
 		    "    along with this program. If not, write to the Free Software\n"
 		    "    Foundation,  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,\n"
-		    "    USA.\n"));
+		    "    USA.\n"),VERSION);
+	(*infoout)(p);
+	g_free(p);
 	error_num = IGNORE_ERROR;
 	if(exception) *exception = TRUE; /*raise exception*/
 	return NULL;
@@ -86,7 +103,7 @@ exit_op(ETree * * a, int *exception)
 static ETree *
 ni_op(ETree * * a, int *exception)
 {
-	(*errorout)("We are the Knights Who Say... Ni!");
+	(*infoout)("We are the Knights Who Say... Ni!");
 	if(exception) *exception = TRUE; /*raise exception*/
 	error_num = IGNORE_ERROR;
 	return NULL;
@@ -95,9 +112,9 @@ ni_op(ETree * * a, int *exception)
 static ETree *
 shrubbery_op(ETree * * a, int *exception)
 {
-	(*errorout)("Then, when you have found the shrubbery, you must\n"
-		    "cut down the mightiest tree in the forest... with...\n"
-		    "A HERRING!");
+	(*infoout)("Then, when you have found the shrubbery, you must\n"
+		   "cut down the mightiest tree in the forest... with...\n"
+		   "A HERRING!");
 	if(exception) *exception = TRUE; /*raise exception*/
 	error_num = IGNORE_ERROR;
 	return NULL;
@@ -123,10 +140,10 @@ static ETree *
 print_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		puts(a[0]->data.str);
+		fprintf(outputfp,"%s\n",a[0]->data.str);
 	else {
-		pretty_print_etree(NULL,stdout,a[0]);
-		puts("");
+		pretty_print_etree(NULL,outputfp,a[0]);
+		fprintf(outputfp,"\n");
 	}
 	return makenum_null();
 }
@@ -135,10 +152,10 @@ static ETree *
 printn_op(ETree * * a, int *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		printf("%s",a[0]->data.str);
+		fprintf(outputfp,"%s",a[0]->data.str);
 	else
-		print_etree(NULL,stdout,a[0]);
-	fflush(stdout);
+		print_etree(NULL,outputfp,a[0]);
+	fflush(outputfp);
 	return makenum_null();
 }
 /*print function*/
@@ -149,9 +166,9 @@ display_op(ETree * * a, int *exception)
 		(*errorout)(_("display: first argument must be string!"));
 		return NULL;
 	}
-	printf("%s: ",a[0]->data.str);
-	pretty_print_etree(NULL,stdout,a[1]);
-	puts("");
+	fprintf(outputfp,"%s: ",a[0]->data.str);
+	pretty_print_etree(NULL,outputfp,a[1]);
+	fprintf(outputfp,"\n");
 	return makenum_null();
 }
 
@@ -433,22 +450,20 @@ atan_op(ETree * * a, int *exception)
 
 	return makenum_use(fr);
 }
+	
 
 /*e function (or e variable actually)*/
 static ETree *
 e_op(ETree * * a, int *exception)
 {
-	static mpw_t cache;
-	static int iscached = FALSE;
-	
-	if(iscached)
-		return makenum(cache);
+	if(e_iscached)
+		return makenum(e_cache);
 
-	mpw_init(cache);
-	mpw_set_ui(cache,1);
-	mpw_exp(cache,cache);
-	iscached = TRUE;
-	return makenum(cache);
+	mpw_init(e_cache);
+	mpw_set_ui(e_cache,1);
+	mpw_exp(e_cache,e_cache);
+	e_iscached = TRUE;
+	return makenum(e_cache);
 }
 
 /*pi function (or pi variable or whatever)*/
@@ -1149,13 +1164,13 @@ prime_op(ETree * * a, int *exception)
 		unsigned long b;
 		primes = g_array_new(FALSE,FALSE,sizeof(unsigned long));
 		b = 2;
-		g_array_append_val(primes,b);
+		primes = g_array_append_val(primes,b);
 		b = 3;
-		g_array_append_val(primes,b);
+		primes = g_array_append_val(primes,b);
 		b = 5;
-		g_array_append_val(primes,b);
+		primes = g_array_append_val(primes,b);
 		b = 7;
-		g_array_append_val(primes,b);
+		primes = g_array_append_val(primes,b);
 		numprimes = 4;
 	}
 	
@@ -1163,7 +1178,7 @@ prime_op(ETree * * a, int *exception)
 		return makenum_ui(g_array_index(primes,unsigned long,num-1));
 	
 
-	g_array_set_size(primes,num);
+	primes = g_array_set_size(primes,num);
 	for(i=g_array_index(primes,unsigned long,numprimes-1)+1;
 	    numprimes<=num-1 && i<=ULONG_MAX;i++) {
 		if(is_prime(i))
@@ -1627,32 +1642,198 @@ polytofunc_op(ETree * * a, int *exception)
 	return n;
 }
 
+static ETree *
+help_op(ETree * * a, int *exception)
+{
+	GList *li;
+	
+	li = g_list_last(d_getcontext());
+	for(;li;li=g_list_previous(li)) {
+		EFunc *f = li->data;
+		if(!f->id || !f->id->token ||
+		   strcmp(f->id->token,"ni")==0 ||
+		   strcmp(f->id->token,"shrubbery")==0)
+			continue;
+		fprintf(outputfp,"%-20s - %s\n",f->id->token,get_description(f->id->token));
+	}
+
+	return makenum_null();
+}
+
+static ETree *
+sethelp_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=STRING_NODE ||
+	   a[1]->type!=STRING_NODE) {
+		(*errorout)(_("sethelp: arguments must be strings (function name,help text)"));
+		return NULL;
+	}
+	
+	add_description(a[0]->data.str,a[1]->data.str);
+
+	return makenum_null();
+}
+
+static ETree *
+float_prec_op(ETree * * a, int *exception)
+{
+	long bits;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   !mpw_is_integer(a[0]->data.value)) {
+		(*errorout)(_("float_prec: argument not an integer"));
+		return NULL;
+	}
+
+	bits = mpw_get_long(a[0]->data.value);
+	if(error_num) {
+		error_num = 0;
+		return NULL;
+	}
+	if(bits<60 || bits>16384) {
+		(*errorout)(_("float_prec: argument should be between 60 and 16384"));
+		return NULL;
+	}
+	
+	if(calcstate.float_prec != bits) {
+		calcstate.float_prec = bits;
+		mpw_set_default_prec(calcstate.float_prec);
+		if(statechange_hook)
+			(*statechange_hook)(calcstate);
+	}
+
+	return makenum_ui(calcstate.float_prec);
+}
+
+static ETree *
+get_float_prec_op(ETree * * a, int *exception)
+{
+	return makenum_ui(calcstate.float_prec);
+}
+
+static ETree *
+max_digits_op(ETree * * a, int *exception)
+{
+	long digits;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   !mpw_is_integer(a[0]->data.value)) {
+		(*errorout)(_("max_digits: argument not an integer"));
+		return NULL;
+	}
+
+	digits = mpw_get_long(a[0]->data.value);
+	if(error_num) {
+		error_num = 0;
+		return NULL;
+	}
+	if(digits<0 || digits>256) {
+		(*errorout)(_("max_digits: argument should be between 0 and 256"));
+		return NULL;
+	}
+	
+	if(calcstate.max_digits != digits) {
+		calcstate.max_digits = digits;
+		if(statechange_hook)
+			(*statechange_hook)(calcstate);
+	}
+
+	return makenum_ui(calcstate.max_digits);
+}
+
+static ETree *
+get_max_digits_op(ETree * * a, int *exception)
+{
+	return makenum_ui(calcstate.max_digits);
+}
+
+static ETree *
+results_as_floats_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("results_as_floats: argument not a value"));
+		return NULL;
+	}
+	calcstate.results_as_floats = mpw_sgn(a[0]->data.value)!=0;
+	if(statechange_hook)
+		(*statechange_hook)(calcstate);
+
+	if(calcstate.results_as_floats)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+static ETree *
+scientific_notation_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("scientific_notation: argument not a value"));
+		return NULL;
+	}
+	calcstate.scientific_notation = mpw_sgn(a[0]->data.value)!=0;
+	if(statechange_hook)
+		(*statechange_hook)(calcstate);
+
+	if(calcstate.scientific_notation)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+
 /*add the routines to the dictionary*/
 void
 funclib_addall(void)
 {
 	d_addfunc(d_makebifunc(d_intern("warranty"),warranty_op,0));
+	add_description("warranty",_("Gives the warranty information"));
 	d_addfunc(d_makebifunc(d_intern("exit"),exit_op,0));
+	add_description("exit",_("Exits the program"));
 	d_addfunc(d_makebifunc(d_intern("quit"),exit_op,0));
+	add_description("quit",_("Exits the program"));
 	d_addfunc(d_makebifunc(d_intern("error"),error_op,1));
+	add_description("error",_("Prints a string to the error stream"));
 	d_addfunc(d_makebifunc(d_intern("print"),print_op,1));
+	add_description("print",_("Prints an expression"));
 	d_addfunc(d_makebifunc(d_intern("printn"),printn_op,1));
+	add_description("printn",_("Prints an expression without a trailing newline"));
 	d_addfunc(d_makebifunc(d_intern("display"),display_op,2));
+	add_description("display",_("Display a string and an expression"));
+
+	d_addfunc(d_makebifunc(d_intern("float_prec"),float_prec_op,1));
+	d_addfunc(d_makebifunc(d_intern("get_float_prec"),get_float_prec_op,0));
+	d_addfunc(d_makebifunc(d_intern("max_digits"),max_digits_op,1));
+	d_addfunc(d_makebifunc(d_intern("get_max_digits"),get_max_digits_op,0));
+	d_addfunc(d_makebifunc(d_intern("results_as_floats"),results_as_floats_op,1));
+	d_addfunc(d_makebifunc(d_intern("scientific_notation"),scientific_notation_op,1));
+
 	d_addfunc(d_makebifunc(d_intern("ni"),ni_op,0));
 	d_addfunc(d_makebifunc(d_intern("shrubbery"),shrubbery_op,0));
 	d_addfunc(d_makebifunc(d_intern("sin"),sin_op,1));
+	add_description("sin",_("Calculates the sine function"));
 	d_addfunc(d_makebifunc(d_intern("cos"),cos_op,1));
+	add_description("cos",_("Calculates the cosine function"));
 	d_addfunc(d_makebifunc(d_intern("sinh"),sinh_op,1));
+	add_description("sinh",_("Calculates the hyperbolic sine function"));
 	d_addfunc(d_makebifunc(d_intern("cosh"),cosh_op,1));
+	add_description("cosh",_("Calculates the hyperbolic cosine function"));
 	d_addfunc(d_makebifunc(d_intern("tan"),tan_op,1));
+	add_description("tan",_("Calculates the tan function"));
 	d_addfunc(d_makebifunc(d_intern("atan"),atan_op,1));
+	add_description("atan",_("Calculates the arctan function"));
 	d_addfunc(d_makebifunc(d_intern("pi"),pi_op,0));
+	add_description("pi",_("The number pi"));
 	d_addfunc(d_makebifunc(d_intern("e"),e_op,0));
+	add_description("e",_("The natural number e"));
 	d_addfunc(d_makebifunc(d_intern("sqrt"),sqrt_op,1));
+	add_description("sqrt",_("The square root"));
 	d_addfunc(d_makebifunc(d_intern("exp"),exp_op,1));
+	add_description("exp",_("The exponential function"));
 	d_addfunc(d_makebifunc(d_intern("ln"),ln_op,1));
+	add_description("ln",_("The natural logarithm function"));
 	d_addfunc(d_makebifunc(d_intern("gcd"),gcd_op,2));
+	add_description("gcd",_("Greatest common divisor"));
 	d_addfunc(d_makebifunc(d_intern("lcm"),lcm_op,2));
+	add_description("lcm",_("Least common multiplier"));
 	d_addfunc(d_makebifunc(d_intern("jacobi"),jacobi_op,2));
 	d_addfunc(d_makebifunc(d_intern("legendre"),legendre_op,2));
 	d_addfunc(d_makebifunc(d_intern("perfect_square"),perfect_square_op,1));
@@ -1693,4 +1874,6 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("is_poly"),is_poly_op,1));
 	d_addfunc(d_makebifunc(d_intern("polytostring"),polytostring_op,2));
 	d_addfunc(d_makebifunc(d_intern("polytofunc"),polytofunc_op,1));
+	d_addfunc(d_makebifunc(d_intern("help"),help_op,0));
+	d_addfunc(d_makebifunc(d_intern("sethelp"),sethelp_op,2));
 }

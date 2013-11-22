@@ -1,30 +1,9 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.4.0)
+AM_INIT_AUTOMAKE(genius,0.4.1)
 AM_MAINTAINER_MODE
 AM_ACLOCAL_INCLUDE(macros)
-
-dnl Let the user disable GNOME even if it can be found
-AC_ARG_ENABLE(gnome,
-	      [  --disable-gnome         Do not try to use GNOME ],
-	      enable_gnome="$enableval",)
-
-dnl If GNOME is found, run the script in square brackets.
-if test x$enable_gnome != xno ; then
-  GNOME_INIT_HOOK([have_gnome=yes])
-fi
-AM_CONDITIONAL(HAVE_GNOME, test x$have_gnome = xyes)
-
-GNOME_SUPPORT=-DGNOME_SUPPORT
-GNOME_GENIUS=gnome-genius
-if test x$have_gnome != xyes ; then
-  AC_MSG_WARN([*** The gnome version will not be built ***])
-  GNOME_GENIUS=
-  GNOME_SUPPORT=
-fi
-AC_SUBST(GNOME_GENIUS)
-AC_SUBST(GNOME_SUPPORT)
 
 AC_ISC_POSIX
 AC_PROG_CC
@@ -36,6 +15,40 @@ AM_PROG_LIBTOOL
 AM_PATH_GLIB
 
 GNOME_COMPILE_WARNINGS
+
+
+dnl Let the user disable GNOME even if it can be found
+AC_ARG_ENABLE(gnome,
+	      [  --disable-gnome         Do not try to use GNOME ],
+	      enable_gnome="$enableval",)
+
+dnl Check for termcap - not fatal if it fails, not all readlines use it
+AC_CHECK_LIB(termcap, tgoto,[TERMCAP_LIB="-ltermcap"])
+
+dnl Check for readline
+AC_CHECK_LIB(readline,readline, [READLINE_LIB="-lreadline $TERMCAP_LIB"],
+	     AC_MSG_ERROR(Readline library not found), $TERMCAP_LIB)
+AC_SUBST(READLINE_LIB)
+
+dnl If GNOME is found, run the script in square brackets.
+if test x$enable_gnome != xno ; then
+  GNOME_INIT_HOOK([have_gnome=yes])
+fi
+AM_CONDITIONAL(HAVE_GNOME, test x$have_gnome = xyes)
+
+GNOME_SUPPORT=-DGNOME_SUPPORT
+GNOME_GENIUS=gnome-genius
+ZVT_LIBS=
+if test x$have_gnome != xyes ; then
+  AC_MSG_WARN([*** The gnome version will not be built ***])
+  GNOME_GENIUS=
+  GNOME_SUPPORT=
+else
+  ZVT_LIBS=`$GNOME_CONFIG --libs zvt`
+fi
+AC_SUBST(GNOME_GENIUS)
+AC_SUBST(GNOME_SUPPORT)
+AC_SUBST(ZVT_LIBS)
 
 ## this should come after `AC_PROG_CC'
 if test x$have_gnome != xno ; then
@@ -49,13 +62,6 @@ AC_CHECK_LIB(gmp, mpz_init_set,[GMP_LIB=-lgmp], [
 		AC_DEFINE(HAVE_GMP2_INCLUDE_DIR)],
 		AC_MSG_ERROR(GMP Library not found))])
 AC_SUBST(GMP_LIB)
-
-READLINE_LIB=""
-READLINE_SUPPORT=""
-AC_CHECK_LIB(readline, readline,[READLINE_LIB=-lreadline
-				 READLINE_SUPPORT=-DWITH_READLINE_SUPPORT])
-AC_SUBST(READLINE_LIB)
-AC_SUBST(READLINE_SUPPORT)
 
 AC_SUBST(CFLAGS)
 AC_SUBST(CPPFLAGS)

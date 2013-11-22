@@ -26,5 +26,7 @@
 
 /*add the routines to the dictionary*/
 void funclib_addall(void);
+/*remove all cached floating point values*/
+void break_fp_caches(void);
 
 #endif

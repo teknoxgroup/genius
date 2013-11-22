@@ -1,6 +1,13 @@
 Genius Calculator
 =================
 
+------------------------------------------------------------------
+NOTE: if you are using the vi mode of readline and the gui version
+of genius (gnome-genius), you need to patch readline since there
+is a bug in readline that makes it lock up. I've sent a patch to
+the maintainers. In the meantime apply the readline-4.0.patch.
+------------------------------------------------------------------
+
 Although it's under heavy development, it's actually very usable.
 I use it myself as my desktop calculator.
 
@@ -99,6 +106,18 @@ name:		# of arguments:		description:
 warranty	0			prints warranty and license info
 exit		0			exits genius
 quit		0			exits genius
+help		0			displays a list of functions with
+					short descriptions
+sethelp		2 (string,string)	set a description for the above list,
+					(to be used inside library files)
+float_prec	1 (integer)		set the floating point precision
+get_float_prec	0			get the current float_prec
+max_digits	1 (integer)		set the maximum digits in a result
+get_max_digits	0 			get the current max_digits
+results_as_floats 1 (bool)		sets if the results should be always
+					printed as floats
+scientific_notation 1 (bool)		sets if floats should be in scientific
+					notation
 error		1 (string)		prints an error to the error channel
 print		1 (string)		prints a string onto the standard
 					output
