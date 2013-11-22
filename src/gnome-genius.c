@@ -608,11 +608,27 @@ add_main_window_contents (GtkWidget *window, GtkWidget *notebook)
 	GtkWidget *box1;
 	GtkActionGroup *actions;
 	GError *error = NULL;
+	GtkAction *act;
 
 	stock_init ();
 
 	actions = gtk_action_group_new ("Actions");
 	gtk_action_group_add_actions (actions, entries, n_entries, NULL);
+
+	/* FIXME: I have no clue if this is correct, but I can't find any docs
+	 * on this */
+	act = gtk_action_group_get_action (actions, "Interrupt");
+	gtk_action_set_is_important (act, TRUE);
+	act = gtk_action_group_get_action (actions, "Run");
+	gtk_action_set_is_important (act, TRUE);
+	act = gtk_action_group_get_action (actions, "ToolbarNew");
+	gtk_action_set_is_important (act, TRUE);
+	act = gtk_action_group_get_action (actions, "ToolbarOpen");
+	gtk_action_set_is_important (act, TRUE);
+	act = gtk_action_group_get_action (actions, "ToolbarPlot");
+	gtk_action_set_is_important (act, TRUE);
+	act = gtk_action_group_get_action (actions, "Quit");
+	gtk_action_set_is_important (act, TRUE);
 
 	genius_ui = gtk_ui_manager_new ();
 	genius_window_statusbar = gtk_statusbar_new ();
@@ -964,10 +980,9 @@ geniusbox (gboolean error,
 static void
 populate_var_box (GtkTextBuffer *buffer)
 {
-	GSList *all_contexts;
+	GelContextFrame *all_contexts, *lic;
 	GSList *funcs;
-	GSList *context_names;
-	GSList *li, *lic;
+	GSList *li;
 	GelOutput *out;
 	GtkTextIter iter;
 	GtkTextIter iter_end;
@@ -982,7 +997,6 @@ populate_var_box (GtkTextBuffer *buffer)
 	gtk_text_buffer_get_iter_at_offset (buffer, &iter, 0);
 
 	all_contexts = d_get_all_contexts ();
-	context_names = d_get_context_names ();
 	funcs = d_getcontext_global ();
 
 	out = gel_output_new ();
@@ -1027,8 +1041,8 @@ populate_var_box (GtkTextBuffer *buffer)
 			(buffer, &iter, _("(depth of context in parentheses)\n\n"), -1, "note", NULL);
 
 		/* go over all local contexts (not the last one, that is global) */
-		for (lic = context_names; lic != NULL && lic->next != NULL; lic = lic->next) {
-			GelToken *tok = lic->data;
+		for (lic = all_contexts; lic != NULL && lic->next != NULL; lic = lic->next) {
+			GelToken *tok = lic->name;
 			char *s;
 
 			if (tok == NULL) {
@@ -1069,7 +1083,7 @@ populate_var_box (GtkTextBuffer *buffer)
 
 	/* go over all local contexts (not the last one, that is global) */
 	for (lic = all_contexts; lic != NULL && lic->next != NULL; lic = lic->next) {
-		for (li = lic->data; li != NULL; li = li->next) {
+		for (li = lic->functions; li != NULL; li = li->next) {
 			GelEFunc *f = li->data;
 			char *s;
 			if (f->type != GEL_VARIABLE_FUNC ||
@@ -3256,6 +3270,22 @@ get_source_language_manager ()
 #endif
 
 static gboolean
+file_exists (const char *fname)
+{
+	GnomeVFSURI *uri;
+	gboolean ret;
+
+	if (ve_string_empty (fname))
+		return FALSE; 
+
+	uri = gnome_vfs_uri_new (fname);
+	ret = gnome_vfs_uri_exists (uri);
+	gnome_vfs_uri_unref (uri);
+
+	return ret;
+}
+
+static gboolean
 file_is_writable (const char *fname)
 {
 	GnomeVFSFileInfo *info;
@@ -3399,8 +3429,13 @@ new_program (const char *filename)
 	} else {
 		char *contents;
 		p->name = g_strdup (filename);
-		p->readonly = ! file_is_writable (filename);
-		contents = get_contents_vfs (p->name);
+		if (file_exists (filename)) { 
+			p->readonly = ! file_is_writable (filename);
+			contents = get_contents_vfs (p->name);
+		} else {
+			p->readonly = FALSE;
+			contents = g_strdup ("");
+		}
 		if (contents != NULL &&
 		    g_utf8_validate (contents, -1, NULL)) {
 			GtkTextIter iter;

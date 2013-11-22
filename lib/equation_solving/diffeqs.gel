@@ -5,6 +5,7 @@
 SetHelp ("EulersMethod", "equation_solving",
          "Use classical Euler's method to numerically solve y'=f(x,y) for initial x0,y0 going to x1 with n increments, returns y at x1")
 function EulersMethod(f,x0,y0,x1,n) = (
+	local *;
 	# Note we can't check the 2 arguments, FIXME
 	if not IsFunction(f) then
 		(error("EulersMethod: f must be a function of two arguments");bailout)
@@ -21,13 +22,13 @@ function EulersMethod(f,x0,y0,x1,n) = (
 	);
 	y
 )
-protect ("EulersMethod")
 
 # See Handbook of Mathematics and Computational Science,
 # John W.Harris, Horst Stocker
 SetHelp ("RungeKutta", "equation_solving",
          "Use classical non-adaptive Runge-Kutta of fourth order method to numerically solve y'=f(x,y) for initial x0,y0 going to x1 with n increments, returns y at x1")
 function RungeKutta(f,x0,y0,x1,n) = (
+	local *;
 	# Note we can't check the 2 arguments, FIXME
 	if not IsFunction(f) then
 		(error("RungeKutta: f must be a function of two arguments");bailout)
@@ -55,4 +56,3 @@ function RungeKutta(f,x0,y0,x1,n) = (
 	);
 	y
 )
-protect ("RungeKutta")

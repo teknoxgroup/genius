@@ -61,48 +61,49 @@
      EXCEPTION = 277,
      CONTINUE = 278,
      BREAK = 279,
-     WHILE = 280,
-     UNTIL = 281,
-     FOR = 282,
-     SUM = 283,
-     PROD = 284,
-     DO = 285,
-     IF = 286,
-     THEN = 287,
-     ELSE = 288,
-     TO = 289,
-     BY = 290,
-     IN = 291,
-     AT = 292,
-     MAKEIMAGPARENTH = 293,
-     SEPAR = 294,
-     NEXTROW = 295,
-     EQUALS = 296,
-     DEFEQUALS = 297,
-     TRANSPOSE = 298,
-     ELTELTDIV = 299,
-     ELTELTMUL = 300,
-     ELTELTPLUS = 301,
-     ELTELTMINUS = 302,
-     ELTELTEXP = 303,
-     ELTELTMOD = 304,
-     DOUBLEFACT = 305,
-     EQ_CMP = 306,
-     NE_CMP = 307,
-     CMP_CMP = 308,
-     LT_CMP = 309,
-     GT_CMP = 310,
-     LE_CMP = 311,
-     GE_CMP = 312,
-     LOGICAL_XOR = 313,
-     LOGICAL_OR = 314,
-     LOGICAL_AND = 315,
-     LOGICAL_NOT = 316,
-     LOWER_THEN_ELSE = 317,
-     MOD = 318,
-     ELTELTBACKDIV = 319,
-     UPLUS = 320,
-     UMINUS = 321
+     LOCAL = 280,
+     WHILE = 281,
+     UNTIL = 282,
+     FOR = 283,
+     SUM = 284,
+     PROD = 285,
+     DO = 286,
+     IF = 287,
+     THEN = 288,
+     ELSE = 289,
+     TO = 290,
+     BY = 291,
+     IN = 292,
+     AT = 293,
+     MAKEIMAGPARENTH = 294,
+     SEPAR = 295,
+     NEXTROW = 296,
+     EQUALS = 297,
+     DEFEQUALS = 298,
+     TRANSPOSE = 299,
+     ELTELTDIV = 300,
+     ELTELTMUL = 301,
+     ELTELTPLUS = 302,
+     ELTELTMINUS = 303,
+     ELTELTEXP = 304,
+     ELTELTMOD = 305,
+     DOUBLEFACT = 306,
+     EQ_CMP = 307,
+     NE_CMP = 308,
+     CMP_CMP = 309,
+     LT_CMP = 310,
+     GT_CMP = 311,
+     LE_CMP = 312,
+     GE_CMP = 313,
+     LOGICAL_XOR = 314,
+     LOGICAL_OR = 315,
+     LOGICAL_AND = 316,
+     LOGICAL_NOT = 317,
+     LOWER_THAN_ELSE = 318,
+     MOD = 319,
+     ELTELTBACKDIV = 320,
+     UPLUS = 321,
+     UMINUS = 322
    };
 #endif
 /* Tokens.  */
@@ -128,48 +129,49 @@
 #define EXCEPTION 277
 #define CONTINUE 278
 #define BREAK 279
-#define WHILE 280
-#define UNTIL 281
-#define FOR 282
-#define SUM 283
-#define PROD 284
-#define DO 285
-#define IF 286
-#define THEN 287
-#define ELSE 288
-#define TO 289
-#define BY 290
-#define IN 291
-#define AT 292
-#define MAKEIMAGPARENTH 293
-#define SEPAR 294
-#define NEXTROW 295
-#define EQUALS 296
-#define DEFEQUALS 297
-#define TRANSPOSE 298
-#define ELTELTDIV 299
-#define ELTELTMUL 300
-#define ELTELTPLUS 301
-#define ELTELTMINUS 302
-#define ELTELTEXP 303
-#define ELTELTMOD 304
-#define DOUBLEFACT 305
-#define EQ_CMP 306
-#define NE_CMP 307
-#define CMP_CMP 308
-#define LT_CMP 309
-#define GT_CMP 310
-#define LE_CMP 311
-#define GE_CMP 312
-#define LOGICAL_XOR 313
-#define LOGICAL_OR 314
-#define LOGICAL_AND 315
-#define LOGICAL_NOT 316
-#define LOWER_THEN_ELSE 317
-#define MOD 318
-#define ELTELTBACKDIV 319
-#define UPLUS 320
-#define UMINUS 321
+#define LOCAL 280
+#define WHILE 281
+#define UNTIL 282
+#define FOR 283
+#define SUM 284
+#define PROD 285
+#define DO 286
+#define IF 287
+#define THEN 288
+#define ELSE 289
+#define TO 290
+#define BY 291
+#define IN 292
+#define AT 293
+#define MAKEIMAGPARENTH 294
+#define SEPAR 295
+#define NEXTROW 296
+#define EQUALS 297
+#define DEFEQUALS 298
+#define TRANSPOSE 299
+#define ELTELTDIV 300
+#define ELTELTMUL 301
+#define ELTELTPLUS 302
+#define ELTELTMINUS 303
+#define ELTELTEXP 304
+#define ELTELTMOD 305
+#define DOUBLEFACT 306
+#define EQ_CMP 307
+#define NE_CMP 308
+#define CMP_CMP 309
+#define LT_CMP 310
+#define GT_CMP 311
+#define LE_CMP 312
+#define GE_CMP 313
+#define LOGICAL_XOR 314
+#define LOGICAL_OR 315
+#define LOGICAL_AND 316
+#define LOGICAL_NOT 317
+#define LOWER_THAN_ELSE 318
+#define MOD 319
+#define ELTELTBACKDIV 320
+#define UPLUS 321
+#define UMINUS 322
 
 
 
@@ -182,7 +184,7 @@ typedef union YYSTYPE
 	char *id;
 }
 /* Line 1489 of yacc.c.  */
-#line 186 "y.tab.h"
+#line 188 "y.tab.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

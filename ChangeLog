@@ -1,3 +1,176 @@
+Wed Jul 29 15:11:16 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.7
+
+	* src/gnome-genius.c: set all toolbar items to important so
+	  that text always shows.
+
+Tue Jul 28 14:04:33 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* NEWS: update,
+
+	* help/C/gel-function-list.xml: add more docs on the root finding
+	  functions.  There aren't very nice, but ...
+
+	* lib/equation_solving/find_root.gel: use true/false for booleans
+	  rather than 0/1
+
+Mon Jul 27 15:22:57 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml, help/C/gel-function-list.xml: Update
+	  documentation for all the new features and improve existing
+	  parts a bit especially by adding a bunch of links for some
+	  functions.
+
+	* NEWS: update
+
+Fri Jul 24 17:23:04 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/calculus/fourier.gel: fix cosine series and fix argument
+	  checking on the fourier function creation
+
+	* src/geniustests.txt, src/testfourier.gel: add tests for the
+	  fourier functions
+
+	* src/graphing.c: the create plot and plot dialogs are stupid as
+	  dialogs because of the way metacity handles dialogs (annoyingly
+	  as "keep above parent") so set the hint to normal.
+
+Fri Jul 24 16:32:32 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/calculus/fourier.gel: add NumericalFourierCosineSeriesFunction
+	  and NumericalFourierSineSeriesFunction and fixup some doc strings
+
+	* src/eval.c, src/dict.c: build the subst_dict on first function
+	  evaluate.  This avoids subst lists for simple functions, plus
+	  it makes the global identifier no-substitution behaviour slightly
+	  more easy to see.
+
+Fri Jul 24 16:01:28 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c, src/compil.c: Correctly compile/decompile all the new
+	  function attributes
+
+	* src/calc.c: correctly print out the local stuff, handle local node
+	  correctly when outside of functions
+
+	* src/funclib.c, src/graphing.c: handle eof errors from parsing
+	  things correctly without dying.
+
+	* src/dict.c, src/eval.c, src/structs.h: is_local generally should
+	  not be moved around with the function.  Also correctly copy/free
+	  all the other attributes when needed as well.
+
+	* src/eval.c: Set arguments BEFORE extradict.  This should never
+	  be an issue, but it feels more correct.
+
+	* src/dict.c: when the subst list becomes empty, remove from subst
+	  list to avoid unnecessary lookups
+
+	* lib/*/*.gel: update and fix for the [] operator
+
+	* src/geniustests.txt: Add some testcases
+
+	* src/symbolic.c: just a comment change
+
+Thu Jul 23 18:35:28 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/parse.y, src/eval.c, src/dict.c, src/structs.h: Add an optional
+	  list of extra_dict parameters to function definition.  In this
+	  case the subst dance never happens and those variables are added to
+	  extra dict at function definition time.
+
+	* lib/*/*.gel: Use local where appropriate and the [] extra dict
+	  definition where appropriate
+
+	* src/testscope.gel, src/geniustests.txt: update test suite
+
+	* src/geniustest.pl: fix colors
+
+Thu Jul 23 16:28:59 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/dict.c, src/eval.c: remove some forgotten debug prints
+
+	* src/eval.c: do not allow setting a new parameter over a protected
+	  id
+
+	* src/funclib.c: Add UserVariables function
+
+	* src/geniustests.txt, src/testscope.gel: add new tests
+
+Thu Jul 23 12:26:47 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: Add UndefineAll, ProtectAll, make Undefine an alias
+	  for undefine.
+
+	* src/dict.[ch], src/eval.c: allow setting of protected parameters,
+	  they just can't be deleted or changed
+
+	* lib/*.gel: Use the ProtectAll function
+
+	* src/testscope.gel: add extra tests
+
+Wed Jul 22 14:44:10 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: raise version, require slightly newer glib (2.10)
+
+	* src/compil.c, src/dict.[ch], src/eval.[ch], src/lexer.l,
+	  src/parse.y, src/parseutil.[ch], src/structs.h:  Add local
+	  variables (not seen by higher contexts).  Also fix several minor
+	  issues relating to dictionaries and lookup, mainly subst list
+	  function is not substituted again if it is passed up and down the
+	  contexts, and substitution is done in a smarter way.
+
+	* src/dict.[ch], src/gnome-genius.c: Redo the way contexts are done
+	  to get rid of some gslists
+
+	* src/mpwrap.[ch]: allocate new real nums in a smarter way (by large
+	  blocks) and put no limit on the number of real number structures
+	  on the free list.
+
+	* src/geniustests.txt, src/testscope.gel:  Add scope tests
+
+Wed Jul 22 00:30:36 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel: update for newest info from
+	  GIMPS.  Also fix MersennePrimeExponents (it had 3 columns by
+	  mistake)
+
+Fri Jul 10 14:53:41 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/figures/genius_window.png, help/C/figures/line_plot.png,
+	  help/C/figures/line_plot_graph.png, help/C/figures/parametric.png,
+	  help/C/figures/parametric_graph.png,
+	  help/C/figures/surface_graph.png, pixmaps/32x32/gnome-genius.png,
+	  pixmaps/48x48/gnome-genius.png, pixmaps/genius-graph.png:
+	  Optimize PNGs
+
+Thu Apr 23 01:32:06 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: Fix opening new files from the command line.
+	  It just works now.
+
+	* lib/calculus/Makefile.am, lib/calculus/fourier.gel:  Add some
+	  Fourier series routines.  This currently exposes a bug in scoping
+	  rules
+
+Sun Apr 19 19:27:09 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/geniustests.txt, src/testprec.gel: test the precision stuff
+
+	* src/graphing.c: Apply patch from Matthias Drochner of NetBSD to
+	  fix unitialized variable in one dimensional function plots
+
+Sun Apr 19 18:55:12 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: Fix conflict with changing precision and the mpfr
+	  cache.  Also fix a possible extra negation error in pow_z.
+
+Fri Apr 03 15:42:40 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: joins and caps are round.  Fixes bad looking joins
+	  on graphs of quickly oscillating functions
+
 Sun Mar 15 00:04:08 2009  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.6
@@ -922,7 +1095,7 @@ Sat Nov 03 20:51:37 2007  Jiri (George) Lebl <jirka@5z.com>
 	* src/Makefile.am:
 	* src/gnome-genius.c: (get_source_language_manager), (new_program):
 	Optionally allow to use GtkSourceView2 instead of GtkSourceView1.
-	Version 2 is preffered if available, otherwise version 1 will be used.
+	Version 2 is preferred if available, otherwise version 1 will be used.
 
 2007-11-03  Sebastian Dröge  <slomo@circular-chaos.org>
 

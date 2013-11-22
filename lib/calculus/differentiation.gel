@@ -30,6 +30,7 @@
 function OneSidedThreePointFormula(f,x0,h) =
 # This has error term max(f''')h^2/3
 	(
+	local *;
 # check arguments
 ## check types
 	if not IsFunctionOrIdentifier(f) then
@@ -44,12 +45,12 @@ function OneSidedThreePointFormula(f,x0,h) =
         (-3*f(x0)+4*(f call (x0+h))-(f call (x0+2*h)))/(2*h)
 	)
 SetHelp("OneSidedThreePointFormula","calculus","Compute one-sided derivative using three-point formula");
-protect("OneSidedThreePointFormula");
 
 # Two-sided three-point formula, Section 4.1, Formula 4.5, p. 161
 function TwoSidedThreePointFormula(f,x0,h) =
 # This has error term max(f''')h^2/6
 	(
+	local *;
 # check arguments
 ## check types
 	if not IsFunctionOrIdentifier(f) then
@@ -63,12 +64,12 @@ function TwoSidedThreePointFormula(f,x0,h) =
         ((f call (x0+h))-(f call (x0-h)))/(2*h)
 	)
 SetHelp("TwoSidedThreePointFormula","calculus","Compute two-sided derivative using three-point formula");
-protect("TwoSidedThreePointFormula");
 
 # One-sided five-point formula, Section 4.1, Formula 4.7, p. 161
 function OneSidedFivePointFormula(f,x0,h) =
 # This has error term max(f''''')h^4/5
 	(
+	local *;
 # check arguments
 ## check types
 	if not IsFunctionOrIdentifier(f) then
@@ -82,12 +83,12 @@ function OneSidedFivePointFormula(f,x0,h) =
         (-25*(f call (x0))+48*(f call (x0+h))-36*(f call (x0+2*h))+16*(f call (x0+3*h))-3*(f call (x0+4*h)))/(12*h)
 	)
 SetHelp("OneSidedFivePointFormula","calculus","Compute one-sided derivative using five point formula");
-protect("OneSidedFivePointFormula");
 
 # Two-sided five-point formula, Section 4.1, Formula 4.6, p. 161
 function TwoSidedFivePointFormula(f,x0,h) =
 # This has error term max(f''''')h^4/30
 	(
+	local *;
 # check arguments
 ## check types
 	if(not IsFunctionOrIdentifier(f)) then
@@ -101,7 +102,6 @@ function TwoSidedFivePointFormula(f,x0,h) =
         ((f call (x0-2*h))-8*(f call (x0-h))+8*(f call (x0+h))-(f call (x0+2*h)))/(12*h)
 	)
 SetHelp("TwoSidedFivePointFormula","calculus","Compute two-sided derivative using five-point formula");
-protect("TwoSidedFivePointFormula");
 
 SetHelp ("DerivativeTolerance", "parameters", "Tolerance for calculating the derivatives of functions")
 parameter DerivativeTolerance=10.0^(-5);
@@ -113,56 +113,56 @@ parameter DerivativeNumberOfTries=100;
 # Simple test for differentiability
 function IsDifferentiable(f,x0) =
 (
+	local *;
 	# differentiable functions have to be continuous and left and right derivatives must
 	# be equal
 	IsContinuous (f, x0) and
 	| NumericalLeftDerivative (f,x0) - NumericalRightDerivative (f,x0) | < 2*DerivativeTolerance
 )
 SetHelp("IsDifferentiable","calculus","Test for differentiability by approximating the left and right limits and comparing");
-protect("IsDifferentiable");
 
 # Simple derivative function
 #FIXME!!!! BROKEN!!!! ???
 function NumericalDerivative(f,x0) =
 # returns f'(x0)
 (
+    local *;
     # FIXME: perhaps check differentiability first, but then we're doing so many limits already
-    NumericalLimitAtInfinity (`(n)=(TwoSidedFivePointFormula(f,x0,2.0^(-n))),
+    NumericalLimitAtInfinity (`(n)[f,x0]=(TwoSidedFivePointFormula(f,x0,2.0^(-n))),
 			      Identity,
 			      DerivativeTolerance,
 			      DerivativeSFS,
 			      DerivativeNumberOfTries)
 )
 SetHelp("NumericalDerivative","calculus","Attempt to calculate numerical derivative");
-protect("NumericalDerivative");
 SetHelpAlias ("NumericalDerivative", "NDerivative");
 NDerivative = NumericalDerivative
-protect("NDerivative");
 
 function NumericalLeftDerivative(f,x0) =
 (
-    NumericalLimitAtInfinity (`(n)=(OneSidedFivePointFormula(f,x0,-(2.0^(-n)))),
+    local *;
+    NumericalLimitAtInfinity (`(n)[f,x0]=(OneSidedFivePointFormula(f,x0,-(2.0^(-n)))),
 			      Identity,
 			      DerivativeTolerance,
 			      DerivativeSFS,
 			      DerivativeNumberOfTries)
 )
 SetHelp("NumericalLeftDerivative","calculus","Attempt to calculate numerical left derivative");
-protect("NumericalLeftDerivative");
 
 function NumericalRightDerivative(f,x0) =
 (
-    NumericalLimitAtInfinity (`(n)=(OneSidedFivePointFormula(f,x0,2.0^(-n))),
+    local *;
+    NumericalLimitAtInfinity (`(n)[f,x0]=(OneSidedFivePointFormula(f,x0,2.0^(-n))),
 			      Identity,
 			      DerivativeTolerance,
 			      DerivativeSFS,
 			      DerivativeNumberOfTries)
 )
 SetHelp("NumericalRightDerivative","calculus","Attempt to calculate numerical right derivative");
-protect("NumericalRightDerivative");
 
 function Derivative(f,x0) =
 (
+	local *;
 	df = SymbolicDerivativeTry (f);
 	if IsNull(df) then
 		NumericalDerivative (f, x0)
@@ -170,4 +170,3 @@ function Derivative(f,x0) =
 		df(x0)
 )
 SetHelp("Derivative","calculus","Attempt to calculate derivative by trying first symbolically and then numerically");
-protect("Derivative");

@@ -54,9 +54,6 @@ struct _MpwCtx {
 };
 #endif
 
-static MpwRealNum *free_reals = NULL;
-static int free_reals_n = 0;
-
 MpwRealNum *gel_zero = NULL;
 MpwRealNum *gel_one = NULL;
 
@@ -109,11 +106,12 @@ static __mpfr_struct *free_mpfr_top = free_mpfr;
 		memcpy (THE_f, free_mpfr_top, sizeof (__mpfr_struct));	\
 	}
 #define CLEAR_FREE_MPF(THE_f)				\
-	if (free_mpfr_top == &free_mpfr[FREE_LIST_SIZE-1]) { \
+	if (free_mpfr_top == &free_mpfr[FREE_LIST_SIZE-1] || \
+	    mpfr_get_prec (THE_f) != default_mpfr_prec) { \
 		mpfr_clear (THE_f);			\
 	} else {					\
 		memcpy (free_mpfr_top, THE_f, sizeof (__mpfr_struct));	\
-		free_mpfr_top++;				\
+		free_mpfr_top++;			\
 	}
 
 #define MAKE_CPLX_OPS(THE_op,THE_r,THE_i) {		\
@@ -136,16 +134,42 @@ static __mpfr_struct *free_mpfr_top = free_mpfr;
 	}						\
 }
 
+#ifdef MEM_DEBUG_FRIENDLY
+# define GET_NEW_REAL(n) (n = g_new0 (MpwRealNum, 1));
+#else
 
-#define GET_NEW_REAL(n) {				\
-	if(!free_reals) {				\
-		n = g_new0(MpwRealNum,1);		\
-	} else {					\
-		n = free_reals;				\
-		free_reals = free_reals->alloc.next;	\
-		free_reals_n--;				\
-	}						\
+/* In tests it seems that this achieves better then 4096 */
+#define GEL_CHUNK_SIZE 4048
+#define ALIGNED_SIZE(t) (sizeof(t) + sizeof (t) % G_MEM_ALIGN)
+
+static MpwRealNum *free_reals = NULL;
+
+static void
+_gel_make_free_reals (void)
+{
+	int i;
+	char *p;
+
+	p = g_malloc ((GEL_CHUNK_SIZE / ALIGNED_SIZE (MpwRealNum)) *
+		      ALIGNED_SIZE (MpwRealNum));
+	for (i = 0; i < (GEL_CHUNK_SIZE / ALIGNED_SIZE (MpwRealNum)); i++) {
+		MpwRealNum *t = (MpwRealNum *)p;
+		/*put onto the free list*/
+		t->alloc.next = free_reals;
+		free_reals = t;
+		p += ALIGNED_SIZE (MpwRealNum);
+	}
 }
+#define GET_NEW_REAL(n) {				\
+	if G_UNLIKELY (free_reals == NULL) {		\
+		_gel_make_free_reals ();		\
+	}						\
+	(n) = free_reals;				\
+    	free_reals = free_reals->alloc.next;		\
+}
+
+#endif
+
 #define MAKE_COPY(n) {					\
 	if((n)->alloc.usage>1) {			\
 		MpwRealNum *m;				\
@@ -642,18 +666,12 @@ mpwl_free(MpwRealNum *op)
 
 	mpwl_clear(op);
 
-	/*FIXME: the 2000 should be settable*/
-	/*if we want to store this so that we don't allocate new one
-	  each time, up to a limit of 2000, unless it was some local
-	  var in which case it can't be freed nor put on the free
-	  stack*/
-	if(free_reals_n>2000) {
-		g_free(op);
-	} else {
-		op->alloc.next = free_reals;
-		free_reals = op;
-		free_reals_n++;
-	}
+#ifdef MEM_DEBUG_FRIENDLY
+	g_free (op);
+#else
+	op->alloc.next = free_reals;
+	free_reals = op;
+#endif
 }
 
 static inline int
@@ -1971,7 +1989,7 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			mpwl_pow_ui(rop,op1,mpz_get_ui(op2->data.ival),reverse);
 	}
 
-	if(reverse)
+	if(reverse && op2 != rop)
 		mpz_neg(op2->data.ival,op2->data.ival);
 }
 
@@ -3160,6 +3178,7 @@ void
 mpw_set_default_prec (unsigned long int prec)
 {
 	__mpfr_struct *p;
+
 	mpfr_set_default_prec (prec);
 
 	/* whack the mpf cache */
@@ -5462,6 +5481,8 @@ mpw_im(mpw_ptr rop, mpw_ptr op)
 	if (rop == op) {
 		MAKE_IMAG(rop);
 		rop->r = rop->i;
+		/* Note that rop->r is set to gel_zero
+		   and it is allocated in MAKE_IMAG */
 		rop->i = gel_zero;
 		return;
 	}

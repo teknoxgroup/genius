@@ -570,6 +570,11 @@ freetree_full (GelETree *n, gboolean freeargs, gboolean kill)
 		if(freeargs && n->sp.arg)
 			gel_freetree(n->sp.arg);
 		break;
+	case GEL_LOCAL_NODE:
+		if(freeargs && n->loc.arg)
+			gel_freetree(n->loc.arg);
+		g_slist_free (n->loc.idents);
+		break;
 	default: break;
 	}
 	if(kill) {
@@ -758,6 +763,7 @@ copynode_to(GelETree *empty, GelETree *o)
 		else
 			empty->sp.arg = NULL;
 		break;
+	/* GEL_LOCAL_NODE: not needed */
 	default:
 		g_assert_not_reached();
 		break;
@@ -1300,6 +1306,8 @@ get_func_call_node(GelEFunc *func, GelETree **args, int nargs)
 	GEL_GET_NEW_NODE(l);
 	l->type = GEL_FUNCTION_NODE;
 	l->func.func = d_copyfunc(func);
+	/* never copy is_local */
+	l->func.func->is_local = 0;
 	l->any.next = NULL;
 
 	GEL_GET_NEW_NODE(ret);
@@ -2594,7 +2602,10 @@ make_funccall (GelEFunc *a)
 	GEL_GET_NEW_NODE (nn);
 	nn->type = GEL_FUNCTION_NODE;
 	nn->func.func = d_copyfunc (a);
-	nn->func.func->context = -1;
+	/* never copy is_local */
+	nn->func.func->is_local = 0;
+	if ( ! nn->func.func->on_subst_list)
+		nn->func.func->context = -1;
 
 	n->op.args = nn;
 
@@ -2638,6 +2649,8 @@ function_finish_bin_op (GelCtx *ctx, GelETree *n, int nargs, GelETree *la, GelET
 	n->type = GEL_FUNCTION_NODE;
 	n->func.func = f;
 	n->func.func->context = -1;
+
+	/* FIXME: never on subst list maybe? but only when not adding random expression! */
 
 	return TRUE;
 }
@@ -2754,6 +2767,8 @@ function_uni_op (GelCtx *ctx, GelETree *n, GelETree *l)
 	n->func.func = f;
 	n->func.func->context = -1;
 
+	n->func.func->never_on_subst_list = 1;
+
 	return TRUE;
 }
 
@@ -2787,7 +2802,10 @@ gel_function_from_function (GelEFunc *func, GelETree *l)
 	GEL_GET_NEW_NODE (n);
 	n->type = GEL_FUNCTION_NODE;
 	n->func.func = d_copyfunc (func);
-	n->func.func->context = -1;
+	/* never copy is_local */
+	n->func.func->is_local = 0;
+	if ( ! n->func.func->on_subst_list)
+		n->func.func->context = -1;
 
 	GEL_GET_NEW_NODE (nn);
 	nn->type = GEL_OPERATOR_NODE;
@@ -2810,6 +2828,8 @@ gel_function_from_function (GelEFunc *func, GelETree *l)
 	n->type = GEL_FUNCTION_NODE;
 	n->func.func = f;
 	n->func.func->context = -1;
+
+	n->func.func->never_on_subst_list = 1;
 
 	return n;
 }
@@ -3296,16 +3316,11 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 
 		n->type = GEL_FUNCTION_NODE;
 		/* FIXME: are we ok with passing the token as well? */
-		n->func.func = d_makeufunc (f->id /* FIXME: does this need to be NULL */,
-					    gel_copynode (f->data.user),
-					    g_slist_copy (f->named_args),
-					    f->nargs,
-					    f->extra_dict);
-		n->func.func->context = -1;
-		n->func.func->vararg = f->vararg;
-		if (f->on_subst_list &&
-		    d_curcontext () != 0)
-			d_put_on_subst_list (n->func.func);
+		n->func.func = d_copyfunc (f);
+		/* The function can no longer be local */
+		n->func.func->is_local = 0;
+		if ( ! f->on_subst_list)
+			n->func.func->context = -1;
 	} else if(f->type == GEL_BUILTIN_FUNC) {
 		GelETree *ret;
 		gboolean exception = FALSE;
@@ -3315,8 +3330,8 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 			n->type = GEL_FUNCTION_NODE;
 			/* FIXME: are we ok with passing the token (f->id) as well? */
 			n->func.func = d_makerealfunc(f,f->id,FALSE);
-			n->func.func->context = -1;
-			n->func.func->vararg = f->vararg;
+			if ( ! n->func.func->on_subst_list)
+				n->func.func->context = -1;
 			/* FIXME: no need for extra_dict right? */
 			return TRUE;
 		}
@@ -3345,7 +3360,6 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 			/*make up a new fake id*/
 			GelToken *tok = g_new0(GelToken,1);
 			tok->refs = g_slist_append(NULL,f);
-			tok->curref = f;
 			i->id.id = tok;
 		}
 		i->any.next = NULL;
@@ -4532,20 +4546,11 @@ iter_funccallop(GelCtx *ctx, GelETree *n, gboolean *repushed)
 
 		EDEBUG("     USER FUNC PUSHING CONTEXT");
 
-		d_addcontext_named (f->id);
+		d_addcontext (f);
 
-		EDEBUG("     USER FUNC CONTEXT PUSHED TO ADD EXTRA DICT");
+		EDEBUG("     USER FUNC TO ADD ARGS TO DICT");
 
-		/* add extra dictionary stuff */
-		for (li = f->extra_dict; li != NULL; li = li->next) {
-			GelEFunc *func = d_copyfunc (li->data);
-			func->context = d_curcontext ();
-			d_addfunc (func);
-		}
-
-		EDEBUG("     USER FUNC EXTRA DICT ADDED, TO PUSH ARGS ON CONTEXT STACK");
-
-		/*push arguments on context stack*/
+		/*add arguments to dictionary*/
 		li = f->named_args;
 		for(ali = n->op.args->any.next;
 		    ali != NULL;
@@ -4607,6 +4612,30 @@ iter_funccallop(GelCtx *ctx, GelETree *n, gboolean *repushed)
 
 				d_addfunc (d_makevfunc (last_arg, nn));
 			}
+		}
+
+		EDEBUG("     USER FUNC CONTEXT PUSHED TO ADD EXTRA DICT");
+
+		/* add extra dictionary stuff */
+		for (li = f->extra_dict; li != NULL; li = li->next) {
+			GelEFunc *func = d_copyfunc (li->data);
+			func->context = d_curcontext ();
+			d_addfunc (func);
+		}
+
+
+		EDEBUG("     CREATING LOCAL VARS");
+
+		for (li = f->local_idents;
+		     li != NULL;
+		     li = li->next) {
+			GelToken *tok = li->data;
+			GelEFunc *vf = d_lookup_local (tok);
+			if (vf == NULL) {
+				vf = d_addfunc (d_makevfunc
+					 (tok, gel_makenum_null ()));
+			}
+			vf->is_local = 1;
 		}
 
 		EDEBUG("     USER FUNC ABOUT TO ENSURE BODY");
@@ -5404,7 +5433,7 @@ iter_equalsop(GelETree *n)
 	GelETree *l,*r;
 
 	GEL_GET_LR(n,l,r);
-	
+
 	if G_UNLIKELY (l->type != GEL_IDENTIFIER_NODE &&
 		       !(l->type == GEL_OPERATOR_NODE && l->op.oper == GEL_E_GET_VELEMENT) &&
 		       !(l->type == GEL_OPERATOR_NODE && l->op.oper == GEL_E_GET_ELEMENT) &&
@@ -5416,16 +5445,15 @@ iter_equalsop(GelETree *n)
 	}
 
 	if(l->type == GEL_IDENTIFIER_NODE) {
-		if G_UNLIKELY (d_curcontext() == 0 &&
-			       l->id.id->protected_) {
-			gel_errorout (_("Trying to set a protected id '%s'"),
-				      l->id.id->token);
-			return;
-		}
 		if (l->id.id->parameter) {
 			GelETree *ret = set_parameter (l->id.id, r);
 			if (ret != NULL)
 				replacenode (n, ret);
+			return;
+		} else if G_UNLIKELY (d_curcontext() == 0 &&
+			       l->id.id->protected_) {
+			gel_errorout (_("Trying to set a protected id '%s'"),
+				      l->id.id->token);
 			return;
 		} else if(r->type == GEL_FUNCTION_NODE) {
 			d_addfunc (d_makerealfunc (r->func.func,
@@ -5671,7 +5699,13 @@ iter_parameterop (GelETree *n)
 		gel_errorout (_("Parameters can only be created in the global context"));
 		return;
 	}
-	
+
+	if G_UNLIKELY (r->id.id->protected_) {
+		gel_errorout (_("Trying to set a protected id '%s'"),
+			      r->id.id->token);
+		return;
+	}
+
 	d_addfunc (d_makevfunc (r->id.id, gel_copynode (rr)));
 	r->id.id->parameter = 1;
 
@@ -6607,7 +6641,7 @@ iter_operator_post (GelCtx *ctx, gboolean *repushed)
 }
 
 static gboolean
-function_id_on_list (GSList *funclist, GelToken *id)
+id_on_function_list (GSList *funclist, GelToken *id)
 {
 	GSList *li;
        
@@ -6620,33 +6654,32 @@ function_id_on_list (GSList *funclist, GelToken *id)
 }
 
 GSList *
-gel_subst_local_vars (GSList *funclist, GelETree *n)
+gel_get_ids_for_extradict (GSList *toklist, GSList *args, GSList *locals, GelETree *n)
 {
 	if (n == NULL)
-		return funclist;
+		return toklist;
 
 	if (n->type == GEL_IDENTIFIER_NODE) {
-		GelEFunc *func = d_lookup_local (n->id.id);
-		if (func != NULL &&
-		    ! function_id_on_list (funclist, n->id.id)) {
-			GelEFunc *f = d_copyfunc (func);
-			f->context = -1;
-			funclist = g_slist_prepend (funclist, f);
+		if (g_slist_find (args, n->id.id) == NULL &&
+		    g_slist_find (locals, n->id.id) == NULL &&
+		    g_slist_find (toklist, n->id.id) == NULL) {
+			GelEFunc *f = d_lookup_global (n->id.id);
+			if (f != NULL && f->context > 0)
+				toklist = g_slist_prepend (toklist, n->id.id);
 		}
 	} else if (n->type == GEL_SPACER_NODE) {
-		funclist = gel_subst_local_vars (funclist, n->sp.arg);
-	} else if(n->type == GEL_OPERATOR_NODE) {
-		/* special case to avoid more work
-		 * than needed */
-		if ((n->op.oper == GEL_E_EQUALS || n->op.oper == GEL_E_DEFEQUALS) &&
-		    n->op.args->type == GEL_IDENTIFIER_NODE) {
-			funclist = gel_subst_local_vars (funclist, n->op.args->any.next);
-		} else {
-			GelETree *args = n->op.args;
-			while (args != NULL) {
-				funclist = gel_subst_local_vars (funclist, args);
-				args = args->any.next;
-			}
+		toklist = gel_get_ids_for_extradict (toklist, args, locals, n->sp.arg);
+	} else if (n->type == GEL_OPERATOR_NODE) {
+		GelETree *al = n->op.args;
+		while (al != NULL) {
+			toklist = gel_get_ids_for_extradict (toklist, args, locals, al);
+			al = al->any.next;
+		}
+	} else if (n->type == GEL_COMPARISON_NODE) {
+		GelETree *al = n->comp.args;
+		while (al != NULL) {
+			toklist = gel_get_ids_for_extradict (toklist, args, locals, al);
+			al = al->any.next;
 		}
 	} else if (n->type == GEL_MATRIX_NODE &&
 		   n->mat.matrix != NULL &&
@@ -6655,24 +6688,89 @@ gel_subst_local_vars (GSList *funclist, GelETree *n)
 		int w,h;
 		w = gel_matrixw_width (n->mat.matrix);
 		h = gel_matrixw_height (n->mat.matrix);
-		gel_matrixw_make_private (n->mat.matrix, TRUE /* kill_type_caches */);
 		for (i = 0; i < w; i++) {
 			for(j = 0; j < h; j++) {
 				GelETree *t = gel_matrixw_get_index
 					(n->mat.matrix, i, j);
 				if (t != NULL)
-					funclist = gel_subst_local_vars (funclist, t);
+					toklist = gel_get_ids_for_extradict (toklist, args, locals, t);
 			}
 		}
 	} else if (n->type == GEL_SET_NODE) {
 		GelETree *ali;
 		for(ali = n->set.items; ali != NULL; ali = ali->any.next)
-			funclist = gel_subst_local_vars (funclist, ali);
+			toklist = gel_get_ids_for_extradict (toklist, args, locals, ali);
 	} else if (n->type == GEL_FUNCTION_NODE &&
 		   (n->func.func->type == GEL_USER_FUNC ||
 		    n->func.func->type == GEL_VARIABLE_FUNC)) {
 		D_ENSURE_USER_BODY (n->func.func);
-		funclist = gel_subst_local_vars (funclist, n->func.func->data.user);
+		toklist = gel_get_ids_for_extradict (toklist, args, locals, n->func.func->data.user);
+	}
+	return toklist;
+}
+
+GSList *
+gel_subst_local_vars (GSList *funclist, GSList **toklist)
+{
+	GSList *li;
+	GSList *prev;
+
+	li = *toklist;
+	prev = NULL;
+	while (li != NULL) {
+		GelToken *id = li->data;
+		GelEFunc *func = d_lookup_local (id);
+		if (func != NULL &&
+		    ! func->is_local) {
+			GSList *tmp;
+			GelEFunc *f = d_copyfunc (func);
+			if ( ! f->on_subst_list)
+				f->context = -1;
+			funclist = g_slist_prepend (funclist, f);
+			
+			tmp = li;
+			li = li->next;
+			if (prev != NULL) {
+				prev->next = g_slist_remove_link (prev->next, tmp);
+			} else {
+				*toklist = g_slist_remove_link (*toklist, tmp);
+			}
+		} else {
+			prev = li;
+			li = li->next;
+		}
+	}
+	return funclist;
+}
+
+static GSList *
+build_extradict (GSList *funclist, GSList *toklist)
+{
+	GSList *li;
+
+	for (li = toklist; li != NULL; li = li->next) {
+		GelToken *id = li->data;
+		GelEFunc *func = d_lookup_global (id);
+		if G_LIKELY (func != NULL) {
+			GelEFunc *f = d_copyfunc (func);
+			/* note that local stays local! */
+			if ( ! f->on_subst_list)
+				f->context = -1;
+			funclist = g_slist_prepend (funclist, f);
+		} else {
+			char *similar = gel_similar_possible_ids (id->token);
+			if (similar != NULL) {
+				gel_errorout (_("Variable '%s' used uninitialized, "
+						"perhaps you meant %s."),
+					      id->token,
+					      similar);
+
+				g_free (similar);
+			} else {
+				gel_errorout (_("Variable '%s' used uninitialized"),
+					      id->token);
+			}
+		}
 	}
 	return funclist;
 }
@@ -6797,11 +6895,22 @@ iter_eval_etree(GelCtx *ctx)
 
 		case GEL_FUNCTION_NODE:
 			EDEBUG(" FUNCTION NODE");
-			if (n->func.func != NULL &&
-			    (n->func.func->type == GEL_USER_FUNC ||
-			     n->func.func->type == GEL_VARIABLE_FUNC) &&
-			    d_curcontext () != 0) {
-				d_put_on_subst_list (n->func.func);
+			if (n->func.func->never_on_subst_list) {
+				if (n->func.func->built_subst_dict) {
+					n->func.func->extra_dict = build_extradict (n->func.func->extra_dict,
+										    n->func.func->subst_dict);
+					n->func.func->built_subst_dict = 0;
+					g_slist_free (n->func.func->subst_dict);
+					n->func.func->subst_dict = NULL;
+				}
+			} else if (n->func.func != NULL &&
+				   (n->func.func->type == GEL_USER_FUNC ||
+				    n->func.func->type == GEL_VARIABLE_FUNC) &&
+				   d_curcontext () != 0) {
+				D_ENSURE_SUBST_DICT (n->func.func);
+				if (n->func.func->subst_dict != NULL) {
+					d_put_on_subst_list (n->func.func);
+				}
 			}
 			WHACK_SAVEDN_POP;
 			break;
@@ -7064,6 +7173,89 @@ gather_comparisons_end:
 	return ret;
 }
 
+/* 0 not found
+   1 found OK
+   2 found not first */
+int
+gel_get_local_node (GelETree *n, gboolean first_arg,
+		    gboolean *local_all, GSList **local_idents)
+{
+	if (n == NULL) return 0;
+
+	if (n->type == GEL_LOCAL_NODE) {
+		if (first_arg) {
+			GelETree *arg = n->loc.arg;
+
+			*local_idents = n->loc.idents;
+			if (n->loc.idents == NULL)
+				*local_all = TRUE;
+
+			n->loc.idents = NULL;
+			n->loc.arg = NULL;
+
+			replacenode (n, arg);
+			if (gel_get_local_node (n, FALSE,
+						local_all, local_idents) == 2) {
+				return 2;
+			} else {
+				return 1;
+			}
+		} else {
+			return 2;
+		}
+	} else if (n->type == GEL_SPACER_NODE) {
+		return gel_get_local_node (n->sp.arg, first_arg, local_all, local_idents);
+	} else if (n->type == GEL_OPERATOR_NODE) {
+		GelETree *ali;
+		if (n->op.oper == GEL_E_SEPAR) {
+			int ret = gel_get_local_node (n->op.args, first_arg, local_all, local_idents);
+			if (ret == 2)
+				return 2;
+			for (ali = n->op.args->any.next; ali != NULL; ali = ali->any.next)
+				if (gel_get_local_node (ali, FALSE, local_all, local_idents))
+					return 2;
+			return ret;
+		} else {
+			for (ali = n->op.args; ali != NULL; ali = ali->any.next)
+				if (gel_get_local_node (ali, FALSE, local_all, local_idents))
+					return 2;
+		}
+		return FALSE;
+	} else if(n->type == GEL_MATRIX_NODE) {
+		int i, j;
+		int w, h;
+		if (n->mat.matrix == NULL ||
+		    gel_is_matrix_value_only (n->mat.matrix)) {
+			return 0;
+		}
+		w = gel_matrixw_width (n->mat.matrix);
+		h = gel_matrixw_height (n->mat.matrix);
+		gel_matrixw_make_private (n->mat.matrix, TRUE /* kill_type_caches */);
+		for (j = 0; j < h; j++) {
+			for (i = 0; i < w; i++) {
+				GelETree *t = gel_matrixw_get_index
+					(n->mat.matrix, i, j);
+				if (t != NULL) {
+					if (gel_get_local_node (t, FALSE, local_all,
+								local_idents))
+						return 2;
+				}
+			}
+		}
+		return FALSE;
+	} else if (n->type == GEL_SET_NODE) {
+		GelETree *ali;
+		for (ali = n->set.items; ali != NULL; ali = ali->any.next)
+			if (gel_get_local_node (ali, FALSE, local_all,
+						local_idents))
+				return 2;
+		return 0;
+	}
+	/* Note: Need not go into functions! */
+	/* Note: Need not go into comparison nodes as those do not exist yet! */
+	return 0;
+}
+
 void
 gel_replace_equals (GelETree *n, gboolean in_expression)
 {
@@ -7129,6 +7321,8 @@ gel_replace_equals (GelETree *n, gboolean in_expression)
 		/* function bodies are a completely new thing */
 		gel_replace_equals (n->func.func->data.user, FALSE);
 	}
+
+	/* Note: no need to handle comparison node, not yet created */
 }
 
 void

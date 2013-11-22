@@ -25,6 +25,18 @@
 /*declarations of structures*/
 #include "structs.h"
 
+typedef struct _GelContextFrame  GelContextFrame;
+struct _GelContextFrame  {
+	GelContextFrame *next;
+
+	GSList *functions;
+	GSList *substlist;
+	GelToken *name;
+
+	gboolean local_all;
+};
+
+
 /*return current context number (0 is global, -1 is uninitialized)*/
 int d_curcontext(void);
 
@@ -76,11 +88,12 @@ GelEFunc * d_lookup_global_up1(GelToken *id);
 GelEFunc * d_lookup_only_global (GelToken *id);
 /*lookup a function in the dictionary, if there are more return the one in the
   highest context*/
-#define d_lookup_global(id) ((id)->curref)
+GelEFunc * d_lookup_global (GelToken *id);
 
 GelToken * d_intern (const char *id);
 
 gboolean d_delete(GelToken *id);
+gboolean d_delete_global(GelToken *id);
 
 /*clear all context dictionaries and pop out all the contexts except
   the global one
@@ -96,8 +109,7 @@ void d_freefunc(GelEFunc *n);
 void d_replacefunc (GelEFunc *old, GelEFunc *_new);
 
 /*push a new dictionary onto the context stack*/
-gboolean d_addcontext(void);
-gboolean d_addcontext_named (GelToken *name);
+gboolean d_addcontext (GelEFunc *func);
 
 /*gimme the last dictinary and pop the context stack*/
 void d_popcontext(void);
@@ -105,9 +117,9 @@ void d_popcontext(void);
 /*gimme the current dictinary*/
 GSList * d_getcontext (void);
 
-/* this is a list of lists of the context stack */
-GSList * d_get_all_contexts (void);
-GSList * d_get_context_names (void);
+/* this is a list of lists of the context stack,
+ * Also it is a pointer to the current context frame */
+GelContextFrame * d_get_all_contexts (void);
 
 /*gimme the current global dictinary*/
 GSList * d_getcontext_global (void);
@@ -124,15 +136,25 @@ void d_protect_all(void);
 void d_add_named_args (GelEFunc *f, const char *args);
 
 #define D_ENSURE_USER_BODY(f) \
-	if G_UNLIKELY (f->data.user == NULL) {				\
-		g_assert (f->id->uncompiled != NULL);			\
-		f->data.user =						\
-			gel_decompile_tree (f->id->uncompiled);		\
-		f->id->uncompiled = NULL;				\
+	if G_UNLIKELY ((f)->data.user == NULL) {			\
+		g_assert ((f)->id->uncompiled != NULL);			\
+		(f)->data.user =					\
+			gel_decompile_tree ((f)->id->uncompiled);	\
+		(f)->id->uncompiled = NULL;				\
 		/* On error give null tree */				\
-		if (f->data.user == NULL)				\
-			f->data.user = gel_makenum_null ();		\
+		if ((f)->data.user == NULL)				\
+			(f)->data.user = gel_makenum_null ();		\
 	}								\
+
+#define D_ENSURE_SUBST_DICT(f) \
+	D_ENSURE_USER_BODY (f);							\
+	if ( ! (f)->built_subst_dict) {						\
+		(f)->subst_dict = gel_get_ids_for_extradict (NULL,		\
+						             (f)->named_args,	\
+							     (f)->local_idents,	\
+							     (f)->data.user);	\
+		(f)->built_subst_dict = 1;					\
+	}
 
 
 #endif

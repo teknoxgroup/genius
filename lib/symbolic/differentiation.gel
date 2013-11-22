@@ -1,5 +1,6 @@
 function SymbolicNthDerivative(f,n) =
 (
+	local *;
 	if not IsFunction(f) then
 		(error("SymbolicNthDerivative: argument 1 must be a function");bailout)
 	else if not IsNonNegativeInteger(n) then
@@ -15,10 +16,10 @@ function SymbolicNthDerivative(f,n) =
 	df
 )
 SetHelp("SymbolicNthDerivative","symbolic","Attempt to symbolically differentiate a function n times");
-protect("SymbolicNthDerivative");
 
 function SymbolicNthDerivativeTry(f,n) =
 (
+	local *;
 	if not IsFunction(f) then
 		(error("SymbolicNthDerivativeTry: argument 1 must be a function");bailout)
 	else if not IsNonNegativeInteger(n) then
@@ -34,10 +35,10 @@ function SymbolicNthDerivativeTry(f,n) =
 	df
 )
 SetHelp("SymbolicNthDerivativeTry","symbolic","Attempt to symbolically differentiate a function n times quietly and return null on failure");
-protect("SymbolicNthDerivativeTry");
 
 function SymbolicTaylorApproximationFunction(f,x0,n) =
 (
+	local *;
 	if not IsFunction(f) then
 		(error("SymbolicTaylorApproximationFunction: argument 1 must be a function");bailout)
 	else if not IsValue(x0) then
@@ -57,7 +58,6 @@ function SymbolicTaylorApproximationFunction(f,x0,n) =
 	        )
 	);
 	tp = PolyToFunction (c);
-	`(x) = (tp call (x - x0))
+	`(x)[tp,x0] = (tp call (x - x0))
 )
 SetHelp("SymbolicTaylorApproximationFunction","symbolic","Attempt to construct the taylor approximation function around x0 to the nth degree.");
-protect("SymbolicTaylorApproximationFunction");

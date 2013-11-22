@@ -17,7 +17,6 @@ function PseudoprimeTest(n,b) =
  (
   b^(|n|-1) == 1 mod |n|
  )
-protect("PseudoprimeTest");
 
 # An integer is said to be a PseudoPrime with base b iff it is:
 # odd, composite, and satisfies b^(n-1) == 1 (mod n).
@@ -28,14 +27,12 @@ function IsPseudoprime(n,b) =
   IsOdd(n) and PseudoprimeTest(n,b) and not(IsPrime(n))
  )
 SetHelp("IsPseudoprime","number_theory","If n is a pseudoprime base b but not a prime, that is if b^(n-1) == 1 mod n");
-protect("IsPseudoprime");
 
 function IsStrongPseudoprime(n,b) =
  (
   IsOdd(n) and gcd(n,b)==1 and StrongPseudoprimeTest(n,b) and not (IsPrime(n))
  )
 SetHelp("IsStrongPseudoprime","number_theory","Test if n is a strong pseudoprime to base b but not a prime");
-protect("IsStrongPseudoprime");
 
 #######################################
 ############## Misc ###################
@@ -58,7 +55,6 @@ function LucasLehmer(p) = (
 	);
 	S == 0
 );
-protect("LucasLehmer")
 
 # See http://primes.utm.edu/mersenne/index.html
 # Or http://www.mersenne.org
@@ -106,10 +102,10 @@ MersennePrimeExponents = [2
 24036583
 25964951
 30402457
-32582657,
-37156667,
+32582657
+37156667
+42643801
 43112609];
-protect("MersennePrimeExponents");
 
 # See http://www.mersenne.org
 SetHelp("IsMersennePrimeExponent","number_theory","Test if Mp is a Mersenne prime using a table");
@@ -124,11 +120,10 @@ function IsMersennePrimeExponent(p) = (
 		return true;
 
 	# http://www.mersenne.org / GIMPS doublechecked everything up
-	# to 17,001,247
-	if p <= 17001247 then
+	# to 18,297,089 (on Jul. 22, 2009)
+	if p <= 18297089 then
 		return false;
 
-	error("IsMersennePrimeExponent: Number too large (known values up to: " + 17001247 + ")");
+	error("IsMersennePrimeExponent: Number too large (known values up to: " + 18297089 + ")");
 	bailout
 );
-protect("IsMersennePrimeExponent")

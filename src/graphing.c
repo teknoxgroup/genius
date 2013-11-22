@@ -1714,6 +1714,9 @@ ensure_window (gboolean do_window_present)
 		 GTK_STOCK_CLOSE,
 		 GTK_RESPONSE_CLOSE,
 		 NULL);
+	gtk_window_set_type_hint (GTK_WINDOW (graph_window),
+				  GDK_WINDOW_TYPE_HINT_NORMAL);
+
 	gtk_window_add_accel_group (GTK_WINDOW (graph_window),
 				    accel_group);
 
@@ -3012,7 +3015,9 @@ draw_line (double *x, double *y, int len, int thickness, GdkColor *color)
 
 	gtk_plot_data_set_line_attributes (data,
 					   GTK_PLOT_LINE_SOLID,
-					   0, 0, thickness, color);
+					   GDK_CAP_ROUND, 
+					   GDK_JOIN_ROUND,
+					   thickness, color);
 
 	gtk_widget_show (GTK_WIDGET (data));
 
@@ -3318,9 +3323,13 @@ replot_fields (void)
 						   slopefield_data);
 				gdk_color_parse ("blue", &color);
 				color_alloc (&color);
-				gtk_plot_data_set_line_attributes (slopefield_data,
-								   GTK_PLOT_LINE_NONE,
-								   0, 0, 1, &color);
+				gtk_plot_data_set_line_attributes
+					(slopefield_data,
+					 GTK_PLOT_LINE_NONE,
+					 GDK_CAP_ROUND, 
+					 GDK_JOIN_ROUND,
+					 1 /* thickness */,
+					 &color);
 				gtk_plot_data_set_symbol (slopefield_data,
 							  GTK_PLOT_SYMBOL_NONE /* symbol type? */,
 							  GTK_PLOT_SYMBOL_EMPTY /* symbol style */,
@@ -3371,9 +3380,13 @@ replot_fields (void)
 						   vectorfield_data);
 				gdk_color_parse ("blue", &color);
 				color_alloc (&color);
-				gtk_plot_data_set_line_attributes (vectorfield_data,
-								   GTK_PLOT_LINE_NONE,
-								   0, 0, 1, &color);
+				gtk_plot_data_set_line_attributes
+					(vectorfield_data,
+					 GTK_PLOT_LINE_NONE,
+					 GDK_CAP_ROUND, 
+					 GDK_JOIN_ROUND,
+					 1 /* thickess */,
+					 &color);
 				gtk_plot_data_set_symbol (vectorfield_data,
 							  GTK_PLOT_SYMBOL_NONE /* symbol type? */,
 							  GTK_PLOT_SYMBOL_EMPTY /* symbol style */,
@@ -3512,7 +3525,9 @@ plot_functions (gboolean do_window_present)
 		color_alloc (&color);
 		gtk_plot_data_set_line_attributes (line_data[i],
 						   GTK_PLOT_LINE_SOLID,
-						   0, 0, 2, &color);
+						   GDK_CAP_ROUND, 
+						   GDK_JOIN_ROUND,
+						   2, &color);
 
 		label = label_func (i, plot_func[i], "x", plot_func_name[i]);
 		gtk_plot_data_set_legend (line_data[i], label);
@@ -3566,7 +3581,9 @@ plot_functions (gboolean do_window_present)
 		color_alloc (&color);
 		gtk_plot_data_set_line_attributes (parametric_data,
 						   GTK_PLOT_LINE_SOLID,
-						   0, 0, 2, &color);
+						   GDK_CAP_ROUND, 
+						   GDK_JOIN_ROUND,
+						   2, &color);
 
 		if (parametric_name != NULL) {
 			label = g_strdup (parametric_name);
@@ -4264,6 +4281,10 @@ function_from_expression (const char *e, const char *var, gboolean *ex)
 			      NULL /* dirprefix */);
 	g_free (ce);
 
+	/* Have to reset the error here, else we may die */
+	gel_error_num = GEL_NO_ERROR;
+	gel_got_eof = FALSE;
+
 	/* FIXME: if "x" (var) not used try to evaluate and if it returns a function use that */
 
 	if (value != NULL) {
@@ -4314,6 +4335,10 @@ function_from_expression2 (const char *e, gboolean *ex)
 			      NULL /* finished */,
 			      NULL /* dirprefix */);
 	g_free (ce);
+
+	/* Have to reset the error here, else we may die */
+	gel_error_num = GEL_NO_ERROR;
+	gel_got_eof = FALSE;
 
 	/* FIXME: funcbody?  I think it must be done. */
 	got_x = gel_eval_find_identifier (value, d_intern ("x"), TRUE /*funcbody*/);
@@ -4629,6 +4654,7 @@ plot_from_dialog_lineplot (void)
 
 	line_plot_clear_funcs ();
 
+	j = 0;
 	for (i = 0; i < MAXFUNC; i++) {
 		if (func[i] != NULL) {
 			plot_func[j] = func[i];
@@ -5033,6 +5059,8 @@ genius_plot_dialog (void)
 		 _("_Plot"),
 		 RESPONSE_PLOT,
 		 NULL);
+	gtk_window_set_type_hint (GTK_WINDOW (plot_dialog),
+				  GDK_WINDOW_TYPE_HINT_NORMAL);
 	gtk_dialog_set_default_response (GTK_DIALOG (plot_dialog),
 					 RESPONSE_PLOT);
 
