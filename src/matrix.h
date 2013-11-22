@@ -34,6 +34,10 @@ struct _Matrix {
 	/*private data*/
 	int realwidth;
 	int fullsize;
+	
+	/*how many times has this been used, do we need
+	  a copy?*/
+	int use;
 };
 typedef gpointer (*ElementCopyFunc)(gpointer,gpointer);
 

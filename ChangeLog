@@ -1,3 +1,124 @@
+Sat Apr 24 18:24:53 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.3.2
+
+Sat Apr 24 18:20:00 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c: fix prime function to return correct values
+
+	* src/{funclib.c,lib.gel}: added functionality to call scalar
+	  type functions with matrixes to work on node by node basis
+
+	* src/geniustests.txt: added a couple of tests
+
+	* README: updated
+
+Sat Apr 24 16:49:22 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: use a trick from bc for calculating atan close to 1
+
+Thu Apr 22 22:51:15 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: added a somewhat working arctan and implement
+	  ln for complex numbers, also fix some errors with errors :)
+
+	* src/lib.gel: implement a whole bunch of trigonometric functions
+	  and a bunch of other functions
+
+	* README: updated
+
+Thu Apr 22 19:02:52 1999  George Lebl  <jirka@5z.com>
+
+	* src/{calc.c,genius.c,gnome-genius.c,eval.c}: ignore SIGINT, and
+	  in calculations halt calculations on SIGINT
+
+Thu Apr 22 15:49:37 1999  George Lebl  <jirka@5z.com>
+
+	* src/{mpwrap.[ch],funclib.c}: added jacobi,legendre and
+	  perfect_square functions from gmp
+
+	* src/lib.gel: add infsum,infsum2,convol,convol_vec,matsum and
+	  matprod functions
+
+	* src/geniustests.txt: add some tests
+
+	* README: updated
+
+Thu Apr 22 02:39:19 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: test for complexness of arguments
+
+	* src/{mpwrap.[ch],funclib.c}: move reduction of sin/cos arguments
+	  to the sin cos functions in mpwrap, added sinh/cosh variety and
+	  added handeling of complex numbers for sin/cos/sinh/cosh/abs/exp,
+	  also added float function to make things floating
+
+	* src/{mpwrap.[ch],genius.c,calc.c,gnome-genius.c}: remove the
+	  ugly make_floats_ints hack since it is just not a correct
+	  thing to do
+
+	* src/mpwrap.c: when printing out complex numbers with imaginary
+	  part negative, don't print '+'
+
+	* README: add the sinh/cosh/float functions
+
+Tue Apr 20 15:30:07 1999  Erik Walthinsen <omega@cse.ogi.edu>
+
+	* added spec.in file and changed Makefile.am/configure.in to match
+
+Fri Apr 16 23:11:54 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c: added a set_size function which returns a new
+	  matrix of a specified size with the old one in it as it fit
+
+	* src/geniustests.txt: update
+
+	* README: update
+
+Fri Apr 16 22:58:01 1999  George Lebl  <jirka@5z.com>
+
+	* src/{parse.y,lexer.l,eval.c,calc.c}: added the range operator
+	  for matrix indexes, and this adds a lot more flexibility to
+	  manipulating matrixes.
+
+	* src/parse.y: added an implicit null node if ';' is at the end
+	  of a parenthesis or a block, so that it can act somewhat
+	  like a terminator instead of just a separator
+
+	* src/geniustests.txt: added a whole bunch of new tests for new
+	  things
+
+	* README: updated for the above changes
+
+	* src/lexer.l: always display secondary prompt from the lexer as
+	  this is the correct behaviour
+
+Fri Apr 16 20:38:37 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: fix segfault on errors of matrix index evaluating
+
+	* src/matrixw.c: fix set_region for matrixes of different ->tr
+	  value
+
+	* src/geniustests.txt: add tests for the above
+
+Fri Apr 16 20:03:03 1999  George Lebl  <jirka@5z.com>
+
+	* src/{matrix.[ch],matrixw.[ch],eval.c,calc.c,funclib.c,structs.h}:
+	  implement wrappers around matrices, to not store 0 nodes, to
+	  do a copy-on-write kind of allocation, which increases memory
+	  efficency and speed by an order of magnitude
+
+	* src/eval.c: don't reevaluate variables, unless they are called
+	  as functions with ()
+
+	* src/geniustests.txt: updated with a couple of new tests
+
+Fri Apr 16 01:14:22 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c,src/funclib.c,src/mymath.[ch]: remove mymath.[ch],
+	  rewrite functions in native gmp and moved them to mpwrap
+
 Thu Apr 15 20:26:46 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.3.1

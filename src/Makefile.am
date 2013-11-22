@@ -14,7 +14,7 @@ INCLUDES = \
 	$(GMP_INCLUDEDIR) \
 	$(GNOME_INCLUDEDIR)
 
-bin_PROGRAMS = @GNOME_GENIUS@ genius #gnome-genius-mdi
+bin_PROGRAMS = @GNOME_GENIUS@ genius
 
 EXTRA_PROGRAMS = gnome-genius
 
@@ -31,12 +31,12 @@ gnome_genius_SOURCES = 	\
 	dict.h		\
 	funclib.c	\
 	funclib.h	\
-	mymath.c	\
-	mymath.h	\
 	mpwrap.c	\
 	mpwrap.h	\
 	matrix.c	\
 	matrix.h	\
+	matrixw.c	\
+	matrixw.h	\
 	structs.h	\
 	lexer.l		\
 	parse.h		\
@@ -62,12 +62,12 @@ genius_SOURCES = 	\
 	dict.h		\
 	funclib.c	\
 	funclib.h	\
-	mymath.c	\
-	mymath.h	\
 	mpwrap.c	\
 	mpwrap.h	\
 	matrix.c	\
 	matrix.h	\
+	matrixw.c	\
+	matrixw.h	\
 	structs.h	\
 	lexer.l		\
 	parse.y
@@ -80,11 +80,13 @@ genius_LDADD = \
 	$(INTLLIBS) \
 	@READLINE_LIB@
 
-BUILT_SOURCES = parse.h
+BUILT_SOURCES = parse.h parse.c lexer.c
 
-EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel #gnome-genius-mdi.desktop
+CLEANFILES += $(BUILT_SOURCES)
 
-Utilities_DATA = gnome-genius.desktop #gnome-genius-mdi.desktop
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel
+
+Utilities_DATA = gnome-genius.desktop
 
 Library_DATA = lib.gel
 

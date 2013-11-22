@@ -25,6 +25,7 @@
 #endif
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <glob.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +41,7 @@
 #include "util.h"
 #include "dict.h"
 #include "funclib.h"
+#include "matrixw.h"
 
 #include "mpwrap.h"
 
@@ -77,6 +79,8 @@ void (*errorout)(char *)=NULL;
 
 char *loadfile = NULL;
 char *loadfile_glob = NULL;
+
+int interrupted = FALSE;
 
 static void
 appendout_c(GString *gs, FILE *out, char c)
@@ -130,6 +134,12 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			append_binaryoper(gs,out,";",n); break;
 		case E_EQUALS:
 			append_binaryoper(gs,out,"=",n); break;
+		case E_ABS:
+			GET_L(n,l);
+			appendout(gs,out,"(|");
+			print_etree(gs,out,l);
+			appendout(gs,out,"|)");
+			break;
 		case E_PLUS:
 			append_binaryoper(gs,out,"+",n); break;
 		case E_MINUS:
@@ -182,7 +192,11 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_LOGICAL_NOT:
 			append_unaryoper(gs,out,"not ",n); break;
 
+		case E_REGION_SEP:
+			append_binaryoper(gs,out,"..",n); break;
+
 		case E_GET_ELEMENT:
+		case E_GET_REGION:
 			GET_LRR(n,l,r,rr);
 			appendout_c(gs,out,'(');
 			print_etree(gs,out,l);
@@ -192,7 +206,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			print_etree(gs,out,rr);
 			appendout(gs,out,"))");
 			break;
-		case E_GET_ROW:
+		case E_GET_ROW_REGION:
 			GET_LR(n,l,r);
 			appendout_c(gs,out,'(');
 			print_etree(gs,out,l);
@@ -200,7 +214,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			print_etree(gs,out,r);
 			appendout(gs,out,",])");
 			break;
-		case E_GET_COLUMN:
+		case E_GET_COL_REGION:
 			GET_LR(n,l,r);
 			appendout_c(gs,out,'(');
 			print_etree(gs,out,l);
@@ -315,23 +329,23 @@ appendoper(GString *gs,FILE *out, ETree *n)
 }
 
 static void
-appendmatrix(GString *gs, FILE *out, Matrix *m)
+appendmatrix(GString *gs, FILE *out, MatrixW *m)
 {
 	int i,j;
 	appendout(gs,out,"[");
 	
-	print_etree(gs,out,matrix_index(m,0,0));
+	print_etree(gs,out,matrixw_index(m,0,0));
 	
-	for(i=1;i<m->width;i++) {
+	for(i=1;i<matrixw_width(m);i++) {
 		appendout(gs,out,",");
-		print_etree(gs,out,matrix_index(m,i,0));
+		print_etree(gs,out,matrixw_index(m,i,0));
 	}
-	for(j=1;j<m->height;j++) {
+	for(j=1;j<matrixw_height(m);j++) {
 		appendout(gs,out,":");
-		print_etree(gs,out,matrix_index(m,0,j));
-		for(i=1;i<m->width;i++) {
+		print_etree(gs,out,matrixw_index(m,0,j));
+		for(i=1;i<matrixw_width(m);i++) {
 			appendout(gs,out,",");
-			print_etree(gs,out,matrix_index(m,i,j));
+			print_etree(gs,out,matrixw_index(m,i,j));
 		}
 	}
 
@@ -424,12 +438,12 @@ pretty_print_etree(GString *gs, FILE *out, ETree *n)
 	if(n->type == MATRIX_NODE) {
 		int i,j;
 		appendout(gs,out,"\n[");
-		for(j=0;j<n->data.matrix->height;j++) {
+		for(j=0;j<matrixw_height(n->data.matrix);j++) {
 			if(j>0) appendout(gs,out,"\n ");
-			for(i=0;i<n->data.matrix->width;i++) {
+			for(i=0;i<matrixw_width(n->data.matrix);i++) {
 				if(i>0) appendout(gs,out,"\t");
 				print_etree(gs, out,
-					    matrix_index(n->data.matrix,i,j));
+					    matrixw_index(n->data.matrix,i,j));
 			}
 		}
 		appendout(gs,out,"]");
@@ -513,6 +527,13 @@ load_file(char *file, calcstate_t state, void (*errorfunc)(char *))
 		(*errorfunc)(buf);
 		got_eof = oldgeof;
 	}
+}
+
+static void
+interrupt(int x)
+{
+	interrupted = TRUE;
+	signal(SIGINT,SIG_IGN);
 }
 
 char *
@@ -644,17 +665,21 @@ for(;;) {
 	returnval = NULL;
 	inbailout = FALSE;
 	inexception = FALSE;
+	interrupted = FALSE;
 	if(inloop) g_slist_free(inloop);
 	inloop = g_slist_prepend(NULL,GINT_TO_POINTER(0));
+	signal(SIGINT,interrupt);
 	ret = evalnode(evalstack->data);
+	signal(SIGINT,SIG_IGN);
 	g_slist_free(inloop);
 	inloop = NULL;
-	if(inbailout || inexception) {
+	if(interrupted || inbailout || inexception) {
 		if(returnval) freetree(returnval);
 		returnval = NULL;
 	}
 	inbailout = FALSE;
 	inexception = FALSE;
+	interrupted = FALSE;
 	freetree(stack_pop(&evalstack));
 	if(!ret && returnval)
 		ret = returnval;

@@ -627,7 +627,7 @@ static int matrix_entry=0;
 #ifdef WITH_READLINE_SUPPORT
 #define NEXT_LINE {							\
 	while(use_readline) {						\
-		char *s = readline(!evalstack?"genius> ":"      > ");	\
+		char *s = readline("      > ");				\
 		if(!s) {						\
 			got_eof = TRUE;					\
 			return '\n';					\
@@ -1128,15 +1128,13 @@ case 33:
 YY_RULE_SETUP
 #line 192 "lexer.l"
 {
-			REJECT;
-			/*FIXME:*/
-			/*NO_RET;
-			return REGION_SEP;*/
+			NO_RET;
+			return REGION_SEP;
 		}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 199 "lexer.l"
+#line 197 "lexer.l"
 {
 			matrix_entry++;
 			parenth_depth++;
@@ -1146,7 +1144,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 206 "lexer.l"
+#line 204 "lexer.l"
 {
 			matrix_entry--;
 			parenth_depth--;
@@ -1156,7 +1154,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 214 "lexer.l"
+#line 212 "lexer.l"
 {
 			parenth_depth++;
 			NO_RET;
@@ -1165,7 +1163,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 220 "lexer.l"
+#line 218 "lexer.l"
 {
 			parenth_depth--;
 			DO_RET;
@@ -1174,7 +1172,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 226 "lexer.l"
+#line 224 "lexer.l"
 {
 				/* identifier*/
 				yylval.id = g_strdup(yytext);
@@ -1183,14 +1181,14 @@ YY_RULE_SETUP
 			}
 	YY_BREAK
 case 39:
-#line 234 "lexer.l"
+#line 232 "lexer.l"
 case 40:
-#line 235 "lexer.l"
+#line 233 "lexer.l"
 case 41:
-#line 236 "lexer.l"
+#line 234 "lexer.l"
 case 42:
 YY_RULE_SETUP
-#line 236 "lexer.l"
+#line 234 "lexer.l"
 {
 			char *s;
 			if(yytext[0] == '.')
@@ -1205,12 +1203,12 @@ YY_RULE_SETUP
 		}
 	YY_BREAK
 case 43:
-#line 251 "lexer.l"
+#line 249 "lexer.l"
 case 44:
-#line 252 "lexer.l"
+#line 250 "lexer.l"
 case 45:
 YY_RULE_SETUP
-#line 252 "lexer.l"
+#line 250 "lexer.l"
 {
 			char *s;
 			if(yytext[0] == '.')
@@ -1226,7 +1224,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 266 "lexer.l"
+#line 264 "lexer.l"
 {
 			char *s;
 			int base;
@@ -1242,12 +1240,12 @@ YY_RULE_SETUP
 		}
 	YY_BREAK
 case 47:
-#line 281 "lexer.l"
+#line 279 "lexer.l"
 case 48:
-#line 282 "lexer.l"
+#line 280 "lexer.l"
 case 49:
 YY_RULE_SETUP
-#line 282 "lexer.l"
+#line 280 "lexer.l"
 {
 			mpw_init(yylval.val);
 			mpw_set_str_int(yylval.val,yytext,0);
@@ -1257,12 +1255,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 289 "lexer.l"
+#line 287 "lexer.l"
 { NEXT_LINE; }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 291 "lexer.l"
+#line 289 "lexer.l"
 { 
 			if(matrix_entry) {
 				NEXT_LINE;
@@ -1276,17 +1274,17 @@ YY_RULE_SETUP
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 302 "lexer.l"
+#line 300 "lexer.l"
 ;
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 304 "lexer.l"
+#line 302 "lexer.l"
 { return ','; }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 306 "lexer.l"
+#line 304 "lexer.l"
 {
 			if(matrix_entry)
 				return ',';
@@ -1294,12 +1292,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 311 "lexer.l"
+#line 309 "lexer.l"
 ; /*ignore whitespace*/
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 313 "lexer.l"
+#line 311 "lexer.l"
 {
 			DO_RET;
 			return yytext[0];
@@ -1307,34 +1305,34 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 318 "lexer.l"
+#line 316 "lexer.l"
 { NO_RET; return yytext[0]; }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 320 "lexer.l"
+#line 318 "lexer.l"
 { DO_RET; return '.'; }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 322 "lexer.l"
+#line 320 "lexer.l"
 { DO_RET; return '|'; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 324 "lexer.l"
+#line 322 "lexer.l"
 { got_eof = TRUE; return '\n'; }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 326 "lexer.l"
+#line 324 "lexer.l"
 { NO_RET; return yytext[0]; }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 328 "lexer.l"
+#line 326 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 1338 "lex.yy.c"
+#line 1336 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2214,5 +2212,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 328 "lexer.l"
+#line 326 "lexer.l"
 

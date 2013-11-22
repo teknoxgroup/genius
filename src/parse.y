@@ -27,6 +27,8 @@
 #include "dict.h"
 #include "util.h"
 #include "calc.h"
+#include "matrix.h"
+#include "matrixw.h"
 
 extern evalstack_t evalstack;
 
@@ -260,7 +262,7 @@ push_matrix(void)
 	
 	GET_NEW_NODE(tree);
 	tree->type = MATRIX_NODE;
-	tree->data.matrix = matrix;
+	tree->data.matrix = matrixw_new_with_matrix(matrix);
 	tree->args = NULL;
 	tree->nargs = 0;
 	
@@ -347,6 +349,7 @@ fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
 	;
 
 expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
+	|	'(' expr SEPAR ')'	{ push_null(); PUSH_ACT(E_SEPAR); }
 	|	expr EQUALS expr	{ PUSH_ACT(E_EQUALS); }
 	|	'|' expr '|'		{ PUSH_ACT(E_ABS); }
 	|	expr '+' expr		{ PUSH_ACT(E_PLUS); }
@@ -370,13 +373,13 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
 	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
-	|	expr AT reg ',' expr ')' { PUSH_ACT(-1/*FIXME:*/); }
-	|	expr AT expr ',' reg ')' { PUSH_ACT(-1/*FIXME:*/); }
-	|	expr AT reg ',' reg ')' { PUSH_ACT(-1/*FIXME:*/); }
-	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW); }
-	|	expr AT reg ',' ')'	{ PUSH_ACT(-1/*FIXME:*/); }
-	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COLUMN); }
-	|	expr AT ',' reg ')'	{ PUSH_ACT(-1/*FIXME:*/); }
+	|	expr AT reg ',' expr ')' { PUSH_ACT(E_GET_REGION); }
+	|	expr AT expr ',' reg ')' { PUSH_ACT(E_GET_REGION); }
+	|	expr AT reg ',' reg ')' { PUSH_ACT(E_GET_REGION); }
+	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
+	|	expr AT reg ',' ')'	{ PUSH_ACT(E_GET_ROW_REGION); }
+	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COL_REGION); }
+	|	expr AT ',' reg ')'	{ PUSH_ACT(E_GET_COL_REGION); }
 	|	'[' matrixrows ']'	{ if(!push_matrix()) {SYNTAX_ERROR;} }
 	|	WHILE expr DO expr	{ PUSH_ACT(E_WHILE_CONS); }
 	|	UNTIL expr DO expr	{ PUSH_ACT(E_UNTIL_CONS); }
@@ -416,9 +419,15 @@ deref:		'*' ident		{ PUSH_ACT(E_DEREFERENCE); }
 ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); g_free($<id>1); }
 	;
 	
-funcdef:	'(' identlist')' '{' expr '}'	{ if(!push_func()) {SYNTAX_ERROR;} }
-	|	'(' ')' '{' expr '}'		{ if(!push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;}
-						  if(!push_func()) {SYNTAX_ERROR;} }
+funcdef:	'(' identlist')' block	{ if(!push_func()) {SYNTAX_ERROR;} }
+	|	'(' ')' block		{ if(!push_marker(EXPRLIST_START_NODE))
+						{SYNTAX_ERROR;}
+					  if(!push_func())
+					  	{SYNTAX_ERROR;} }
+	;
+	
+block:		'{' expr '}'
+	|	'{' expr SEPAR '}'	{ push_null(); PUSH_ACT(E_SEPAR); }
 	;
 
 identlist:	identlist ',' ident
@@ -433,7 +442,7 @@ matrixrows:	matrixrows ':' exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} }
 	|	exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
 	;
 	
-reg:		expr REGION_SEP expr	{/*FIXME:*/;}
+reg:		expr REGION_SEP expr	{ PUSH_ACT(E_REGION_SEP); }
 	;
 	
 %%

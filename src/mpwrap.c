@@ -19,13 +19,18 @@
  * USA.
  */
 
+#ifdef GNOME_SUPPORT
+#include <gnome.h>
+#else
+#define _(x) x
+#endif
+
 #include <string.h>
 #include <glib.h>
 #include <math.h>
 #include <limits.h>
 #include "calc.h"
 #include "util.h"
-#include "mymath.h"
 
 #include "mpwrap.h"
 
@@ -37,6 +42,8 @@ static int free_reals_n = 0;
 
 static MpwRealNum *zero = NULL;
 static MpwRealNum *one = NULL;
+
+static mpf_ptr pi_mpf = NULL;
 
 #define GET_NEW_REAL(n) {				\
 	if(!free_reals) {				\
@@ -73,6 +80,15 @@ static MpwRealNum *one = NULL;
 /*************************************************************************/
 /*low level stuff prototypes                                             */
 /*************************************************************************/
+
+/*get sin*/
+static void mympf_sin(mpf_t rop, mpf_t op, int hyperbolic, int reduceop);
+/*get cos*/
+static void mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop);
+/*get arctan*/
+static void mympf_arctan(mpf_ptr rop, mpf_ptr op);
+/*get pi*/
+static void mympf_pi(mpf_ptr rop);
 
 /*my own power function for floats, very simple :) */
 static void mympf_pow_ui(mpf_t rop,mpf_t op,unsigned long int e);
@@ -136,6 +152,9 @@ static void mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op);
 static void mpwl_mod(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
 static void mpwl_gcd(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static void mpwl_jacobi(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static void mpwl_legendre(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static int mpwl_perfect_square(MpwRealNum *op);
 
 static void mpwl_neg(MpwRealNum *rop,MpwRealNum *op);
 
@@ -160,11 +179,18 @@ static int mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op);
 static void mpwl_exp(MpwRealNum *rop,MpwRealNum *op);
 static int mpwl_ln(MpwRealNum *rop,MpwRealNum *op);
 
+static void mpwl_sin(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_cos(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_sinh(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_cosh(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_arctan(MpwRealNum *rop,MpwRealNum *op);
+static void mpwl_pi(MpwRealNum *rop);
+
 static int mpwl_cmp(MpwRealNum *op1, MpwRealNum *op2);
 
 static int mpwl_cmp_ui(MpwRealNum *op, unsigned long int i);
 
-static void mpwl_make_int(MpwRealNum *rop, int floats);
+static void mpwl_make_int(MpwRealNum *rop);
 
 /*make number into a float, this might be neccessary for unprecise
   calculations*/
@@ -203,6 +229,203 @@ static char * mpwl_getstring(MpwRealNum * num, int max_digits,
 /*************************************************************************/
 /*low level stuff                                                        */
 /*************************************************************************/
+
+/*get sin*/
+static void
+mympf_sin(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
+{
+	mpf_t top;
+	mpf_t bottom;
+	mpf_t fres;
+	mpf_t foldres;
+	mpf_t xsq;
+	mpz_t q;
+	unsigned long int i;
+	int negate=TRUE;
+
+	/*special case*/
+	if(mpf_cmp_ui(op,0)==0) {
+		mpf_set_ui(rop,0);
+		return;
+	}
+	
+	if(!hyperbolic && reduceop) {
+		if(!pi_mpf)
+			mympf_pi(NULL);
+
+		/*make xsq be op but in the range of -pi*2<xsq<pi*2 */
+		mpf_init(xsq);
+		mpf_div(xsq,op,pi_mpf);
+		mpf_div_ui(xsq,xsq,2);
+		mpz_init(q);
+		mpz_set_f(q,xsq);
+		mpf_set_z(xsq,q);
+		mpz_clear(q);
+		mpf_mul(xsq,xsq,pi_mpf);
+		mpf_sub(xsq,op,xsq);
+	} else 
+		mpf_init_set(xsq,op);
+	
+	mpf_init_set(top,xsq);
+	mpf_init(bottom);
+	mpf_set_ui(bottom,1);
+
+	mpf_init(fres);
+	mpf_init(foldres);
+	mpf_set(foldres,top);
+
+	mpf_mul(xsq,xsq,xsq);
+
+	for(i=2;;i+=2) {
+		mpf_mul(top,top,xsq);
+		/*this assumes that SHRT_MAX^2 can fit an an ulong*/
+		if(i<SHRT_MAX) {
+			mpf_mul_ui(bottom,bottom,i*(i+1));
+		} else {
+			mpf_mul_ui(bottom,bottom,i);
+			mpf_mul_ui(bottom,bottom,i+1);
+		}
+		mpf_div(fres,top,bottom);
+		if(!hyperbolic && negate)
+			mpf_sub(fres,foldres,fres);
+		else
+			mpf_add(fres,foldres,fres);
+		negate= !negate;
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+	
+	mpf_clear(top);
+	mpf_clear(bottom);
+	mpf_clear(foldres);
+	mpf_clear(xsq);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+}
+
+/*get cos*/
+static void
+mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
+{
+	mpf_t top;
+	mpf_t bottom;
+	mpf_t fres;
+	mpf_t foldres;
+	mpf_t xsq;
+	mpz_t q;
+	unsigned long int i;
+	int negate=TRUE;
+
+	/*special case*/
+	if(mpf_cmp_ui(op,0)==0) {
+		mpf_set_ui(rop,1);
+		return;
+	}
+
+	if(!hyperbolic && reduceop) {
+		if(!pi_mpf)
+			mympf_pi(NULL);
+
+		/*make xsq be op but in the range of -pi*2<xsq<pi*2 */
+		mpf_init(xsq);
+		mpf_div(xsq,op,pi_mpf);
+		mpf_div_ui(xsq,xsq,2);
+		mpz_init(q);
+		mpz_set_f(q,xsq);
+		mpf_set_z(xsq,q);
+		mpz_clear(q);
+		mpf_mul(xsq,xsq,pi_mpf);
+		mpf_sub(xsq,op,xsq);
+	} else
+		mpf_init_set(xsq,op);
+	
+	mpf_init(top);
+	mpf_set_ui(top,1);
+	mpf_init(bottom);
+	mpf_set_ui(bottom,1);
+
+	mpf_init(fres);
+	mpf_init(foldres);
+	mpf_set_ui(foldres,1);
+
+	mpf_mul(xsq,xsq,xsq);
+
+	for(i=1;;i+=2) {
+		mpf_mul(top,top,xsq);
+		/*this assumes that SHRT_MAX^2 can fit an an ulong*/
+		if(i<SHRT_MAX) {
+			mpf_mul_ui(bottom,bottom,i*(i+1));
+		} else {
+			mpf_mul_ui(bottom,bottom,i);
+			mpf_mul_ui(bottom,bottom,i+1);
+		}
+		mpf_div(fres,top,bottom);
+		if(!hyperbolic && negate)
+			mpf_sub(fres,foldres,fres);
+		else
+			mpf_add(fres,foldres,fres);
+		negate= !negate;
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+	
+	mpf_clear(top);
+	mpf_clear(bottom);
+	mpf_clear(foldres);
+	mpf_clear(xsq);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+}
+
+/*get the value for pi*/
+void
+mympf_pi(mpf_ptr rop)
+{
+	mpf_t fr2;
+	mpf_t frt;
+
+	if(pi_mpf) {
+		if(rop) mpf_set(rop,pi_mpf);
+		return;
+	}
+	
+	pi_mpf = g_new(__mpf_struct,1);
+
+	/*
+	 * Newton's method: Xn+1 = Xn - f(Xn)/f'(Xn)
+	 */
+	
+	mpf_init(pi_mpf);
+	mpf_init(fr2);
+	mpf_init(frt);
+	mpf_set_d(pi_mpf,3.14159265358979323846); /*use quite a precise guess
+						    as the initial one*/
+	for(;;) {
+		mympf_sin(fr2,pi_mpf,FALSE,FALSE);
+
+		mympf_cos(frt,pi_mpf,FALSE,FALSE);
+		mpf_div(fr2,fr2,frt);
+		mpf_neg(fr2,fr2);
+		mpf_add(fr2,fr2,pi_mpf);
+		
+		if(mpf_cmp(fr2,pi_mpf)==0)
+			break;
+		mpf_set(pi_mpf,fr2);
+	}
+	mpf_clear(fr2);
+	mpf_clear(frt);
+
+	if(rop) mpf_set(rop,pi_mpf);
+}
+
 
 /*exponential function uses the fact that e^x == (e^(x/2))^2*/
 /*precision is OFF ... bc mathlib defines it as "scale = 6 + scale + .44*x"*/
@@ -244,7 +467,7 @@ mympf_exp(mpf_t rop,mpf_t op)
 		if(f==ULONG_MAX) {
 			mpf_clear(x);
 			mpf_clear(cmp);
-			(*errorout)("Number too large to compute exponential!");
+			(*errorout)(_("Number too large to compute exponential!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -419,21 +642,179 @@ mympf_ln_top(mpf_t rop,mpf_t op)
 
 	mpf_clear(fres);
 }
-
-/*ln function*/
-static int
-mympf_ln(mpf_t rop,mpf_t op)
-{
-	if(mpf_cmp_ui(op,2)>=0) {
-		mympf_ln_top(rop,op);
-		return TRUE;
-	} else if(mpf_cmp_ui(op,0)>0) {
-		mympf_ln_bottom(rop,op);
-		return TRUE;
-	} else
-		return FALSE;
-}
 #endif
+
+/*arctan for op<=1*/
+static int
+mympf_arctan_bottom(mpf_t rop,mpf_t op)
+{
+	int neg = TRUE;
+	mpf_t x;
+	mpf_t top;
+	mpf_t fres;
+	mpf_t foldres;
+	unsigned long int i;
+	unsigned long int prec;
+
+	if(mpf_cmp_ui(op,0)<=0)
+		return FALSE;
+
+	/* 4bits is about 1 digit I guess */
+	prec = 6*4 + mpf_get_prec(op);
+	
+	mpf_init2(x,prec);
+	mpf_mul(x,op,op);
+	
+	mpf_init2(fres,prec);
+	mpf_init2(foldres,prec);
+	mpf_set(foldres,op);
+
+	mpf_init2(top,prec);
+	mpf_set(top,op);
+
+	for(i=3;;i+=2) {
+		mpf_mul(top,top,x);
+		mpf_div_ui(fres,top,i);
+		
+		if(neg)
+			mpf_sub(fres,foldres,fres);
+		else
+			mpf_add(fres,foldres,fres);
+		neg = !neg;
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+
+	mpf_clear(foldres);
+	mpf_clear(top);
+	mpf_clear(x);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+	
+	return TRUE;
+}
+
+/*arctan for op>=1*/
+static int
+mympf_arctan_top(mpf_t rop,mpf_t op)
+{
+	int neg = FALSE;
+	mpf_t x;
+	mpf_t xacc;
+	mpf_t fres;
+	mpf_t foldres;
+	unsigned long int i;
+	unsigned long int prec;
+
+	if(mpf_cmp_ui(op,0)<=0)
+		return FALSE;
+
+	/* 4bits is about 1 digit I guess */
+	prec = 6*4 + mpf_get_prec(op);
+	
+	mpf_init2(x,prec);
+	mpf_mul(x,op,op);
+	mpf_ui_div(x,1,x);
+	
+	mpf_init2(fres,prec);
+	mpf_init2(foldres,prec);
+	mpf_ui_div(foldres,1,op);
+
+	if(!pi_mpf)
+		mympf_pi(NULL);
+	
+	mpf_div_ui(fres,pi_mpf,2);
+	/*we never give it a negative argument*/
+	/*
+	if(mpf_sgn(op)<0)
+		mpf_neg(fres,fres);
+		*/
+	
+	mpf_sub(foldres,fres,foldres);
+
+	mpf_init2(xacc,prec);
+	mpf_ui_div(xacc,1,op);
+
+	for(i=3;;i+=2) {
+		mpf_mul(xacc,xacc,x);
+		mpf_div_ui(fres,xacc,i);
+		
+		if(neg)
+			mpf_sub(fres,foldres,fres);
+		else
+			mpf_add(fres,foldres,fres);
+		neg = !neg;
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+
+	mpf_clear(foldres);
+	mpf_clear(xacc);
+	mpf_clear(x);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+	
+	return TRUE;
+}
+
+/*arctan function*/
+static void
+mympf_arctan(mpf_ptr rop,mpf_ptr op)
+{
+	int negate = FALSE;
+	int cached_0_2 = FALSE;
+	static mpf_t atan_0_2;
+	if(mpf_sgn(op)<0) {
+		mpf_neg(op,op);
+		negate = TRUE;
+	}
+
+	if(mpf_cmp_ui(op,2)>=0)
+		mympf_arctan_top(rop,op);
+	else {
+		mpf_t tmp;
+		mpf_init_set_d(tmp,0.8);
+		if(mpf_cmp(op,tmp)<=0)
+			mympf_arctan_bottom(rop,op);
+		else {
+			/* 2>op>0.8 */
+			/* we'll calculate it as follows:
+			   atan(.2)+atan((op-0.2)/(op+0.2))*/
+			mpf_t tmp2;
+			mpf_init(tmp2);
+
+			mpf_set_d(tmp,0.2);
+			mpf_add(tmp2,op,tmp);
+			mpf_sub(tmp,op,tmp);
+			mpf_div(tmp,tmp,tmp2);
+			
+			mpf_clear(tmp2);
+
+			if(!cached_0_2) {
+				mpf_init_set_d(atan_0_2,0.2);
+				mympf_arctan_bottom(atan_0_2,atan_0_2);
+			}
+			
+			mympf_arctan_bottom(rop,tmp);
+			mpf_add(rop,rop,atan_0_2);
+		}
+		mpf_clear(tmp);
+	}
+	
+	if(negate) {
+		mpf_neg(op,op);
+		if(op!=rop)
+			mpf_neg(rop,rop);
+	}
+}
 
 /*my own power function for floats, very simple :) */
 static void
@@ -943,7 +1324,7 @@ mpwl_set(MpwRealNum *rop,MpwRealNum *op)
 			break;
 		case MPW_RATIONAL:
 			mpq_set(rop->data.rval,op->data.rval);
-			mpwl_make_int(rop,FALSE);
+			mpwl_make_int(rop);
 			break;
 		case MPW_INTEGER:
 			mpz_set(rop->data.ival,op->data.ival);
@@ -1011,7 +1392,7 @@ mpwl_add(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			break;
 		case MPW_RATIONAL:
 			mpq_add(rop->data.rval,op1->data.rval,op2->data.rval);
-			mpwl_make_int(rop,FALSE);
+			mpwl_make_int(rop);
 			break;
 		case MPW_INTEGER:
 			mpz_add(rop->data.ival,op1->data.ival,op2->data.ival);
@@ -1041,7 +1422,7 @@ mpwl_add(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		break;
 	case MPW_RATIONAL:
 		mpq_add(r.data.rval,op1->data.rval,op2->data.rval);
-		mpwl_make_int(&r,FALSE);
+		mpwl_make_int(&r);
 		break;
 	case MPW_INTEGER:
 		mpz_add(r.data.ival,op1->data.ival,op2->data.ival);
@@ -1105,7 +1486,7 @@ mpwl_sub(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			break;
 		case MPW_RATIONAL:
 			mpq_sub(rop->data.rval,op1->data.rval,op2->data.rval);
-			mpwl_make_int(rop,FALSE);
+			mpwl_make_int(rop);
 			break;
 		case MPW_INTEGER:
 			mpz_sub(rop->data.ival,op1->data.ival,op2->data.ival);
@@ -1135,7 +1516,7 @@ mpwl_sub(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		break;
 	case MPW_RATIONAL:
 		mpq_sub(r.data.rval,op1->data.rval,op2->data.rval);
-		mpwl_make_int(&r,FALSE);
+		mpwl_make_int(&r);
 		break;
 	case MPW_INTEGER:
 		mpz_sub(r.data.ival,op1->data.ival,op2->data.ival);
@@ -1181,7 +1562,7 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 				mpwl_init_type(rop,MPW_RATIONAL);
 			}
 			mpq_mul(rop->data.rval,op1->data.rval,op2->data.rval);
-			mpwl_make_int(rop,FALSE);
+			mpwl_make_int(rop);
 			break;
 		case MPW_INTEGER:
 			if(rop->type != MPW_INTEGER) {
@@ -1214,7 +1595,7 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	case MPW_RATIONAL:
 		mpwl_init_type(&r,t);
 		mpq_mul(r.data.rval,op1->data.rval,op2->data.rval);
-		mpwl_make_int(&r,FALSE);
+		mpwl_make_int(&r);
 		break;
 	case MPW_INTEGER:
 		mpwl_init_type(&r,t);
@@ -1255,7 +1636,7 @@ mpwl_mul_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 		}
 		mpz_mul_ui(mpq_numref(rop->data.rval),
 			   mpq_numref(op->data.rval),i);
-		mpwl_make_int(rop,FALSE);
+		mpwl_make_int(rop);
 		break;
 	case MPW_INTEGER:
 		if(rop->type!=MPW_INTEGER) {
@@ -1290,7 +1671,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			break;
 		case MPW_RATIONAL:
 			mpq_div(rop->data.rval,op1->data.rval,op2->data.rval);
-			mpwl_make_int(rop,FALSE);
+			mpwl_make_int(rop);
 			break;
 		default: ;
 		}
@@ -1307,14 +1688,14 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	case MPW_RATIONAL:
 		mpwl_init_type(&r,t);
 		mpq_div(r.data.rval,op1->data.rval,op2->data.rval);
-		mpwl_make_int(&r,FALSE);
+		mpwl_make_int(&r);
 		break;
 	case MPW_INTEGER:
 		mpwl_init_type(&r,MPW_RATIONAL);
 		mpq_set_z(r.data.rval,op1->data.ival);
 		mpz_set(mpq_denref(r.data.rval),
 			op2->data.ival);
-		mpwl_make_int(&r,FALSE);
+		mpwl_make_int(&r);
 		break;
 	case MPW_NATIVEINT:
 		if(op1->data.nval%op2->data.nval == 0) {
@@ -1362,7 +1743,7 @@ mpwl_div_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 		}
 		mpz_mul_ui(mpq_denref(rop->data.rval),
 			   mpq_denref(op->data.rval),i);
-		mpwl_make_int(rop,FALSE);
+		mpwl_make_int(rop);
 		break;
 	case MPW_INTEGER:
 		t = rop->type;
@@ -1413,7 +1794,7 @@ mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op)
 		mpq_inv(rop->data.rval,op->data.rval);
 		mpz_mul_ui(mpq_numref(rop->data.rval),
 			   mpq_numref(rop->data.rval),i);
-		mpwl_make_int(rop,FALSE);
+		mpwl_make_int(rop);
 		break;
 	case MPW_INTEGER:
 		t = rop->type;
@@ -1475,7 +1856,7 @@ mpwl_mod(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		mpwl_clear_extra_type(op1,t);
 		mpwl_clear_extra_type(op2,t);
 	} else {
-		(*errorout)("Can't do modulo of floats or rationals!");
+		(*errorout)(_("Can't do modulo of floats or rationals!"));
 		error_num=NUMERICAL_MPW_ERROR;
 	}
 }
@@ -1499,7 +1880,7 @@ mpwl_gcd(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		case MPW_NATIVEINT:
 			if(rop->type!=MPW_NATIVEINT) {
 				mpwl_clear(rop);
-				mpwl_init_type(rop,MPW_INTEGER);
+				mpwl_init_type(rop,MPW_NATIVEINT);
 			}
 			a = op1->data.nval;
 		        b = op2->data.nval;
@@ -1514,8 +1895,89 @@ mpwl_gcd(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		mpwl_clear_extra_type(op1,t);
 		mpwl_clear_extra_type(op2,t);
 	} else {
-		(*errorout)("Can't do GCD of floats or rationals!");
+		(*errorout)(_("Can't do GCD of floats or rationals!"));
 		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
+static void
+mpwl_jacobi(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
+{
+	if(op1->type<=MPW_INTEGER && op2->type<=MPW_INTEGER) {
+		int t=mpwl_make_same_extra_type(op1,op2);
+		int ret = 0;
+		mpz_t i1,i2;
+
+		switch(t) {
+		case MPW_INTEGER:
+			ret = mpz_jacobi(op1->data.ival,op2->data.ival);
+			break;
+		case MPW_NATIVEINT:
+			mpz_init_set_si(i1,op1->data.nval);
+			mpz_init_set_si(i2,op2->data.nval);
+			ret = mpz_jacobi(i1,i2);
+			mpz_clear(i1);
+			mpz_clear(i2);
+			break;
+		}
+		mpwl_clear_extra_type(op1,t);
+		mpwl_clear_extra_type(op2,t);
+		mpwl_clear(rop);
+		mpwl_init_type(rop,MPW_NATIVEINT);
+		rop->data.nval = ret;
+	} else {
+		(*errorout)(_("Can't get jacobi symbols of floats or rationals!"));
+		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
+static void
+mpwl_legendre(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
+{
+	if(op1->type<=MPW_INTEGER && op2->type<=MPW_INTEGER) {
+		int t=mpwl_make_same_extra_type(op1,op2);
+		int ret = 0;
+		mpz_t i1,i2;
+
+		switch(t) {
+		case MPW_INTEGER:
+			ret = mpz_legendre(op1->data.ival,op2->data.ival);
+			break;
+		case MPW_NATIVEINT:
+			mpz_init_set_si(i1,op1->data.nval);
+			mpz_init_set_si(i2,op2->data.nval);
+			ret = mpz_jacobi(i1,i2);
+			mpz_clear(i1);
+			mpz_clear(i2);
+			break;
+		}
+		mpwl_clear_extra_type(op1,t);
+		mpwl_clear_extra_type(op2,t);
+		mpwl_clear(rop);
+		mpwl_init_type(rop,MPW_NATIVEINT);
+		rop->data.nval = ret;
+	} else {
+		(*errorout)(_("Can't get legendre symbols of floats or rationals!"));
+		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
+static int
+mpwl_perfect_square(MpwRealNum *op)
+{
+	if(op->type==MPW_NATIVEINT) {
+		int ret;
+		mpz_t i;
+		mpz_init_set_si(i,op->data.nval);
+		ret = mpz_perfect_square_p(i);
+		mpz_clear(i);
+		return ret;
+	} else if(op->type==MPW_INTEGER) {
+		return mpz_perfect_square_p(op->data.ival);
+	} else {
+		(*errorout)(_("perfect_square: can't work on non-integers!"));
+		error_num=NUMERICAL_MPW_ERROR;
+		return FALSE;
 	}
 }
 
@@ -1557,25 +2019,25 @@ static void
 mpwl_fac(MpwRealNum *rop,MpwRealNum *op)
 {
 	if(op->type!=MPW_INTEGER && op->type!=MPW_NATIVEINT) {
-		(*errorout)("Can't do factorials of rationals or floats!");
+		(*errorout)(_("Can't do factorials of rationals or floats!"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return;
 	}
 	if(op->type==MPW_INTEGER) {
 		if(mpz_cmp_ui(op->data.ival,ULONG_MAX)>0) {
-			(*errorout)("Number too large to compute factorial!");
+			(*errorout)(_("Number too large to compute factorial!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
 		if(mpz_sgn(op->data.ival)<0) {
-			(*errorout)("Can't do factorials of negative numbers!");
+			(*errorout)(_("Can't do factorials of negative numbers!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
 		mpwl_fac_ui(rop,mpz_get_ui(op->data.ival));
 	} else {
 		if(op->data.nval<0) {
-			(*errorout)("Can't do factorials of negative numbers!");
+			(*errorout)(_("Can't do factorials of negative numbers!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -1913,12 +2375,82 @@ mpwl_ln(MpwRealNum *rop,MpwRealNum *op)
 }
 
 static void
-mpwl_make_int(MpwRealNum *rop, int floats)
+mpwl_cos(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_cos(r.data.fval,op->data.fval,FALSE,TRUE);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+static void
+mpwl_sin(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_sin(r.data.fval,op->data.fval,FALSE,TRUE);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+static void
+mpwl_cosh(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_cos(r.data.fval,op->data.fval,TRUE,FALSE);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+static void
+mpwl_sinh(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_sin(r.data.fval,op->data.fval,TRUE,FALSE);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+static void
+mpwl_arctan(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_arctan(r.data.fval,op->data.fval);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+
+static void
+mpwl_pi(MpwRealNum *rop)
+{
+	mpwl_clear(rop);
+	mpwl_init_type(rop,MPW_FLOAT);
+	mympf_pi(rop->data.fval);
+}
+
+static void
+mpwl_make_int(MpwRealNum *rop)
 {
 	mpf_t fr;
 	switch(rop->type) {
 		case MPW_NATIVEINT:
-		case MPW_INTEGER: return;
+		case MPW_INTEGER:
+		case MPW_FLOAT: return;
 		case MPW_RATIONAL:
 			mpq_canonicalize(rop->data.rval);
 			if(mpz_cmp_ui(mpq_denref(rop->data.rval),1)==0) {
@@ -1931,28 +2463,6 @@ mpwl_make_int(MpwRealNum *rop, int floats)
 				rop->data.rval = NULL;
 				rop->type=MPW_INTEGER;
 			}
-			break;
-		case MPW_FLOAT:
-			if(!floats) return;
-			/*gotta find a better way of doing this!*/
-
-			if(!rop->data.ival)
-				rop->data.ival = g_new(__mpz_struct,1);
-			mpz_init(rop->data.ival);
-			mpz_set_f(rop->data.ival,rop->data.fval);
-			mpf_init(fr);
-			mpf_set_z(fr,rop->data.ival);
-			if(mpf_cmp(fr,rop->data.fval)==0) {
-				rop->type=MPW_INTEGER;
-				mpf_clear(rop->data.fval);
-				g_free(rop->data.fval);
-				rop->data.fval = NULL;
-			} else {
-				mpz_clear(rop->data.ival);
-				g_free(rop->data.ival);
-				rop->data.ival = NULL;
-			}
-			mpf_clear(fr);
 			break;
 	}
 
@@ -2519,7 +3029,7 @@ mpw_sgn(mpw_ptr op)
 	if(op->type==MPW_REAL) {
 		return mpwl_sgn(op->r);
 	} else {
-		(*errorout)("Can't compare complex numbers");
+		(*errorout)(_("Can't compare complex numbers"));
 		error_num=NUMERICAL_MPW_ERROR;
 	}
 	return 0;
@@ -2534,8 +3044,20 @@ mpw_abs(mpw_ptr rop,mpw_ptr op)
 		else
 			mpw_set(rop,op);
 	} else {
-		(*errorout)("Can't make complex numbers absolute");
-		error_num=NUMERICAL_MPW_ERROR;
+		MpwRealNum t={0};
+
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		
+		mpwl_init_type(&t,MPW_NATIVEINT);
+		
+		mpwl_mul(rop->r,op->r,op->r);
+		mpwl_mul(&t,op->i,op->i);
+		mpwl_add(rop->r,rop->r,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpwl_sqrt(rop->r,rop->r);
 	}
 }
 
@@ -2649,7 +3171,7 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
 		if(mpwl_sgn(op2->r)==0) {
-			(*errorout)("Division by zero!");
+			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -2660,7 +3182,7 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		MpwRealNum t1={0};
 		MpwRealNum t2={0};
 		if(mpwl_sgn(op2->r)==0 && mpwl_sgn(op2->i)==0) {
-			(*errorout)("Division by zero!");
+			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -2705,7 +3227,7 @@ void
 mpw_div_ui(mpw_ptr rop,mpw_ptr op, unsigned int i)
 {
 	if(i==0) {
-		(*errorout)("Division by zero!");
+		(*errorout)(_("Division by zero!"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return;
 	}
@@ -2728,7 +3250,7 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 {
 	if(op->type==MPW_REAL) {
 		if(mpwl_sgn(op->r)==0) {
-			(*errorout)("Division by zero!");
+			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -2739,7 +3261,7 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 		MpwRealNum t1={0};
 		MpwRealNum t2={0};
 		if(mpwl_sgn(op->r)==0 && mpwl_sgn(op->i)==0) {
-			(*errorout)("Division by zero!");
+			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -2780,7 +3302,7 @@ mpw_mod(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
 		if(mpwl_sgn(op2->r)==0) {
-			(*errorout)("Division by zero!");
+			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
 		}
@@ -2789,7 +3311,7 @@ mpw_mod(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		mpwl_mod(rop->r,op1->r,op2->r);
 	} else {
 		error_num=NUMERICAL_MPW_ERROR;
-		(*errorout)("Can't modulo complex numbers");
+		(*errorout)(_("Can't modulo complex numbers"));
 	}
 }
 
@@ -2802,7 +3324,42 @@ mpw_gcd(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		mpwl_gcd(rop->r,op1->r,op2->r);
 	} else {
 		error_num=NUMERICAL_MPW_ERROR;
-		(*errorout)("Can't GCD complex numbers");
+		(*errorout)(_("Can't GCD complex numbers"));
+	}
+}
+void
+mpw_jacobi(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+{
+	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_jacobi(rop->r,op1->r,op2->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("Can't get jacobi symbols of complex numbers"));
+	}
+}
+void
+mpw_legendre(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+{
+	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_legendre(rop->r,op1->r,op2->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("Can't get legendre symbols complex numbers"));
+	}
+}
+int
+mpw_perfect_square(mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		return mpwl_perfect_square(op->r);
+	} else {
+		error_num=NUMERICAL_MPW_ERROR;
+		(*errorout)(_("perfect_square: can't work on complex numbers"));
+		return FALSE;
 	}
 }
 
@@ -2818,7 +3375,8 @@ mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		}
 	} else {
 		/*FIXME: complex numbers*/
-		(*errorout)("pow: can't deal with complex numbers");
+		(*errorout)(_("pow: can't deal with complex numbers"));
+		error_num=NUMERICAL_MPW_ERROR;
 	}
 }
 
@@ -2837,7 +3395,8 @@ mpw_sqrt(mpw_ptr rop,mpw_ptr op)
 		}
 	} else {
 		/*FIXME: complex numbers*/
-		(*errorout)("sqrt: can't deal with complex numbers");
+		(*errorout)(_("sqrt: can't deal with complex numbers"));
+		error_num=NUMERICAL_MPW_ERROR;
 	}
 }
 
@@ -2849,8 +3408,26 @@ mpw_exp(mpw_ptr rop,mpw_ptr op)
 		MAKE_COPY(rop->r);
 		mpwl_exp(rop->r,op->r);
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)("exp: can't deal with complex numbers");
+		MpwRealNum t={0};
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_exp(rop->r,op->r);
+		mpwl_set(rop->i,rop->r);
+		
+		mpwl_cos(&t,op->i);
+		mpwl_mul(rop->r,rop->r,&t);
+
+		mpwl_sin(&t,op->i);
+		mpwl_mul(rop->i,rop->i,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpw_uncomplex(rop);
 	}
 }
 
@@ -2861,13 +3438,193 @@ mpw_ln(mpw_ptr rop,mpw_ptr op)
 		MAKE_REAL(rop);
 		MAKE_COPY(rop->r);
 		if(!mpwl_ln(rop->r,op->r)) {
-			(*errorout)("ln: argument out of range");
+			(*errorout)(_("ln: argument out of range"));
 			error_num=NUMERICAL_MPW_ERROR;
 		}
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)("ln: can't deal with complex numbers");
+		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		
+		if(rop==op) {
+			r = g_new(MpwRealNum,1);
+			i = g_new(MpwRealNum,1);
+			mpwl_init_type(r,MPW_FLOAT);
+			mpwl_init_type(i,MPW_FLOAT);
+			mpwl_set(r,op->r);
+			mpwl_set(i,op->i);
+		} else {
+			r = op->r;
+			i = op->i;
+		}
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_mul(rop->r,r,r);
+		mpwl_mul(&t,i,i);
+		mpwl_add(rop->r,rop->r,&t);
+		mpwl_ln(rop->r,rop->r);
+		mpwl_div_ui(rop->r,rop->r,2);
+
+		mpwl_free(&t,TRUE);
+		
+		mpwl_div(rop->i,i,r);
+		mpwl_arctan(rop->i,rop->i);
+
+		mpw_uncomplex(rop);
+
+		if(rop==op) {
+			mpwl_free(i,TRUE);
+			mpwl_free(r,TRUE);
+		}
 	}
+}
+
+void
+mpw_sin(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_sin(rop->r,op->r);
+	} else {
+		MpwRealNum t={0};
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_sin(rop->r,op->r);
+		mpwl_cosh(&t,op->i);
+		mpwl_mul(rop->r,rop->r,&t);
+
+		mpwl_cos(rop->i,op->i);
+		mpwl_sinh(&t,op->r);
+		mpwl_mul(rop->i,rop->i,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpw_uncomplex(rop);
+	}
+}
+
+void
+mpw_cos(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_cos(rop->r,op->r);
+	} else {
+		MpwRealNum t={0};
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_cos(rop->r,op->r);
+		mpwl_cosh(&t,op->i);
+		mpwl_mul(rop->r,rop->r,&t);
+
+		mpwl_sin(rop->i,op->i);
+		mpwl_neg(rop->i,rop->i);
+		mpwl_sinh(&t,op->r);
+		mpwl_mul(rop->i,rop->i,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpw_uncomplex(rop);
+	}
+}
+
+void
+mpw_sinh(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_sinh(rop->r,op->r);
+	} else {
+		MpwRealNum t={0};
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_sinh(rop->r,op->r);
+		mpwl_cos(&t,op->i);
+		mpwl_mul(rop->r,rop->r,&t);
+
+		mpwl_cosh(rop->i,op->i);
+		mpwl_sin(&t,op->r);
+		mpwl_mul(rop->i,rop->i,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpw_uncomplex(rop);
+	}
+}
+
+void
+mpw_cosh(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_cos(rop->r,op->r);
+	} else {
+		MpwRealNum t={0};
+		rop->type = MPW_COMPLEX;
+
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+
+		mpwl_init_type(&t,MPW_FLOAT);
+		
+		mpwl_cosh(rop->r,op->r);
+		mpwl_cos(&t,op->i);
+		mpwl_mul(rop->r,rop->r,&t);
+
+		mpwl_sinh(rop->i,op->i);
+		mpwl_sin(&t,op->r);
+		mpwl_mul(rop->i,rop->i,&t);
+		
+		mpwl_free(&t,TRUE);
+
+		mpw_uncomplex(rop);
+	}
+}
+
+void
+mpw_arctan(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_arctan(rop->r,op->r);
+	} else {
+		/*FIXME: complex numbers*/
+		(*errorout)(_("arctan: can't deal with complex numbers (yet)"));
+		error_num=NUMERICAL_MPW_ERROR;
+	}
+}
+
+void
+mpw_pi(mpw_ptr rop)
+{
+	MAKE_REAL(rop);
+	MAKE_COPY(rop->r);
+	mpwl_pi(rop->r);
 }
 
 void
@@ -2879,7 +3636,8 @@ mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e)
 		mpwl_pow_ui(rop->r,op->r,e,FALSE);
 	} else {
 		/*FIXME: complex numbers*/
-		(*errorout)("pow_ui: can't deal with complex numbers");
+		(*errorout)(_("pow_ui: can't deal with complex numbers"));
+		error_num=NUMERICAL_MPW_ERROR;
 	}
 }
 
@@ -2889,7 +3647,7 @@ mpw_cmp(mpw_ptr op1, mpw_ptr op2)
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
 		return mpwl_cmp(op1->r,op2->r);
 	} else {
-		(*errorout)("Can't compare complex numbers");
+		(*errorout)(_("Can't compare complex numbers"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return 0;
 	}
@@ -2901,7 +3659,7 @@ mpw_cmp_ui(mpw_ptr op, unsigned long int i)
 	if(op->type==MPW_REAL) {
 		return mpwl_cmp_ui(op->r,i);
 	} else {
-		(*errorout)("Can't compare complex numbers");
+		(*errorout)(_("Can't compare complex numbers"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return 0;
 	}
@@ -2939,31 +3697,20 @@ mpw_fac(mpw_ptr rop,mpw_ptr op)
 		MAKE_COPY(rop->r);
 		mpwl_fac(rop->r,op->r);
 	} else {
-		(*errorout)("Can't make factorials of complex numbers");
+		(*errorout)(_("Can't make factorials of complex numbers"));
 		error_num=NUMERICAL_MPW_ERROR;
 	}
 }
 
-/*make a number int if possible, if floats is true try to convert to an
-  int if the two equal*/
+/*make a number int if possible*/
 void
-mpw_make_int(mpw_ptr rop,int floats)
+mpw_make_int(mpw_ptr rop)
 {
 	if(rop->type==MPW_REAL) {
-		/*floats might be destructive so make
-		  us a copy*/
-		if(floats)
-			MAKE_COPY(rop->r);
-		mpwl_make_int(rop->r,floats);
+		mpwl_make_int(rop->r);
 	} else {
-		/*floats might be destructive so make
-		  us a copy*/
-		if(floats) {
-			MAKE_COPY(rop->r);
-			MAKE_COPY(rop->i);
-		}
-		mpwl_make_int(rop->r,floats);
-		mpwl_make_int(rop->i,floats);
+		mpwl_make_int(rop->r);
+		mpwl_make_int(rop->i);
 	}
 }
 
@@ -3015,7 +3762,10 @@ mpw_getstring(mpw_ptr num, int max_digits,int scientific_notation,
 			results_as_floats);
 		p2 = mpwl_getstring(num->i,max_digits,scientific_notation,
 			results_as_floats);
-		r = g_strconcat("(",p1,"+",p2,"i)",NULL);
+		if(mpwl_sgn(num->i)>=0)
+			r = g_strconcat("(",p1,"+",p2,"i)",NULL);
+		else
+			r = g_strconcat("(",p1,p2,"i)",NULL);
 		g_free(p1);
 		g_free(p2);
 		return r;
@@ -3069,7 +3819,7 @@ int
 mpw_is_integer(mpw_ptr op)
 {
 	if(op->type == MPW_COMPLEX) {
-		(*errorout)("Can't determine type of a complex number");
+		(*errorout)(_("Can't determine type of a complex number"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return FALSE;
 	}
@@ -3080,7 +3830,7 @@ int
 mpw_is_rational(mpw_ptr op)
 {
 	if(op->type == MPW_COMPLEX) {
-		(*errorout)("Can't determine type of a complex number");
+		(*errorout)(_("Can't determine type of a complex number"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return FALSE;
 	}
@@ -3091,7 +3841,7 @@ int
 mpw_is_float(mpw_ptr op)
 {
 	if(op->type == MPW_COMPLEX) {
-		(*errorout)("Can't determine type of a complex number");
+		(*errorout)(_("Can't determine type of a complex number"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return FALSE;
 	}
@@ -3172,17 +3922,17 @@ mpw_get_long(mpw_ptr op)
 	long r;
 	int ex = 0;
 	if(op->type==MPW_COMPLEX) {
-		(*errorout)("Can't convert complex number into integer");
+		(*errorout)(_("Can't convert complex number into integer"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return 0;
 	} 
 	r = mpwl_get_long(op->r,&ex);
 	if(ex==1) {
-		(*errorout)("Can't convert real number to integer");
+		(*errorout)(_("Can't convert real number to integer"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return 0;
 	} else if(ex==2) {
-		(*errorout)("Integer too large for this operation");
+		(*errorout)(_("Integer too large for this operation"));
 		error_num=NUMERICAL_MPW_ERROR;
 		return 0;
 	}

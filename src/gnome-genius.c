@@ -23,6 +23,7 @@
 #include <gtk/gtk.h>
 
 #include <string.h>
+#include <signal.h>
 #include <stdlib.h>
 
 #include "gnome-genius.h"
@@ -35,7 +36,6 @@
 calcstate_t curstate={
 	256,
 	12,
-	FALSE,
 	FALSE,
 	FALSE
         };
@@ -375,16 +375,6 @@ setup_calc(GtkWidget *widget, gpointer data)
 				    (tmpstate.max_digits == 0) ?
 				    TRUE : FALSE);
 	
-	w=gtk_check_button_new_with_label(
-		_("Make floats integers (e.g. 10.0=10)"));
-	gtk_signal_connect(GTK_OBJECT(w), "toggled",
-		   GTK_SIGNAL_FUNC(optioncb),
-		   (gpointer *)&tmpstate.make_floats_ints);
-	gtk_table_attach_defaults(GTK_TABLE(boxt), GTK_WIDGET(w), 1, 2, 0, 1);
-	gtk_widget_show(w);
-	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
-				    tmpstate.make_floats_ints);
-
 	w=gtk_check_button_new_with_label(_("Results as floats"));
 	gtk_signal_connect(GTK_OBJECT(w), "toggled",
 		   GTK_SIGNAL_FUNC(optioncb),
@@ -476,9 +466,6 @@ get_properties (void)
 	g_snprintf(buf,256,"/genius/properties/max_digits=%s",
 		   (curstate.max_digits == 0)?"true":"false");
 	curstate.max_digits = (gnome_config_get_bool(buf))? 0 : 12;
-	g_snprintf(buf,256,"/genius/properties/make_floats_ints=%s",
-		   curstate.make_floats_ints?"true":"false");
-	curstate.make_floats_ints = gnome_config_get_bool(buf);
 	g_snprintf(buf,256,"/genius/properties/results_as_floats=%s",
 		   curstate.results_as_floats?"true":"false");
 	curstate.results_as_floats = gnome_config_get_bool(buf);
@@ -492,8 +479,6 @@ set_properties (void)
 {
 	gnome_config_set_bool("/genius/properties/max_digits", 
 			      (curstate.max_digits == 0) ? TRUE : FALSE);
-	gnome_config_set_bool("/genius/properties/make_floats_ints", 
-			     curstate.make_floats_ints);
 	gnome_config_set_bool("/genius/properties/results_as_floats",
 			     curstate.results_as_floats);
 	gnome_config_set_bool("/genius/properties/scientific_notation",
@@ -528,7 +513,6 @@ main(int argc, char *argv[])
 	char *file;
 	FILE *fp;
 
-
 	/*numpad button labels*/
 	char *numpad[5][4]={
 		{" ( "," ) "," ^ "," % "},
@@ -546,6 +530,8 @@ main(int argc, char *argv[])
 		{" round "," sqrt ", " ! "}
 	};
 	int x,y;
+
+	signal(SIGINT,SIG_IGN);
 
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 	textdomain(PACKAGE);

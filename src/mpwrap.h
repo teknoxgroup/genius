@@ -112,6 +112,9 @@ void mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op);
 void mpw_mod(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 
 void mpw_gcd(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+void mpw_jacobi(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+void mpw_legendre(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+int mpw_perfect_square(mpw_ptr op);
 
 void mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e);
@@ -119,6 +122,13 @@ void mpw_sqrt(mpw_ptr rop,mpw_ptr op);
 
 void mpw_exp(mpw_ptr rop,mpw_ptr op);
 void mpw_ln(mpw_ptr rop,mpw_ptr op);
+
+void mpw_sin(mpw_ptr rop,mpw_ptr op);
+void mpw_cos(mpw_ptr rop,mpw_ptr op);
+void mpw_sinh(mpw_ptr rop,mpw_ptr op);
+void mpw_cosh(mpw_ptr rop,mpw_ptr op);
+void mpw_arctan(mpw_ptr rop,mpw_ptr op);
+void mpw_pi(mpw_ptr rop);
 
 int mpw_cmp(mpw_ptr op1, mpw_ptr op2);
 int mpw_cmp_ui(mpw_ptr op, unsigned long int i);
@@ -129,9 +139,8 @@ int mpw_eql_ui(mpw_ptr op, unsigned long int i);
 void mpw_fac_ui(mpw_ptr rop,unsigned long int i);
 void mpw_fac(mpw_ptr rop,mpw_ptr op);
 
-/*make a number int if possible, if floats is true try to convert to an
-  int if the two equal*/
-void mpw_make_int(mpw_ptr rop,int floats);
+/*make a number int if possible*/
+void mpw_make_int(mpw_ptr rop);
 
 /*make number into a float, this might be neccessary for unprecise
   calculations*/

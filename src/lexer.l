@@ -56,7 +56,7 @@ static int matrix_entry=0;
 #ifdef WITH_READLINE_SUPPORT
 #define NEXT_LINE {							\
 	while(use_readline) {						\
-		char *s = readline(!evalstack?"genius> ":"      > ");	\
+		char *s = readline("      > ");				\
 		if(!s) {						\
 			got_eof = TRUE;					\
 			return '\n';					\
@@ -190,10 +190,8 @@ break		{ DO_RET; return BREAK; }
 			return AT;
 		}
 \.\.		{
-			REJECT;
-			/*FIXME:*/
-			/*NO_RET;
-			return REGION_SEP;*/
+			NO_RET;
+			return REGION_SEP;
 		}
 		
 [[][\t ]*	{

@@ -54,6 +54,8 @@ matrix_new(void)
 	m->realwidth = 0;
 	m->fullsize = 0;
 	
+	m->use = 0;
+	
 	return m;
 }
 

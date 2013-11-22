@@ -23,12 +23,19 @@
  * this is a command line genius interface program!
  */
 
+#ifdef GNOME_SUPPORT
+#include <gnome.h>
+#else
+#define _(x) x
+#endif
+
 #include "config.h"
 
 #include <glib.h>
 
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "calc.h"
@@ -40,7 +47,6 @@
 calcstate_t curstate={
 	256,
 	0,
-	FALSE,
 	FALSE,
 	FALSE
 	};
@@ -65,6 +71,13 @@ main(int argc, char *argv[])
 	char *file;
 	FILE *fp;
 
+	signal(SIGINT,SIG_IGN);
+
+#ifdef GNOME_SUPPORT
+	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
+	textdomain(PACKAGE);
+#endif
+
 	for(i=1;i<argc;i++) {
 		int val;
 		if(lastarg || argv[i][0]!='-')
@@ -75,10 +88,6 @@ main(int argc, char *argv[])
 			curstate.float_prec = val;
 		else if(sscanf(argv[i],"--maxdigits=%d",&val)==1)
 			curstate.max_digits = val;
-		else if(strcmp(argv[i],"--floatstoints")==0)
-			curstate.make_floats_ints = TRUE;
-		else if(strcmp(argv[i],"--nofloatstoints")==0)
-			curstate.make_floats_ints = FALSE;
 		else if(strcmp(argv[i],"--floatresult")==0)
 			curstate.results_as_floats = TRUE;
 		else if(strcmp(argv[i],"--nofloatresult")==0)
@@ -96,8 +105,6 @@ main(int argc, char *argv[])
 			     "genius [options] [files]\n\n"
 			     "\t--precision=num   \tFloating point precision [256]\n"
 			     "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
-			     "\t--[no]floatstoints\tConvert floats to integers in the\n"
-			     "\t                  \tmiddle of calculations [OFF]\n"
 			     "\t--[no]floatresult \tAll results as floats [OFF]\n"
 			     "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
 			     "\t--[no]readline    \tUse readline even if it is available [ON]\n"
@@ -108,10 +115,10 @@ main(int argc, char *argv[])
 	inter = isatty(0) && !files;
 	/*interactive mode, print welcome message*/
 	if(inter) {
-		puts("Genius "VERSION"\n"
+		puts(_("Genius "VERSION"\n"
 		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
 		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
-		     "For details type `warranty'.\n");
+		     "For details type `warranty'.\n"));
 	}
 	
 	file = g_strconcat(LIBRARY_DIR,"/lib.gel",NULL);

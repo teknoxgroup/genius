@@ -40,7 +40,6 @@ typedef struct _calcstate_t {
 	int float_prec;        /*precision of floats to use*/
 	/*about outgoing stuff*/
 	int max_digits; /*max digits in the display 0= as many as I got*/
-	int make_floats_ints;  /*make ints from floats during calculations*/
 	int results_as_floats;  /*give result as float*/
 	int scientific_notation; /*always scientific notation*/
 } calcstate_t;

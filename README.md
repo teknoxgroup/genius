@@ -81,8 +81,24 @@ function
 
 (of course the number of arguments is different for each function)
 
-NOTE: that if there are no arguments you can but don't have to put
-the parentheses in.
+NOTE: if you don't type the () in, the function will not be evaluated
+and just it's body will be returned, this makes variables faster, so
+
+a = `(){1+2}; a
+
+yeilds "(1+2)", but
+
+a = `(){1+2}; a()
+
+yeilds 3 correctly. Since when you don't use the `(){...} format, the
+argument is evaluated when actually setting the variable, 
+
+a = 1+2; a
+
+does yeild 3, so it depends how you have made the function. This behaviour
+is consistent with most other programming languages and won't bite you as
+long as you use () for actual functions which aren't just variables. You can
+still use () for variables, but it's pointless and will slow you down.
 
 Current built in functions:
 
@@ -102,7 +118,10 @@ display		2 (string,value)	prints a string, a colon and then the
 
 sin		1 (value)		calculates the sin function
 cos		1 (value)		calculates the cos function
+sinh		1 (value)		calculates the hyperbolic sin function
+cosh		1 (value)		calculates the hyperbolic cos function
 tan		1 (value)		calculates the tan function
+atan		1 (value)		calculates the inverse tan function
 pi		0 			the number pi
 e		0 			the number e (same as exp(1), but
 					answer is cached)
@@ -112,6 +131,10 @@ exp		1 (value)		calculates the e^value (exponential
 ln		1 (value)		calculates the natural logarithm
 gcd		2 (integer,integer)	the greatest common divisor function
 lcm		2 (integer,integer)	the least common multiple function
+jacobi		2 (integer,integer)	obtain the jacobi symbol
+legendre	2 (integer,integer)	obtain the legendre symbol
+perfect_square	1 (integer)		return 1 if argument is a perfect
+					square
 max		2 (value,value)		returns the larger of the two values
 min		2 (value,value)		returns the smaller of the two values
 prime		1 (integer)		returns the n'th prime for primes up
@@ -120,12 +143,19 @@ round		1 (value)		rounds the value
 floor		1 (value)		greatest integer <= value
 ceil		1 (value)		least integer >= value
 trunc		1 (value)		truncate the number to an integer
+float		1 (value)		make the number into a floating
+					point number, no matter what type it
+					was
 Re		1 (value)		get the real part of a complex number
 Im		1 (value)		get the imaginary part of a
 					complex number
 I		1 (integer)		make an identity matrix of the size n
 rows		1 (matrix)		get the number of rows in a matrix
 columns		1 (matrix)		get the number of columns in a matrix
+set_size	3 (matrix,integer,integer)
+					return a matrix which is truncated or
+					extended according to the size given
+					as rows, columns
 is_value_only	1 (matrix)		are all the nodes in the matrix values
 
 is_null		1 (anything)		returns true if the argument is a
@@ -188,6 +218,16 @@ prod		3 (from,to,function)	calculates the product of the
 					function which should take one
 					argument which is an integer
 					stepped from "from" to "to
+infsum		3 (function,start,inc)	try to calculate an infinite sum, to
+					the point where the new terms
+					calculated by function, don't make
+					any difference on the sum, the index
+					is passed as a single argument to the
+					function
+infsum2		4 (function,arg,start,inc)
+					like the above, but pass arg as the
+					first argument to function and the
+					index as the second
 nPr		2 (integer,integer)	calculate permutations
 nCr		2 (integer,integer)	calculate combinations
 fib		1 (integer)		returns n'th fibbonachi number
@@ -197,6 +237,42 @@ rref		1 (matrix)		reduce the matrix to reduced
 					row-echelon form, this is usefull for
 					solving systems of linear equations
 trace		1 (matrix)		calculate the trace of the matrix
+convol		2 (vector) (vector)	takes to horizontal vectors and
+					calculates convolution
+convol_vec	2 (vector) (vector)	as above, but returns a vector of
+					the individual terms
+matsum		1 (matrix)		sums up all the terms of the matrix
+matprod		1 (matrix)		multiplies all the terms of the matrix
+asinh		1 (value)		hyperbolic inverse sin function
+acosh		1 (value)		hyperbolic inverse cos function
+cot		1 (value)		cotangent function
+coth		1 (value)		hyperbolic cotangent function
+acot		1 (value)		inverse cotangent function
+acoth		1 (value)		hyperbolic inverse cotangent function
+tanh		1 (value)		hyperbolic tangent function
+atanh		1 (value)		hyperbolic inverse tangent function
+csc		1 (value)		cosecant function
+csch		1 (value)		hyperbolic cosecant function
+acsc		1 (value)		inverse cosecant function
+acsch		1 (value)		hyperbolic inverse cosecant function
+sec		1 (value)		secant function
+sech		1 (value)		hyperbolic secant function
+asec		1 (value)		inverse secant function
+asech		1 (value)		hyperbolic inverse secant function
+sign		1 (value)		return the sign of the value (-1,0,1)
+log		2 (value,base)		log of the value to the base b
+log10		1 (value)		log of the value to the base 10
+log2		1 (value)		log of the value to the base 2
+conj		1 (value)		conjugate of a complex value
+
+apply_over_matrix1
+		1 (matrix,function)	apply function to every element in
+					the matrix, mostly used inside the
+					library functions
+apply_over_matrix2
+		1 (matrix or value,matrix or value,function)
+					apply function to two matrixes or
+					a matrix and a scalar value
 
 
 To define a function do:
@@ -212,7 +288,7 @@ it to a variable name you effectively define a function
 
 for example:
 
-define sum(a,b,c) { a+b+c}
+define sum(a,b,c) {a+b+c}
 
 then "sum(1,1,1)" yields 3
 
@@ -237,7 +313,13 @@ This will require some parenthesizing to make it unambiguous sometimes,
 especially if the ; is not the top most primitive. This slightly differs
 from other programming languages where the ; is a terminator of statements,
 whereas in GEL it's actually a binary operator. If you are familiar with
-pascal this should be second nature.
+pascal this should be second nature. However genius can let you pretend
+it's a terminator somewhat, if a ";" is found at the end of a parenthesis 
+or a block, genius will itself append a null node to it as if you would
+have written ";.". This is usefull in case you don't want to return a
+value from say a loop, or if you handle the return differently. Note that
+it will slow down the code if it's executed too often as there is one
+more operator involved.
 
 The GEL operators:
 
@@ -267,6 +349,29 @@ a'		matrix transpose
 a@(b,c)		get element of a matrix
 a@(b,)		get row of a matrix
 a@(,c)		get column of a matrix
+a..b		specify a row, column region
+
+NOTE: the @() operator for matrixes is the only place you can use the ..
+operator. With it you can specify a range of values instead of just
+one. So that a@(2..4,6) is the rows 2,3,4 of the column 6. Or a@(,1..2)
+will get you the first two columns of a matrix. You can also assign to
+the @() operator, as long as the right value is a matrix that matches the
+region in size, or if it is any other type of value.
+
+Lvalues:
+
+Valid lvalues are
+
+a		identifier
+*a		dereference of an identifier
+a@(<region>)	a region of a matrix (where the region is specified normally
+		as with the regular @() operator)
+
+Examples:
+
+a=4
+*tmp = 89
+a@(4..8,3)=[1,2,3,4,5]'
 
 There are also a number of constructs:
 

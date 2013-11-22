@@ -736,7 +736,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.3.1
+VERSION=0.3.2
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { echo "configure: error: source directory already configured; run "make distclean" there first" 1>&2; exit 1; }
@@ -5777,6 +5777,7 @@ ac_given_srcdir=$srcdir
 ac_given_INSTALL="$INSTALL"
 
 trap 'rm -fr `echo "
+genius.spec
 Makefile
 src/Makefile
 intl/Makefile
@@ -5952,7 +5953,8 @@ EOF
 
 cat >> $CONFIG_STATUS <<EOF
 
-CONFIG_FILES=\${CONFIG_FILES-"Makefile
+CONFIG_FILES=\${CONFIG_FILES-"genius.spec
+Makefile
 src/Makefile
 intl/Makefile
 po/Makefile.in
@@ -6181,5 +6183,4 @@ EOF
 chmod +x $CONFIG_STATUS
 rm -fr confdefs* $ac_clean_files
 test "$no_create" = yes || ${CONFIG_SHELL-/bin/sh} $CONFIG_STATUS || exit 1
-
 

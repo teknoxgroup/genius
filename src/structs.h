@@ -23,7 +23,6 @@
 #define _STRUCTS_H_
 
 #include "mpwrap.h"
-#include "matrix.h"
 
 /*dictionary function structure*/
 typedef enum {
@@ -35,6 +34,10 @@ typedef enum {
 typedef struct _EFunc EFunc;
 typedef struct _ETree ETree;
 typedef struct _Token Token;
+
+/*not defined here, but needed and we can't include matrixw.h, but
+  matrixw.h includes structs.h*/
+typedef struct _MatrixW MatrixW;
 
 struct _Token {
 	char *token;
@@ -79,7 +82,7 @@ struct _ETree {
 		Token *id;
 		char *str;
 		EFunc *func; /*anon function*/
-		Matrix *matrix;
+		MatrixW *matrix;
 		ETree *next; /*this is for keeping a free list*/
 	} data;
 	int nargs;
