@@ -1,31 +1,13 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-#undef PACKAGE
-#undef VERSION
-#undef HAVE_LIBSM
-#undef ENABLE_NLS
-#undef HAVE_CATGETS
-#undef HAVE_GETTEXT
-#undef HAVE_LC_MESSAGES
-#undef HAVE_STPCPY
-#undef HAVE_GMP2_INCLUDE_DIR
-#undef HAVE_WORDEXP
-#undef HAVE_MPFR
-#undef GETTEXT_PACKAGE
-#undef HAVE_GTKSOURCEVIEW
-#undef USE_NCURSES
-#undef INC_NCURSES
-#undef HAVE_SETENV
-#undef HAVE_UNSETENV
-#undef HAVE_CLEARENV
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
+/* gettext package name */
+#undef GETTEXT_PACKAGE
+
 /* Define to 1 if you have the `bind_textdomain_codeset' function. */
 #undef HAVE_BIND_TEXTDOMAIN_CODESET
-
-/* Define to 1 if you have the `clearenv' function. */
-#undef HAVE_CLEARENV
 
 /* Define to 1 if you have the `dcgettext' function. */
 #undef HAVE_DCGETTEXT
@@ -35,6 +17,12 @@
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
+
+/* Have gmp2 include directory */
+#undef HAVE_GMP2_INCLUDE_DIR
+
+/* have gtksourceview */
+#undef HAVE_GTKSOURCEVIEW
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -47,9 +35,6 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
-
-/* Define to 1 if you have the `setenv' function. */
-#undef HAVE_SETENV
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -72,8 +57,11 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `unsetenv' function. */
-#undef HAVE_UNSETENV
+/* Have the wordexp function */
+#undef HAVE_WORDEXP
+
+/* ncurses include */
+#undef INC_NCURSES
 
 /* Name of package */
 #undef PACKAGE
@@ -95,6 +83,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Use ncurses library */
+#undef USE_NCURSES
 
 /* Version number of package */
 #undef VERSION

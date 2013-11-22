@@ -562,6 +562,20 @@ To get help on a specific function from the console type:
     <sect1 id="genius-gel-function-list-constants">
       <title>Constants</title>
       <variablelist>
+        <varlistentry id="gel-function-CatalanConstant">
+         <term>CatalanConstant</term>
+         <listitem>
+          <synopsis>CatalanConstant</synopsis>
+          <para>
+	    Catalan's Constant, approximately 0.915...  It is defined to be the series where terms are <userinput>(-1^k)/((2*k+1)^2)</userinput>, where k ranges from 0 to infinity.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/CatalansConstant.html">Mathworld</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-EulerConstant">
          <term>EulerConstant</term>
          <listitem>
@@ -1002,7 +1016,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acos (x)</synopsis>
           <para>Aliases: <function>arccos</function></para>
-          <para>The arccos (reverse cos) function</para>
+          <para>The arccos (inverse cos) function</para>
          </listitem>
         </varlistentry>
 
@@ -1011,7 +1025,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acosh (x)</synopsis>
           <para>Aliases: <function>arccosh</function></para>
-          <para>The arccosh (reverse cosh) function</para>
+          <para>The arccosh (inverse cosh) function</para>
          </listitem>
         </varlistentry>
 
@@ -1020,7 +1034,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acot (x)</synopsis>
           <para>Aliases: <function>arccot</function></para>
-          <para>The arccot (reverse cot) function</para>
+          <para>The arccot (inverse cot) function</para>
          </listitem>
         </varlistentry>
 
@@ -1029,7 +1043,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acoth (x)</synopsis>
           <para>Aliases: <function>arccoth</function></para>
-          <para>The arccoth (reverse coth) function</para>
+          <para>The arccoth (inverse coth) function</para>
          </listitem>
         </varlistentry>
 
@@ -1038,7 +1052,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acsc (x)</synopsis>
           <para>Aliases: <function>arccsc</function></para>
-          <para>The reverse cosecant function</para>
+          <para>The inverse cosecant function</para>
          </listitem>
         </varlistentry>
 
@@ -1047,7 +1061,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acsch (x)</synopsis>
           <para>Aliases: <function>arccsch</function></para>
-          <para>The reverse hyperbolic cosecant function</para>
+          <para>The inverse hyperbolic cosecant function</para>
          </listitem>
         </varlistentry>
 
@@ -1056,7 +1070,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asec (x)</synopsis>
           <para>Aliases: <function>arcsec</function></para>
-          <para>The reverse secant function</para>
+          <para>The inverse secant function</para>
          </listitem>
         </varlistentry>
 
@@ -1065,7 +1079,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asech (x)</synopsis>
           <para>Aliases: <function>arcsech</function></para>
-          <para>The reverse hyperbolic secant function</para>
+          <para>The inverse hyperbolic secant function</para>
          </listitem>
         </varlistentry>
 
@@ -1074,7 +1088,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asin (x)</synopsis>
           <para>Aliases: <function>arcsin</function></para>
-          <para>The arcsin (reverse sin) function</para>
+          <para>The arcsin (inverse sin) function</para>
          </listitem>
         </varlistentry>
 
@@ -1083,7 +1097,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asinh (x)</synopsis>
           <para>Aliases: <function>arcsinh</function></para>
-          <para>The arcsinh (reverse sinh) function</para>
+          <para>The arcsinh (inverse sinh) function</para>
          </listitem>
         </varlistentry>
 
@@ -1092,7 +1106,11 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>atan (x)</synopsis>
           <para>Aliases: <function>arctan</function></para>
-          <para>Calculates the arctan function</para>
+          <para>Calculates the arctan (inverse tan) function.</para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/InverseTangent.html">Mathworld</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -1101,7 +1119,27 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>atanh (x)</synopsis>
           <para>Aliases: <function>arctanh</function></para>
-          <para>The arctanh (reverse tanh) function</para>
+          <para>The arctanh (inverse tanh) function</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-atan2">
+         <term>atan2</term>
+         <listitem>
+          <synopsis>atan2 (y, x)</synopsis>
+          <para>Aliases: <function>arctan2</function></para>
+          <para>Calculates the arctan2 function.  If
+	  <userinput>x&gt;0</userinput> then it returns
+	  <userinput>atan(y/x)</userinput>.  If <userinput>x&lt;0</userinput>
+	  then it returns <userinput>sign(y) * (pi - atan(|y/x|)</userinput>.
+	  When <userinput>x=0</userinput> it returns <userinput>sign(y) *
+	  pi/2</userinput>.  <userinput>atan2(0,0)</userinput> returns 0
+	  rather then failing.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/InverseTangent.html">Mathworld</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -1934,6 +1972,19 @@ number is specified) of the given size returned.  For example
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-CountZeroColumns">
+         <term>CountZeroColumns</term>
+         <listitem>
+          <synopsis>CountZeroColumns (M)</synopsis>
+          <para>
+	   Count the number of zero columns in a matrix.  For example
+	   Once you column reduce a matrix you can use this to find
+	   the nullity.  See <link linkend="gel-function-cref">cref</link>
+	   and <link linkend="gel-function-Nullity">Nullity</link>.
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-DeleteColumn">
          <term>DeleteColumn</term>
          <listitem>
@@ -1962,8 +2013,12 @@ number is specified) of the given size returned.  For example
          <term>DotProduct</term>
          <listitem>
           <synopsis>DotProduct (u,v)</synopsis>
-          <para>Aliases: <function>InnerProduct</function></para>
-          <para>Get the dot product of two vectors</para>
+	  <para>Get the dot product of two vectors.  The vectors must be of the
+same size.  No conjugates are taken so this is a bilinear form even if working over the complex numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/DotProduct.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -1971,7 +2026,25 @@ number is specified) of the given size returned.  For example
          <term>ExpandMatrix</term>
          <listitem>
           <synopsis>ExpandMatrix (M)</synopsis>
-          <para>Expands a matrix just like we do on unquoted matrix input</para>
+          <para>
+	    Expands a matrix just like we do on unquoted matrix input.
+	    That is we expand any internal matrices as blocks.  This is
+	    a way to construct matrices out of smaller ones and this is
+	    normally done automatically on input unless the matrix is quoted.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-HermitianProduct">
+         <term>HermitianProduct</term>
+         <listitem>
+          <synopsis>HermitianProduct (u,v)</synopsis>
+          <para>Aliases: <function>InnerProduct</function></para>
+          <para>Get the hermitian product of two vectors.  The vectors must be of the same size.  This is a sesquilinear form using the identity matrix.</para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/HermitianInnerProduct.html">Mathworld</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2044,7 +2117,10 @@ number is specified) of the given size returned.  For example
          <term>IsMatrixSquare</term>
          <listitem>
           <synopsis>IsMatrixSquare (M)</synopsis>
-          <para>Is a matrix square</para>
+          <para>
+	    Check if a matrix is square, that is its width is equal to
+	    its height.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2068,7 +2144,11 @@ number is specified) of the given size returned.  For example
          <term>IsVector</term>
          <listitem>
           <synopsis>IsVector (v)</synopsis>
-          <para>Is argument a horizontal or a vertical vector</para>
+          <para>
+	    Is argument a horizontal or a vertical vector.  Genius does
+	    not distinguish between a matrix and a vector and a vector
+	    is just a 1 by n or n by 1 matrix.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2097,7 +2177,11 @@ number is specified) of the given size returned.  For example
          <term>MatrixProduct</term>
          <listitem>
           <synopsis>MatrixProduct (a)</synopsis>
-          <para>Calculate the product of all elements in a matrix</para>
+          <para>
+	    Calculate the product of all elements in a matrix.  That is
+	    we multiply all the elements and return a number that is the
+	    product of all the elements.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2105,7 +2189,11 @@ number is specified) of the given size returned.  For example
          <term>MatrixSum</term>
          <listitem>
           <synopsis>MatrixSum (a)</synopsis>
-          <para>Calculate the sum of all elements in a matrix</para>
+          <para>
+	    Calculate the sum of all elements in a matrix.  That is
+	    we add all the elements and return a number that is the
+	    sum of all the elements.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2113,7 +2201,7 @@ number is specified) of the given size returned.  For example
          <term>MatrixSumSquares</term>
          <listitem>
           <synopsis>MatrixSumSquares (a)</synopsis>
-          <para>Calculate the sum of squares of all elements in a matrix</para>
+          <para>Calculate the sum of squares of all elements in a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2161,7 +2249,10 @@ number is specified) of the given size returned.  For example
          <term>SetMatrixSize</term>
          <listitem>
           <synopsis>SetMatrixSize (M,rows,columns)</synopsis>
-          <para>Make new matrix of given size from old one</para>
+          <para>Make new matrix of given size from old one.  That is, a new
+	  matrix will be returned to which the old one is copied.  Entries that
+	  don't fit are clipped and extra space is filled with zeros.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2169,7 +2260,7 @@ number is specified) of the given size returned.  For example
          <term>SortVector</term>
          <listitem>
           <synopsis>SortVector (v)</synopsis>
-          <para>Sort vector elements</para>
+          <para>Sort vector elements in an increasing order.</para>
          </listitem>
         </varlistentry>
 
@@ -2177,7 +2268,7 @@ number is specified) of the given size returned.  For example
          <term>StripZeroColumns</term>
          <listitem>
           <synopsis>StripZeroColumns (M)</synopsis>
-          <para>Removes any all-zero columns of M</para>
+          <para>Removes any all-zero columns of <varname>M</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -2185,7 +2276,7 @@ number is specified) of the given size returned.  For example
          <term>StripZeroRows</term>
          <listitem>
           <synopsis>StripZeroRows (M)</synopsis>
-          <para>Removes any all-zero rows of M</para>
+          <para>Removes any all-zero rows of <varname>M</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -2320,7 +2411,12 @@ number is specified) of the given size returned.  For example
          <term>ConjugateTranspose</term>
          <listitem>
           <synopsis>ConjugateTranspose (M)</synopsis>
-          <para>Conjugate transpose of a matrix (adjoint)</para>
+          <para>Conjugate transpose of a matrix (adjoint).  This is the
+	  same as the <userinput>'</userinput> operator.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/ConjugateTranspose.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2385,20 +2481,13 @@ number is specified) of the given size returned.  For example
         <varlistentry id="gel-function-GramSchmidt">
          <term>GramSchmidt</term>
          <listitem>
-          <synopsis>GramSchmidt (v,B)</synopsis>
-          <para>Apply the Gram-Schmidt process (to the columns) with respect to innter product given by <varname>B</varname></para>
-          <para>
-	    See
-	    <ulink url="http://planetmath.org/encyclopedia/GramSchmidtOrthogonalization.html">Planetmath</ulink> for more information.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="gel-function-GramSchmidtDot">
-         <term>GramSchmidtDot</term>
-         <listitem>
-          <synopsis>GramSchmidtDot (M)</synopsis>
-          <para>Apply the Gram-Schmidt process (to the columns) using the dot product</para>
+          <synopsis>GramSchmidt (v,B...)</synopsis>
+	  <para>Apply the Gram-Schmidt process (to the columns) with respect to
+inner product given by <varname>B</varname>.  If <varname>B</varname> is not
+given then the standard hermitian product is used.  <varname>B</varname> can
+either be a sesquilinear function of two arguments or it can be a matrix giving
+a sesquilinear form.  The vectors will be made orthonormal with respect to
+<varname>B</varname>.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/GramSchmidtOrthogonalization.html">Planetmath</ulink> for more information.
@@ -2510,7 +2599,11 @@ number is specified) of the given size returned.  For example
          <term>IsSkewHermitian</term>
          <listitem>
           <synopsis>IsSkewHermitian (M)</synopsis>
-          <para>Is a matrix skew-hermitian</para>
+          <para>Is a matrix skew-hermitian.  That is, is the conjugate transpose equal to negative of the matrix.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/SkewHermitianMatrix.html">Planetmath</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2535,7 +2628,10 @@ number is specified) of the given size returned.  For example
          <term>Kernel</term>
          <listitem>
           <synopsis>Kernel (T)</synopsis>
-          <para>Get the kernel (nullspace) of a linear transform</para>
+          <para>Get the kernel (nullspace) of a linear transform.</para>
+	  <para>
+	  (See <link linkend="gel-function-NullSpace">NullSpace</link>)
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2546,7 +2642,8 @@ number is specified) of the given size returned.  For example
           <para>
 	    Get the LU decomposition of <varname>A</varname>
 	    and store the result in the <varname>L</varname> and
-	    <varname>U</varname> which should be references.  It returns null.
+	    <varname>U</varname> which should be references.  It returns true
+	    if successful.
 	    For example suppose that A is a square matrix, then after running:
 	    <screen><prompt>genius></prompt> <userinput>LUDecomposition(A,&amp;L,&amp;U)</userinput>
 </screen>
@@ -2609,7 +2706,14 @@ number is specified) of the given size returned.  For example
          <term>NullSpace</term>
          <listitem>
           <synopsis>NullSpace (T)</synopsis>
-          <para>Get the nullspace of a matrix</para>
+          <para>Get the nullspace of a matrix.  That is the kernel of the
+	  linear mapping that the matrix represents.  This is returned
+	  as a matrix whose column space is the nullspace of
+	  <varname>T</varname>.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/Nullspace.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2618,7 +2722,11 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>Nullity (M)</synopsis>
           <para>Aliases: <function>nullity</function></para>
-          <para>Get the nullity of a matrix</para>
+          <para>Get the nullity of a matrix.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/Nullity.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2641,8 +2749,39 @@ number is specified) of the given size returned.  For example
         <varlistentry id="gel-function-Projection">
          <term>Projection</term>
          <listitem>
-          <synopsis>Projection (v,W,B)</synopsis>
-          <para>Projection of vector v onto subspace W given a bilinear form B</para>
+          <synopsis>Projection (v,W,B...)</synopsis>
+	  <para>Projection of vector <varname>v</varname> onto subspace
+<varname>W</varname> with respect to inner product given by
+<varname>B</varname>.  If <varname>B</varname> is not given then the standard
+hermitian product is used.  <varname>B</varname> can either be a sesquilinear
+function of two arguments or it can be a matrix giving a sesquilinear form.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-QRDecomposition">
+         <term>QRDecomposition</term>
+         <listitem>
+          <synopsis>QRDecomposition (A, Q)</synopsis>
+          <para>
+	    Get the QR decomposition of a square matrix <varname>A</varname>,
+	    returns the upper triangular matrix <varname>R</varname>
+	    and sets <varname>Q</varname> to the orthogonal (unitary) matrix.
+	    <varname>Q</varname> should be a reference or null if you don't
+	    want any return.
+	    For example:
+	    <screen><prompt>genius></prompt> <userinput>R = QRDecomposition(A,&amp;Q)</userinput>
+</screen>
+	    You will have the upper triangular matrix stored in
+	    a variable called
+	    <varname>R</varname> and the orthogonal (unitary) matrix stored in
+	    <varname>Q</varname>.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/QRDecomposition.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/QRDecomposition.html">Mathworld</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2659,7 +2798,11 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>Rank (M)</synopsis>
           <para>Aliases: <function>rank</function></para>
-          <para>Get the rank of a matrix</para>
+          <para>Get the rank of a matrix.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/SylvestersLaw.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2712,6 +2855,22 @@ number is specified) of the given size returned.  For example
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-SesquilinearForm">
+         <term>SesquilinearForm</term>
+         <listitem>
+          <synopsis>SesquilinearForm (v,A,w)</synopsis>
+          <para>Evaluate (v,w) with respect to the sesquilinear form given by the matrix A</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SesquilinearFormFunction">
+         <term>SesquilinearFormFunction</term>
+         <listitem>
+          <synopsis>SesquilinearFormFunction (A)</synopsis>
+          <para>Return a function that evaluates two vectors with respect to the sesquilinear form given by A</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-SmithNormalFormField">
          <term>SmithNormalFormField</term>
          <listitem>
@@ -2749,7 +2908,12 @@ number is specified) of the given size returned.  For example
          <term>Transpose</term>
          <listitem>
           <synopsis>Transpose (M)</synopsis>
-          <para>Transpose of a matrix</para>
+          <para>Transpose of a matrix.  This is the same as the
+          <userinput>.'</userinput> operator.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/Transpose.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2765,8 +2929,12 @@ number is specified) of the given size returned.  For example
         <varlistentry id="gel-function-VectorAngle">
          <term>VectorAngle</term>
          <listitem>
-          <synopsis>VectorAngle (v,w,B)</synopsis>
-          <para>The angle of two vectors, given an inner product</para>
+          <synopsis>VectorAngle (v,w,B...)</synopsis>
+          <para>The angle of two vectors with respect to inner product given by
+<varname>B</varname>.  If <varname>B</varname> is not given then the standard
+hermitian product is used.  <varname>B</varname> can either be a sesquilinear
+function of two arguments or it can be a matrix giving a sesquilinear form.
+</para>
          </listitem>
         </varlistentry>
 
@@ -2873,7 +3041,9 @@ number is specified) of the given size returned.  For example
          <term>Combinations</term>
          <listitem>
           <synopsis>Combinations (k,n)</synopsis>
-          <para>Get all combinations of k numbers from 1 to n as a vector of vectors</para>
+          <para>Get all combinations of k numbers from 1 to n as a vector of vectors.
+	  (See also <link linkend="gel-function-NextCombination">NextCombination</link>)
+</para>
          </listitem>
         </varlistentry>
 
@@ -2974,11 +3144,44 @@ number is specified) of the given size returned.  For example
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-NextCombination">
+         <term>NextCombination</term>
+         <listitem>
+          <synopsis>NextCombination (v,n)</synopsis>
+	  <para>Get combination that would come after v in call to
+combinations, first combination should be <userinput>[1:k]</userinput>.  This
+function is useful if you have many combinations to go through and you don't
+want to waste memory to store them all.
+	  </para>
+	  <para>
+	    For example with Combination you would normally write a loop like:
+          <screen><userinput>for n in Combinations (4,6) do (
+  SomeFunction (n)
+);</userinput>
+</screen>
+	    But with NextCombination you would write something like:
+          <screen><userinput>n:=[1:4];
+do (
+  SomeFunction (n)
+) while not IsNull(n:=NextCombination(n,6));</userinput>
+</screen>
+	  See also <link linkend="gel-function-Combinations">Combinations</link>.
+	  </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-Pascal">
          <term>Pascal</term>
          <listitem>
           <synopsis>Pascal (i)</synopsis>
-          <para>Get the pascal's triangle as a matrix</para>
+          <para>Get the Pascal's triangle as a matrix.  This will return
+	  an <varname>i</varname>+1 by <varname>i</varname>+1 lower diagonal
+	  matrix which is the Pascal's triangle after <varname>i</varname>
+	  iterations.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/PascalsTriangle.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2004 Jiri (George) Lebl
+ * Copyright (C) 1997-2006 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -209,6 +209,11 @@ void gel_mod_node (GelCtx *ctx, GelETree *n);
 gboolean gel_mod_integer_rational (mpw_t num, mpw_t mod);
 
 mpw_ptr gel_find_pre_function_modulo (GelCtx *ctx);
+
+
+/*compare nodes, return TRUE if equal
+  makes them the same type as a side effect*/
+gboolean gel_eqlnodes (GelETree *l, GelETree *r);
 
 #define GET_ABCDE(n,a,b,c,d,e) { \
 	(a) = (n)->op.args; \

@@ -6,8 +6,7 @@ plugindir = $(libdir)/genius
 
 plugin_includedir = $(includedir)/genius
 
-#YACCFLAGS += -d -t
-YFLAGS += -d -t
+AM_YFLAGS = -d -t
 
 if INTERNAL_MPFR
 MPFR_INCLUDEDIR = \
@@ -31,10 +30,10 @@ INCLUDES = \
 	-I$(srcdir)						\
 	-I$(includedir)						\
 	-I$(top_srcdir)						\
-	-I$(top_srcdir)/vicious-extensions			\
+	-I$(top_srcdir)/ve					\
 	-I$(top_srcdir)/gtkextra				\
 	-I$(top_builddir)					\
-	-I$(top_builddir)/vicious-extensions			\
+	-I$(top_builddir)/ve					\
 	-I$(top_builddir)/gtkextra				\
 	$(MPFR_INCLUDEDIR)					\
 	$(GMP_INCLUDEDIR)					\
@@ -101,7 +100,7 @@ gnome_genius_SOURCES = 	\
 	funclibhelper.cP
 
 gnome_genius_LDADD = \
-	-L$(top_builddir)/vicious-extensions	\
+	-L$(top_builddir)/ve			\
 	-lviciousui				\
 	-L$(top_builddir)/gtkextra		\
 	-lgtkextra-genius			\
@@ -120,7 +119,7 @@ genius_readline_helper_fifo_SOURCES = \
 
 # FIXME: no need for so many libs
 genius_readline_helper_fifo_LDADD = \
-	-L$(top_builddir)/vicious-extensions	\
+	-L$(top_builddir)/ve			\
 	-lvicious				\
 	-lm					\
 	$(GENIUS_NOGUI_LIBS)			\
@@ -178,7 +177,7 @@ genius_SOURCES = 	\
 	funclibhelper.cP
 
 genius_LDADD = \
-	-L$(top_builddir)/vicious-extensions	\
+	-L$(top_builddir)/ve			\
 	-lvicious				\
 	-lm					\
 	@GMP_LIB@				\
@@ -213,7 +212,7 @@ libtestplugin_la_SOURCES =	\
 
 BUILT_SOURCES = parse.h parse.c lexer.c
 
-CLEANFILES += $(BUILT_SOURCES)
+CLEANFILES = $(BUILT_SOURCES)
 
 Desktopdir = $(datadir)/applications
 Desktop_in_files = \
@@ -221,6 +220,8 @@ Desktop_in_files = \
 Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
 @INTLTOOL_DESKTOP_RULE@
+
+DISTCLEANFILES = $(Desktop_DATA) test.plugin
 
 EXTRA_DIST = \
 	geniustest.pl \
@@ -237,7 +238,7 @@ Plugindesc_DATA = test.plugin
 Langdesc_DATA = genius.lang
 
 parse.h: parse.y
-	$(YACC) $(YFLAGS) $<
+	$(YACC) $(YFLAGS) $(AM_YFLAGS) $<
 	test -f y.tab.c && mv -f y.tab.c parse.c
 	test -f y.tab.h && mv -f y.tab.h parse.h
 

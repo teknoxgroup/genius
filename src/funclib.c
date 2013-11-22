@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2005 Jiri (George) Lebl
+ * Copyright (C) 1997-2006 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -819,13 +819,115 @@ DiagonalOf_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
 
-	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "DiagonalOf"))
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "DiagonalOf"))
 		return NULL;
+
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_null ();
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_diagonalof (a[0]->mat.matrix);
 	n->mat.quoted = FALSE;
+	return n;
+}
+
+static GelETree *
+CountZeroColumns_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelMatrixW *m;
+	int i, j, w, h;
+	int cnt;
+
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "CountZeroColumns"))
+		return NULL;
+
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_ui (0);
+
+	m = a[0]->mat.matrix;
+	w = gel_matrixw_width (m);
+	h = gel_matrixw_height (m);
+	cnt = 0;
+	for (i = 0; i < w; i++) {
+		for (j = 0; j < h; j++) {
+			GelETree *t = gel_matrixw_set_index (m, i, j);
+			if ( ! ( t == NULL ||
+				 t->type == NULL_NODE ||
+				 (t->type == VALUE_NODE &&
+				  mpw_cmp_ui (t->val.value, 0) == 0))) {
+				cnt++;
+				break;
+			}
+		}
+	}
+
+	return gel_makenum_ui (w-cnt);
+}
+
+static GelETree *
+StripZeroColumns_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelETree *n;
+	GelMatrixW *m;
+	GelMatrix *nm;
+	int i, j, w, h, tj;
+	int cnt;
+	GSList *cols, *li;
+
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "StripZeroColumns"))
+		return NULL;
+
+	if (a[0]->type == NULL_NODE)
+		return gel_makenum_null ();
+
+	m = a[0]->mat.matrix;
+	w = gel_matrixw_width (m);
+	h = gel_matrixw_height (m);
+	cnt = 0;
+	cols = NULL;
+	for (i = 0; i < w; i++) {
+		for (j = 0; j < h; j++) {
+			GelETree *t = gel_matrixw_set_index (m, i, j);
+			if ( ! ( t == NULL ||
+				 t->type == NULL_NODE ||
+				 (t->type == VALUE_NODE &&
+				  mpw_cmp_ui (t->val.value, 0) == 0))) {
+				cols = g_slist_prepend (cols,
+							GINT_TO_POINTER (i));
+				cnt++;
+				break;
+			}
+		}
+	}
+
+	if (cnt == w) {
+		g_slist_free (cols);
+		return copynode (a[0]);
+	}
+
+	nm = gel_matrix_new ();
+	gel_matrix_set_size (nm, cnt, h, FALSE /* padding */);
+
+	tj = cnt-1;
+	for (li = cols; li != NULL; li = li->next) {
+		i = GPOINTER_TO_INT (li->data);
+		for (j = 0; j < h; j++) {
+			GelETree *t = gel_matrixw_set_index (m, i, j);
+			if (t != NULL)
+				gel_matrix_index (nm, tj, j) =
+					copynode (t);
+		}
+		tj--;
+	}
+
+	g_slist_free (cols);
+
+	GET_NEW_NODE (n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.quoted = a[0]->mat.quoted;
+
 	return n;
 }
 
@@ -1003,7 +1105,33 @@ atan_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	return gel_makenum_use(fr);
 }
-	
+
+/*atan2 (arctan2) function*/
+static GelETree *
+atan2_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpw_t fr;
+
+	if(a[0]->type==MATRIX_NODE ||
+	   a[1]->type==MATRIX_NODE)
+		return gel_apply_func_to_matrixen(ctx,a[0],a[1],atan2_op,"atan2", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "atan2") ||
+			! check_argument_number (a, 1, "atan2"))
+		return NULL;
+
+	mpw_init (fr);
+	mpw_arctan2 (fr,
+		     a[0]->val.value,
+		     a[1]->val.value);
+	if G_UNLIKELY (error_num) {
+		error_num = 0;
+		mpw_clear (fr);
+		return NULL;
+	}
+
+	return gel_makenum_use (fr);
+}
 
 /*e function (or e variable actually)*/
 static GelETree *
@@ -1036,6 +1164,16 @@ EulerConstant_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	mpw_t e;
 	mpw_init (e);
 	mpw_euler_constant (e);
+	return gel_makenum_use (e);
+}
+
+/* CatalanConstant */
+static GelETree *
+CatalanConstant_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpw_t e;
+	mpw_init (e);
+	mpw_catalan_constant (e);
 	return gel_makenum_use (e);
 }
 
@@ -2510,6 +2648,192 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 }
 
 static GelETree *
+HermitianProduct_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelMatrixW *m1, *m2;
+	int i, len;
+	mpw_t res;
+	mpw_t trm;
+
+	if G_UNLIKELY ( ! check_argument_value_only_vector (a, 0, "HermitianProduct") ||
+			! check_argument_value_only_vector (a, 1, "HermitianProduct"))
+		return NULL;
+
+	m1 = a[0]->mat.matrix;
+	m2 = a[1]->mat.matrix;
+	len = gel_matrixw_elements (m1);
+	if G_UNLIKELY (gel_matrixw_elements (m2) != len) {
+		gel_errorout (_("%s: arguments must be vectors of equal size"), "HermitianProduct");
+		return NULL;
+	}
+
+	mpw_init (res);
+	mpw_init (trm);
+	mpw_set_ui (res, 0);
+	for (i = 0; i < len; i++) {
+		GelETree *t1 = gel_matrixw_vindex (m1, i);
+		GelETree *t2 = gel_matrixw_vindex (m2, i);
+		/* (t1 and t2 must be value only nodes! checked above!) */
+		mpw_conj (trm, t2->val.value);
+		mpw_mul (trm, trm, t1->val.value);
+		mpw_add (res, res, trm);
+	}
+
+	mpw_clear (trm);
+
+	return gel_makenum_use (res);
+}
+
+static gboolean
+isinmatrix (GelETree *n, GelMatrixW *m)
+{
+	int ml, i;
+
+	ml = gel_matrixw_elements (m);
+
+	for (i = 0; i < ml; i++) {
+		GelETree *t = gel_matrixw_vindex (m, i);
+		if (gel_eqlnodes (t, n)) {
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}
+
+static GelETree *
+IsIn_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 1, "IsIn"))
+		return NULL;
+
+	if (a[1]->type == NULL_NODE)
+		return gel_makenum_bool (FALSE);
+
+	return gel_makenum_bool (isinmatrix (a[0], a[1]->mat.matrix));
+}
+
+static GelETree *
+SetMinus_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelMatrixW *m1, *m2;
+	int ml, i;
+	int len;
+	GSList *list, *li;
+	GelETree *n;
+	GelMatrix *nm;
+
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "SetMinus") ||
+			! check_argument_matrix_or_null (a, 1, "SetMinus"))
+		return NULL;
+
+	if (a[0]->type == NULL_NODE) {
+		return gel_makenum_null ();
+	} else if (a[1]->type == NULL_NODE) {
+		return copynode (a[0]);
+	}
+
+	m1 = a[0]->mat.matrix;
+	ml = gel_matrixw_elements (m1);
+
+	m2 = a[1]->mat.matrix;
+
+	list = NULL;
+	len = 0;
+
+	for (i = 0; i < ml; i++) {
+		GelETree *t = gel_matrixw_vindex (m1, i);
+		if ( ! isinmatrix (t, m2)) {
+			if (t == the_zero)
+				list = g_slist_prepend (list, NULL);
+			else
+				list = g_slist_prepend (list, copynode (t));
+			len ++;
+		}
+	}
+	if (list == NULL) {
+		return gel_makenum_null ();
+	}
+
+	nm = gel_matrix_new ();
+	gel_matrix_set_size (nm, len, 1, FALSE /* padding */);
+	/* go backwards to "preserver order" */
+	li = list;
+	for (i = len-1; i >= 0; i--) {
+		gel_matrix_index (nm, i, 0) = li->data;
+		li = li->next;
+	}
+	g_slist_free (list);
+
+	GET_NEW_NODE (n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.quoted = a[0]->mat.quoted;
+
+	return n;
+}
+
+static GelETree *
+Intersection_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelMatrixW *m1, *m2;
+	int ml, i;
+	int len;
+	GSList *list, *li;
+	GelETree *n;
+	GelMatrix *nm;
+
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "Intersection") ||
+			! check_argument_matrix_or_null (a, 1, "Intersection"))
+		return NULL;
+
+	if (a[0]->type == NULL_NODE) {
+		return gel_makenum_null ();
+	} else if (a[1]->type == NULL_NODE) {
+		return gel_makenum_null ();
+	}
+
+	m1 = a[0]->mat.matrix;
+	ml = gel_matrixw_elements (m1);
+
+	m2 = a[1]->mat.matrix;
+
+	list = NULL;
+	len = 0;
+
+	for (i = 0; i < ml; i++) {
+		GelETree *t = gel_matrixw_vindex (m1, i);
+		if (isinmatrix (t, m2)) {
+			if (t == the_zero)
+				list = g_slist_prepend (list, NULL);
+			else
+				list = g_slist_prepend (list, copynode (t));
+			len ++;
+		}
+	}
+	if (list == NULL) {
+		return gel_makenum_null ();
+	}
+
+	nm = gel_matrix_new ();
+	gel_matrix_set_size (nm, len, 1, FALSE /* padding */);
+	/* go backwards to "preserver order" */
+	li = list;
+	for (i = len-1; i >= 0; i--) {
+		gel_matrix_index (nm, i, 0) = li->data;
+		li = li->next;
+	}
+	g_slist_free (list);
+
+	GET_NEW_NODE (n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.quoted = a[0]->mat.quoted;
+
+	return n;
+}
+
+static GelETree *
 det_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	mpw_t ret;
@@ -2546,7 +2870,10 @@ rref_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_copy(a[0]->mat.matrix);
-	gel_value_matrix_gauss (ctx, n->mat.matrix, TRUE, FALSE, FALSE, NULL, NULL);
+	if ( ! n->mat.matrix->rref) {
+		gel_value_matrix_gauss (ctx, n->mat.matrix, TRUE, FALSE, FALSE, NULL, NULL);
+		n->mat.matrix->rref = 1;
+	}
 	n->mat.quoted = FALSE;
 	return n;
 }
@@ -4015,6 +4342,58 @@ Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 }
 
 static GelETree *
+NextCombination_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	long k, n;
+	int *comb;
+	int i;
+	GelETree *r;
+	GelMatrixW *m;
+
+	if G_UNLIKELY ( ! check_argument_value_only_matrix (a, 0, "NextCombination") ||
+			! check_argument_integer (a, 1, "NextCombination"))
+		return NULL;
+
+	m = a[0]->mat.matrix;
+	k = gel_matrixw_elements (m);
+
+	error_num = 0;
+	n = mpw_get_long(a[1]->val.value);
+	if G_UNLIKELY (error_num != 0) {
+		error_num = 0;
+		return NULL;
+	}
+	if G_UNLIKELY (n < 1 || n > G_MAXINT || k < 1 || k > n) {
+		gel_errorout (_("%s: value out of range"),
+			      "NextCombination");
+		return NULL;
+	}
+
+	comb = g_new (int, k);
+	for (i = 0; i < k; i++) {
+		int j = mpw_get_long (gel_matrixw_vindex (m, i)->val.value);
+		if G_UNLIKELY (error_num != 0) {
+			error_num = 0;
+			g_free (comb);
+			return NULL;
+		} else if G_UNLIKELY (j < 1 || j > n) {
+			g_free (comb);
+			gel_errorout (_("%s: value out of range"),
+				      "NextCombination");
+			return NULL;
+		}
+		comb[i] = j;
+	}
+	if (comb_get_next_combination (comb, k, n))
+		r = etree_out_of_int_vector (comb, k);
+	else
+		r = gel_makenum_null ();
+	g_free (comb);
+
+	return r;
+}
+
+static GelETree *
 protect_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelToken *tok;
@@ -4668,6 +5047,8 @@ gel_funclib_addall(void)
 	FUNC (RowsOf, 1, "M", "matrix", N_("Gets the rows of a matrix as a vertical vector"));
 	FUNC (ColumnsOf, 1, "M", "matrix", N_("Gets the columns of a matrix as a horizontal vector"));
 	FUNC (DiagonalOf, 1, "M", "matrix", N_("Gets the diagonal entries of a matrix as a horizontal vector"));
+	FUNC (CountZeroColumns, 1, "M", "matrix", N_("Count the number of zero columns in a matrix"));
+	FUNC (StripZeroColumns, 1, "M", "matrix", N_("Removes any all-zero columns of M"));
 
 	FUNC (ComplexConjugate, 1, "M", "numeric", N_("Calculates the conjugate"));
 	conj_function = f;
@@ -4688,6 +5069,9 @@ gel_funclib_addall(void)
 	atan_function = f;
 	ALIAS (arctan, 1, atan);
 
+	FUNC (atan2, 2, "y,x", "trigonometry", N_("Calculates the arctan2 function (arctan(y/x) if x>0)"));
+	ALIAS (arctan2, 1, atan2);
+
 	FUNC (pi, 0, "", "constants", N_("The number pi"));
 	pi_function = f;
 	FUNC (e, 0, "", "constants", N_("The natural number e"));
@@ -4700,6 +5084,8 @@ gel_funclib_addall(void)
 	      N_("Euler's Constant gamma"));
 	ALIAS (gamma, 0, EulerConstant);
 	EulerConstant_function = f;
+	FUNC (CatalanConstant, 0, "", "constants",
+	      N_("Catalan's Constant (0.915...)"));
 
 	/* FIXME: need to handle complex values */
 	/*
@@ -4816,11 +5202,17 @@ gel_funclib_addall(void)
 
 	FUNC (SetMatrixSize, 3, "M,rows,columns", "matrix", N_("Make new matrix of given size from old one"));
 	FUNC (IndexComplement, 2, "vec,msize", "matrix", N_("Return the index complement of a vector of indexes"));
+	FUNC (HermitianProduct, 2, "u,v", "matrix", N_("Get the hermitian product of two vectors"));
+	ALIAS (InnerProduct, 2, HermitianProduct);
 
 	FUNC (IsValueOnly, 1, "M", "matrix", N_("Check if a matrix is a matrix of numbers"));
 	FUNC (IsMatrixInteger, 1, "M", "matrix", N_("Check if a matrix is an integer (non-complex) matrix"));
 	FUNC (IsMatrixRational, 1, "M", "matrix", N_("Check if a matrix is a rational (non-complex) matrix"));
 	FUNC (IsMatrixReal, 1, "M", "matrix", N_("Check if a matrix is a real (non-complex) matrix"));
+
+	FUNC (IsIn, 2, "x,X", "sets", N_("Returns true if the element x is in the set X (where X is a vector pretending to be a set)"));
+	FUNC (SetMinus, 2, "X,Y", "sets", N_("Returns a set theoretic difference X-Y (X and Y are vectors pretending to be sets)"));
+	FUNC (Intersection, 2, "X,Y", "sets", N_("Returns a set theoretic intersection of X and Y (X and Y are vectors pretending to be sets)"));
 
 	FUNC (IsNull, 1, "arg", "basic", N_("Check if argument is a null"));
 	FUNC (IsValue, 1, "arg", "basic", N_("Check if argument is a number"));
@@ -4854,6 +5246,7 @@ gel_funclib_addall(void)
 	FUNC (PolyToFunction, 1, "p", "polynomial", N_("Make function out of a polynomial (as vector)"));
 
 	FUNC (Combinations, 2, "k,n", "combinatorics", N_("Get all combinations of k numbers from 1 to n as a vector of vectors"));
+	FUNC (NextCombination, 2, "v,n", "combinatorics", N_("Get combination that would come after v in call to combinations, first combination should be [1:k]."));
 	FUNC (Permutations, 2, "k,n", "combinatorics", N_("Get all permutations of k numbers from 1 to n as a vector of vectors"));
 
 	FUNC (StringToASCII, 1, "str", "misc", N_("Convert a string to a vector of ASCII values"));

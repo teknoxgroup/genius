@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2005 Jiri (George) Lebl
+ * Copyright (C) 1997-2006 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -1921,8 +1921,12 @@ new_program (const char *filename)
 				p);
 
 	if (filename == NULL) {
+		char *d = g_get_current_dir ();
+		char *n = g_strdup_printf (_("Program_%d.gel"), cnt);
 		/* the file name will have an underscore */
-		p->name = g_strdup_printf (_("Program_%d.gel"), cnt);
+		p->name = g_strconcat (d, "/", n, NULL);
+		g_free (d);
+		g_free (n);
 		p->vname = g_strdup_printf (_("Program %d"), cnt);
 		cnt++;
 	} else {
@@ -2399,6 +2403,14 @@ run_program (GtkWidget *menu_item, gpointer data)
 
 }
 
+static gboolean
+delete_event (GtkWidget *w, GdkEventAny *e, gpointer data)
+{
+	quitapp (w, data);
+	return TRUE;
+}
+
+
 /*main window creation, slightly copied from same-gnome:)*/
 static GtkWidget *
 create_main_window (void)
@@ -2410,7 +2422,7 @@ create_main_window (void)
 	gtk_window_set_wmclass (GTK_WINDOW (w), "gnome-genius", "gnome-genius");
 
         g_signal_connect (G_OBJECT (w), "delete_event",
-			  G_CALLBACK (quitapp), NULL);
+			  G_CALLBACK (delete_event), NULL);
         return w;
 }
 
@@ -2873,7 +2885,7 @@ drag_data_received (GtkWidget *widget, GdkDragContext *context,
 	if (info != TARGET_URI_LIST)
 		return;
 			
-	list = gnome_vfs_uri_list_parse (selection_data->data);
+	list = gnome_vfs_uri_list_parse ((gpointer)selection_data->data);
 
 	for (li = list; li != NULL; li = li->next) {
 		const GnomeVFSURI *uri = li->data;
@@ -2884,6 +2896,41 @@ drag_data_received (GtkWidget *widget, GdkDragContext *context,
 	
 	gnome_vfs_uri_list_free (list);
 }
+
+static void
+update_term_geometry (void)
+{
+	GdkGeometry hints;
+	int char_width;
+	int char_height;
+	int xpad, ypad;
+
+	char_width = VTE_TERMINAL (term)->char_width;
+	char_height = VTE_TERMINAL (term)->char_height;
+  
+	vte_terminal_get_padding (VTE_TERMINAL (term), &xpad, &ypad);
+
+	hints.base_width = xpad;
+	hints.base_height = ypad;
+
+#define MIN_WIDTH_CHARS 10
+#define MIN_HEIGHT_CHARS 4
+
+	hints.width_inc = char_width;
+	hints.height_inc = char_height;
+
+	/* min size is min size of just the geometry widget, remember. */
+	hints.min_width = hints.base_width + hints.width_inc * MIN_WIDTH_CHARS;
+	hints.min_height = hints.base_height + hints.height_inc * MIN_HEIGHT_CHARS;
+
+	gtk_window_set_geometry_hints (GTK_WINDOW (genius_window),
+				       term,
+				       &hints,
+				       GDK_HINT_RESIZE_INC |
+				       GDK_HINT_MIN_SIZE |
+				       GDK_HINT_BASE_SIZE);
+}
+
 
 int
 main (int argc, char *argv[])
@@ -3081,6 +3128,10 @@ main (int argc, char *argv[])
 		(VTE_TERMINAL (term),
 		 genius_setup.blinking_cursor);
 	vte_terminal_set_encoding (VTE_TERMINAL (term), "UTF-8");
+
+	update_term_geometry ();
+	g_signal_connect (G_OBJECT (term), "char-size-changed",
+			  G_CALLBACK (update_term_geometry), NULL);
 
 	gtk_widget_show_now (genius_window);
 

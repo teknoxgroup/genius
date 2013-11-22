@@ -1,7 +1,7 @@
 if INTERNAL_MPFR
 MAYBE_MPFR = mpfr
 endif
-SUBDIRS = $(MAYBE_MPFR) vicious-extensions gtkextra src pixmaps lib po help
+SUBDIRS = $(MAYBE_MPFR) ve gtkextra src pixmaps lib po help
 
 mimeinfodir = $(datadir)/mime-info
 mimeinfo_DATA = genius.keys genius.mime
@@ -22,7 +22,6 @@ EXTRA_DIST = \
 	genius.mime \
 	genius.keys \
 	genius.applications \
-	intltool-modules/XML/Parser/Style/OrigTree.pm \
 	intltool-extract.in	\
 	intltool-merge.in	\
 	intltool-update.in
@@ -38,4 +37,4 @@ DISTCLEANFILES = \
 #	echo "------------------------------------------" >> genius-function-list.txt
 #	echo help | src/genius >> genius-function-list.txt
 
-distuninstallcheck_listfiles = find . -type f -print | grep -v '^\./var/scrollkeeper' | grep -v 'omf' | grep -v 'figures'
+distuninstallcheck_listfiles = find . -type f -print | fgrep -v '/var/scrollkeeper' | fgrep -v 'omf' | fgrep -v 'figures' | fgrep -v '/share/mime'

@@ -1,3 +1,155 @@
+Tue Aug 01 19:48:10 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: use same geometry setup as gnome-terminal
+	  (resize in terms of the terminal characters) I don't have
+	  time to debug vte and new versions crap out when we don't set
+	  this up.
+
+	* po/POTFILES.in, Makefile.am, mpfr/Makefile.am,
+	  mpfr/tests/Makefile.am, src/Makefile.am, help/C/Makefile.am:
+	  fix build/distcheck for new autotools
+
+	* help/omf.make, help/xmldocs.make: update to newest versions from
+	  gnome-common to fix distcheck
+
+Tue Jul 18 20:35:23 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/eval.c: fix matrix expanding
+
+Mon Jul 17 01:55:30 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/*.gel: Added QRDecomposition, SesquilinearForm,
+	  SesquilinearFormFunction, killed GramSchmidtDot, DotProduct is now
+	  the actual dot product, not the hermitian product.  InnerProduct
+	  now calls HermitianProduct not DotProduct.  GramSchmidt,
+	  Projection, VectorAngle have the inner product as an optional
+	  argument.  GramSchmidt normalizes the vectors.  NullSpace optimized
+	  a bit, now no longer calls ColumnSpace which was not needed.  Fixed
+	  OuterProduct to actually return the outer product not just the 1,1
+	  element.  Killed HermitianProduct which moved to being C based
+
+	* src/funclib.c, src/funclibhelper.cP: implemented HermitianProduct
+	  in C, optimized StripZeroColumns in the case when there are no
+	  columns to strip
+
+	* src/matrixw.[ch], src/funclib.c: remember that we did rref so that
+	  we don't do it several times (speeds up NullSpace a bit)
+
+	* combinatorics/factorial.gel, lib/linear_algebra/*.gel,
+	  statistics/basic.gel: use zeros instead of SetMatrixSize
+
+	* help/C/gel-function-list.xml: update
+
+Fri Jul 14 18:00:39 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* configure.in, mpfr/*: update mpfr to 2.2.0 and require 2.2.0 in
+	  the configure script
+
+	* src/mpwrap.[ch], src/funclib.c: use mpfr_pow_z and whack our own
+	  stupid version.  Add CatalanConstant and atan2 functions
+
+	* help/C/gel-functions-list.xml, lib/functions/elementary.gel:
+	  document CatalanConstant, atan2, and change all "reverse function"
+	  to "inverse function".
+
+Fri Jul 14 01:00:03 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/funclib.c:  Add NextCombination function
+
+	* src/geniustests.txt: add tests
+
+	* help/C/gel-function-list.xml: add docs for NextCombination
+
+Thu Jul 13 17:50:28 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* configure.in, autogen.sh, acconfig.h, src/Makefile.am: use automake
+	  1.9 to fix the po directory mess and other things.
+
+	* mpfr/*: apparently automake gets update in cvs for this
+
+Thu Jul 13 13:42:25 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/calc.h, src/*.c: update copyright strings for 2006
+
+Thu Jul 13 13:33:12 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/funclib.c, lib/linear_algebra/linear_algebra.gel,
+	  lib/linear_algebra/subspaces.gel:
+	  Add CountZeroColumns function which is quicker then
+	  stripping zero columns and then counting the remainder.  
+	  Further port StripZeroColumns to C to make it a lot more
+	  efficient.  This also optimizes things such as nullity, rank,
+	  ColumnSpace, NullSpace and related.
+
+	* src/geniustests.txt: Add some tests
+
+	* help/C/gel-function-list.xml, help/C/genius.xml: Update the manual,
+	  and expand a bunch of entries for a bunch of functions.
+
+Thu Jul 13 10:53:54 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* lib/sets/basic.gel, src/funclib.c, src/eval.[ch]: Implement IsIn,
+	  Intersection and SetMinus in C for speed
+
+	* lib/linear_algebra/subspaces.gel,
+	  lib/linear_algebra/linear_algebra.gel:  Minor speed improvements
+	  to NullSpace
+
+	* src/geniustests.txt: add some more tests
+
+Thu Jul 13 08:56:10 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/eval.c: fix leaks
+
+	* src/matrix.c: zero out matrix data to init it
+
+	* lib/linear_algebra/linear_algebra.gel: simplify NonPivotColumns a
+	  tiny bit
+
+Thu Jul 13 01:32:55 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/eval.[ch], src/matrixw.c, src/matrix.c: Fix a whole bunch of
+	  leaks and memory corruption problems especially with respect to
+	  loops and matrixes.
+
+	* src/eval.c: fix evaluation of matrix entries to be a little faster
+	  perhaps (don't ever push value nodes) and evaluate matrix entries
+	  in the most obvious order rather then our previous
+	  very weird order.
+
+	* src/geniustest.txt: add a test
+
+Wed Jul 12 14:26:35 2006  George (Jiri) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix error in using the file chooser
+
+	* src/eval.c: fix compiler warning
+
+	* ve/*, configure.in, **/Makefile.am: use a private copy of
+	  slightly cut down vicious-extensions to make things work
+
+2006-04-17  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* configure.in: Remove obsolete entry for no_NO.
+	* po/no.po: And the translation.
+
+2005-12-06  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* configure.in: Add nb to ALL_LINGUAS.
+
+2005-08-24  Pawan Chitrakar  <pchitrakar@gmail.com>
+
+	* configure.in: Added ne in ALL_LINGUAS
+
+Thu Aug 11 11:51:10 2005  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: make the unsaved work quit dialog work for
+	  window closing as well (it just asked but quit anyway in that case).
+
+2005-08-08  Chao-Hsiung Liao  <j_h_liau@yahoo.com.tw>
+
+	* configure.in: Added "zh_TW" to ALL_LINGUAS.
+
 Fri Jul 22 10:12:09 2005  George Lebl <jirka@5z.com>
 
 	* Release 0.7.4

@@ -113,11 +113,35 @@ check_argument_matrix (GelETree **a, int argnum, const char *funcname)
 }
 
 static inline gboolean
+check_argument_matrix_or_null (GelETree **a, int argnum, const char *funcname)
+{
+	if G_UNLIKELY (a[argnum]->type != MATRIX_NODE &&
+		       a[argnum]->type != NULL_NODE) {
+		gel_errorout (_("%s: argument number %d not a matrix or null node"), funcname, argnum+1);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static inline gboolean
 check_argument_value_only_matrix (GelETree **a, int argnum, const char *funcname)
 {
 	if G_UNLIKELY (a[argnum]->type != MATRIX_NODE ||
 		       ! gel_is_matrix_value_only (a[argnum]->mat.matrix)) {
 		gel_errorout (_("%s: argument number %d not a value only matrix"), funcname, argnum+1);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+static inline gboolean
+check_argument_value_only_vector (GelETree **a, int argnum, const char *funcname)
+{
+	if G_UNLIKELY (a[argnum]->type != MATRIX_NODE ||
+		       ! gel_is_matrix_value_only (a[argnum]->mat.matrix) ||
+		       ! (gel_matrixw_width (a[argnum]->mat.matrix) == 1 ||
+			  gel_matrixw_height (a[argnum]->mat.matrix) == 1)) {
+		gel_errorout (_("%s: argument number %d not a value only vector"), funcname, argnum+1);
 		return FALSE;
 	}
 	return TRUE;
