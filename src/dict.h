@@ -36,6 +36,9 @@ EFunc * d_makebifunc(Token *id, dictfunc f, int nargs);
 /*make a user function and return it*/
 EFunc * d_makeufunc(Token *id, ETree *value, GList *argnames, int nargs);
 
+/*make a variable function and return in*/
+EFunc * d_makevfunc(Token *id, ETree *value);
+
 /*make a user function and return it*/
 EFunc * d_makereffunc(Token *id, EFunc *ref);
 
@@ -88,7 +91,10 @@ void replacefunc(EFunc *old,EFunc *new);
 /*push a new dictionary onto the context stack*/
 int d_addcontext(void);
 
-/*gimme the last dictinary*/
+/*gimme the last dictinary and pop the context stack*/
 GList * d_popcontext(void);
+
+/*gimme the current dictinary*/
+GList * d_getcontext(void);
 
 #endif

@@ -37,6 +37,10 @@ gnome_genius_SOURCES = 	\
 	matrix.h	\
 	matrixw.c	\
 	matrixw.h	\
+	matop.c		\
+	matop.h		\
+	compil.c	\
+	compil.h	\
 	structs.h	\
 	lexer.l		\
 	parse.h		\
@@ -68,6 +72,10 @@ genius_SOURCES = 	\
 	matrix.h	\
 	matrixw.c	\
 	matrixw.h	\
+	matop.c		\
+	matop.h		\
+	compil.c	\
+	compil.h	\
 	structs.h	\
 	lexer.l		\
 	parse.y
@@ -88,7 +96,12 @@ EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel
 
 Utilities_DATA = gnome-genius.desktop
 
-Library_DATA = lib.gel
+Library_DATA = lib.gel lib.cgel
+
+MOSTLYCLEANFILES = lib.cgel
+
+lib.cgel: lib.gel genius
+	$(top_builddir)/src/genius --compile lib.gel > lib.cgel
 
 parse.h: parse.y
 	$(YACC) $(YFLAGS) $<

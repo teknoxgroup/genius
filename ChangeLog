@@ -1,3 +1,144 @@
+Sat May 01 04:13:42 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.0
+
+Sat May 01 04:08:05 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: added abs,adj and delrowcol functions
+
+	* src/eval.c: implement integer powers for matricies, absolute
+	  value and division
+
+	* src/geniustests.txt: added some tests
+
+	* README: updated for new functions
+
+Fri Apr 30 17:09:14 1999  George Lebl  <jirka@5z.com>
+
+	* src/{lexer.l,parse.y,eval.[ch],calc.c}: add a 'for in do' for
+	  loop, for iterating over the elements of a matrix
+
+	* src/lib.gel: added a whole bunch of statistical functions and
+	  use the above construct more over the whole library
+
+	* src/{calc.[ch],genius.c,gnome-genius.c,lexer.l}: at least for
+	  parsing errors, display line numbers and file information
+
+	* src/geniustests.txt: added a bit of tests
+
+	* README: added description of the new construct and of the new
+	  functions
+
+Fri Apr 30 01:51:49 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: add <> as an alternative !=
+
+	* src/{eval.[ch],parse.y}: make new node type, SPACER, and
+	  push it for parenthesised nodes
+
+	* src/{eval.[ch],calc.c}: add new node type, COMPARISON_NODE,
+	  and just before evaluation, replace all comparison operators
+	  by comparison nodes, using spacers as stops so that parenthesis
+	  are still honored, then remove the spacers, also add evaluation
+	  and prining of the COMPARISON_NODE, with this change, ambiguous
+	  comparison expressions are now handled better in terms of math
+	  (e.g. 3<x<=7 is possible), also added evaluation of strings for
+	  all the comparison operators
+
+	* src/geniustests.txt: added a bunch of tests
+
+	* TODO: removed the comparison item
+
+	* README: updated about the comparison operator changes
+
+Thu Apr 29 15:38:55 1999  George Lebl  <jirka@5z.com>
+
+	* src/{eval.[ch],dict.[ch],calc.c}: pass functions by value, and
+	  differentiate between functions and variables, when evaluating a
+	  function without (...) return a function node with the function.
+	  this breaks compatibility a bit
+
+	* src/lib.gel: use functions by value everywhere
+
+	* src/geniustests.txt: update
+
+	* README: change stuff relating to function calling and references
+
+	* TODO: remove what was done
+
+Thu Apr 29 13:55:54 1999  George Lebl  <jirka@5z.com>
+
+	* src/{lexer.l,parse.y}: a much much nicer syntax for writing
+	  functions the old one is still there but is depreceated
+
+	* src/geniustests.txt: updated for the new stuff above
+
+	* src/lib.gel: updated for the new stuff
+
+	* README: updated
+
+	* TODO: add entries for 0.4.0
+
+	* configure.in: raise version to distinguish cvs from released
+
+Thu Apr 29 09:00:36 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: changed catallan to catalan
+
+	* src/eval.c: a !,- operators for matrixes, <=> operator for strings
+
+	* src/{compil.[ch],eval.c,dict.c,calc.[ch],genius.c,gnome-genius.c}:
+	  created "compiled" GEL files, to make startup much faster,
+	  functions are not actually even parsed until they are needed
+
+	* src/Makefile.am: compile and install lib.cgel
+
+	* src/geniustests.txt: small update
+
+	* README: updates
+
+Wed Apr 28 21:51:48 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: add == and != to matrix support and != for strings
+
+Wed Apr 28 18:03:19 1999  George Lebl  <jirka@5z.com>
+
+	* src/matop.[ch]: implemented an internal version of the
+	  gauss algorithm and put some matrix operations in this file 
+	  and added a determinant function
+
+	* src/eval.c: take out the matrix multiplication from here
+
+	* src/matrixw.c: fix a problem with matrix refcounting
+
+	* src/funclib.c: added the det,ref and rref functions
+
+	* src/lib.gel: added rad2deg,deg2rad,minimize,diagonal and
+	  swaprow functions, and took out the ref and rref functions
+
+	* README: updated
+
+Wed Apr 28 00:35:29 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch]: add_ui sub_ui and ui_sub routines added
+
+	* src/{eval.[ch],calc.c,parse.y,lexer.l}: added an iterative for
+	  loop
+
+	* src/lexer.l: added null to be '.' so that printouts are legal GEL
+
+	* src/lib.gel: added catallan, adjoint and string functions and
+	  avoided new reserved words
+
+	* src/geniustests.txt: added a couple new tests
+
+	* README: updated
+
+Mon Apr 26 02:27:24 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: complete complex number support (hopefully) and
+	  a whole bunch of fixes
+
 Sat Apr 24 18:24:53 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.3.2

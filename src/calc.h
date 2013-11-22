@@ -42,6 +42,7 @@ typedef struct _calcstate_t {
 	int max_digits; /*max digits in the display 0= as many as I got*/
 	int results_as_floats;  /*give result as float*/
 	int scientific_notation; /*always scientific notation*/
+	int do_interrupts; /*handle SIGINT*/
 } calcstate_t;
 
 
@@ -63,5 +64,15 @@ char * addparenth(char *s);
   pretty will use pretty_print_etree*/
 char * evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 	       calcstate_t state,void (*errorfunc)(char *), int pretty);
+void compile_all_user_funcs(FILE *outfile, void (*errorfunc)(char *));
+void load_compiled_file(char *file, calcstate_t state, void (*errorfunc)(char *),int warn);
+void load_file(char *file, calcstate_t state, void (*errorfunc)(char *),int warn);
+
+/*This is for file/line info for errors*/
+void push_file_info(char *file,int line);
+void pop_file_info(void);
+void incr_file_info(void);
+void rewind_file_info(void);
+void get_file_info(char **file, int *line);
 
 #endif

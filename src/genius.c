@@ -57,7 +57,15 @@ extern int got_eof;
 static void
 puterror(char *s)
 {
-	fprintf(stderr,"%s\n",s);
+	char *file;
+	int line;
+	get_file_info(&file,&line);
+	if(file)
+		fprintf(stderr,"%s:%d: %s\n",file,line,s);
+	else if(line>0)
+		fprintf(stderr,"line %d: %s\n",line,s);
+	else
+		fprintf(stderr,"%s\n",s);
 }
 
 int
@@ -70,8 +78,8 @@ main(int argc, char *argv[])
 	GList *files = NULL;
 	char *file;
 	FILE *fp;
-
-	signal(SIGINT,SIG_IGN);
+	int do_compile = FALSE;
+	int be_quiet = FALSE;
 
 #ifdef GNOME_SUPPORT
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
@@ -100,7 +108,19 @@ main(int argc, char *argv[])
 			use_readline = TRUE;
 		else if(strcmp(argv[i],"--noreadline")==0)
 			use_readline = FALSE;
-		else if(strcmp(argv[i],"--help")==0) {
+		else if(strcmp(argv[i],"--compile")==0)
+			do_compile = TRUE;
+		else if(strcmp(argv[i],"--nocompile")==0)
+			do_compile = FALSE;
+		else if(strcmp(argv[i],"--quiet")==0)
+			be_quiet = TRUE;
+		else if(strcmp(argv[i],"--noquiet")==0)
+			be_quiet = FALSE;
+		else {
+			if(strcmp(argv[i],"--help")!=0) {
+				fprintf(stderr,"Unknown argument '%s'!\n\n",
+					argv[i]);
+			}
 			puts("Genius "VERSION" usage:\n\n"
 			     "genius [options] [files]\n\n"
 			     "\t--precision=num   \tFloating point precision [256]\n"
@@ -108,74 +128,76 @@ main(int argc, char *argv[])
 			     "\t--[no]floatresult \tAll results as floats [OFF]\n"
 			     "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
 			     "\t--[no]readline    \tUse readline even if it is available [ON]\n"
+			     "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
+			     "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
+			     "\t                  \t(always on when compiling) [OFF]\n"
 			     );
 			exit(1);
 		}
 	}
-	inter = isatty(0) && !files;
+	if(do_compile)
+		be_quiet = TRUE;
+	inter = isatty(0) && !files && !do_compile;
 	/*interactive mode, print welcome message*/
 	if(inter) {
 		puts(_("Genius "VERSION"\n"
 		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
 		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
 		     "For details type `warranty'.\n"));
-	}
+		signal(SIGINT,SIG_IGN);
+		curstate.do_interrupts = TRUE;
+		be_quiet = FALSE;
+	} else
+		curstate.do_interrupts = FALSE;
 	
-	file = g_strconcat(LIBRARY_DIR,"/lib.gel",NULL);
-	if((fp = fopen(file,"r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
-		fclose(fp);
-	}
-	g_free(file);
+	if(!do_compile) {
+		file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
+		load_compiled_file(file,curstate,puterror,FALSE);
+		g_free(file);
 
-	/*try the library file in the current directory*/
-	if((fp = fopen("lib.gel","r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
-		fclose(fp);
-	}
-	
-	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+		/*try the library file in the current directory*/
+		load_compiled_file("lib.cgel",curstate,puterror,FALSE);
 
-	fp = NULL;
-	if(file && (fp = fopen(file,"r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
+		file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
+		if(file)
+			load_file(file,curstate,puterror,FALSE);
+		g_free(file);
 	}
-	if(fp) fclose(fp);
 
 	if(files) {
 		GList *t;
-		fp = fopen(files->data,"r");
-		t = files;
-		files = g_list_remove_link(files,t);
-		g_list_free_1(t);
-	} else
+		do {
+			fp = fopen(files->data,"r");
+			push_file_info(files->data,1);
+			t = files;
+			files = g_list_remove_link(files,t);
+			g_list_free_1(t);
+			if(!fp) {
+				pop_file_info();
+				puterror(_("Can't open file"));
+			}
+		} while(!fp && files);
+		if(!fp && !files)
+			return 0;
+	} else {
 		fp = stdin;
+		push_file_info(NULL,1);
+	}
 	for(;;) {
 		while(1/*!feof(fp)*/) {
 #ifdef WITH_READLINE_SUPPORT
-			if(inter && use_readline) /*use readline mode*/
+			if(inter && use_readline) /*use readline mode*/ {
+				rewind_file_info();
 				evalexp(NULL,NULL,stdout,"= ",curstate,puterror,TRUE);
-			else
+			} else {
 #endif
-				evalexp(NULL,fp,stdout,NULL,curstate,puterror,FALSE);
+				if(be_quiet)
+					g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
+				else
+					evalexp(NULL,fp,stdout,NULL,curstate,puterror,FALSE);
+#ifdef WITH_READLINE_SUPPORT
+			}
+#endif
 
 			if(got_eof) {
 				if(inter)
@@ -187,16 +209,37 @@ main(int argc, char *argv[])
 		if(files) {
 			GList *t;
 			fclose(fp);
-			fp = fopen(files->data,"r");
-			t = files;
-			files = g_list_remove_link(files,t);
-			g_list_free_1(t);
+			do {
+				fp = fopen(files->data,"r");
+				push_file_info(files->data,1);
+				t = files;
+				files = g_list_remove_link(files,t);
+				g_list_free_1(t);
+				if(!fp) {
+					pop_file_info();
+					puterror(_("Can't open file"));
+				}
+			} while(!fp && files);
+			if(!fp && !files) {
+				if(do_compile) {
+					push_file_info(NULL,0);
+					compile_all_user_funcs(stdout,puterror);
+					pop_file_info();
+				}
+				return 0;
+			}
 		} else
 			break;
 	}
 	
 	if(fp != stdin)
 		fclose(fp);
+	
+	if(do_compile) {
+		push_file_info(NULL,0);
+		compile_all_user_funcs(stdout,puterror);
+		pop_file_info();
+	}
 
 	return 0;
 }

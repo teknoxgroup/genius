@@ -25,6 +25,7 @@
 #include "dict.h"
 #include "util.h"
 #include "funclib.h"
+#include "compil.h"
 
 /*the context stack structure*/
 typedef struct _context_t {
@@ -35,6 +36,8 @@ typedef struct _context_t {
 static context_t context={NULL,-1};
 
 static GHashTable *dictionary;
+
+extern GHashTable *uncompiled;
 
 EFunc *free_funcs = NULL;
 
@@ -89,6 +92,28 @@ d_makeufunc(Token *id, ETree *value, GList *argnames, int nargs)
 	return n;
 }
 
+/*make a variable function and return it*/
+EFunc *
+d_makevfunc(Token *id, ETree *value)
+{
+	EFunc *n;
+
+	if(!free_funcs)
+		n = g_new(EFunc,1);
+	else {
+		n = free_funcs;
+		free_funcs = free_funcs->data.next;
+	}
+	n->id=id;
+	n->data.user=value;
+	n->nargs=0;
+	n->named_args=NULL;
+	n->context=context.top;
+	n->type=VARIABLE_FUNC;
+
+	return n;
+}
+
 /*make a user function and return it*/
 EFunc *
 d_makereffunc(Token *id, EFunc *ref)
@@ -125,8 +150,17 @@ d_copyfunc(EFunc *o)
 		free_funcs = free_funcs->data.next;
 	}
 	memcpy(n,o,sizeof(EFunc));
-	if(n->type == USER_FUNC)
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC) {
+		if(!o->data.user) {
+			g_assert(uncompiled);
+			o->data.user =
+				decompile_tree(g_hash_table_lookup(uncompiled,o->id));
+			g_hash_table_remove(uncompiled,o->id);
+			g_assert(o->data.user);
+		}
 		n->data.user=copynode(o->data.user);
+	}
 	n->named_args = g_list_copy(o->named_args);
 	
 	return n;
@@ -149,8 +183,17 @@ d_makerealfunc(EFunc *o,Token *id)
 	n->id = id;
 	n->context = context.top;
 
-	if(n->type == USER_FUNC)
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC) {
+		if(!o->data.user) {
+			g_assert(uncompiled);
+			o->data.user =
+				decompile_tree(g_hash_table_lookup(uncompiled,o->id));
+			g_hash_table_remove(uncompiled,o->id);
+			g_assert(o->data.user);
+		}
 		n->data.user=copynode(o->data.user);
+	}
 	n->named_args = g_list_copy(o->named_args);
 	
 	return n;
@@ -162,13 +205,23 @@ d_setrealfunc(EFunc *n,EFunc *fake)
 {
 	GList *li;
 	
-	if(n->type == USER_FUNC)
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC)
 		freetree(n->data.user);
 	
 	n->type = fake->type;
 	n->data = fake->data;
-	if(fake->type == USER_FUNC)
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC) {
+		if(!fake->data.user) {
+			g_assert(uncompiled);
+			fake->data.user =
+				decompile_tree(g_hash_table_lookup(uncompiled,fake->id));
+			g_hash_table_remove(uncompiled,fake->id);
+			g_assert(fake->data.user);
+		}
 		n->data.user = copynode(fake->data.user);
+	}
 
 	n->named_args = g_list_copy(fake->named_args);
 	n->nargs = fake->nargs;
@@ -228,7 +281,8 @@ d_setvalue(Token *id,ETree *value)
 {
 	EFunc *f;
 	f=d_lookup_local(id);
-	if(!f || f->type!=USER_FUNC)
+	if(!f || (f->type!=USER_FUNC &&
+		  f->type!=VARIABLE_FUNC))
 		return FALSE;
 	f->data.user=value;
 	return TRUE;
@@ -309,7 +363,8 @@ freefunc(EFunc *n)
 	g_assert(!n->id || g_list_find(n->id->refs,n)==NULL);
 	/*if(n->id)
 		n->id->refs = g_list_remove(n->id->refs,n);*/
-	if(n->type == USER_FUNC && n->data.user) 
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC)
 		freetree(n->data.user);
 	g_list_free(n->named_args);
 	/*prepend to free list*/
@@ -328,7 +383,8 @@ replacefunc(EFunc *old,EFunc *new)
 	g_return_if_fail(old && new);
 	g_return_if_fail(old->id == new->id);
 
-	if(old->type == USER_FUNC && old->data.user) 
+	if(old->type == USER_FUNC ||
+	   old->type == VARIABLE_FUNC)
 		freetree(old->data.user);
 	g_list_free(old->named_args);
 	memcpy(old,new,sizeof(EFunc));
@@ -344,7 +400,8 @@ d_set_ref(EFunc *n,EFunc *ref)
 	GList *li;
 	if(!n || !ref)
 		return;
-	if(n->type == USER_FUNC && n->data.user)
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC)
 		freetree(n->data.user);
 	n->type = REFERENCE_FUNC;
 	g_list_free(n->named_args);
@@ -361,9 +418,10 @@ d_set_value(EFunc *n,ETree *value)
 	GList *li;
 	if(!n || !value)
 		return;
-	if(n->type == USER_FUNC && n->data.user) 
+	if(n->type == USER_FUNC ||
+	   n->type == VARIABLE_FUNC)
 		freetree(n->data.user);
-	n->type = USER_FUNC;
+	n->type = VARIABLE_FUNC;
 	g_list_free(n->named_args);
 	n->nargs = 0;
 	n->named_args = NULL;
@@ -380,7 +438,7 @@ d_addcontext(void)
 	return TRUE;
 }
 
-/*gimme the last dictionary*/
+/*gimme the last dictionary and pop the context stack*/
 GList *
 d_popcontext(void)
 {
@@ -400,4 +458,14 @@ d_popcontext(void)
 		g_list_free_1(li);
 		return dict;
 	}
+}
+
+/*gimme the current dictinary*/
+GList *
+d_getcontext(void)
+{
+	if(context.top==-1)
+		return NULL;
+	else
+		return context.stack->data;
 }

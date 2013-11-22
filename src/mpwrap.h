@@ -99,8 +99,11 @@ int mpw_sgn(mpw_ptr op);
 void mpw_neg(mpw_ptr rop,mpw_ptr op);
 
 void mpw_add(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+void mpw_add_ui(mpw_ptr rop,mpw_ptr op, unsigned long i);
 
 void mpw_sub(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
+void mpw_sub_ui(mpw_ptr rop,mpw_ptr op, unsigned long i);
+void mpw_ui_sub(mpw_ptr rop,unsigned long i, mpw_ptr op);
 
 void mpw_mul(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_mul_ui(mpw_ptr rop,mpw_ptr op, unsigned int i);
@@ -159,6 +162,8 @@ void mpw_set_str_float(mpw_ptr rop,char *s,int base);
 void mpw_set_str_complex(mpw_ptr rop,char *s,int base);
 
 void mpw_set_str_int(mpw_ptr rop,char *s,int base);
+
+void mpw_set_str(mpw_ptr rop,char *s,int base);
 
 int mpw_is_complex(mpw_ptr op);
 int mpw_is_integer(mpw_ptr op);

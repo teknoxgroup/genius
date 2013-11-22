@@ -36,7 +36,6 @@ extern int return_ret; /*should the lexer return on \n*/
 extern calc_error_t error_num;
 extern int got_eof;
 extern ETree *free_trees;
-extern EFunc *free_funcs;
 extern char *loadfile;
 extern char *loadfile_glob;
 
@@ -72,7 +71,6 @@ static int
 push_func(void)
 {
 	ETree * tree;
-	EFunc * func;
 	ETree * val;
 	GList * list = NULL;
 	int i = 0;
@@ -101,25 +99,11 @@ push_func(void)
 		i++;
 	}
 	
-	if(!free_funcs)
-		func = g_new0(EFunc,1);
-	else {
-		func = free_funcs;
-		free_funcs = free_funcs->data.next;
-		memset(func,0,sizeof(EFunc));
-	}
-	
-	func->id = NULL;
-	func->type = USER_FUNC;
-	func->context = -1;
-	func->nargs = i;
-	func->named_args = list;
-	func->data.user = val;
-
 	GET_NEW_NODE(tree);
 
 	tree->type = FUNCTION_NODE;
-	tree->data.func = func;
+	tree->data.func = d_makeufunc(NULL,val,list,i);
+	tree->data.func->context = -1;
 	tree->args = NULL;
 	tree->nargs = 0;
 
@@ -158,6 +142,28 @@ push_marker_simple(ETreeType markertype)
 	tree->args = NULL;
 	tree->nargs = 0;
 	stack_push(&evalstack,tree);
+}
+
+/*puts a spacer into the tree, spacers are just useless nodes to be removed
+  before evaluation, they just signify where there were parenthesis*/
+static int
+push_spacer(void)
+{
+	ETree * last_expr = stack_pop(&evalstack);
+	
+	if(!last_expr)
+		return FALSE;
+	else if(last_expr->type == SPACER_NODE)
+		stack_push(&evalstack,last_expr);
+	else {
+		ETree * tree;
+		GET_NEW_NODE(tree);
+		tree->type = SPACER_NODE;
+		tree->args = g_list_append(NULL,last_expr);
+		tree->nargs = 1;
+		stack_push(&evalstack,tree);
+	}
+	return TRUE;
 }
 	
 /*gather all expressions up until a row start marker and push the
@@ -299,11 +305,11 @@ push_null(void)
 %token <id> STRING
 %token <id> FUNCID
 
-%token DEFINE CALL
+%token FUNCTION DEFINE CALL
 
 %token RETURNTOK BAILOUT EXCEPTION CONTINUE BREAK
 
-%token WHILE UNTIL DO IF THEN ELSE
+%token WHILE UNTIL FOR DO IF THEN ELSE TO BY IN
 
 %token AT REGION_SEP
 
@@ -317,16 +323,17 @@ push_null(void)
 %left SEPAR
 
 %nonassoc LOWER_THEN_ELSE
-%nonassoc WHILE UNTIL DO IF THEN ELSE DEFINE CALL RETURNTOK
+%nonassoc WHILE UNTIL DO IF FOR TO BY IN THEN ELSE DEFINE FUNCTION CALL RETURNTOK
 
 %left LOGICAL_XOR LOGICAL_OR
 %left LOGICAL_AND
 %right LOGICAL_NOT
 
-%nonassoc EQ_CMP NE_CMP CMP_CMP
-%nonassoc LT_CMP GT_CMP LE_CMP GE_CMP
-
 %right EQUALS
+
+%nonassoc CMP_CMP
+%right EQ_CMP NE_CMP LT_CMP GT_CMP LE_CMP GE_CMP
+
 %left '+' '-'
 %left '*' '/' '%'
 
@@ -347,9 +354,11 @@ fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
 	|	error '\n' { return_ret = TRUE; yyclearin; YYABORT; }
 	|	error { return_ret = TRUE; }
 	;
-
+	
 expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
-	|	'(' expr SEPAR ')'	{ push_null(); PUSH_ACT(E_SEPAR); }
+	|	'(' expr SEPAR ')'	{ push_null(); PUSH_ACT(E_SEPAR);
+					  push_spacer(); }
+	|	'(' expr ')'		{ push_spacer(); }
 	|	expr EQUALS expr	{ PUSH_ACT(E_EQUALS); }
 	|	'|' expr '|'		{ PUSH_ACT(E_ABS); }
 	|	expr '+' expr		{ PUSH_ACT(E_PLUS); }
@@ -357,13 +366,15 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr '*' expr		{ PUSH_ACT(E_MUL); }
 	|	expr '/' expr		{ PUSH_ACT(E_DIV); }
 	|	expr '%' expr		{ PUSH_ACT(E_MOD); }
+	|	expr CMP_CMP expr	{ PUSH_ACT(E_CMP_CMP); }
+
 	|	expr EQ_CMP expr	{ PUSH_ACT(E_EQ_CMP); }
 	|	expr NE_CMP expr	{ PUSH_ACT(E_NE_CMP); }
-	|	expr CMP_CMP expr	{ PUSH_ACT(E_CMP_CMP); }
 	|	expr LT_CMP expr	{ PUSH_ACT(E_LT_CMP); }
 	|	expr GT_CMP expr	{ PUSH_ACT(E_GT_CMP); }
 	|	expr LE_CMP expr	{ PUSH_ACT(E_LE_CMP); }
 	|	expr GE_CMP expr	{ PUSH_ACT(E_GE_CMP); }
+
 	|	expr LOGICAL_AND expr	{ PUSH_ACT(E_LOGICAL_AND); }
 	|	expr LOGICAL_OR expr	{ PUSH_ACT(E_LOGICAL_OR); }
 	|	expr LOGICAL_XOR expr	{ PUSH_ACT(E_LOGICAL_XOR); }
@@ -385,9 +396,11 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	UNTIL expr DO expr	{ PUSH_ACT(E_UNTIL_CONS); }
 	|	DO expr WHILE expr	{ PUSH_ACT(E_DOWHILE_CONS); }
 	|	DO expr UNTIL expr	{ PUSH_ACT(E_DOUNTIL_CONS); }
+	|	FOR ident EQUALS expr TO expr DO expr { PUSH_ACT(E_FOR_CONS); }
+	|	FOR ident EQUALS expr TO expr BY expr DO expr { PUSH_ACT(E_FORBY_CONS); }
+	|	FOR ident IN expr DO expr { PUSH_ACT(E_FORIN_CONS); }
 	|	IF expr THEN expr %prec LOWER_THEN_ELSE	{ PUSH_ACT(E_IF_CONS); }
 	|	IF expr THEN expr ELSE expr { PUSH_ACT(E_IFELSE_CONS); }
-	|	'(' expr ')'
 	|	ident
 	|	'&' ident		{ PUSH_ACT(E_REFERENCE); }
 	|	deref
@@ -402,6 +415,9 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 					  PUSH_ACT(E_CALL); }
 	|	DEFINE ident funcdef	{ PUSH_ACT(E_EQUALS); }
 	|	'`' funcdef
+	|	FUNCTION ident funcdef2	{ PUSH_ACT(E_EQUALS); }
+	|	FUNCTION funcdef2
+	|	'`' funcdef2
 	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
 	|	BAILOUT			{ PUSH_ACT(E_BAILOUT); }
 	|	EXCEPTION		{ PUSH_ACT(E_EXCEPTION); }
@@ -421,6 +437,13 @@ ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); g_free($<id>1); }
 	
 funcdef:	'(' identlist')' block	{ if(!push_func()) {SYNTAX_ERROR;} }
 	|	'(' ')' block		{ if(!push_marker(EXPRLIST_START_NODE))
+						{SYNTAX_ERROR;}
+					  if(!push_func())
+					  	{SYNTAX_ERROR;} }
+	;
+
+funcdef2:	'(' identlist')' EQUALS expr { if(!push_func()) {SYNTAX_ERROR;} }
+	|	'(' ')' EQUALS expr	{ if(!push_marker(EXPRLIST_START_NODE))
 						{SYNTAX_ERROR;}
 					  if(!push_func())
 					  	{SYNTAX_ERROR;} }

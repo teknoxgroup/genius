@@ -28,6 +28,7 @@
 typedef enum {
 	BUILTIN_FUNC=0, /*function internal to genius*/
 	USER_FUNC, /*function that points to an ETree for evaluation*/
+	VARIABLE_FUNC, /*function that points to an ETree result */
 	REFERENCE_FUNC /*a function that points to some other EFunc*/
 } EFuncType;
 
@@ -66,12 +67,14 @@ typedef enum {
 	OPERATOR_NODE,
 	IDENTIFIER_NODE,
 	STRING_NODE,
-	FUNCTION_NODE, /*only used for anonymous functions*/
+	FUNCTION_NODE, /*stores an anonymous function*/
+	COMPARISON_NODE,
 	
 	/*marker nodes*/
 	MATRIX_ROW_NODE,
 	MATRIX_START_NODE,
-	EXPRLIST_START_NODE
+	EXPRLIST_START_NODE,
+	SPACER_NODE
 } ETreeType;
 
 struct _ETree {
@@ -79,6 +82,7 @@ struct _ETree {
 	union {
 		mpw_t value;
 		int oper;
+		GList *comp;
 		Token *id;
 		char *str;
 		EFunc *func; /*anon function*/

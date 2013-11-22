@@ -1,0 +1,17 @@
+*	matrix powers for rational numbers, and scalar^matrix (as matlab
+	does it
+
+*	change the gnome edition to use zvt and run the command line version
+	and send it stuff using pipes
+
+*	add gui display to genius and use when genius run in X
+
+*	extern and global variables
+
+*	cload toplevel command like load for loading compiled cgel files
+
+*	allow some sort of <file.gel> format for loading library files from
+	the library directory so that we may add some extra library files
+	which are not loaded on startup but can be optionally loaded in
+
+*	substitute ~ in paths

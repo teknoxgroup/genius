@@ -49,6 +49,9 @@ enum {
 	E_UNTIL_CONS,
 	E_DOWHILE_CONS,
 	E_DOUNTIL_CONS,
+	E_FOR_CONS,
+	E_FORBY_CONS,
+	E_FORIN_CONS,
 	E_EQ_CMP,
 	E_NE_CMP,
 	E_CMP_CMP,
@@ -106,7 +109,29 @@ ETree *evalnode(ETree *n);
 int isnodetrue(ETree *n, int *bad_node);
 int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 
-#define GET_LRR(n,l,r,rr) { l = n->args->data; \
+
+ETree * gather_comparisons(ETree *n);
+
+#define GET_ABCDE(n,a,b,c,d,e) { \
+	a = n->args->data; \
+	b = n->args->next->data; \
+	c = n->args->next->next->data; \
+	d = n->args->next->next->next->data; \
+	e = n->args->next->next->next->next->data; \
+}
+#define GET_ABCD(n,a,b,c,d) { \
+	a = n->args->data; \
+	b = n->args->next->data; \
+	c = n->args->next->next->data; \
+	d = n->args->next->next->next->data; \
+}
+#define GET_LRR(n,l,r,rr) { \
+	l = n->args->data; \
+	r = n->args->next->data; \
+	rr = n->args->next->next->data; \
+}
+#define GET_LRR(n,l,r,rr) { \
+	l = n->args->data; \
 	r = n->args->next->data; \
 	rr = n->args->next->next->data; \
 }

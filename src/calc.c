@@ -18,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
+#include <config.h>
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
@@ -42,6 +43,7 @@
 #include "dict.h"
 #include "funclib.h"
 #include "matrixw.h"
+#include "compil.h"
 
 #include "mpwrap.h"
 
@@ -64,6 +66,8 @@ extern GSList *inloop;
 extern char *loadfile;
 extern char *loadfile_glob;
 
+GHashTable *uncompiled = NULL;
+
 /* stack ... has to be global:-( */
 evalstack_t evalstack=NULL;
 
@@ -81,6 +85,69 @@ char *loadfile = NULL;
 char *loadfile_glob = NULL;
 
 int interrupted = FALSE;
+
+static GList *curfile = NULL;
+static GList *curline = NULL;
+
+void
+push_file_info(char *file,int line)
+{
+	curfile = g_list_prepend(curfile,file?g_strdup(file):NULL);
+	curline = g_list_prepend(curline,GINT_TO_POINTER(line));
+}
+
+void
+pop_file_info(void)
+{
+	GList *li;
+	g_assert(curfile && curline);
+
+	li = curfile;
+	curfile = g_list_remove_link(curfile,curfile);
+	g_free(li->data);
+	g_list_free_1(li);
+	li = curline;
+	curline = g_list_remove_link(curline,curline);
+	g_list_free_1(li);
+}
+
+void
+incr_file_info(void)
+{
+	int i;
+	
+	if(!curline)
+		return;
+	
+	i = GPOINTER_TO_INT(curline->data);
+	curline->data = GINT_TO_POINTER((i+1));
+}
+
+void
+rewind_file_info(void)
+{
+	int i;
+	
+	if(!curline)
+		return;
+	
+	curline->data = GINT_TO_POINTER(1);
+}
+
+void
+get_file_info(char **file, int *line)
+{
+	int i;
+	
+	if(!curline || !curfile) {
+		*file = NULL;
+		*line = 0;
+		return;
+	}
+	
+	*file = curfile->data;
+	*line = GPOINTER_TO_INT(curline->data);
+}
 
 static void
 appendout_c(GString *gs, FILE *out, char c)
@@ -278,6 +345,48 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			print_etree(gs,out,r);
 			appendout(gs,out,")");
 			break;
+		case E_FOR_CONS:
+			{
+				ETree *a,*b,*c,*d;
+				GET_ABCD(n,a,b,c,d);
+				appendout(gs,out,"(for ");
+				print_etree(gs,out,a);
+				appendout(gs,out," = ");
+				print_etree(gs,out,b);
+				appendout(gs,out," to ");
+				print_etree(gs,out,c);
+				appendout(gs,out," do ");
+				print_etree(gs,out,d);
+				appendout(gs,out,")");
+				break;
+			}
+		case E_FORBY_CONS:
+			{
+				ETree *a,*b,*c,*d,*e;
+				GET_ABCDE(n,a,b,c,d,e);
+				appendout(gs,out,"(for ");
+				print_etree(gs,out,a);
+				appendout(gs,out," = ");
+				print_etree(gs,out,b);
+				appendout(gs,out," to ");
+				print_etree(gs,out,c);
+				appendout(gs,out," by ");
+				print_etree(gs,out,d);
+				appendout(gs,out," do ");
+				print_etree(gs,out,e);
+				appendout(gs,out,")");
+				break;
+			}
+		case E_FORIN_CONS:
+			GET_LRR(n,l,r,rr);
+			appendout(gs,out,"(for ");
+			print_etree(gs,out,l);
+			appendout(gs,out," in ");
+			print_etree(gs,out,r);
+			appendout(gs,out," do ");
+			print_etree(gs,out,rr);
+			appendout(gs,out,")");
+			break;
 
 		case E_DIRECTCALL:
 		case E_CALL:
@@ -326,6 +435,39 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			appendout(gs,out,"(???)");
 		       break;
 	}
+}
+
+static void
+appendcomp(GString *gs,FILE *out, ETree *n)
+{
+	GList *li,*oli;
+	
+	appendout_c(gs,out,'(');
+	
+	for(oli=n->data.comp,li=n->args;oli;
+	    li=g_list_next(li),oli=g_list_next(oli)) {
+		int oper= GPOINTER_TO_INT(oli->data);
+		print_etree(gs,out,li->data);
+		switch(oper) {
+		case E_EQ_CMP:
+			appendout(gs,out,"=="); break;
+		case E_NE_CMP:
+			appendout(gs,out,"!="); break;
+		case E_LT_CMP:
+			appendout(gs,out,"<"); break;
+		case E_GT_CMP:
+			appendout(gs,out,">"); break;
+		case E_LE_CMP:
+			appendout(gs,out,"<="); break;
+		case E_GE_CMP:
+			appendout(gs,out,">="); break;
+		default:
+			g_assert_not_reached();
+		}
+	}
+	print_etree(gs,out,li->data);
+
+	appendout_c(gs,out,')');
 }
 
 static void
@@ -403,6 +545,10 @@ print_etree(GString *gs, FILE *out, ETree *n)
 				appendout(gs,out,"(???)");
 				break;
 			}
+			if(f->type==BUILTIN_FUNC) {
+				appendout(gs,out,"(<builtin function>)");
+				break;
+			}
 
 			appendout(gs,out,"(`(");
 
@@ -414,15 +560,27 @@ print_etree(GString *gs, FILE *out, ETree *n)
 			}
 
 			if(f->type==USER_FUNC) {
-				appendout(gs,out,"){");
+				appendout(gs,out,")=(");
+				if(!f->data.user) {
+					g_assert(uncompiled);
+					f->data.user =
+						decompile_tree(g_hash_table_lookup(uncompiled,f->id));
+					g_hash_table_remove(uncompiled,f->id);
+					g_assert(f->data.user);
+				}
 				print_etree(gs,out,f->data.user);
-				appendout(gs,out,"})");
+				appendout(gs,out,"))");
 			} else {
+				/*variable and reference functions should
+				  never be in the etree*/
 				(*errorout)(_("Unexpected function type!"));
-				appendout(gs,out,"){???}");
+				appendout(gs,out,")(???)");
 			}
 			break;
 		}
+	case COMPARISON_NODE:
+		appendcomp(gs,out,n);
+		break;
 	default:
 		(*errorout)(_("Unexpected node!"));
 		appendout(gs,out,"(???)");
@@ -504,14 +662,202 @@ addparenth(char *s)
 	return s;
 }
 
+void
+compile_all_user_funcs(FILE *outfile, void (*errorfunc)(char *))
+{
+	GList *funcs;
+	errorout = errorfunc;
+	fprintf(outfile,"CGEL "VERSION"\n");
+	funcs = d_getcontext();
+	for(funcs=g_list_last(funcs);funcs;funcs=g_list_previous(funcs)) {
+		EFunc *func = funcs->data;
+		GString *gs;
+		char *body;
+		GList *li;
 
-static void
-load_file(char *file, calcstate_t state, void (*errorfunc)(char *))
+		if((func->type!=USER_FUNC &&
+		    func->type!=VARIABLE_FUNC) ||
+		   !func->id ||
+		   !func->id->token ||
+		   strcmp(func->id->token,"Ans")==0)
+			continue;
+
+		if(func->data.user) {
+			body = compile_tree(func->data.user);
+		} else {
+			body = g_strdup(g_hash_table_lookup(uncompiled,func->id));
+			g_assert(body);
+		}
+		gs = g_string_new(NULL);
+		if(func->type==USER_FUNC) {
+			g_string_sprintfa(gs,"F;%d;%s;%d",(int)strlen(body),func->id->token,(int)func->nargs);
+			for(li=func->named_args;li;li=g_list_next(li)) {
+				Token *tok = li->data;
+				g_string_sprintfa(gs,";%s",tok->token);
+			}
+		} else /*VARIABLE_FUNC*/ {
+			g_string_sprintfa(gs,"V;%d;%s",(int)strlen(body),func->id->token);
+		}
+		fprintf(outfile,"%s\n",gs->str);
+		g_string_free(gs,TRUE);
+
+		fprintf(outfile,"%s\n",body);
+		g_free(body);
+	}
+}
+
+void
+load_compiled_file(char *file, calcstate_t state, void (*errorfunc)(char *), int warn)
+{
+	FILE *fp;
+	push_file_info(NULL,0);
+	if((fp = fopen(file,"r"))) {
+		char buf[4096];
+		
+		if(!fgets(buf,4096,fp)) {
+			pop_file_info();
+			return;
+		}
+		if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
+			char buf[256];
+			g_snprintf(buf,256,_("File '%s' is a wrong version of GEL"),file);
+			(*errorfunc)(buf);
+			pop_file_info();
+			return;
+		}
+
+		/*init the context stack and clear out any stale dictionaries
+		  except the global one, if this is the first time called it
+		  will also register the builtin routines with the global
+		  dictionary*/
+		d_singlecontext();
+	
+		errorout=errorfunc;
+
+		error_num=NO_ERROR;
+
+		/*set the state variable for calculator*/
+		calcstate=state;
+
+		mpw_init_mp();
+		mpw_set_default_prec(state.float_prec);
+
+		errorout = errorfunc;
+		while(fgets(buf,4096,fp)) {
+			char *p;
+			char *b2;
+			Token *tok;
+			/*ETree *val;*/
+			int size,nargs;
+			int i;
+			GList *li = NULL;
+			int type;
+
+			p=strchr(buf,'\n');
+			if(p) *p='\0';
+
+			p = strtok(buf,";");
+			if(!p) {
+				g_snprintf(buf,256,_("Badly formed record"));
+				continue;
+			} else if(*p == 'T') {
+				g_snprintf(buf,256,_("Record out of place"));
+				continue;
+			} else if(*p != 'F' && *p != 'V') {
+				g_snprintf(buf,256,_("Badly formed record"));
+				continue;
+			}
+			type = *p=='F'?USER_FUNC:VARIABLE_FUNC;
+
+			/*size*/
+			p = strtok(NULL,";");
+			if(!p) {
+				g_snprintf(buf,256,_("Badly formed record"));
+				continue;
+			}
+			size = -1;
+			sscanf(p,"%d",&size);
+			if(size==-1) {
+				g_snprintf(buf,256,_("Badly formed record"));
+				continue;
+			}
+
+			/*id*/
+			p = strtok(NULL,";");
+			if(!p) {
+				g_snprintf(buf,256,_("Badly formed record"));
+				continue;
+			}
+			tok = d_intern(p);
+
+			if(type == USER_FUNC) {
+				/*nargs*/
+				p = strtok(NULL,";");
+				if(!p) {
+					g_snprintf(buf,256,_("Badly formed record"));
+					continue;
+				}
+				nargs = -1;
+				sscanf(p,"%d",&nargs);
+				if(size==-1) {
+					g_snprintf(buf,256,_("Badly formed record"));
+					continue;
+				}
+
+				/*argument names*/
+				li = NULL;
+				for(i=0;i<nargs;i++) {
+					p = strtok(NULL,";");
+					if(!p) {
+						g_snprintf(buf,256,_("Badly formed record"));
+						g_list_free(li);
+						goto continue_reading;
+					}
+					li = g_list_append(li,d_intern(p));
+				}
+			}
+
+			/*the value*/
+			b2 = g_new(char,size+2);
+			if(!fgets(b2,size+2,fp)) {
+				g_snprintf(buf,256,_("Missing value for function"));
+				g_free(b2);
+				g_list_free(li);
+				break;
+			}
+			p=strchr(b2,'\n');
+			if(p) *p='\0';
+			/*val = decompile_tree(b2);
+			if(!val) {
+				g_list_free(li);
+				continue;
+			}*/
+			if(!uncompiled)
+				uncompiled = g_hash_table_new(NULL,NULL);
+			g_hash_table_insert(uncompiled,tok,b2);
+			if(type == USER_FUNC)
+				d_addfunc(d_makeufunc(tok,NULL,li,nargs));
+			else /*VARIABLE_FUNC*/
+				d_addfunc(d_makevfunc(tok,NULL));
+continue_reading:	;
+		}
+		fclose(fp);
+	} else if(warn) {
+		char buf[256];
+		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
+		(*errorfunc)(buf);
+	}
+	pop_file_info();
+}
+
+void
+load_file(char *file, calcstate_t state, void (*errorfunc)(char *), int warn)
 {
 	FILE *fp;
 	int oldgeof = got_eof;
 	got_eof = FALSE;
 	if((fp = fopen(file,"r"))) {
+		push_file_info(file,1);
 		while(1) {
 			g_free(evalexp(NULL,fp,NULL,NULL,state,errorfunc,FALSE));
 			if(got_eof) {
@@ -519,9 +865,10 @@ load_file(char *file, calcstate_t state, void (*errorfunc)(char *))
 				break;
 			}
 		}
+		pop_file_info();
 		fclose(fp);
 		got_eof = oldgeof;
-	} else {
+	} else if(warn) {
 		char buf[256];
 		g_snprintf(buf,256,_("Can't open file: '%s'"),file);
 		(*errorfunc)(buf);
@@ -610,7 +957,7 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		loadfile=NULL;
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		load_file(file,state,errorfunc);
+		load_file(file,state,errorfunc,TRUE);
 		g_free(file);
 		return NULL;
 	}
@@ -627,7 +974,7 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		while(f) {
 			glob(f,GLOB_NOSORT|GLOB_NOCHECK,NULL,&gs);
 			for(i=0;i<gs.gl_pathc;i++) {
-				load_file(gs.gl_pathv[i],state,errorfunc);
+				load_file(gs.gl_pathv[i],state,errorfunc,TRUE);
 			}
 			globfree(&gs);
 			f = strtok(NULL,"\t ");
@@ -655,7 +1002,10 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		(*errorout)(_("ERROR: Probably corrupt stack!"));
 		return NULL;
 	}
+	evalstack->data = gather_comparisons(evalstack->data);
 
+
+	push_file_info(NULL,0);
 #ifdef LEAK_DEBUG_CONTRAPTION
 for(;;) {
 	ETree *node = copynode(evalstack->data);
@@ -668,9 +1018,11 @@ for(;;) {
 	interrupted = FALSE;
 	if(inloop) g_slist_free(inloop);
 	inloop = g_slist_prepend(NULL,GINT_TO_POINTER(0));
-	signal(SIGINT,interrupt);
+	if(state.do_interrupts)
+		signal(SIGINT,interrupt);
 	ret = evalnode(evalstack->data);
-	signal(SIGINT,SIG_IGN);
+	if(state.do_interrupts)
+		signal(SIGINT,SIG_IGN);
 	g_slist_free(inloop);
 	inloop = NULL;
 	if(interrupted || inbailout || inexception) {
@@ -693,6 +1045,7 @@ for(;;) {
 	stack_push(&evalstack,node);
 }
 #endif
+	pop_file_info();
 
 	/*catch evaluation errors*/
 	if(!ret)
@@ -730,7 +1083,7 @@ for(;;) {
 		if(ret->data.func)
 			d_addfunc(d_makerealfunc(ret->data.func,d_intern("Ans")));
 		else
-			d_addfunc(d_makeufunc(d_intern("Ans"),makenum_ui(0),NULL,0));
+			d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
 		freetree(ret);
 	} else if(ret->type == OPERATOR_NODE &&
 		ret->data.oper == E_REFERENCE) {
@@ -740,12 +1093,12 @@ for(;;) {
 			if(rf)
 				d_addfunc(d_makereffunc(d_intern("Ans"),rf));
 			else
-				d_addfunc(d_makeufunc(d_intern("Ans"),makenum_ui(0),NULL,0));
+				d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
 		} else
-				d_addfunc(d_makeufunc(d_intern("Ans"),makenum_ui(0),NULL,0));
+				d_addfunc(d_makevfunc(d_intern("Ans"),makenum_ui(0)));
 		freetree(ret);
 	} else
-		d_addfunc(d_makeufunc(d_intern("Ans"),ret,NULL,0));
+		d_addfunc(d_makevfunc(d_intern("Ans"),ret));
 
 	return p;
 }

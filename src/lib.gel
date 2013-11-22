@@ -1,35 +1,27 @@
-define apply_over_matrix1(a,func) {
+function apply_over_matrix1(a,func) = (
 	if(not is_matrix(a)) then
 		(error("apply_over_matrix1: argument 1 must be a matrix");bailout)
-	else if(not is_function_ref(func)) then
-		(error("apply_over_matrix1: argument 2 must be a function reference");bailout);
-	i = 1;
-	j = 1;
-	while(i<=rows(a)) do (
-		j = 1;
-		while(j<=columns(a)) do (
-			r@(i,j) = *func(a@(i,j));
-			j = j + 1
-		);
-		i = i+1
+	else if(not is_function(func)) then
+		(error("apply_over_matrix1: argument 2 must be a function");bailout);
+	for i = 1 to rows(a) do (
+		for j = 1 to columns(a) do (
+			r@(i,j) = func(a@(i,j))
+		)
 	);
 	r
-}
-define apply_over_matrix2(a,b,func) {
+)
+function apply_over_matrix2(a,b,func) = (
 	if(not is_matrix(a) and not is_matrix(b)) then
 		(error("apply_over_matrix2: argument 1 or 2 must be a matrix");bailout)
-	else if(not is_function_ref(func)) then
-		(error("apply_over_matrix2: argument 3 must be a function reference");bailout)
+	else if(not is_function(func)) then
+		(error("apply_over_matrix2: argument 3 must be a function");bailout)
 
 	else if(is_matrix(a) and is_matrix(b) and
 		(rows(a)!=rows(b) or columns(a)!=columns(b))) then
 		(error("apply_over_matrix2: cannot apply a function over two matrixes of different sizes");bailout);
 	
-	i = 1;
-	j = 1;
-	while(i<=rows(a)) do (
-		j = 1;
-		while(j<=columns(a)) do (
+	for i = 1 to rows(a) do (
+		for j = 1 to columns(a) do (
 			if(is_matrix(a)) then
 				aa = a@(i,j)
 			else
@@ -38,68 +30,84 @@ define apply_over_matrix2(a,b,func) {
 				bb = b@(i,j)
 			else
 				bb = b;
-			r@(i,j) = *func(aa,bb);
-			j = j + 1
-		);
-		i = i+1
+			r@(i,j) = func(aa,bb)
+		)
 	);
 	r
-}
+)
 
 
-define sum(from,to,func) {
-	if(not is_value(from) or not is_value(to)) then
-		(error("sum: from,to arguments not values");bailout)
-	else if(is_complex(from) or is_complex(to)) then
-		(error("sum: from,to arguments can't be complex");bailout)
-	else if(not is_function_ref(func)) then
-		(error("sum: func argument not a function reference");bailout);
+function sum(start,end,func) = (
+	if(not is_value(start) or not is_value(end)) then
+		(error("sum: start,end arguments not values");bailout)
+	else if(is_complex(start) or is_complex(end)) then
+		(error("sum: start,end arguments can't be complex");bailout)
+	else if(not is_function(func)) then
+		(error("sum: func argument not a function");bailout);
 	r = 0;
-	while (from<=to) do (r = r + *func(from); from=from+1);
+	while (start<=end) do (r = r + func(start); start=start+1);
 	r
-}
-define prod(from,to,func) {
-	if(not is_value(from) or not is_value(to)) then
-		(error("prod: from,to arguments not values");bailout)
-	else if(is_complex(from) or is_complex(to)) then
-		(error("sum: from,to arguments can't be complex");bailout)
-	else if(not is_function_ref(func)) then
-		(error("prod: func argument not a function reference");bailout);
+)
+function prod(start,end,func) = (
+	if(not is_value(start) or not is_value(end)) then
+		(error("prod: start,end arguments not values");bailout)
+	else if(is_complex(start) or is_complex(end)) then
+		(error("sum: start,end arguments can't be complex");bailout)
+	else if(not is_function(func)) then
+		(error("prod: func argument not a function");bailout);
 	r = 1;
-	while (from<=to) do (r = r * *func(from); from=from+1);
+	while (start<=end) do (r = r * func(start); start=start+1);
 	r
-}
-define nPr(n,r) {
+)
+function nPr(n,r) = (
 	if(is_matrix(n) or is_matrix(r)) then
-		return apply_over_matrix2(n,r,&nPr)
+		return apply_over_matrix2(n,r,nPr)
 	else if(not is_value(n) or not is_value(r)) then
 		(error("nPr: n,r arguments not values");bailout)
 	else if(is_complex(n) or is_complex(r) or 
-		not is_integer(n) or not is_integer(r)) then
+		not is_integer(r)) then
 		(error("nPr: argument not an integer");bailout)
 	else if(r<0 or n<0 or r>n) then
 		0
-	else
+	else if(is_integer(n)) then
 		(n!)/((n-r)!)
-}
-define nCr(n,r) {
+	else (
+		ret = 1;
+		i=0;
+		while(i<r) do (
+			ret = ret*(n-i);
+			i = i+1
+		);
+		ret
+	)
+)
+function nCr(n,r) = (
 	if(is_matrix(n) or is_matrix(r)) then
-		return apply_over_matrix2(n,r,&nCr)
+		return apply_over_matrix2(n,r,nCr)
 	else if(not is_value(n) or not is_value(r)) then
 		(error("nCr: n,r arguments not values");bailout)
 	else if(is_complex(n) or is_complex(r) or 
-		not is_integer(n) or not is_integer(r)) then
+		not is_integer(r)) then
 		(error("nCr: argument not an integer");bailout)
 	else if(r<0 or n<0 or r>n) then
 		0
-	else
+	else if(is_integer(n)) then
 		(n!)/(r!*(n-r)!)
-}
+	else (
+		ret = 1;
+		i=0;
+		while(i<r) do (
+			ret = ret*(n-i);
+			i = i+1
+		);
+		ret/(r!)
+	)
+)
 
 # return the fibbonachi number, calculated using an iterative method
-define fib(x) {
+function fib(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&fib)
+		return apply_over_matrix1(x,fib)
 	else if(not is_value(x) or is_complex(x) or not is_integer(x)) then
 		(error("fib: argument not an integer");bailout)
 	else if(x<0) then
@@ -118,318 +126,241 @@ define fib(x) {
 		);
 		c
 	)
-}
-
-#calculate the row-echelon form of a matrix
-define ref(m) {
-	if(not is_matrix(m) or not is_value_only(m)) then
-		(error("ref: argument not a value only matrix");bailout);
-	s=min(rows(m),columns(m));
-	i=1;
-	d=1;
-	while(d<=s and i<=columns(m)) do (
-
-		# This just makes the anchor element non-zero if at
-		# all possible
-		if(m@(d,i)==0) then (
-			j=d+1;
-			while(j<=rows(m)) do (
-				if(m@(j,i)==0) then (j=j+1;continue);
-				a=m@(j,);
-				m@(j,)=m@(d,);
-				m@(d,)=a;
-				j=j+1;
-				break
-			)
-		);
-		if(m@(d,i)==0) then (i=i+1;continue);
-
-		# Here comes the actual zeroing of all but the anchor
-		# element rows
-		j=d+1;
-		while(j<=rows(m)) do (
-			if(m@(j,i)!=0) then (
-				m@(j,)=m@(j,)-(m@(j,i)/m@(d,i))*m@(d,)
-			);
-			j=j+1
-		);
-		m@(d,) = m@(d,) * (1/m@(d,i));
-		d=d+1;
-		i=i+1
-	);
-	m
-}
-
-#calculate the reduced row-echelon form of a matrix
-define rref(m) {
-	if(not is_matrix(m) or not is_value_only(m)) then
-		(error("rref: argument not a value only matrix");bailout);
-	m = ref(m);
-
-	i=1;
-	j=1;
-	while(i<=rows(m) and j<=columns(m)) do (
-		while(j<=columns(m) and m@(i,j)==0) do j=j+1;
-		if(j>columns(m)) then break;
-		ii=1;
-		while(ii<i) do (
-			if(m@(ii,j)!=0) then (
-				m@(ii,)=m@(ii,)-(m@(ii,j)*m@(i,))
-			);
-			ii=ii+1
-		);
-		j=j+1;
-		i=i+1
-	);
-	m
-}
+)
 
 #calculate a trace function
-define trace(m) {
+function trace(m) = (
 	if(not is_matrix(m) or not is_value_only(m)) then
 		(error("trace: argument not a value only matrix");bailout)
 	else if(rows(m)!=columns(m)) then
 		(error("trace: matrix not a square");bailout);
-	i=1;
 	a=0;
-	while(i<=rows(m)) do (a=a+m@(i,i);i=i+1);
-	a
-}
+	for i = 1 to rows(m) do (a=a+m@(i,i))
+)
 
 #calculate an infinite sum until the new terms stop making a difference
-define infsum(func,start,inc) {
+function infsum(func,start,inc) = (
 	if(not is_value(start) or not is_value(inc)) then
 		(error("infsum: start,inc arguments not values");bailout)
-	else if(not is_function_ref(func)) then
-		(error("infsum: func argument not a function reference");bailout);
+	else if(not is_function(func)) then
+		(error("infsum: func argument not a function");bailout);
 	sum = 0.0;
 	while 1 do (
-		newsum = sum + *func(start);
+		newsum = sum + func(start);
 		if newsum==sum then break;
 		sum = newsum;
 		start = start + 1;
 	);
 	sum
-}
+)
 
 #calculate an infinite sum until the new terms stop making a difference
-define infsum2(func,arg,start,inc) {
+function infsum2(func,arg,start,inc) = (
 	if(not is_value(start) or not is_value(inc)) then
 		(error("infsum: start,inc arguments not values");bailout)
-	else if(not is_function_ref(func)) then
-		(error("infsum: func argument not a function reference");bailout);
+	else if(not is_function(func)) then
+		(error("infsum: func argument not a function");bailout);
 	sum = 0.0;
 	while 1 do (
-		newsum = sum + *func(arg,start);
+		newsum = sum + func(arg,start);
 		if newsum==sum then break;
 		sum = newsum;
 		start = start + 1;
 	);
 	sum
-}
+)
 
 #calculate convolution of two horizontal vectors
-define convol(a,b) {
+function convol(a,b) = (
 	if(not is_matrix(a) or not is_value_only(a) or
 	   not is_matrix(b) or not is_value_only(b) or
 	   rows(a)>1 or rows(b)>1) then
 		(error("convol: arguments not value only horizontal vectors");bailout)
 	else if(columns(a)!=columns(b)) then
 		(error("convol: arguments must be identical vectors");bailout);
-	i=1;
 	sum = 0;
-	while(i<=columns(a)) do (
-		sum = sum + a@(1,i)*b@(1,columns(a)-i+1);
-		i = i+1
-	);
-	sum
-}
+	for i = 1 to columns(a) do (
+		sum = sum + a@(1,i)*b@(1,columns(a)-i+1)
+	)
+)
 
 #calculate convolution of two horizontal vectors and return the result
 #not added together but in a vector
-define convol_vec(a,b) {
+function convol_vec(a,b) = (
 	if(not is_matrix(a) or not is_value_only(a) or
 	   not is_matrix(b) or not is_value_only(b) or
 	   rows(a)>1 or rows(b)>1) then
 		(error("convol_vec: arguments not value only horizontal vectors");bailout)
 	else if(columns(a)!=columns(b)) then
 		(error("convol_vec: arguments must be identical vectors");bailout);
-	i=1;
 	r = set_size([0],1,columns(a));
-	while(i<=columns(a)) do (
-		r@(1,i) = a@(1,i)*b@(1,columns(a)-i+1);
-		i = i+1
+	for i = 1 to columns(a) do (
+		r@(1,i) = a@(1,i)*b@(1,columns(a)-i+1)
 	);
 	r
-}
+)
 
 #calculate the sum of all elements in a matrix
-define matsum(a) {
+function matsum(a) = (
 	if(not is_matrix(a) or not is_value_only(a)) then
 		(error("matsum: argument not a value only matrix");bailout);
 	sum = 0;
-	i=1;
-	while(i<=rows(a)) do (
-		j = 1;
-		while(j<=columns(a)) do (
-			sum = sum + a@(i,j);
-			j = j + 1
-		);
-		i = i+1
-	);
-	sum
-}
+
+	for n in a do
+		sum = sum + n
+)
+
+function matsum_sq(a) = (
+	if(not is_matrix(a) or not is_value_only(a)) then
+		(error("matsum_sq: argument not a value only matrix");bailout);
+	sum = 0;
+
+	for n in a do
+		sum = sum + n^2
+)
 
 #calculate the product of all elements in a matrix
-define matprod(a) {
+function matprod(a) = (
 	if(not is_matrix(a) or not is_value_only(a)) then
 		(error("matprod: argument not a value only matrix");bailout);
 	prod = 1;
-	i=1;
-	while(i<=rows(a)) do (
-		j = 1;
-		while(j<=columns(a)) do (
-			prod = prod * a@(i,j);
-			j = j + 1
-		);
-		i = i+1
-	);
-	prod
-}
+	for n in a do
+		prod = prod * n
+)
 
-define asin(x) {
+function asin(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&asin)
+		return apply_over_matrix1(x,asin)
 	else if(not is_value(x)) then
 		(error("asin: argument not a value");bailout);
 	atan(x/sqrt(1-x^2))
-}
-define asinh(x) {
+)
+function asinh(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&asinh)
+		return apply_over_matrix1(x,asinh)
 	else if(not is_value(x)) then
 		(error("asinh: argument not a value");bailout);
 	ln(x+sqrt((x^2)+1))
-}
-define acos(x) {
+)
+function acos(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acos)
+		return apply_over_matrix1(x,acos)
 	else if(not is_value(x)) then
 		(error("acos: argument not a value");bailout);
 	atan(sqrt(1-x^2)/x)+(if x>0 then 0 else pi)
-}
-define acosh(x) {
+)
+function acosh(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acosh)
+		return apply_over_matrix1(x,acosh)
 	else if(not is_value(x)) then
 		(error("acosh: argument not a value");bailout);
 	ln(x+sqrt((x^2)-1))
-}
+)
 
-define cot(x) {
+function cot(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&cot)
+		return apply_over_matrix1(x,cot)
 	else if(not is_value(x)) then
 		(error("cot: argument not a value");bailout);
 	1/tan(x)
-}
-define coth(x) {
+)
+function coth(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&coth)
+		return apply_over_matrix1(x,coth)
 	else if(not is_value(x)) then
 		(error("coth: argument not a value");bailout);
 	1/tanh(x)
-}
-define acot(x) {
+)
+function acot(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acot)
+		return apply_over_matrix1(x,acot)
 	else if(not is_value(x)) then
 		(error("acot: argument not a value");bailout);
 	atan(1/x)
-}
-define acoth(x) {
+)
+function acoth(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acoth)
+		return apply_over_matrix1(x,acoth)
 	else if(not is_value(x)) then
 		(error("acoth: argument not a value");bailout);
 	atanh(1/x)
-}
+)
 
-define tanh(x) {
+function tanh(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&tanh)
+		return apply_over_matrix1(x,tanh)
 	else if(not is_value(x)) then
 		(error("tanh: argument not a value");bailout);
 	sinh(x)/cosh(x)
-}
-define atanh(x) {
+)
+function atanh(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&atanh)
+		return apply_over_matrix1(x,atanh)
 	else if(not is_value(x)) then
 		(error("atanh: argument not a value");bailout);
 	ln((1+x)/(1-x))/2
-}
+)
 
-define csc(x) {
+function csc(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&csc)
+		return apply_over_matrix1(x,csc)
 	else if(not is_value(x)) then
 		(error("csc: argument not a value");bailout);
 	1/sin(x)
-}
-define csch(x) {
+)
+function csch(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&csch)
+		return apply_over_matrix1(x,csch)
 	else if(not is_value(x)) then
 		(error("csch: argument not a value");bailout);
 	1/sinh(x)
-}
-define acsc(x) {
+)
+function acsc(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acsc)
+		return apply_over_matrix1(x,acsc)
 	else if(not is_value(x)) then
 		(error("acsch: argument not a value");bailout);
 	asin(1/x)
-}
-define acsch(x) {
+)
+function acsch(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&acsch)
+		return apply_over_matrix1(x,acsch)
 	else if(not is_value(x)) then
 		(error("acsc: argument not a value");bailout);
 	asinh(1/x)
-}
-define sec(x) {
+)
+function sec(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&sec)
+		return apply_over_matrix1(x,sec)
 	else if(not is_value(x)) then
 		(error("sec: argument not a value");bailout);
 	1/cos(x)
-}
-define sech(x) {
+)
+function sech(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&sech)
+		return apply_over_matrix1(x,sech)
 	else if(not is_value(x)) then
 		(error("sech: argument not a value");bailout);
 	1/cosh(x)
-}
-define asec(x) {
+)
+function asec(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&asec)
+		return apply_over_matrix1(x,asec)
 	else if(not is_value(x)) then
 		(error("asec: argument not a value");bailout);
 	acos(1/x)
-}
-define asech(x) {
+)
+function asech(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&asech)
+		return apply_over_matrix1(x,asech)
 	else if(not is_value(x)) then
 		(error("asech: argument not a value");bailout);
 	acosh(1/x)
-}
+)
 
-define sign(x) {
+function sign(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&sign)
+		return apply_over_matrix1(x,sign)
 	else if(not is_value(x)) then
 		(error("sign: argument not a value");bailout);
 	if(is_complex(x)) then (
@@ -439,32 +370,310 @@ define sign(x) {
 	) else if(x<0) then (
 		-1
 	) else 0
-}
-define log(x,b) {
+)
+function log(x,b) = (
 	if(is_matrix(x) or is_matrix(b)) then
-		return apply_over_matrix2(x,b,&log)
+		return apply_over_matrix2(x,b,log)
 	else if(not is_value(x) or not is_value(b)) then
 		(error("log: arguments not values");bailout);
 	ln(x)/ln(b)
-}
-define log10(x) {
+)
+function log10(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&log10)
+		return apply_over_matrix1(x,log10)
 	else if(not is_value(x)) then
 		(error("log10: argument not a value");bailout);
 	ln(x)/ln(10)
-}
-define log2(x) {
+)
+function log2(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&log2)
+		return apply_over_matrix1(x,log2)
 	else if(not is_value(x)) then
 		(error("log2: argument not a value");bailout);
 	ln(x)/ln(2)
-}
-define conj(x) {
+)
+function conj(x) = (
 	if(is_matrix(x)) then
-		return apply_over_matrix1(x,&conj)
+		return apply_over_matrix1(x,conj)
 	else if(not is_value(x)) then
 		(error("conj: argument not a value");bailout);
 	Re(x)-(Im(x)*1i)
-}
+)
+
+function catalan(n) = (
+	if(is_matrix(n)) then
+		return apply_over_matrix1(n,catalan)
+	else if(not is_value(n) or not is_integer(n) or n<0) then
+		(error("catallan: argument not an integer >= 0");bailout);
+	nCr(2*n,n)/(n+1)
+)
+
+function delrowcol(m,row,col) = (
+	if(not is_matrix(m) or
+	   not is_value(row) or is_complex(row) or not is_integer(row) or
+	   not is_value(col) or is_complex(col) or not is_integer(col)) then
+		(error("swaprow: arguments are not the right type");bailout)
+	else if(row>rows(m) or col>columns(m)) then
+		(error("delrowcol: arguments out of range");bailout);
+	if row==1 then (
+		if col==1 then
+			m@(2..rows(m),2..columns(m))
+		else if col==columns(m) then
+			m@(2..rows(m),1..columns(m)-1)
+		else
+			[m@(2..rows(m),1..col-1),\
+			 m@(2..rows(m),col+1..columns(m))]
+	) else if row==rows(m) then (
+		if col==1 then
+			m@(1..rows(m)-1,2..columns(m))
+		else if col==columns(m) then
+			m@(1..rows(m)-1,1..columns(m)-1)
+		else
+			[m@(1..rows(m)-1,1..col-1),\
+			 m@(1..rows(m)-1,col+1..columns(m))]
+	) else (
+		if col==1 then
+			[m@(1..row-1,2..columns(m))
+			 m@(row+1..rows(m),2..columns(m))]
+		else if col==columns(m) then
+			[m@(1..row-1,1..columns(m)-1)
+			 m@(row+1..rows(m),1..columns(m)-1)]
+		else
+			[m@(1..row-1,1..col-1),m@(row+1..rows(m),1..col-1)
+			 m@(1..row-1,col+1..columns(m)),\
+			 m@(row+1..rows(m),col+1..columns(m))]
+	)
+)
+
+#adjoint of a matrix
+function adj(m) = (
+	if(not is_matrix(m) or not is_value_only(m)) then
+		(error("adj: argument not a value-only matrix");bailout)
+	else if(rows(m)!=columns(m)) then
+		(error("adj: argument not a square matrix");bailout)
+	else if(rows(m)<2) then
+		(error("adj: argument cannot be 1x1 matrix");bailout);
+
+	a = set_size([0],rows(m),rows(m));
+	for i = 1 to rows(m) do (
+		for j = 1 to rows(m) do (
+			a@(j,i) = ((-1)^(i+j))*det(delrowcol(m,i,j))
+		)
+	);
+	a
+)
+
+function rad2deg(x) = (
+	if(is_matrix(x)) then
+		return apply_over_matrix1(x,rad2deg)
+	else if(not is_value(x)) then
+		(error("rad2deg: argument not a value");bailout);
+	(x*180)/pi
+)
+
+function deg2rad(x) = (
+	if(is_matrix(x)) then
+		return apply_over_matrix1(x,deg2rad)
+	else if(not is_value(x)) then
+		(error("deg2rad: argument not a value");bailout);
+	(x*pi)/180
+)
+
+function minimize(func,x,incr) = (
+	if(not is_value(x) or not is_value(incr)) then
+		(error("minimize: x,incr arguments not values");bailout)
+	else if(not is_function(func)) then
+		(error("minimize: func argument not a function");bailout);
+	while(func(x)>0) do x=x+incr;
+	x
+)
+
+function diagonal(v) = (
+	if(not is_matrix(v) or rows(v)>1) then
+		(error("diagonal: argument not a horizontal vector");bailout);
+	r = set_size([0],columns(v),columns(v));
+	for i = 1 to columns(v) do (
+		r@(i,i) = v@(1,i)
+	);
+	r
+)
+
+function swaprow(m,row1,row2) = (
+	if(not is_matrix(m) or
+	   not is_value(row1) or is_complex(row1) or not is_integer(row1) or
+	   not is_value(row2) or is_complex(row2) or not is_integer(row2)) then
+		(error("swaprow: arguments are not the right type");bailout)
+	else if(row1>rows(m) or row2>rows(m)) then
+		(error("swaprow: argument out of range");bailout)
+	else if(row1 != row2) then (
+		tmp = m@(row1,);
+		m@(row1,) = m@(row2,);
+		m@(row2,) = tmp
+	);
+	m
+)
+
+function rowsum(m) = (
+	if not is_matrix(m) then
+		(error("rowsum: argument not matrix");bailout);
+	r = set_size([0],rows(m),1);
+	for i = 1 to rows(m) do (
+		for j = 1 to columns(m) do
+			r@(i,1) = r@(i,1) + m@(i,j)
+	);
+	r
+)
+
+function rowsum_sq(m) = (
+	if not is_matrix(m) then
+		(error("rowsum_sq: argument not matrix");bailout);
+	r = set_size([0],rows(m),1);
+	for i = 1 to rows(m) do (
+		for j = 1 to columns(m) do
+			r@(i,1) = r@(i,1) + m@(i,j)^2
+	);
+	r
+)
+
+#sort a horizontal vector
+function sortv(v) = (
+	if not is_matrix(v) or rows(v)>1 then
+		(error("sortv: argument not a horizontal vector");bailout);
+	j = 1;
+	do (
+		sorted = 1;
+		for i = 1 to columns(v)-j do (
+			if v@(1,i)>v@(1,i+1) then (
+				t = v@(1,i);
+				v@(1,i) = v@(1,i+1);
+				v@(1,i+1) = t;
+				sorted = 0
+			)
+		);
+		j=j+1
+	) while not sorted;
+	v
+)
+
+function reversev(v) = (
+	if not is_matrix(v) or rows(v)>1 then
+		(error("reversev: argument not a horizontal vector");bailout);
+	r=set_size([0],1,columns(v));
+	for i = 1 to columns(v) do
+		r@(1,i) = v@(1,columns(v)-i+1);
+	r
+)
+
+function rowmedian(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("rowmedian: argument not value-only matrix");bailout);
+	r = set_size([0],rows(m),1);
+	if columns(m)%2 == 1 then (
+		for i = 1 to rows(m) do (
+			s = sortv(m@(i,));
+			r@(i,1) = s@(1,trunc(columns(m)/2)+1)
+		)
+	) else (
+		for i = 1 to rows(m) do (
+			s = sortv(m@(i,));
+			r@(i,1) = (s@(1,columns(m)/2) +
+				   s@(1,(columns(m)/2)+1))/2
+		)
+	);
+	r
+)
+
+function median(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("median: argument not value-only matrix");bailout);
+	s = set_size([0],1,rows(m)*columns(m));
+	i = 0;
+	for n in m do
+		s@(1,i=i+1)=n;
+	s = sortv(s);
+	
+	if columns(s)%2 == 1 then
+		s@(1,trunc(columns(s)/2)+1)
+	else
+		(s@(1,columns(s)/2) +
+		 s@(1,(columns(s)/2)+1))/2
+)
+
+function rowaverage(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("rowaverage: argument not value-only matrix");bailout);
+	r = set_size([0],rows(m),1);
+	for i = 1 to rows(m) do (
+		for j = 1 to columns(m) do
+			r@(i,1) = r@(i,1) + m@(i,j);
+		r@(i,1) = r@(i,1)/columns(m)
+	);
+	r
+)
+
+function average(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("average: argument not value-only matrix");bailout);
+	r = 0;
+	for i in m do
+	       r = r + i;
+	r/(columns(m)*rows(m))
+)
+
+function rowstdev(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("rowstdev: argument not value-only matrix");bailout)
+	else if columns(m)<2 then
+		(error("rowstdev: there must be at least two columns");bailout);
+	r = rowaverage(m);
+	for i = 1 to rows(m) do (
+		rr = 0;
+		for j = 1 to columns(m) do
+			rr = rr + (m@(i,j)-r@(i,1))^2;
+		
+		r@(i,1) = sqrt(rr/(columns(m)-1))
+	);
+	r
+)
+
+function rowstdevp(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("rowstdevp: argument not value-only matrix");bailout);
+	r = rowaverage(m);
+	for i = 1 to rows(m) do (
+		rr = 0;
+		for j = 1 to columns(m) do
+			rr = rr + (m@(i,j)-r@(i,1))^2;
+		
+		r@(i,1) = sqrt(rr/columns(m))
+	);
+	r
+)
+
+function stdev(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("stdev: argument not value-only matrix");bailout)
+	else if columns(m)<2 then
+		(error("stdev: there must be at least two columns");bailout);
+	r = average(m);
+	rr = 0;
+	for i in m do
+		rr = rr + (i-r)^2;
+	sqrt(rr/(columns(m)-1))
+)
+
+function stdevp(m) = (
+	if not is_matrix(m) or not is_value_only(m) then
+		(error("stdevp: argument not value-only matrix");bailout);
+	r = average(m);
+	rr = 0;
+	for i in m do
+		rr = rr + (i-r)^2;
+	sqrt(rr/columns(m))
+)
+
+#just for somewhat of "source compatibility"
+function abs(x) = |x|
+
+#make something a string
+function string(s) = s + ""

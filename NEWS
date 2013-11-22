@@ -1,4 +1,17 @@
-Changes to 0.3
+Changes to 0.4 (includes all changes from all >0.3.1)
+
+* new syntax for writing functions, more math like
+* functions are now passed by value not by reference, this is unfortunately
+  backwards incompatible but adds consistency and flexibility, so just instead
+  of sum(4,5,&func) you'd write sum(4,5,func), with anonymous functions,
+  the calling syntax does not change. inside the function then, one would use
+  func(...) instead of *func(...)
+* library file is compiled now for quick startup
+* many new functions
+* more matrix support
+* complete complex number support with new operators
+
+Changes to 0.3 (includes all changes from all >0.2.1)
 
 * matrix support
 * a couple of new operators (absolute value, get element/row/column, transpose)

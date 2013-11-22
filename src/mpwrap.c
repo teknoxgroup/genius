@@ -45,6 +45,27 @@ static MpwRealNum *one = NULL;
 
 static mpf_ptr pi_mpf = NULL;
 
+#define MAKE_CPLX_OPS(THE_op,THE_r,THE_i) {		\
+	if(rop==THE_op) {				\
+		THE_r = g_new0(MpwRealNum,1);		\
+		THE_i = g_new0(MpwRealNum,1);		\
+		mpwl_init_type(THE_r,MPW_FLOAT);	\
+		mpwl_init_type(THE_i,MPW_FLOAT);	\
+		mpwl_set(THE_r,THE_op->r);		\
+		mpwl_set(THE_i,THE_op->i);		\
+	} else {					\
+		THE_r = THE_op->r;			\
+		THE_i = THE_op->i;			\
+	}						\
+}
+#define BREAK_CPLX_OPS(THE_op,THE_r,THE_i) {		\
+	if(rop==THE_op) {				\
+		mpwl_free(THE_i,TRUE);			\
+		mpwl_free(THE_r,TRUE);			\
+	}						\
+}
+
+
 #define GET_NEW_REAL(n) {				\
 	if(!free_reals) {				\
 		n = g_new0(MpwRealNum,1);		\
@@ -140,7 +161,10 @@ static int mympn_add(long *res, long op1, long op2);
 static int mympn_sub(long *res, long op1, long op2);
 
 static void mpwl_add(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static void mpwl_add_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long i);
 static void mpwl_sub(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
+static void mpwl_sub_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long i);
+static void mpwl_ui_sub(MpwRealNum *rop,unsigned long i,MpwRealNum *op);
 
 static void mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 static void mpwl_mul_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i);
@@ -255,13 +279,14 @@ mympf_sin(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 
 		/*make xsq be op but in the range of -pi*2<xsq<pi*2 */
 		mpf_init(xsq);
-		mpf_div(xsq,op,pi_mpf);
-		mpf_div_ui(xsq,xsq,2);
+		mpf_mul_ui(xsq,pi_mpf,2);
+		mpf_div(xsq,op,xsq);
 		mpz_init(q);
 		mpz_set_f(q,xsq);
 		mpf_set_z(xsq,q);
 		mpz_clear(q);
 		mpf_mul(xsq,xsq,pi_mpf);
+		mpf_mul_ui(xsq,xsq,2);
 		mpf_sub(xsq,op,xsq);
 	} else 
 		mpf_init_set(xsq,op);
@@ -278,7 +303,7 @@ mympf_sin(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 
 	for(i=2;;i+=2) {
 		mpf_mul(top,top,xsq);
-		/*this assumes that SHRT_MAX^2 can fit an an ulong*/
+		/*this assumes that SHRT_MAX^2 can fit in an ulong*/
 		if(i<SHRT_MAX) {
 			mpf_mul_ui(bottom,bottom,i*(i+1));
 		} else {
@@ -332,13 +357,14 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 
 		/*make xsq be op but in the range of -pi*2<xsq<pi*2 */
 		mpf_init(xsq);
-		mpf_div(xsq,op,pi_mpf);
-		mpf_div_ui(xsq,xsq,2);
+		mpf_mul_ui(xsq,pi_mpf,2);
+		mpf_div(xsq,op,xsq);
 		mpz_init(q);
 		mpz_set_f(q,xsq);
 		mpf_set_z(xsq,q);
 		mpz_clear(q);
 		mpf_mul(xsq,xsq,pi_mpf);
+		mpf_mul_ui(xsq,xsq,2);
 		mpf_sub(xsq,op,xsq);
 	} else
 		mpf_init_set(xsq,op);
@@ -356,7 +382,7 @@ mympf_cos(mpf_t rop, mpf_t op, int hyperbolic, int reduceop)
 
 	for(i=1;;i+=2) {
 		mpf_mul(top,top,xsq);
-		/*this assumes that SHRT_MAX^2 can fit an an ulong*/
+		/*this assumes that SHRT_MAX^2 can fit in an ulong*/
 		if(i<SHRT_MAX) {
 			mpf_mul_ui(bottom,bottom,i*(i+1));
 		} else {
@@ -525,15 +551,19 @@ mympf_ln(mpf_t rop,mpf_t op)
 	unsigned long int i;
 	unsigned long int f = 0;
 	unsigned long int prec;
+	int inverse = FALSE;
 
 	if(mpf_cmp_ui(op,0)<=0)
-		return FALSE;
+		inverse = TRUE;
 
 	/* 4bits is about 1 digit I guess */
 	prec = 6*4 + mpf_get_prec(op);
 	
 	mpf_init2(x,prec);
-	mpf_set(x,op);
+	if(inverse)
+		mpf_neg(x,op);
+	else
+		mpf_set(x,op);
 	
 	/*make x be 1/2 < x < 2 and set 2^f to the approriate multiplier*/
 
@@ -588,7 +618,7 @@ mympf_ln(mpf_t rop,mpf_t op)
 
 	mpf_clear(fres);
 	
-	return TRUE;
+	return inverse?FALSE:TRUE;
 }
 
 /*these functions may be more precise but slow as HELL*/
@@ -1433,6 +1463,56 @@ mpwl_add(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	mpwl_move(rop,&r);
 }
 
+static void
+mpwl_add_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long i)
+{
+	switch(op->type) {
+	case MPW_NATIVEINT:
+		/*this assumes that SHRT_MAX+SHRT_MAX can fit in an long*/
+		if(op->data.nval>=SHRT_MAX ||
+		   i>=SHRT_MAX) {
+			long val = op->data.nval;
+			if(rop->type != MPW_INTEGER) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_INTEGER);
+			}
+			mpz_set_si(rop->data.ival,val);
+			mpz_add_ui(rop->data.ival,rop->data.ival,i);
+		} else {
+			if(rop->type != MPW_NATIVEINT) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_NATIVEINT);
+			}
+			rop->data.nval = op->data.nval+i;
+		}
+		break;
+	case MPW_FLOAT:
+		if(rop->type != MPW_FLOAT) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_FLOAT);
+		}
+		mpf_add_ui(rop->data.fval,op->data.fval,i);
+		break;
+	case MPW_RATIONAL:
+		{
+			mpq_t tmp;
+			if(rop->type != MPW_RATIONAL) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_RATIONAL);
+			}
+			mpq_init(tmp);
+			mpq_set_ui(tmp,i,1);
+			mpq_add(rop->data.rval,op->data.rval,tmp);
+			mpq_clear(tmp);
+			mpwl_make_int(rop);
+		}
+		break;
+	case MPW_INTEGER:
+		mpz_add_ui(rop->data.ival,op->data.ival,i);
+		break;
+	}
+}
+
 static int
 mympn_sub(long *res, long op1, long op2)
 {
@@ -1525,6 +1605,109 @@ mpwl_sub(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	mpwl_clear_extra_type(op1,t);
 	mpwl_clear_extra_type(op2,t);
 	mpwl_move(rop,&r);
+}
+
+static void
+mpwl_sub_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long i)
+{
+	switch(op->type) {
+	case MPW_NATIVEINT:
+		/*this assumes that SHRT_MIN-SHRT_MAX can fit in an long*/
+		if(op->data.nval<=SHRT_MIN ||
+		   i>=SHRT_MAX) {
+			long val = op->data.nval;
+			if(rop->type != MPW_INTEGER) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_INTEGER);
+			}
+			mpz_set_si(rop->data.ival,val);
+			mpz_sub_ui(rop->data.ival,rop->data.ival,i);
+		} else {
+			if(rop->type != MPW_NATIVEINT) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_NATIVEINT);
+			}
+			rop->data.nval = op->data.nval-i;
+		}
+		break;
+	case MPW_FLOAT:
+		if(rop->type != MPW_FLOAT) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_FLOAT);
+		}
+		mpf_sub_ui(rop->data.fval,op->data.fval,i);
+		break;
+	case MPW_RATIONAL:
+		{
+			mpq_t tmp;
+			if(rop->type != MPW_RATIONAL) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_RATIONAL);
+			}
+			mpq_init(tmp);
+			mpq_set_ui(tmp,i,1);
+			mpq_neg(tmp,tmp);
+			mpq_add(rop->data.rval,op->data.rval,tmp);
+			mpq_clear(tmp);
+			mpwl_make_int(rop);
+		}
+		break;
+	case MPW_INTEGER:
+		mpz_sub_ui(rop->data.ival,op->data.ival,i);
+		break;
+	}
+}
+
+static void
+mpwl_ui_sub(MpwRealNum *rop, unsigned long i, MpwRealNum *op)
+{
+	switch(op->type) {
+	case MPW_NATIVEINT:
+		/*this assumes that SHRT_MIN-SHRT_MAX can fit in an long*/
+		if(op->data.nval>=SHRT_MAX ||
+		   i<=SHRT_MIN) {
+			long val = op->data.nval;
+			if(rop->type != MPW_INTEGER) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_INTEGER);
+			}
+			mpz_set_si(rop->data.ival,val);
+			mpz_neg(rop->data.ival,rop->data.ival);
+			mpz_add_ui(rop->data.ival,rop->data.ival,i);
+		} else {
+			if(rop->type != MPW_NATIVEINT) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_NATIVEINT);
+			}
+			rop->data.nval = i-op->data.nval;
+		}
+		break;
+	case MPW_FLOAT:
+		if(rop->type != MPW_FLOAT) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_FLOAT);
+		}
+		mpf_ui_sub(rop->data.fval,i,op->data.fval);
+		break;
+	case MPW_RATIONAL:
+		{
+			mpq_t tmp;
+			if(rop->type != MPW_RATIONAL) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_RATIONAL);
+			}
+			mpq_init(tmp);
+			mpq_set_ui(tmp,i,1);
+			mpq_sub(rop->data.rval,op->data.rval,tmp);
+			mpq_clear(tmp);
+			mpwl_make_int(rop);
+		}
+		break;
+	case MPW_INTEGER:
+		mpz_sub_ui(rop->data.ival,op->data.ival,i);
+		mpz_neg(rop->data.ival,rop->data.ival);
+		break;
+	}
 }
 
 static void
@@ -2275,16 +2458,12 @@ mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		error_num=INTERNAL_MPW_ERROR;
 		return FALSE;
 	}
+	if(mpwl_sgn(op1)<=0)
+		return TRUE;
 	
-	mpwl_init_type(&r,MPW_FLOAT);
-
 	mpwl_make_extra_type(op1,MPW_FLOAT);
 	
-	if(mpf_sgn(op1->data.fval)<=0) {
-		mpwl_clear_extra_type(op1,MPW_FLOAT);
-		mpwl_free(&r,TRUE);
-		return TRUE;
-	}
+	mpwl_init_type(&r,MPW_FLOAT);
 
 	mympf_ln(r.data.fval,op1->data.fval);
 	mpf_mul(r.data.fval,r.data.fval,op2->data.fval);
@@ -2299,7 +2478,16 @@ mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 static int
 mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 {
-	if(mpwl_sgn(op2)==0) {
+	int sgn1 = mpwl_sgn(op1);
+	int sgn2 = mpwl_sgn(op2);
+	if(sgn1 == 0 && sgn2 == 0) {
+		(*errorout)(_("0^0 is undefined"));
+		error_num=NUMERICAL_MPW_ERROR;
+		return FALSE;
+	} else if(sgn1 == 0) {
+		mpwl_set_ui(rop,0);
+		return FALSE;
+	} else if(sgn2 == 0) {
 		mpwl_set_ui(rop,1);
 		return FALSE;
 	}
@@ -2364,14 +2552,10 @@ mpwl_ln(MpwRealNum *rop,MpwRealNum *op)
 	mpwl_make_extra_type(op,MPW_FLOAT);
 	ret = mympf_ln(r.data.fval,op->data.fval);
 	mpwl_clear_extra_type(op,MPW_FLOAT);
-	if(!ret) {
-		mpwl_free(&r,TRUE);
-		return FALSE;
-	}
 
 	mpwl_move(rop,&r);
 	
-	return TRUE;
+	return ret;
 }
 
 static void
@@ -3094,6 +3278,25 @@ mpw_add(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 }
 
 void
+mpw_add_ui(mpw_ptr rop,mpw_ptr op, unsigned long i)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_add_ui(rop->r,op->r,i);
+	} else {
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		rop->type = MPW_COMPLEX;
+		mpwl_add_ui(rop->r,op->r,i);
+		mpwl_set(rop->i,op->i);
+
+		/* it shouldn't need uncomplexing*/
+		/* mpw_uncomplex(rop);*/
+	}
+}
+
+void
 mpw_sub(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
@@ -3112,6 +3315,44 @@ mpw_sub(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 }
 
 void
+mpw_sub_ui(mpw_ptr rop,mpw_ptr op, unsigned long i)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_sub_ui(rop->r,op->r,i);
+	} else {
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		rop->type = MPW_COMPLEX;
+		mpwl_sub_ui(rop->r,op->r,i);
+		mpwl_set(rop->i,op->i);
+
+		/* it shouldn't need uncomplexing*/
+		/* mpw_uncomplex(rop);*/
+	}
+}
+
+void
+mpw_ui_sub(mpw_ptr rop,unsigned long i, mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_ui_sub(rop->r,i,op->r);
+	} else {
+		MAKE_COPY(rop->r);
+		MAKE_COPY(rop->i);
+		rop->type = MPW_COMPLEX;
+		mpwl_ui_sub(rop->r,i,op->r);
+		mpwl_neg(rop->i,op->i);
+
+		/* it shouldn't need uncomplexing*/
+		/* mpw_uncomplex(rop);*/
+	}
+}
+
+void
 mpw_mul(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if(op1->type==MPW_REAL && op2->type==MPW_REAL) {
@@ -3121,22 +3362,29 @@ mpw_mul(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 	} else {
 		MpwRealNum tr={0};
 		MpwRealNum ti={0};
+		MpwRealNum *r1;
+		MpwRealNum *i1;
+		MpwRealNum *r2;
+		MpwRealNum *i2;
 		
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
-		mpwl_mul(rop->r,op1->r,op2->r);
-		mpwl_mul(rop->i,op1->i,op2->r);
+		MAKE_CPLX_OPS(op1,r1,i1);
+		MAKE_CPLX_OPS(op2,r2,i2);
 
-		mpwl_init_type(&tr,op1->i->type);
-		mpwl_init_type(&ti,op1->r->type);
+		mpwl_mul(rop->r,r1,r2);
+		mpwl_mul(rop->i,i1,r2);
+
+		mpwl_init_type(&tr,i1->type);
+		mpwl_init_type(&ti,r1->type);
 
 		/* tmp->type = MPW_COMPLEX; */
-		mpwl_mul(&tr,op1->i,op2->i);
+		mpwl_mul(&tr,i1,i2);
 		mpwl_neg(&tr,&tr);
-		mpwl_mul(&ti,op1->r,op2->i);
+		mpwl_mul(&ti,r1,i2);
 		
 		mpwl_add(rop->r,rop->r,&tr);
 		mpwl_add(rop->i,rop->i,&ti);
@@ -3145,6 +3393,9 @@ mpw_mul(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		mpwl_free(&ti,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op1,r1,i1);
+		BREAK_CPLX_OPS(op2,r2,i2);
 	}
 }
 
@@ -3181,6 +3432,10 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 	} else {
 		MpwRealNum t1={0};
 		MpwRealNum t2={0};
+		MpwRealNum *r1;
+		MpwRealNum *i1;
+		MpwRealNum *r2;
+		MpwRealNum *i2;
 		if(mpwl_sgn(op2->r)==0 && mpwl_sgn(op2->i)==0) {
 			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
@@ -3191,24 +3446,27 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op1,r1,i1);
+		MAKE_CPLX_OPS(op2,r2,i2);
+
 		mpwl_init_type(&t1,MPW_INTEGER);
 		mpwl_init_type(&t2,MPW_INTEGER);
 
 		/*real part (r1r2 + i1i2)/(r2r2 + i2i2)*/
-		mpwl_mul(rop->r,op1->r,op2->r);
-		mpwl_mul(&t1,op1->i,op2->i);
+		mpwl_mul(rop->r,r1,r2);
+		mpwl_mul(&t1,i1,i2);
 		mpwl_add(rop->r,rop->r,&t1);
 
-		mpwl_mul(&t1,op2->r,op2->r);
-		mpwl_mul(&t2,op2->i,op2->i);
+		mpwl_mul(&t1,r2,r2);
+		mpwl_mul(&t2,i2,i2);
 		mpwl_add(&t2,&t2,&t1);
 
 		mpwl_div(rop->r,rop->r,&t2);
 
 
 		/*imaginary part (i1r2 - r1i2)/(r2r2 + i2i2)*/
-		mpwl_mul(rop->i,op1->i,op2->r);
-		mpwl_mul(&t1,op1->r,op2->i);
+		mpwl_mul(rop->i,i1,r2);
+		mpwl_mul(&t1,r1,i2);
 		mpwl_neg(&t1,&t1);
 		mpwl_add(rop->i,rop->i,&t1);
 
@@ -3220,6 +3478,9 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		mpwl_free(&t2,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op1,r1,i1);
+		BREAK_CPLX_OPS(op2,r2,i2);
 	}
 }
 
@@ -3246,7 +3507,7 @@ mpw_div_ui(mpw_ptr rop,mpw_ptr op, unsigned int i)
 }
 
 void
-mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
+mpw_ui_div(mpw_ptr rop,unsigned int in,mpw_ptr op)
 {
 	if(op->type==MPW_REAL) {
 		if(mpwl_sgn(op->r)==0) {
@@ -3256,10 +3517,12 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 		}
 		MAKE_REAL(rop);
 		MAKE_COPY(rop->r);
-		mpwl_ui_div(rop->r,i,op->r);
+		mpwl_ui_div(rop->r,in,op->r);
 	} else {
 		MpwRealNum t1={0};
 		MpwRealNum t2={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		if(mpwl_sgn(op->r)==0 && mpwl_sgn(op->i)==0) {
 			(*errorout)(_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
@@ -3270,20 +3533,22 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t1,MPW_NATIVEINT);
 		mpwl_init_type(&t2,MPW_NATIVEINT);
 
 		/*real part (r1r2)/(r2r2 + i2i2)*/
-		mpwl_mul_ui(rop->r,op->r,i);
+		mpwl_mul_ui(rop->r,r,in);
 
-		mpwl_mul(&t1,op->r,op->r);
-		mpwl_mul(&t2,op->i,op->i);
+		mpwl_mul(&t1,r,r);
+		mpwl_mul(&t2,i,i);
 		mpwl_add(&t2,&t2,&t1);
 
 		mpwl_div(rop->r,rop->r,&t2);
 
 		/*imaginary part (- r1i2)/(r2r2 + i2i2)*/
-		mpwl_mul_ui(rop->i,op->i,i);
+		mpwl_mul_ui(rop->i,i,in);
 		mpwl_neg(rop->i,rop->i);
 
 		/*t2 is calculated above*/
@@ -3294,6 +3559,8 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 		mpwl_free(&t2,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3370,13 +3637,22 @@ mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		MAKE_REAL(rop);
 		MAKE_COPY(rop->r);
 		if(mpwl_pow(rop->r,op1->r,op2->r)) {
-			g_warning("complex numbers unsupported yet");
-			error_num=NUMERICAL_MPW_ERROR;
+			mpw_t tmp;
+			mpw_init(tmp);
+			mpw_ln(tmp,op1);
+			mpw_mul(tmp,tmp,op2);
+			mpw_exp(tmp,tmp);
+			mpw_set(rop,tmp);
+			mpw_clear(tmp);
 		}
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)(_("pow: can't deal with complex numbers"));
-		error_num=NUMERICAL_MPW_ERROR;
+		mpw_t tmp;
+		mpw_init(tmp);
+		mpw_ln(tmp,op1);
+		mpw_mul(tmp,tmp,op2);
+		mpw_exp(tmp,tmp);
+		mpw_set(rop,tmp);
+		mpw_clear(tmp);
 	}
 }
 
@@ -3394,9 +3670,9 @@ mpw_sqrt(mpw_ptr rop,mpw_ptr op)
 			rop->type=MPW_COMPLEX;
 		}
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)(_("sqrt: can't deal with complex numbers"));
-		error_num=NUMERICAL_MPW_ERROR;
+		mpw_ln(rop,op);
+		mpw_div_ui(rop,rop,2);
+		mpw_exp(rop,rop);
 	}
 }
 
@@ -3409,25 +3685,31 @@ mpw_exp(mpw_ptr rop,mpw_ptr op)
 		mpwl_exp(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t,MPW_FLOAT);
 		
-		mpwl_exp(rop->r,op->r);
+		mpwl_exp(rop->r,r);
 		mpwl_set(rop->i,rop->r);
 		
-		mpwl_cos(&t,op->i);
+		mpwl_cos(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_sin(&t,op->i);
+		mpwl_sin(&t,i);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3435,11 +3717,18 @@ void
 mpw_ln(mpw_ptr rop,mpw_ptr op)
 {
 	if(op->type==MPW_REAL) {
+		if(mpwl_sgn(op->r)==0) {
+			(*errorout)(_("ln: can't take logarithm of 0"));
+			error_num=NUMERICAL_MPW_ERROR;
+			return;
+		}
+
 		MAKE_REAL(rop);
 		MAKE_COPY(rop->r);
 		if(!mpwl_ln(rop->r,op->r)) {
-			(*errorout)(_("ln: argument out of range"));
-			error_num=NUMERICAL_MPW_ERROR;
+			rop->type = MPW_COMPLEX;
+			MAKE_COPY(rop->i);
+			mpwl_pi(rop->i);
 		}
 	} else {
 		MpwRealNum t={0};
@@ -3449,18 +3738,23 @@ mpw_ln(mpw_ptr rop,mpw_ptr op)
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
-		
-		if(rop==op) {
-			r = g_new(MpwRealNum,1);
-			i = g_new(MpwRealNum,1);
-			mpwl_init_type(r,MPW_FLOAT);
-			mpwl_init_type(i,MPW_FLOAT);
-			mpwl_set(r,op->r);
-			mpwl_set(i,op->i);
-		} else {
-			r = op->r;
-			i = op->i;
+
+		if(mpwl_sgn(op->r)==0) {
+			g_assert(mpwl_sgn(op->i)!=0);
+			/*don't set the pi before the ln, for the case
+			  rop==op*/
+			if(mpwl_ln(rop->r,op->i)) {
+				mpwl_pi(rop->i);
+				mpwl_div_ui(rop->i,rop->i,2);
+			} else {
+				mpwl_pi(rop->i);
+				mpwl_div_ui(rop->i,rop->i,2);
+				mpwl_neg(rop->i,rop->i);
+			}
+			return;
 		}
+
+		MAKE_CPLX_OPS(op,r,i);
 
 		mpwl_init_type(&t,MPW_FLOAT);
 		
@@ -3470,17 +3764,22 @@ mpw_ln(mpw_ptr rop,mpw_ptr op)
 		mpwl_ln(rop->r,rop->r);
 		mpwl_div_ui(rop->r,rop->r,2);
 
-		mpwl_free(&t,TRUE);
-		
 		mpwl_div(rop->i,i,r);
 		mpwl_arctan(rop->i,rop->i);
 
+		if(mpwl_sgn(r)<0) {
+			mpwl_pi(&t);
+			if(mpwl_sgn(i)<0)
+				mpwl_sub(rop->i,rop->i,&t);
+			else
+				mpwl_add(rop->i,rop->i,&t);
+		}
+
 		mpw_uncomplex(rop);
 
-		if(rop==op) {
-			mpwl_free(i,TRUE);
-			mpwl_free(r,TRUE);
-		}
+		mpwl_free(&t,TRUE);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3493,24 +3792,30 @@ mpw_sin(mpw_ptr rop,mpw_ptr op)
 		mpwl_sin(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t,MPW_FLOAT);
 		
-		mpwl_sin(rop->r,op->r);
-		mpwl_cosh(&t,op->i);
+		mpwl_sin(rop->r,r);
+		mpwl_cosh(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_cos(rop->i,op->i);
-		mpwl_sinh(&t,op->r);
+		mpwl_cos(rop->i,i);
+		mpwl_sinh(&t,r);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3523,25 +3828,31 @@ mpw_cos(mpw_ptr rop,mpw_ptr op)
 		mpwl_cos(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t,MPW_FLOAT);
 		
-		mpwl_cos(rop->r,op->r);
-		mpwl_cosh(&t,op->i);
+		mpwl_cos(rop->r,r);
+		mpwl_cosh(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_sin(rop->i,op->i);
+		mpwl_sin(rop->i,i);
 		mpwl_neg(rop->i,rop->i);
-		mpwl_sinh(&t,op->r);
+		mpwl_sinh(&t,r);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3554,24 +3865,30 @@ mpw_sinh(mpw_ptr rop,mpw_ptr op)
 		mpwl_sinh(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t,MPW_FLOAT);
 		
-		mpwl_sinh(rop->r,op->r);
-		mpwl_cos(&t,op->i);
+		mpwl_sinh(rop->r,r);
+		mpwl_cos(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_cosh(rop->i,op->i);
-		mpwl_sin(&t,op->r);
+		mpwl_cosh(rop->i,i);
+		mpwl_sin(&t,r);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3584,24 +3901,30 @@ mpw_cosh(mpw_ptr rop,mpw_ptr op)
 		mpwl_cos(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
+		MpwRealNum *r;
+		MpwRealNum *i;
 		rop->type = MPW_COMPLEX;
 
 		MAKE_COPY(rop->r);
 		MAKE_COPY(rop->i);
 
+		MAKE_CPLX_OPS(op,r,i);
+
 		mpwl_init_type(&t,MPW_FLOAT);
 		
-		mpwl_cosh(rop->r,op->r);
-		mpwl_cos(&t,op->i);
+		mpwl_cosh(rop->r,r);
+		mpwl_cos(&t,i);
 		mpwl_mul(rop->r,rop->r,&t);
 
-		mpwl_sinh(rop->i,op->i);
-		mpwl_sin(&t,op->r);
+		mpwl_sinh(rop->i,i);
+		mpwl_sin(&t,r);
 		mpwl_mul(rop->i,rop->i,&t);
 		
 		mpwl_free(&t,TRUE);
 
 		mpw_uncomplex(rop);
+
+		BREAK_CPLX_OPS(op,r,i);
 	}
 }
 
@@ -3613,9 +3936,65 @@ mpw_arctan(mpw_ptr rop,mpw_ptr op)
 		MAKE_COPY(rop->r);
 		mpwl_arctan(rop->r,op->r);
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)(_("arctan: can't deal with complex numbers (yet)"));
-		error_num=NUMERICAL_MPW_ERROR;
+		mpw_t tmp1;
+		mpw_t tmp2;
+		mpw_t ai;
+		MpwRealNum *t;
+		
+		/*multiply op by i and put it into ai*/
+		mpw_init_set(ai,op);
+		MAKE_COPY(ai->r);
+		MAKE_COPY(ai->i);
+		
+		t = ai->i;
+		ai->i = ai->r;
+		ai->r = t;
+		
+		mpwl_neg(ai->r,ai->r);
+		
+		error_num = 0;
+		
+		mpw_init(tmp1);
+		mpw_set_ui(tmp1,1);
+		mpw_add(tmp1,tmp1,ai);
+		
+		mpw_init(tmp2);
+		mpw_set_ui(tmp2,1);
+		mpw_sub(tmp2,tmp2,ai);
+		mpw_clear(ai);
+
+		mpw_div(tmp1,tmp1,tmp2);
+		mpw_clear(tmp2);
+		
+		if(error_num) {
+			mpw_clear(tmp1);
+			return;
+		}
+		
+		mpw_ln(tmp1,tmp1);
+
+		if(error_num) {
+			mpw_clear(tmp1);
+			return;
+		}
+
+		/*divide by 2i*/
+		tmp1->type = MPW_COMPLEX;
+		MAKE_COPY(tmp1->r);
+		MAKE_COPY(tmp1->i);
+		
+		t = tmp1->i;
+		tmp1->i = tmp1->r;
+		tmp1->r = t;
+		
+		mpwl_neg(tmp1->i,tmp1->i);
+		mpwl_div_ui(tmp1->r,tmp1->r,2);
+		mpwl_div_ui(tmp1->i,tmp1->i,2);
+		
+		mpw_uncomplex(tmp1);
+		
+		mpw_set(rop,tmp1);
+		mpw_clear(tmp1);
 	}
 }
 
@@ -3635,9 +4014,9 @@ mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e)
 		MAKE_COPY(rop->r);
 		mpwl_pow_ui(rop->r,op->r,e,FALSE);
 	} else {
-		/*FIXME: complex numbers*/
-		(*errorout)(_("pow_ui: can't deal with complex numbers"));
-		error_num=NUMERICAL_MPW_ERROR;
+		mpw_ln(rop,op);
+		mpw_mul_ui(rop,rop,e);
+		mpw_exp(rop,rop);
 	}
 }
 
@@ -3806,6 +4185,61 @@ mpw_set_str_complex(mpw_ptr rop,char *s,int base)
 	g_free(p);
 
 	mpw_uncomplex(rop);
+}
+
+void
+mpw_set_str(mpw_ptr rop,char *s,int base)
+{
+	/*rationals*/
+	if(strchr(s,'/')) {
+		char *p = g_strdup(s);
+		char *pp;
+		mpw_t tmp;
+
+		mpw_init(tmp);
+
+		pp = strtok(p,"/");
+		mpw_set_str_int(rop,pp,base);
+		pp = strtok(NULL,"/");
+		mpw_set_str_int(tmp,pp,base);
+		g_free(p);
+		
+		mpw_div(rop,rop,tmp);
+	/*complex*/
+	} else if(strchr(s,'i')) {
+		char *p = g_strdup(s);
+		char *pp;
+		mpw_t tmp;
+
+		for(pp=p;*pp;pp++) {
+			if(*pp=='+') {
+				*pp='\0';
+				pp++;
+				break;
+			} else if(*pp=='-') {
+				if(pp>p && *(pp-1)!='e') {
+					*pp='\0';
+					pp++;
+					break;
+				}
+			}
+		}
+		/*must be a pure imaginary*/
+		if(!*pp) {
+			g_free(p);
+			mpw_set_str_complex(rop,s,base);
+			return;
+		}
+		mpw_set_str(rop,p,base);
+		mpw_init(tmp);
+		mpw_set_str_complex(tmp,pp,base);
+		mpw_add(rop,rop,tmp);
+		mpw_clear(tmp);
+	/*floats*/
+	} else if(strchr(s,'.') || strchr(s,'e'))
+		mpw_set_str_float(rop,s,base);
+	else
+		mpw_set_str_int(rop,s,base);
 }
 
 int

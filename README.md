@@ -1,7 +1,7 @@
 Genius Calculator
 =================
 
-Although it's under heavy development, it's actually getting usable.
+Although it's under heavy development, it's actually very usable.
 I use it myself as my desktop calculator.
 
 To make myself look important, I also made up an official looking name for
@@ -11,14 +11,13 @@ Language) :)
 Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
 
 - need to make more built-in functions!
-- complete complex number and matrix support, right now neither is complete
+- complete matrix support, right it is not complete
 - CORBA interface
 - do a code clean-up (such as split up eval.[ch]) and make the names of
   types, functions and variables more consistent
 - clean up calc.[ch] to be a better "interface to the calculator"
 - profile and make the code leaner and meaner
 - optimize the engine a bit more
-- find all the annoying memory leaks
 
 Features of Genius:
 
@@ -75,30 +74,23 @@ There are a number of built in functions (currently "e" "pi" "sin" "cos"
 
 To type functions in:
 
-function(argument1, argument2, argument3)
-function()
-function
+function_name(argument1, argument2, argument3)
+function_name()
+
+to type in variables:
+
+variable_name
 
 (of course the number of arguments is different for each function)
 
 NOTE: if you don't type the () in, the function will not be evaluated
-and just it's body will be returned, this makes variables faster, so
+but it will be returned as a "function node", unless of course if it's a
+normal variable in which case it returns the value of the variable, so this
+fact is used 
+1) for variables
+2) for passing functions to functions (explained below)
 
-a = `(){1+2}; a
-
-yeilds "(1+2)", but
-
-a = `(){1+2}; a()
-
-yeilds 3 correctly. Since when you don't use the `(){...} format, the
-argument is evaluated when actually setting the variable, 
-
-a = 1+2; a
-
-does yeild 3, so it depends how you have made the function. This behaviour
-is consistent with most other programming languages and won't bite you as
-long as you use () for actual functions which aren't just variables. You can
-still use () for variables, but it's pointless and will slow you down.
+NOTE2: built in functions with 0 usually act like variables
 
 Current built in functions:
 
@@ -152,6 +144,12 @@ Im		1 (value)		get the imaginary part of a
 I		1 (integer)		make an identity matrix of the size n
 rows		1 (matrix)		get the number of rows in a matrix
 columns		1 (matrix)		get the number of columns in a matrix
+det		1 (matrix)		calculate the determinant of a matrix
+ref		1 (matrix)		reduce the matrix to row-echelon form
+					using the gaussian elimination method
+rref		1 (matrix)		reduce the matrix to reduced
+					row-echelon form, this is usefull for
+					solving systems of linear equations
 set_size	3 (matrix,integer,integer)
 					return a matrix which is truncated or
 					extended according to the size given
@@ -202,14 +200,15 @@ polytostring	2 (vector,string)	convert the polynomial to a string
 					what is to be used for the variable
 					name (such as "x")
 polytofunc	1 (vector)		convert the polynomial into a function 
-					reference which you can then assign
-					to an identifier for use
+					which you can then assign to an
+					identifier for use
 
 
 Functions in the standard library (lib.gel):
 
 name:		# of arguments:		description:
 
+abs		1 (value or matrix)	absolute value (see also |x| operator)
 sum		3 (from,to,function)	calculates the sum of the function
 					which should take one argument
 					which is an integer stepped from
@@ -231,18 +230,30 @@ infsum2		4 (function,arg,start,inc)
 nPr		2 (integer,integer)	calculate permutations
 nCr		2 (integer,integer)	calculate combinations
 fib		1 (integer)		returns n'th fibbonachi number
-ref		1 (matrix)		reduce the matrix to row-echelon form
-					using the gaussian elimination method
-rref		1 (matrix)		reduce the matrix to reduced
-					row-echelon form, this is usefull for
-					solving systems of linear equations
+catalan		1 (integer)		returns the n'th catalan number
+minimize	1 (func,x,incr)		"minimize" the function: start
+					evaluating at x, by increments of
+					incr and return the first x where
+					func is 0
 trace		1 (matrix)		calculate the trace of the matrix
-convol		2 (vector) (vector)	takes to horizontal vectors and
+adj		1 (matrix)		return the adjoint matrix
+delrowcol	1 (matrix,row,col)	delete the row and column indicated
+					from a matrix and return the rest
+convol		2 (vector,vector)	takes two horizontal vectors and
 					calculates convolution
-convol_vec	2 (vector) (vector)	as above, but returns a vector of
+convol_vec	2 (vector,vector)	as above, but returns a vector of
 					the individual terms
 matsum		1 (matrix)		sums up all the terms of the matrix
+matsum_sq	1 (matrix)		sums up all the squares of terms of
+					the matrix
 matprod		1 (matrix)		multiplies all the terms of the matrix
+diagonal	1 (vector)		make a diagonal matrix from a
+					horizontal vector
+swaprow		3 (matrix,row1,row2)	swap two rows of a matrix
+sortv		1 (vector)		sort the elements in a horizontal vector
+reversev	1 (vector)		reverse the elements in a horizontal vector
+rad2deg		1 (value)		convert radians to degrees
+deg2rad		1 (value)		convert degrees to radians
 asinh		1 (value)		hyperbolic inverse sin function
 acosh		1 (value)		hyperbolic inverse cos function
 cot		1 (value)		cotangent function
@@ -265,6 +276,32 @@ log10		1 (value)		log of the value to the base 10
 log2		1 (value)		log of the value to the base 2
 conj		1 (value)		conjugate of a complex value
 
+string		1 (anything)		convert to a string
+
+rowsum		1 (matrix)		sum up the elements in rows and return
+					a vertical vector with the results
+rowsum_sq	1 (matrix)		sum up the squares of elements in rows
+					and return a vertical vector with the
+					results
+rowmedian	1 (matrix)		calculate the median of each row and
+					return a vertical vector with results
+rowaverage	1 (matrix)		calculate the average of each row and
+					return a vertical vector with results
+rowstdev	1 (matrix)		calculate the standard deviateion of
+					each row and return a vertical vector
+					with results
+rowstdevp	1 (matrix)		calculate the population standard
+					deviation of each row and return a
+					vertical vector with results
+median		1 (matrix)		calculate the median of the entire
+					matrix
+average		1 (matrix)		calculate the average of the entire
+					matrix
+stdev		1 (matrix)		calculate the standard deviation of
+					the entire matrix
+stdevp		1 (matrix)		calculate the population standard
+					deviation of the entire matrix
+
 apply_over_matrix1
 		1 (matrix,function)	apply function to every element in
 					the matrix, mostly used inside the
@@ -277,10 +314,14 @@ apply_over_matrix2
 
 To define a function do:
 
+
+function <identifier>(<comma separated argument names>) = <function body>
+
+(you could also assign the anonymous function syntax to an identifier as in:
+ <identifier> = (`() = <function body>)
+
+Old and depreceated ways which will dissapear one of these days:
 define <identifier>(<comma separated argument names>) { <function body> }
-
-or alternatively
-
 <identifier> = `(<comma separated argument names>) { <function body> }
 
 NOTE: that's a backquote and signifies an anonymous function, by setting
@@ -288,7 +329,7 @@ it to a variable name you effectively define a function
 
 for example:
 
-define sum(a,b,c) {a+b+c}
+function sum(a,b,c) = a+b+c
 
 then "sum(1,1,1)" yields 3
 
@@ -335,6 +376,7 @@ a%b		the mod operator
 a!		factorial operator
 a==b		equality operator (returns 1 or 0)
 a!=b		inequality operator (returns 1 or 0)
+a<>b		alternative inequality operator (returns 1 or 0)
 a<=b		inequality operator (returns 1 or 0)
 a>=b		inequality operator (returns 1 or 0)
 a<=>b		comparison operator (returns -1, 0 or 1)
@@ -357,6 +399,11 @@ one. So that a@(2..4,6) is the rows 2,3,4 of the column 6. Or a@(,1..2)
 will get you the first two columns of a matrix. You can also assign to
 the @() operator, as long as the right value is a matrix that matches the
 region in size, or if it is any other type of value.
+
+NOTE: the comparison operators (except for the <=> operator which behaves
+normally), are not strictly binary operators, they can in fact be grouped
+in the normal mathematical way, e.g.: (1<x<=y<5) is a legal boolean
+expression and means just what it should, that is (1<x and x<=y and y<5)
 
 Lvalues:
 
@@ -398,9 +445,40 @@ do <expression2> until <expression1>
 These are similiar to other languages, they return the result of
 the last iteration or NULL if no iteration was done
 
+For loops:
+
+for <identifier> = <from> to <to> do <body>
+for <identifier> = <from> to <to> by <increment> do <body>
+
+Loop with identifier being set to all values from <from> to <to>, optionally
+using an increment other then 1. These are faster, nicer and more compact
+then the normal loops such as above, but less flexible. The identifier must
+be an identifier and can't be a dereference. The value of identifier is the
+last value of identifier, or <from> if body was never evaluated. The variable
+is guaranteed to be initialized after a loop, so you can safely use it.
+Also the <from> <to> and <increment> must be non complex values. The <to>
+is not guaranteed to be hit, but will never be overshot, for example the
+following prints out odd numbers from 1 to 19
+
+for i = 1 to 20 by 2 do print(i)
+
+Foreach loops:
+
+for <identifier> in <matrix> do <body>
+
+For each element, going row by row from left to right do the body. To
+print numbers 1,2,3 and 4 in this order you could do:
+
+for n in [1,2:3,4] do print(n)
+
+
 And now the comparison operators:
 
-==,>=,<=,!=,<,> return 1 for TRUE, 0 for FALSE
+==,>=,<=,!=,<>,<,> return 1 for TRUE, 0 for FALSE
+
+!= and <> are the same thing and mean "is not equal to". Make sure
+you use == for equality however, as = will have the same outcomes as
+it does in C.
 
 <=> returns -1 if left side is smaller, 0 if both sides are equal, 1
     if left side is larger
@@ -440,14 +518,14 @@ keyword is for, it takes one argument which is the return value
 
 Example:
 
-    define f(x) {
+    function f(x) = (
 	    y=1;
 	    while(1) do (
 		    if(x>50) then return y;
 		    y=y+1;
-		    x=x+1;
-	    );
-    }	
+		    x=x+1
+	    )
+    )
 
 References: 
 
@@ -463,7 +541,7 @@ Example:
 
     now a contains 2
 
-    define f(x){x+1};
+    function f(x) = x+1;
     t=&f;
     *t(3)
 
@@ -475,24 +553,24 @@ It is possible to say use a function in another function yet you don't know
 what the function will be, you use an anonymous function. Anonymous function
 is declared as:
 
-`(<comma separated argument names>) { <function body> }
+function(<comma separated argument names>) = <function body>
 
-NOTE: Unlike in setting a variable, when an anonymous function is passed it
-is passed as reference, this is for consistency for function using functional
-arguments
+or shorthand:
+
+`(<comma separated argument names>) = <function body>
 
 Example:
 
-    define f(a,b) {*a(b)+1};
-    f(`(x){x*x},2)
+    function f(a,b) = a(b)+1;
+    f(`(x) = x*x,2)
 
     will return 5 (2*2+1)
 
-You can also use function references for that:
+You can also just pass the function name as well:
 
-    define f(a,b) {*a(b)+1};
-    define b(x){x*x};
-    f(&b,2)
+    function f(a,b) = a(b)+1;
+    function b(x) = x*x;
+    f(b,2)
 
 
 Matrix support:
@@ -582,6 +660,15 @@ with a \. Example:
 will make a string:
 Slash: \ Quotes: " Tabs: 	1	2	3
 
+You can use the library function string to convert anything to a string.
+Example:
+
+string(22)
+
+will return "22".
+
+Strings can also be compared with ==, != and <=> operators
+
 
 Error handeling:
 
@@ -633,42 +720,100 @@ unescaped as they are for strings. Example:
 load program1.gel program2.gel
 load "Weird File Name With SPACES.gel"
 
+Standard startup procedure:
+
+First the program looks for the installed library file (the compiled
+version lib.cgel) in the installed directory, then it looks into the
+current directory, and then it tries to load an uncompiled file called
+~/.geniusinit
+
+If you ever change the lib.gel in it's installed place, you'll have to
+first compile it with "genius --compile lib.gel > lib.cgel"
+
 
 EXAMPLE PROGRAM in GEL:
     a user factorial function (there already is one built in so
     this function is useless)
 
-    define f(x) { if x<=1 then 1 else (f(x-1)*x) }
+    function f(x) = if x<=1 then 1 else (f(x-1)*x)
 
     or with indentation it becomes
 
-    define f(x) {
+    function f(x) = (
 	    if x<=1 then
 		    1
 	    else
 		    (f(x-1)*x)
-    }
+    )
 
     this is a direct port of the factorial function from the bc manpage :)
     it seems similiar to bc syntax, but different in that in gel, the
     last expression is the one that is returned. It can be done with with
     returns as:
 
-    define f(x) {
+    function f(x) = (
 	    if (x <= 1) then return (1);
-	    return (f(x-1) * x);
-    }
+	    return (f(x-1) * x)
+    )
 
-    which is almost verbatim bc code, except for then
+    which is almost verbatim bc code, except for then and the function
+    definition (although there is a compatibility bc like define keyword
+    which will likely disappear in the forseeable future)
 
     here's an iterative version:
 
-    define f(x) {
+    function f(x) = (
 	    r=x;
 	    while (x>1) do
 		    (x=x-1;r=r*x);
 	    r
-    }
+    )
+
+    Here's a larger example, this basically redefines the internal ref
+    function to calculate the same thing, but written in GEL:
+
+    #calculate the row-echelon form of a matrix
+    function ref(m) = (
+	    if(not is_matrix(m) or not is_value_only(m)) then
+		    (error("ref: argument not a value only matrix");bailout);
+	    s=min(rows(m),columns(m));
+	    i=1;
+	    d=1;
+	    while(d<=s and i<=columns(m)) do (
+
+		    # This just makes the anchor element non-zero if at
+		    # all possible
+		    if(m@(d,i)==0) then (
+			    j=d+1;
+			    while(j<=rows(m)) do (
+				    if(m@(j,i)==0) then (j=j+1;continue);
+				    a=m@(j,);
+				    m@(j,)=m@(d,);
+				    m@(d,)=a;
+				    j=j+1;
+				    break
+			    )
+		    );
+		    if(m@(d,i)==0) then (i=i+1;continue);
+    
+		    # Here comes the actual zeroing of all but the anchor
+		    # element rows
+		    j=d+1;
+		    while(j<=rows(m)) do (
+			    if(m@(j,i)!=0) then (
+				    m@(j,)=m@(j,)-(m@(j,i)/m@(d,i))*m@(d,)
+			    );
+			    j=j+1
+		    );
+		    m@(d,) = m@(d,) * (1/m@(d,i));
+		    d=d+1;
+		    i=i+1
+	    );
+	    m
+    )
+
+
+
 
 ****************************************************************************
 

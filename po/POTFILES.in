@@ -4,3 +4,5 @@ src/calc.c
 src/util.c
 src/mpwrap.c
 src/genius.c
+src/matop.c
+src/compil.c

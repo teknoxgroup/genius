@@ -37,7 +37,8 @@ calcstate_t curstate={
 	256,
 	12,
 	FALSE,
-	FALSE
+	FALSE,
+	TRUE /*handle interrupts*/
         };
 
 extern calc_error_t error_num;
@@ -147,15 +148,26 @@ geniuserrorbox(char *s)
 static void
 geniuserror(char *s)
 {
+	char *file;
+	int line;
+	char *str;
+	get_file_info(&file,&line);
+	if(file)
+		str = g_strdup_printf("%s:%d: %s",file,line,s);
+	else if(line>0)
+		str = g_strdup_printf("line %d: %s",line,s);
+	else
+		str = g_strdup(s);
 	if(errors) {
 		errors=my_realloc(errors,strlen(errors)+1,
-			strlen(errors)+1+strlen(s)+1);
+			strlen(errors)+1+strlen(str)+1);
 		strcat(errors,"\n");
-		strcat(errors,s);
+		strcat(errors,str);
 	} else {
-		errors=g_malloc(strlen(s)+1);
-		strcpy(errors,s);
+		errors=g_malloc(strlen(str)+1);
+		strcpy(errors,str);
 	}
+	g_free(str);
 }
 
 static void
@@ -183,12 +195,15 @@ dorun(GtkWidget * widget, gpointer * data)
 	int newrow;
 	static int width = 0;
 
+	push_file_info(NULL,1);
 
 	t[1]=getentry(entry);
 	if(!t[1] || t[1][0]=='\0')
 		return;
 	t[1]=addparenth(t[1]); /*add missing parenthesis*/
 	o[1]=evalexp(t[1],NULL,NULL,NULL,curstate,geniuserror,FALSE);
+
+	pop_file_info();
 
 	if(errors) {
 		geniuserrorbox(errors);
@@ -676,45 +691,17 @@ main(int argc, char *argv[])
 
 	gdk_color_white(gtk_widget_get_colormap(history),&rescol);
 	
-	file = g_strconcat(LIBRARY_DIR,"/lib.gel",NULL);
-	/*read standard files and init scripts*/
-	if((fp = fopen(file,"r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
-		fclose(fp);
-	}
+	file = g_strconcat(LIBRARY_DIR,"/lib.cgel",NULL);
+	load_compiled_file(file,curstate,geniuserror,FALSE);
 	g_free(file);
 
 	/*try the library file in the current directory*/
-	if((fp = fopen("lib.gel","r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
-		fclose(fp);
-	}
+	load_compiled_file("lib.cgel",curstate,geniuserror,FALSE);
 	
 	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
-
-	fp = NULL;
-	if(file && (fp = fopen(file,"r"))) {
-		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
-			if(got_eof) {
-				got_eof = FALSE;
-				break;
-			}
-		}
-	}
-	if(fp) fclose(fp);
+	if(file)
+		load_file(file,curstate,geniuserror,FALSE);
+	g_free(file);
 
 	if(errors) {
 		geniuserrorbox(errors);

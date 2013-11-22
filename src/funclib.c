@@ -38,6 +38,7 @@
 #include "calc.h"
 #include "matrix.h"
 #include "matrixw.h"
+#include "matop.h"
 
 extern void (*errorout)(char *);
 extern calc_error_t error_num;
@@ -940,22 +941,15 @@ min_op(ETree * * a, int *exception)
 static ETree *
 is_value_only_op(ETree * * a, int *exception)
 {
-	int i,j;
-	MatrixW *m;
 	if(a[0]->type!=MATRIX_NODE) {
 		(*errorout)(_("is_value_only: argument not a matrix"));
 		return NULL;
 	}
-	m=a[0]->data.matrix;
 	
-	for(i=0;i<matrixw_width(m);i++) {
-		for(j=0;j<matrixw_height(m);j++) {
-			ETree *t = matrixw_set_index(m,i,j);
-			if(t && t->type!=VALUE_NODE)
-				return makenum_ui(0);
-		}
-	}
-	return makenum_ui(1);
+	if(is_matrix_value_only(a[0]->data.matrix))
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
 }
 
 static ETree *
@@ -1051,6 +1045,59 @@ set_size_op(ETree * * a, int *exception)
 	}
 	n = copynode(a[0]);
 	matrixw_set_size(n->data.matrix,h,w);
+	return n;
+}
+
+static ETree *
+det_op(ETree * * a, int *exception)
+{
+	mpw_t ret;
+	if(a[0]->type!=MATRIX_NODE ||
+	   !is_matrix_value_only(a[0]->data.matrix)) {
+		(*errorout)(_("det: argument not a value only matrix"));
+		return NULL;
+	}
+	mpw_init(ret);
+	if(!value_matrix_det(ret,a[0]->data.matrix)) {
+		mpw_clear(ret);
+		return NULL;
+	}
+	return makenum_use(ret);
+}
+static ETree *
+ref_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	if(a[0]->type!=MATRIX_NODE ||
+	   !is_matrix_value_only(a[0]->data.matrix)) {
+		(*errorout)(_("ref: argument not a value only matrix"));
+		return NULL;
+	}
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix =
+		value_matrix_gauss(a[0]->data.matrix,FALSE,FALSE,FALSE,NULL,NULL);
+	return n;
+}
+static ETree *
+rref_op(ETree * * a, int *exception)
+{
+	ETree *n;
+	if(a[0]->type!=MATRIX_NODE ||
+	   !is_matrix_value_only(a[0]->data.matrix)) {
+		(*errorout)(_("rref: argument not a value only matrix"));
+		return NULL;
+	}
+
+	GET_NEW_NODE(n);
+	n->type = MATRIX_NODE;
+	n->args = NULL;
+	n->nargs = 0;
+	n->data.matrix =
+		value_matrix_gauss(a[0]->data.matrix,TRUE,FALSE,FALSE,NULL,NULL);
 	return n;
 }
 
@@ -1623,6 +1670,9 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("rows"),rows_op,1));
 	d_addfunc(d_makebifunc(d_intern("columns"),columns_op,1));
 	d_addfunc(d_makebifunc(d_intern("set_size"),set_size_op,3));
+	d_addfunc(d_makebifunc(d_intern("det"),det_op,1));
+	d_addfunc(d_makebifunc(d_intern("ref"),ref_op,1));
+	d_addfunc(d_makebifunc(d_intern("rref"),rref_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_value_only"),is_value_only_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_null"),is_null_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_value"),is_value_op,1));

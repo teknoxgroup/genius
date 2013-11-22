@@ -58,7 +58,7 @@ matrixw_new(void)
 	}
 	
 	m->m = matrix_new();
-	m->m->use++;
+	m->m->use = 1;
 	
 	m->tr = FALSE;
 	m->region.x = 0;
@@ -171,6 +171,7 @@ matrixw_set_size(MatrixW *m, int width, int height)
 		int i,j;
 		Matrix *old = m->m;
 		m->m = matrix_new();
+		m->m->use = 1;
 		matrix_set_size(m->m,width,height);
 		for(i=0;i<width;i++) {
 			for(j=0;j<height;j++) {
@@ -185,6 +186,8 @@ matrixw_set_size(MatrixW *m, int width, int height)
 			}
 		}
 		m->region.x = m->region.y = 0;
+		m->region.w = width;
+		m->region.h = height;
 		old->use--;
 	} else {
 		int i,j;
@@ -426,6 +429,9 @@ void
 matrixw_make_private(MatrixW *m)
 {
 	g_return_if_fail(m != NULL);
+
+	if(m->m->use==1)
+		return;
 
 	make_us_a_copy(m,m->region.w,m->region.h);
 }

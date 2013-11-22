@@ -153,6 +153,7 @@ static int matrix_entry=0;
 
 ==		{ NO_RET; return EQ_CMP; }
 !=		{ NO_RET; return NE_CMP; }
+"<>"		{ NO_RET; return NE_CMP; }
 "<=>"		{ NO_RET; return CMP_CMP; }
 
 "<="		{ NO_RET; return LE_CMP; }
@@ -169,13 +170,18 @@ xor		{ NO_RET; return LOGICAL_XOR; }
 or		{ NO_RET; return LOGICAL_OR; }
 
 while		{ NO_RET; return WHILE; }
-do		{ NO_RET; return DO; }
 until		{ NO_RET; return UNTIL; }
+for		{ NO_RET; return FOR; }
+do		{ NO_RET; return DO; }
+to		{ NO_RET; return TO; }
+by		{ NO_RET; return BY; }
+in		{ NO_RET; return IN; }
 if		{ NO_RET; return IF; }
 then		{ NO_RET; return THEN; }
 else		{ NO_RET; return ELSE; }
 
 define		{ NO_RET; return DEFINE; }
+function	{ NO_RET; return FUNCTION; }
 call		{ NO_RET; return CALL; }
 
 return		{ NO_RET; return RETURNTOK; }
@@ -183,6 +189,8 @@ bailout		{ DO_RET; return BAILOUT; }
 exception	{ DO_RET; return EXCEPTION; }
 continue	{ DO_RET; return CONTINUE; }
 break		{ DO_RET; return BREAK; }
+
+null		{ DO_RET; return '.'; }
 
 "@("		{
 			parenth_depth++;
@@ -284,9 +292,10 @@ break		{ DO_RET; return BREAK; }
 			return NUMBER;
 		}
 		
-\\\n		{ NEXT_LINE; }
+\\\n		{ incr_file_info(); NEXT_LINE; }
 		
 [\t ]*\n	{ 
+			incr_file_info();
 			if(matrix_entry) {
 				NEXT_LINE;
 				return ':';
