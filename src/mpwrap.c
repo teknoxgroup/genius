@@ -882,7 +882,6 @@ mympf_arctan(mpf_ptr rop,mpf_ptr op)
 static void
 mympf_pow_ui(mpf_t rop,mpf_t op,unsigned long int e)
 {
-	mpf_t answer;
 	mpf_t base;
 
 	if(e==0) {
@@ -1068,9 +1067,14 @@ mpwl_make_extra_type(MpwRealNum *op,int type)
 		mpf_init(op->data.fval);
 		if(op->type==MPW_INTEGER)
 			mpf_set_z(op->data.fval,op->data.ival);
-		else if(op->type==MPW_RATIONAL)
+		else if(op->type==MPW_RATIONAL) {
 			mpf_set_q(op->data.fval,op->data.rval);
-		else if(op->type==MPW_NATIVEINT)
+			/*go around a mpf_set_q bug*/
+			if(mpq_sgn(op->data.rval)<0 &&
+			   mpf_sgn(op->data.fval)>0) {
+				mpf_neg(op->data.fval,op->data.fval);
+			}
+		} else if(op->type==MPW_NATIVEINT)
 			mpf_set_si(op->data.fval,op->data.nval);
 		break;
 	}
@@ -1174,20 +1178,14 @@ mpwl_free(MpwRealNum *op, int local)
 {
 	if(!op) return;
 	mpwl_clear(op);
+	if(local) return;
 	/*FIXME: the 2000 should be settable*/
 	/*if we want to store this so that we don't allocate new one
 	  each time, up to a limit of 2000, unless it was some local
 	  var in which case it can't be freed nor put on the free
 	  stack*/
-	if(local || free_reals_n>2000) {
-		if(op->data.fval)
-			g_free(op->data.fval);
-		if(op->data.rval)
-			g_free(op->data.rval);
-		if(op->data.ival)
-			g_free(op->data.ival);
-		if(!local)
-			g_free(op);
+	if(free_reals_n>2000) {
+		g_free(op);
 	} else {
 		op->alloc.next = free_reals;
 		free_reals = op;
@@ -2661,7 +2659,6 @@ mpwl_pi(MpwRealNum *rop)
 static void
 mpwl_make_int(MpwRealNum *rop)
 {
-	mpf_t fr;
 	switch(rop->type) {
 		case MPW_NATIVEINT:
 		case MPW_INTEGER:
@@ -3940,7 +3937,7 @@ mpw_cosh(mpw_ptr rop,mpw_ptr op)
 	if(op->type==MPW_REAL) {
 		MAKE_REAL(rop);
 		MAKE_COPY(rop->r);
-		mpwl_cos(rop->r,op->r);
+		mpwl_cosh(rop->r,op->r);
 	} else {
 		MpwRealNum t={0};
 		MpwRealNum *r;

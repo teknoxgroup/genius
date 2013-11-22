@@ -43,16 +43,21 @@ typedef struct _calcstate_t {
 	int max_digits; /*max digits in the display 0= as many as I got*/
 	int results_as_floats;  /*give result as float*/
 	int scientific_notation; /*always scientific notation*/
+	int full_expressions; /*print out expressions longer then a line*/
+	int max_errors;	/*maximum error lines*/
 } calcstate_t;
 
 /*so we can use and set the yyparse function for parse errors*/
 int yyparse(void);
 
 /*make a string representation of an expression*/
-void print_etree(GString *gs, FILE *out, ETree *n);
+/*if full_exp == -1 then the last maxline is used,
+  if full_exp == 0 then maxline is reset
+  if full_exp == 1 then maxline will be 0*/
+void print_etree(GString *gs, FILE *out, ETree *n, int full_exp);
 /*make a string representation of an expression, with the first node prettied
   (currently only for matrix)*/
-void pretty_print_etree(GString *gs, FILE *out, ETree *n);
+void pretty_print_etree(GString *gs, FILE *out, ETree *n, int full_exp);
 
 /*add the right parenthesis and brackets to the end of the expression*/
 char * addparenth(char *s);

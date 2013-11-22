@@ -300,7 +300,7 @@ value_matrix_det(mpw_t rop, MatrixW *m)
         int h = matrixw_height(m);
 	MatrixW *mm;
 	mpw_t tmp;
-	int i,j;
+	int i;
 
 	if(w != h) {
 		(*errorout)(_("Determinant of a non-square matrix is undefined"));

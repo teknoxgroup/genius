@@ -31,7 +31,9 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <signal.h>
-#include <glob.h>
+#ifdef HAVE_WORDEXP
+#include <wordexp.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -47,6 +49,7 @@
 #include "funclib.h"
 #include "matrixw.h"
 #include "compil.h"
+#include "plugin.h"
 
 #include "mpwrap.h"
 
@@ -65,23 +68,26 @@ extern int inbailout;
 extern int inexception;
 
 extern GSList *inloop;
-extern char *loadfile;
-extern char *loadfile_glob;
 void (*evalnode_hook)(void) = NULL;
 int run_hook_every = 1000;
 void (*statechange_hook)(calcstate_t) = NULL;
 
 static GHashTable *funcdesc = NULL;
 
+/*these two are used for test parses so that we know when we have a complete
+  expression toevaluate*/
 static int ignore_end_parse_errors = FALSE;
 static int got_end_too_soon = FALSE;
+
+/*the maximum remaining spaces on a line or if it is 0 means no limit*/
+static int maxline = 0;
 
 FILE *outputfp = NULL;
 
 GHashTable *uncompiled = NULL;
 
 /* stack ... has to be global:-( */
-evalstack_t evalstack=NULL;
+GList *evalstack=NULL;
 
 /*error .. global as well*/
 calc_error_t error_num = NO_ERROR;
@@ -96,6 +102,7 @@ void (*infoout)(char *)=NULL;
 
 char *loadfile = NULL;
 char *loadfile_glob = NULL;
+char *load_plugin = NULL;
 
 int interrupted = FALSE;
 
@@ -184,8 +191,6 @@ incr_file_info(void)
 void
 rewind_file_info(void)
 {
-	int i;
-	
 	if(!curline)
 		return;
 	
@@ -195,8 +200,6 @@ rewind_file_info(void)
 void
 get_file_info(char **file, int *line)
 {
-	int i;
-	
 	if(!curline || !curfile) {
 		*file = NULL;
 		*line = 0;
@@ -210,6 +213,19 @@ get_file_info(char **file, int *line)
 static void
 appendout_c(GString *gs, FILE *out, char c)
 {
+	if(maxline==-1)
+		return;
+	if(maxline>0) {
+		if(maxline<=4) {
+			if(!out)
+				g_string_append(gs,"...");
+			else
+				fputs("...",out);
+			maxline = -1;
+			return;
+		}
+		maxline--;
+	}
 	if(!out)
 		g_string_append_c(gs,c);
 	else
@@ -219,6 +235,27 @@ appendout_c(GString *gs, FILE *out, char c)
 static void
 appendout(GString *gs, FILE *out, char *s)
 {
+	if(maxline==-1)
+		return;
+	if(maxline>0) {
+		int len = strlen(s);
+		if(maxline<=3 + len) {
+			char *ss = g_strdup(s);
+			ss[maxline-4] = '\0';
+			if(!out)
+				g_string_append(gs,ss);
+			else
+				fputs(ss,out);
+			g_free(ss);
+			if(!out)
+				g_string_append(gs,"...");
+			else
+				fputs("...",out);
+			maxline = -1;
+			return;
+		}
+		maxline-=len;
+	}
 	if(!out)
 		g_string_append(gs,s);
 	else
@@ -231,9 +268,9 @@ append_binaryoper(GString *gs,FILE *out,char *p, ETree *n)
 	ETree *l,*r;
 	GET_LR(n,l,r);
 	appendout_c(gs,out,'(');
-	print_etree(gs,out,l);
+	print_etree(gs,out,l,-1);
 	appendout(gs,out,p);
-	print_etree(gs,out,r);
+	print_etree(gs,out,r,-1);
 	appendout_c(gs,out,')');
 }
 
@@ -244,7 +281,7 @@ append_unaryoper(GString *gs,FILE *out,char *p, ETree *n)
 	GET_L(n,l);
 	appendout_c(gs,out,'(');
 	appendout(gs,out,p);
-	print_etree(gs,out,l);
+	print_etree(gs,out,l,-1);
 	appendout_c(gs,out,')');
 }
 
@@ -262,7 +299,7 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_ABS:
 			GET_L(n,l);
 			appendout(gs,out,"(|");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out,"|)");
 			break;
 		case E_PLUS:
@@ -282,14 +319,14 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_FACT:
 			GET_L(n,l);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout_c(gs,out,'!');
 			appendout_c(gs,out,')');
 			break;
 		case E_TRANSPOSE:
 			GET_L(n,l);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout_c(gs,out,'\'');
 			appendout_c(gs,out,')');
 			break;
@@ -323,9 +360,9 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_GET_VELEMENT:
 			GET_LR(n,l,r);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out,"@(");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,"))");
 			break;
 
@@ -333,27 +370,27 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_GET_REGION:
 			GET_LRR(n,l,r,rr);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out,"@(");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout_c(gs,out,',');
-			print_etree(gs,out,rr);
+			print_etree(gs,out,rr,-1);
 			appendout(gs,out,"))");
 			break;
 		case E_GET_ROW_REGION:
 			GET_LR(n,l,r);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out,"@[");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,",])");
 			break;
 		case E_GET_COL_REGION:
 			GET_LR(n,l,r);
 			appendout_c(gs,out,'(');
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out,"@[,");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,"])");
 			break;
 
@@ -365,51 +402,51 @@ appendoper(GString *gs,FILE *out, ETree *n)
 		case E_IF_CONS:
 			GET_LR(n,l,r);
 			appendout(gs,out,"(if ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," then ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,")");
 			break;
 		case E_IFELSE_CONS:
 			GET_LRR(n,l,r,rr);
 			appendout(gs,out,"(if ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," then ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out," else ");
-			print_etree(gs,out,rr);
+			print_etree(gs,out,rr,-1);
 			appendout(gs,out,")");
 			break;
 		case E_WHILE_CONS:
 			GET_LR(n,l,r);
 			appendout(gs,out,"(while ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," do ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,")");
 			break;
 		case E_UNTIL_CONS:
 			GET_LR(n,l,r);
 			appendout(gs,out,"(until ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," do ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,")");
 			break;
 		case E_DOWHILE_CONS:
 			GET_LR(n,l,r);
 			appendout(gs,out,"(do ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," while ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,")");
 			break;
 		case E_DOUNTIL_CONS:
 			GET_LR(n,l,r);
 			appendout(gs,out,"(do ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," until ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out,")");
 			break;
 		case E_FOR_CONS:
@@ -417,13 +454,13 @@ appendoper(GString *gs,FILE *out, ETree *n)
 				ETree *a,*b,*c,*d;
 				GET_ABCD(n,a,b,c,d);
 				appendout(gs,out,"(for ");
-				print_etree(gs,out,a);
+				print_etree(gs,out,a,-1);
 				appendout(gs,out," = ");
-				print_etree(gs,out,b);
+				print_etree(gs,out,b,-1);
 				appendout(gs,out," to ");
-				print_etree(gs,out,c);
+				print_etree(gs,out,c,-1);
 				appendout(gs,out," do ");
-				print_etree(gs,out,d);
+				print_etree(gs,out,d,-1);
 				appendout(gs,out,")");
 				break;
 			}
@@ -432,26 +469,26 @@ appendoper(GString *gs,FILE *out, ETree *n)
 				ETree *a,*b,*c,*d,*e;
 				GET_ABCDE(n,a,b,c,d,e);
 				appendout(gs,out,"(for ");
-				print_etree(gs,out,a);
+				print_etree(gs,out,a,-1);
 				appendout(gs,out," = ");
-				print_etree(gs,out,b);
+				print_etree(gs,out,b,-1);
 				appendout(gs,out," to ");
-				print_etree(gs,out,c);
+				print_etree(gs,out,c,-1);
 				appendout(gs,out," by ");
-				print_etree(gs,out,d);
+				print_etree(gs,out,d,-1);
 				appendout(gs,out," do ");
-				print_etree(gs,out,e);
+				print_etree(gs,out,e,-1);
 				appendout(gs,out,")");
 				break;
 			}
 		case E_FORIN_CONS:
 			GET_LRR(n,l,r,rr);
 			appendout(gs,out,"(for ");
-			print_etree(gs,out,l);
+			print_etree(gs,out,l,-1);
 			appendout(gs,out," in ");
-			print_etree(gs,out,r);
+			print_etree(gs,out,r,-1);
 			appendout(gs,out," do ");
-			print_etree(gs,out,rr);
+			print_etree(gs,out,rr,-1);
 			appendout(gs,out,")");
 			break;
 
@@ -478,11 +515,13 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			}
 			appendout_c(gs,out,'(');
 			li = n->op.args->next;
-			print_etree(gs,out,li->data);
-			li=g_list_next(li);
+			if(li) {
+				print_etree(gs,out,li->data,-1);
+				li=g_list_next(li);
+			}
 			for(;li!=NULL;li=g_list_next(li)) {
 				appendout_c(gs,out,',');
-				print_etree(gs,out,li->data);
+				print_etree(gs,out,li->data,-1);
 			}
 			appendout(gs,out,"))");
 			break;
@@ -496,6 +535,8 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			appendout(gs,out,"(continue)"); break;
 		case E_BREAK:
 			appendout(gs,out,"(break)"); break;
+		case E_MOD_CALC:
+			append_binaryoper(gs,out,"mod",n); break;
 
 		default:
 			(*errorout)(_("Unexpected operator!"));
@@ -514,7 +555,7 @@ appendcomp(GString *gs,FILE *out, ETree *n)
 	for(oli=n->comp.comp,li=n->comp.args;oli;
 	    li=g_list_next(li),oli=g_list_next(oli)) {
 		int oper= GPOINTER_TO_INT(oli->data);
-		print_etree(gs,out,li->data);
+		print_etree(gs,out,li->data,-1);
 		switch(oper) {
 		case E_EQ_CMP:
 			appendout(gs,out,"=="); break;
@@ -532,7 +573,7 @@ appendcomp(GString *gs,FILE *out, ETree *n)
 			g_assert_not_reached();
 		}
 	}
-	print_etree(gs,out,li->data);
+	print_etree(gs,out,li->data,-1);
 
 	appendout_c(gs,out,')');
 }
@@ -543,18 +584,18 @@ appendmatrix(GString *gs, FILE *out, MatrixW *m)
 	int i,j;
 	appendout(gs,out,"[");
 	
-	print_etree(gs,out,matrixw_index(m,0,0));
+	print_etree(gs,out,matrixw_index(m,0,0),-1);
 	
 	for(i=1;i<matrixw_width(m);i++) {
 		appendout(gs,out,",");
-		print_etree(gs,out,matrixw_index(m,i,0));
+		print_etree(gs,out,matrixw_index(m,i,0),-1);
 	}
 	for(j=1;j<matrixw_height(m);j++) {
 		appendout(gs,out,":");
-		print_etree(gs,out,matrixw_index(m,0,j));
+		print_etree(gs,out,matrixw_index(m,0,j),-1);
 		for(i=1;i<matrixw_width(m);i++) {
 			appendout(gs,out,",");
-			print_etree(gs,out,matrixw_index(m,i,j));
+			print_etree(gs,out,matrixw_index(m,i,j),-1);
 		}
 	}
 
@@ -563,10 +604,20 @@ appendmatrix(GString *gs, FILE *out, MatrixW *m)
 
 
 /*make a string representation of an expression*/
+/*if full_exp == -1 then the last maxline is used,
+  if full_exp == 0 then maxline is reset
+  if full_exp == 1 then maxline will be 0*/
 void
-print_etree(GString *gs, FILE *out, ETree *n)
+print_etree(GString *gs, FILE *out, ETree *n, int full_exp)
 {
 	char *p;
+
+	if(full_exp>=0) {
+		if(full_exp || calcstate.full_expressions)
+			maxline = 0;
+		else
+			maxline = get_term_width()-2; /* for the equals sign */
+	}
 	
 	if(!n) {
 		(*errorout)(_("NULL tree!"));
@@ -579,6 +630,9 @@ print_etree(GString *gs, FILE *out, ETree *n)
 		appendout(gs,out,"(null)");
 		break;
 	case VALUE_NODE:
+		/*if at toplevel, then always print the full number*/
+		if(full_exp>=0)
+			maxline = 0;
 		p=mpw_getstring(n->val.value,calcstate.max_digits,
 				calcstate.scientific_notation,
 				calcstate.results_as_floats);
@@ -637,7 +691,7 @@ print_etree(GString *gs, FILE *out, ETree *n)
 					g_hash_table_remove(uncompiled,f->id);
 					g_assert(f->data.user);
 				}
-				print_etree(gs,out,f->data.user);
+				print_etree(gs,out,f->data.user,-1);
 				appendout(gs,out,"))");
 			} else {
 				/*variable and reference functions should
@@ -658,7 +712,7 @@ print_etree(GString *gs, FILE *out, ETree *n)
 }
 
 void
-pretty_print_etree(GString *gs, FILE *out, ETree *n)
+pretty_print_etree(GString *gs, FILE *out, ETree *n, int full_exp)
 {
 	/*do a nice printout of matrices if that's the
 	  top node*/
@@ -678,12 +732,13 @@ pretty_print_etree(GString *gs, FILE *out, ETree *n)
 			for(i=0;i<matrixw_width(n->mat.matrix);i++) {
 				if(i>0) appendout(gs,out,"\t");
 				print_etree(gs, out,
-					    matrixw_index(n->mat.matrix,i,j));
+					    matrixw_index(n->mat.matrix,i,j),
+					    full_exp);
 			}
 		}
 		appendout(gs,out,"]");
 	} else
-		print_etree(gs,out,n);
+		print_etree(gs,out,n,full_exp);
 }
 
 /*add the right parenthesis and brackets to the end of the expression*/
@@ -1037,30 +1092,74 @@ do_load_files(void)
 	}
 
 	if(loadfile_glob) {
-		glob_t gs;
-		char *f;
+#if HAVE_WORDEXP
+		wordexp_t we;
 		char *flist = loadfile_glob;
 		int i;
 		loadfile_glob = NULL;
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		f = strtok(flist,"\t ");
-		while(f) {
-			glob(f,GLOB_NOSORT|GLOB_NOCHECK,NULL,&gs);
-			for(i=0;i<gs.gl_pathc;i++) {
-				char *s = tilde_expand_word(gs.gl_pathv[i]);
-				load_guess_file(s,TRUE);
-				free(s);
-				if(interrupted) {
-					globfree(&gs);
-					free(flist);
-					return;
-				}
+		wordexp(flist,&we,WRDE_NOCMD);
+		for(i=0;i<we.we_wordc;i++) {
+			load_guess_file(we.we_wordv[i],TRUE);
+			if(interrupted) {
+				wordfree(&we);
+				free(flist);
+				return;
 			}
-			globfree(&gs);
-			f = strtok(NULL,"\t ");
 		}
+		wordfree(&we);
 		free(flist);
+#else
+		char *s;
+		FILE *fp;
+		char buf[258]; /*so that we fit 256 chars in there*/
+		char *flist = loadfile_glob;
+
+		loadfile_glob = NULL;
+		while(evalstack)
+			freetree(stack_pop(&evalstack));
+		
+		s = g_strdup_printf("for n in %s ; do echo $n ; done",flist);
+		fp = popen(s,"r");
+		g_free(s);
+		while(fgets(buf,258,fp)) {
+			int len = strlen(buf);
+			if(buf[len-1]=='\n')
+				buf[len-1]='\0';
+			load_guess_file(buf,TRUE);
+			if(interrupted) {
+				fclose(fp);
+				free(flist);
+				return;
+			}
+		}
+		fclose(fp);
+		free(flist);
+#endif
+	}
+	
+	if(load_plugin) {
+		char *plugin = g_strstrip(load_plugin);
+		GList *li;
+
+		load_plugin = NULL;
+		
+		for(li=plugin_list;li;li=g_list_next(li)) {
+			plugin_t *plg = li->data;
+			if(strcmp(plg->base,plugin)==0) {
+				open_plugin(plg);
+				break;
+			}
+		}
+		if(!li) {
+			char *p = g_strdup_printf(_("Cannot open plugin '%s'!"),
+						  plugin);
+			(*errorout)(p);
+			g_free(p);
+		}
+
+		g_free(plugin);
 	}
 }
 
@@ -1101,6 +1200,7 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 
 	g_free(loadfile); loadfile = NULL;
 	g_free(loadfile_glob); loadfile_glob = NULL;
+	g_free(load_plugin); load_plugin = NULL;
 
 	lex_init = TRUE;
 	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
@@ -1124,7 +1224,8 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 	if(!load_files) {
 		g_free(loadfile); loadfile = NULL;
 		g_free(loadfile_glob); loadfile_glob = NULL;
-	} else if(loadfile || loadfile_glob) {
+		g_free(load_plugin); load_plugin = NULL;
+	} else if(loadfile || loadfile_glob || load_plugin) {
 		do_load_files();
 		if(finished) *finished = TRUE;
 		return NULL;
@@ -1163,6 +1264,7 @@ parseexp(char *str, FILE *infile, int load_files, int testparse, int *finished)
 		return NULL;
 	}
 	evalstack->data = gather_comparisons(evalstack->data);
+	evalstack->data = replace_parameters(evalstack->data);
 	
 	if(finished) *finished = TRUE;
 	return stack_pop(&evalstack);
@@ -1250,9 +1352,9 @@ evalexp_parsed(ETree *parsed, FILE *outfile, char **outstring, char *prefix,int 
 				g_string_append(gs,prefix);
 		}
 		if(pretty)
-			pretty_print_etree(gs,outfile,ret);
+			pretty_print_etree(gs,outfile,ret,0);
 		else
-			print_etree(gs,outfile,ret);
+			print_etree(gs,outfile,ret,1);
 		if(outfile)
 			fputc('\n',outfile);
 

@@ -28,6 +28,7 @@ Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
 
 Features of Genius:
 
+ * language is very close to real mathematical notation
  * arbitrary precision integers (2-36), multiple precision floats
  * uses rationals when possible
  * will calculate and show half calculated expressions if the calculation
@@ -36,26 +37,21 @@ Features of Genius:
  * user functions
  * variable and function references with C like syntax
  * anonymous functions
- * it will add missing parenthesis on the ends of expressions (only in
-   the GUI version)
  * matrix support
  * complex numbers
+ * modular arithmetic
  * more ...
 
 How to use this thing: (this is just a quick description)
 
-Just type in the expression and press enter to get a result (or press the =
-button). The expression is written in GEL (Genius Extention Language). 
-A simple GEL expression looks just like a math expression. So you don't need
-to learn GEL to use the calculator. GEL is used when you want to define 
-and use functions, and variables.
+Just type in the expression and press enter to get a result.  The
+expression is written in GEL (Genius Extention Language).  A simple
+GEL expression looks just like a math expression. So you don't need
+to learn GEL to use the calculator. GEL is used when you want to
+define and use functions, and variables and do other cool things.
 
-The command line version is actually nicer to use I think and in the future
-I'll work on the GUI a bit more to make it as good as the command line
-version. To call up the command line version just execute "genius". I myself
-don't use the GUI version because of it's shortcomings. Most likely the next
-version of the GUI will be the comman dline version running in a terminal
-widget with some GUI stuff added to it.
+GEL is designed so that you can quickly get your result with the minimal
+typing.
 
 ****************************************************************************
 What follows is a simple description of GEL:
@@ -112,14 +108,26 @@ help		0			displays a list of functions with
 					short descriptions
 sethelp		2 (string,string)	set a description for the above list,
 					(to be used inside library files)
-float_prec	1 (integer)		set the floating point precision
+set_float_prec	1 (integer)		set the floating point precision
 get_float_prec	0			get the current float_prec
-max_digits	1 (integer)		set the maximum digits in a result
+set_max_digits	1 (integer)		set the maximum digits in a result
 get_max_digits	0 			get the current max_digits
-results_as_floats 1 (bool)		sets if the results should be always
+set_results_as_floats 1 (bool)		sets if the results should be always
 					printed as floats
-scientific_notation 1 (bool)		sets if floats should be in scientific
+get_results_as_floats 0			returns if the results should be always
+					printed as floats
+set_scientific_notation 1 (bool)	sets if floats should be in scientific
 					notation
+get_scientific_notation 0		return if floats should be in scientific
+					notation
+set_full_expressions	1 (bool)	sets if we should print out full
+					expressions for non-numeric return
+					values (longer then a line)
+get_full_expressions	0		return the full_expressions value
+set_max_errors	1 (integer)		sets the maximum number of errors
+					to return on one evaluation
+get_max_errors	0			gets the maximum number of errors
+					to return on one evaluation
 error		1 (string)		prints an error to the error channel
 print		1 (string)		prints a string onto the standard
 					output
@@ -393,6 +401,7 @@ a-b		subtraction
 a*b		multiplication
 a/b		division
 a%b		the mod operator
+a mod b		mod evaluation operator (a evaluated mod b)
 a!		factorial operator
 a==b		equality operator (returns 1 or 0)
 a!=b		inequality operator (returns 1 or 0)
@@ -666,6 +675,18 @@ You can transpose a matrix by using the ' operator, example:
 We transpose the second vector to make matrix multiplication possible.
 
 
+Modular evaluation:
+
+Sometimes when working with large numbers, it might be faster if results
+are modded after each calculation. So there is a modular evaluation operator
+ever since 0.4.5. To use it you just add "mod <integer>" after the
+expression.
+
+Example:
+
+    2^(5!) * 3^(6!) mod 5
+
+
 Strings:
 
 You can enter strings into gel and store them as values inside variables
@@ -734,15 +755,36 @@ file in a middle of a session (or from within another file), you can
 type "load <list of filenames>" at the prompt. This has to be done
 on the top level and not inside any function or whatnot, and it cannot
 be part of any expression. It also has a slightly different syntax then the
-rest of gnome, more similiar to a shell. You can enter the file in
-quotes, but you can't then add more then one file on the command line,
-and there can only be one set of quotes and they have to be the outermost
-characters. If you use the '' quotes, you will get exactly the string
+rest of genius, more similiar to a shell. You can enter the file in
+quotes. If you use the '' quotes, you will get exactly the string
 that you typed, if you use the "" quotes, special characters will be
 unescaped as they are for strings. Example:
 
 load program1.gel program2.gel
 load "Weird File Name With SPACES.gel"
+
+
+Calculator parameters:
+
+There are several parameters that one can set that control the behaviour
+of the calculator. You can either use functions with the prefixes get_ or
+set_. The available parameters are:
+
+float_prec		the floating point precision
+max_digits		the maximum digits in a result
+results_as_floats	if the results should be always printed as floats
+scientific_notation	if floats should be in scientific notation
+full_expressions	boolean, should we print out full expressions
+			for non-numeric return values (longer then a line)
+max_errors		the maximum number of errors to return on one
+			evaluation
+
+You can use the parameters just like a variable, and you can put the name
+on the left side of an equals sign. However, the parameters are not treated
+as variables. They are translated into the get_ and set_ functions just
+before execution. So you have to only use it to get the current value or
+on the left side of the equals sign.
+
 
 Standard startup procedure:
 

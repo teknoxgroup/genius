@@ -47,6 +47,9 @@ extern calc_error_t error_num;
 extern int got_eof;
 extern calcstate_t calcstate;
 
+EFunc *_internal_ln_function = NULL;
+EFunc *_internal_exp_function = NULL;
+
 /*maximum number of primes to precalculate and store*/
 #define MAXPRIMES 100000
 GArray *primes = NULL;
@@ -130,7 +133,7 @@ error_op(ETree * * a, int *exception)
 	else {
 		GString *gs;
 		gs = g_string_new(NULL);
-		pretty_print_etree(gs,NULL,a[0]);
+		pretty_print_etree(gs,NULL,a[0],1);
 		(*errorout)(gs->str);
 		g_string_free(gs,TRUE);
 	}
@@ -143,7 +146,7 @@ print_op(ETree * * a, int *exception)
 	if(a[0]->type==STRING_NODE)
 		fprintf(outputfp,"%s\n",a[0]->str.str);
 	else {
-		pretty_print_etree(NULL,outputfp,a[0]);
+		pretty_print_etree(NULL,outputfp,a[0],1);
 		fprintf(outputfp,"\n");
 	}
 	return makenum_null();
@@ -155,7 +158,7 @@ printn_op(ETree * * a, int *exception)
 	if(a[0]->type==STRING_NODE)
 		fprintf(outputfp,"%s",a[0]->str.str);
 	else
-		print_etree(NULL,outputfp,a[0]);
+		print_etree(NULL,outputfp,a[0],1);
 	fflush(outputfp);
 	return makenum_null();
 }
@@ -168,7 +171,7 @@ display_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	fprintf(outputfp,"%s: ",a[0]->str.str);
-	pretty_print_etree(NULL,outputfp,a[1]);
+	pretty_print_etree(NULL,outputfp,a[1],1);
 	fprintf(outputfp,"\n");
 	return makenum_null();
 }
@@ -178,7 +181,6 @@ apply_func_to_matrixen(ETree *mat1, ETree *mat2,
 		       ETree * (*function)(ETree **a,int *exception),
 		       char *ident)
 {
-	int warned = FALSE;
 	MatrixW *m1 = NULL;
 	MatrixW *m2 = NULL;
 	MatrixW *new;
@@ -262,7 +264,6 @@ apply_func_to_matrix(ETree *mat,
 		     ETree * (*function)(ETree **a,int *exception),
 		     char *ident)
 {
-	int warned = FALSE;
 	MatrixW *m;
 	MatrixW *new;
 	ETree *n;
@@ -315,7 +316,6 @@ static ETree *
 sin_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],sin_op,"sin");
@@ -337,7 +337,6 @@ static ETree *
 sinh_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],sinh_op,"sinh");
@@ -359,7 +358,6 @@ static ETree *
 cos_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],cos_op,"cos");
@@ -381,7 +379,6 @@ static ETree *
 cosh_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],cosh_op,"cosh");
@@ -404,7 +401,6 @@ tan_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 	mpw_t fr2;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],tan_op,"tan");
@@ -433,7 +429,6 @@ static ETree *
 atan_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
-	mpw_t pitmp;
 
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],atan_op,"atan");
@@ -721,8 +716,14 @@ exp_op(ETree * * a, int *exception)
 {
 	mpw_t fr;
 
-	if(a[0]->type==MATRIX_NODE)
-		return apply_func_to_matrix(a[0],exp_op,"exp");
+	if(a[0]->type==MATRIX_NODE) {
+		if(matrixw_width(a[0]->mat.matrix) !=
+		   matrixw_height(a[0]->mat.matrix)) {
+			(*errorout)(_("exp: matrix argument is not square"));
+			return NULL;
+		}
+		return funccall(_internal_exp_function,a,1);
+	}
 
 	if(a[0]->type!=VALUE_NODE) {
 		(*errorout)(_("exp: argument not a number"));
@@ -882,8 +883,6 @@ legendre_op(ETree * * a, int *exception)
 static ETree *
 perfect_square_op(ETree * * a, int *exception)
 {
-	mpw_t tmp;
-
 	if(a[0]->type==MATRIX_NODE)
 		return apply_func_to_matrix(a[0],perfect_square_op,"perfect_square");
 
@@ -907,8 +906,6 @@ perfect_square_op(ETree * * a, int *exception)
 static ETree *
 max_op(ETree * * a, int *exception)
 {
-	mpw_t tmp;
-
 	if(a[0]->type==MATRIX_NODE ||
 	   a[1]->type==MATRIX_NODE)
 		return apply_func_to_matrixen(a[0],a[1],max_op,"max");
@@ -934,8 +931,6 @@ max_op(ETree * * a, int *exception)
 static ETree *
 min_op(ETree * * a, int *exception)
 {
-	mpw_t tmp;
-
 	if(a[0]->type==MATRIX_NODE ||
 	   a[1]->type==MATRIX_NODE)
 		return apply_func_to_matrixen(a[0],a[1],min_op,"min");
@@ -1510,9 +1505,9 @@ polytostring_op(ETree * * a, int *exception)
 		if(mpw_sgn(t->val.value)>0) {
 			if(any) g_string_append(gs," + ");
 			if(i==0)
-				print_etree(gs,NULL,t);
+				print_etree(gs,NULL,t,1);
 			else if(mpw_cmp_ui(t->val.value,1)!=0) {
-				print_etree(gs,NULL,t);
+				print_etree(gs,NULL,t,1);
 				g_string_append_c(gs,'*');
 			}
 			/*negative*/
@@ -1521,9 +1516,9 @@ polytostring_op(ETree * * a, int *exception)
 			else g_string_append_c(gs,'-');
 			mpw_neg(t->val.value,t->val.value);
 			if(i==0)
-				print_etree(gs,NULL,t);
+				print_etree(gs,NULL,t,1);
 			else if(mpw_cmp_ui(t->val.value,1)!=0) {
-				print_etree(gs,NULL,t);
+				print_etree(gs,NULL,t,1);
 				g_string_append_c(gs,'*');
 			}
 			mpw_neg(t->val.value,t->val.value);
@@ -1672,13 +1667,13 @@ sethelp_op(ETree * * a, int *exception)
 }
 
 static ETree *
-float_prec_op(ETree * * a, int *exception)
+set_float_prec_op(ETree * * a, int *exception)
 {
 	long bits;
 
 	if(a[0]->type!=VALUE_NODE ||
 	   !mpw_is_integer(a[0]->val.value)) {
-		(*errorout)(_("float_prec: argument not an integer"));
+		(*errorout)(_("set_float_prec: argument not an integer"));
 		return NULL;
 	}
 
@@ -1688,7 +1683,7 @@ float_prec_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	if(bits<60 || bits>16384) {
-		(*errorout)(_("float_prec: argument should be between 60 and 16384"));
+		(*errorout)(_("set_float_prec: argument should be between 60 and 16384"));
 		return NULL;
 	}
 	
@@ -1709,13 +1704,13 @@ get_float_prec_op(ETree * * a, int *exception)
 }
 
 static ETree *
-max_digits_op(ETree * * a, int *exception)
+set_max_digits_op(ETree * * a, int *exception)
 {
 	long digits;
 
 	if(a[0]->type!=VALUE_NODE ||
 	   !mpw_is_integer(a[0]->val.value)) {
-		(*errorout)(_("max_digits: argument not an integer"));
+		(*errorout)(_("set_max_digits: argument not an integer"));
 		return NULL;
 	}
 
@@ -1725,7 +1720,7 @@ max_digits_op(ETree * * a, int *exception)
 		return NULL;
 	}
 	if(digits<0 || digits>256) {
-		(*errorout)(_("max_digits: argument should be between 0 and 256"));
+		(*errorout)(_("set_max_digits: argument should be between 0 and 256"));
 		return NULL;
 	}
 	
@@ -1745,10 +1740,10 @@ get_max_digits_op(ETree * * a, int *exception)
 }
 
 static ETree *
-results_as_floats_op(ETree * * a, int *exception)
+set_results_as_floats_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("results_as_floats: argument not a value"));
+		(*errorout)(_("set_results_as_floats: argument not a value"));
 		return NULL;
 	}
 	calcstate.results_as_floats = mpw_sgn(a[0]->val.value)!=0;
@@ -1761,10 +1756,18 @@ results_as_floats_op(ETree * * a, int *exception)
 		return makenum_ui(0);
 }
 static ETree *
-scientific_notation_op(ETree * * a, int *exception)
+get_results_as_floats_op(ETree * * a, int *exception)
+{
+	if(calcstate.results_as_floats)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+static ETree *
+set_scientific_notation_op(ETree * * a, int *exception)
 {
 	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("scientific_notation: argument not a value"));
+		(*errorout)(_("set_scientific_notation: argument not a value"));
 		return NULL;
 	}
 	calcstate.scientific_notation = mpw_sgn(a[0]->val.value)!=0;
@@ -1775,6 +1778,74 @@ scientific_notation_op(ETree * * a, int *exception)
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
+}
+static ETree *
+get_scientific_notation_op(ETree * * a, int *exception)
+{
+	if(calcstate.scientific_notation)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+static ETree *
+set_full_expressions_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=VALUE_NODE) {
+		(*errorout)(_("set_full_expressions: argument not a value"));
+		return NULL;
+	}
+	calcstate.full_expressions = mpw_sgn(a[0]->val.value)!=0;
+	if(statechange_hook)
+		(*statechange_hook)(calcstate);
+
+	if(calcstate.full_expressions)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+static ETree *
+get_full_expressions_op(ETree * * a, int *exception)
+{
+	if(calcstate.full_expressions)
+		return makenum_ui(1);
+	else
+		return makenum_ui(0);
+}
+
+static ETree *
+set_max_errors_op(ETree * * a, int *exception)
+{
+	long errors;
+
+	if(a[0]->type!=VALUE_NODE ||
+	   !mpw_is_integer(a[0]->val.value)) {
+		(*errorout)(_("set_max_errors: argument not an integer"));
+		return NULL;
+	}
+
+	errors = mpw_get_long(a[0]->val.value);
+	if(error_num) {
+		error_num = 0;
+		return NULL;
+	}
+	if(errors<0) {
+		(*errorout)(_("set_max_errors: argument should be larger then 0"));
+		return NULL;
+	}
+	
+	if(calcstate.max_errors != errors) {
+		calcstate.max_errors = errors;
+		if(statechange_hook)
+			(*statechange_hook)(calcstate);
+	}
+
+	return makenum_ui(calcstate.max_errors);
+}
+
+static ETree *
+get_max_errors_op(ETree * * a, int *exception)
+{
+	return makenum_ui(calcstate.max_errors);
 }
 
 /*add the routines to the dictionary*/
@@ -1796,12 +1867,22 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("display"),display_op,2));
 	add_description("display",_("Display a string and an expression"));
 
-	d_addfunc(d_makebifunc(d_intern("float_prec"),float_prec_op,1));
+	d_addfunc(d_makebifunc(d_intern("set_float_prec"),set_float_prec_op,1));
+	add_description("set_float_prec",_("Set floating point precision"));
 	d_addfunc(d_makebifunc(d_intern("get_float_prec"),get_float_prec_op,0));
-	d_addfunc(d_makebifunc(d_intern("max_digits"),max_digits_op,1));
+	add_description("get_float_prec",_("Get floating point precision"));
+	d_addfunc(d_makebifunc(d_intern("set_max_digits"),set_max_digits_op,1));
 	d_addfunc(d_makebifunc(d_intern("get_max_digits"),get_max_digits_op,0));
-	d_addfunc(d_makebifunc(d_intern("results_as_floats"),results_as_floats_op,1));
-	d_addfunc(d_makebifunc(d_intern("scientific_notation"),scientific_notation_op,1));
+	d_addfunc(d_makebifunc(d_intern("set_results_as_floats"),set_results_as_floats_op,1));
+	d_addfunc(d_makebifunc(d_intern("get_results_as_floats"),get_results_as_floats_op,0));
+	d_addfunc(d_makebifunc(d_intern("set_scientific_notation"),set_scientific_notation_op,1));
+	d_addfunc(d_makebifunc(d_intern("get_scientific_notation"),get_scientific_notation_op,0));
+	d_addfunc(d_makebifunc(d_intern("set_full_expressions"),set_full_expressions_op,1));
+	d_addfunc(d_makebifunc(d_intern("get_full_expressions"),get_full_expressions_op,0));
+	d_addfunc(d_makebifunc(d_intern("set_max_errors"),set_max_errors_op,1));
+	add_description("set_max_errors",_("Set maximum number of errors printed"));
+	d_addfunc(d_makebifunc(d_intern("get_max_errors"),get_max_errors_op,0));
+	add_description("get_max_errors",_("Get maximum number of errors printed"));
 
 	d_addfunc(d_makebifunc(d_intern("ni"),ni_op,0));
 	d_addfunc(d_makebifunc(d_intern("shrubbery"),shrubbery_op,0));
@@ -1834,23 +1915,41 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("jacobi"),jacobi_op,2));
 	d_addfunc(d_makebifunc(d_intern("legendre"),legendre_op,2));
 	d_addfunc(d_makebifunc(d_intern("perfect_square"),perfect_square_op,1));
+	add_description("perfect_square",_("Check a number for being a perfect square"));
 	d_addfunc(d_makebifunc(d_intern("max"),max_op,2));
+	add_description("max",_("Return the larger of two arguments"));
 	d_addfunc(d_makebifunc(d_intern("min"),min_op,2));
+	add_description("min",_("Return the smaller of two arguments"));
 	d_addfunc(d_makebifunc(d_intern("prime"),prime_op,1));
+	add_description("prime",_("Return the n'th prime (up to a limit)"));
 	d_addfunc(d_makebifunc(d_intern("round"),round_op,1));
+	add_description("round",_("Round a number"));
 	d_addfunc(d_makebifunc(d_intern("floor"),floor_op,1));
+	add_description("floor",_("Get the highest integer less then or equal to n"));
 	d_addfunc(d_makebifunc(d_intern("ceil"),ceil_op,1));
+	add_description("ceil",_("Get the lowest integer more then or equal to n"));
 	d_addfunc(d_makebifunc(d_intern("trunc"),trunc_op,1));
+	add_description("trunc",_("Truncate a number to an integer"));
 	d_addfunc(d_makebifunc(d_intern("float"),float_op,1));
+	add_description("float",_("Make number a float"));
 	d_addfunc(d_makebifunc(d_intern("Re"),Re_op,1));
+	add_description("Re",_("Get the real part of a complex number"));
 	d_addfunc(d_makebifunc(d_intern("Im"),Im_op,1));
+	add_description("Im",_("Get the imaginary part of a complex number"));
 	d_addfunc(d_makebifunc(d_intern("I"),I_op,1));
+	add_description("I",_("Make an identity matrix of a given size"));
 	d_addfunc(d_makebifunc(d_intern("rows"),rows_op,1));
+	add_description("rows",_("Get the rows of a column"));
 	d_addfunc(d_makebifunc(d_intern("columns"),columns_op,1));
+	add_description("columns",_("Get the columns of a column"));
 	d_addfunc(d_makebifunc(d_intern("set_size"),set_size_op,3));
+	add_description("set_size",_("Make new matrix of given size from old one"));
 	d_addfunc(d_makebifunc(d_intern("det"),det_op,1));
+	add_description("det",_("Get the determinant of a matrix"));
 	d_addfunc(d_makebifunc(d_intern("ref"),ref_op,1));
+	add_description("ref",_("Get the row echelon form of a matrix"));
 	d_addfunc(d_makebifunc(d_intern("rref"),rref_op,1));
+	add_description("rref",_("Get the reduced row echelon form of a matrix"));
 	d_addfunc(d_makebifunc(d_intern("is_value_only"),is_value_only_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_null"),is_null_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_value"),is_value_op,1));
@@ -1873,5 +1972,22 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("polytostring"),polytostring_op,2));
 	d_addfunc(d_makebifunc(d_intern("polytofunc"),polytofunc_op,1));
 	d_addfunc(d_makebifunc(d_intern("help"),help_op,0));
+	add_description("help",_("Display function list with small help"));
 	d_addfunc(d_makebifunc(d_intern("sethelp"),sethelp_op,2));
+	
+	/*temporary until well done internal functions are done*/
+	_internal_ln_function = d_makeufunc(d_intern("<internal>ln"),
+					    /*FIXME:this is not the correct 
+					      function*/
+					    parseexp("error(\"ln not finished\")",
+						     NULL,FALSE,FALSE,NULL),
+					    g_list_append(NULL,d_intern("x")),1);
+	_internal_exp_function = d_makeufunc(d_intern("<internal>exp"),
+					     parseexp("sum = float(x^0); "
+						      "fact = 1; "
+						      "for i = 1 to 100 do "
+						      "(fact = fact * x / i; "
+						      "sum = sum + fact) ; sum",
+						      NULL,FALSE,FALSE,NULL),
+					     g_list_append(NULL,d_intern("x")),1);
 }

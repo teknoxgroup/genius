@@ -37,6 +37,7 @@
 
 #include "dict.h"
 #include "calc.h"
+#include "plugin.h"
 
 #include "inter.h"
 
@@ -49,7 +50,8 @@ static int
 ok_for_top(char *s)
 {
 	char *t = g_strstrip(g_strdup(s));
-	if(strncmp(t,"load",strlen(t))==0) {
+	if(strncmp(t,"plugin",strlen(t))==0 ||
+	   strncmp(t,"load",strlen(t))==0) {
 		g_free(t);
 		return TRUE;
 	} else {
@@ -114,6 +116,7 @@ get_p_expression(void)
 static int addtoplevels = TRUE;
 static char *toplevels[] = {
 	"load",
+	"plugin",
 	NULL
 };
 static char *operators[] = {
@@ -164,6 +167,29 @@ command_generator (char *text, int state)
 	return NULL;
 }
 
+static char *
+plugin_generator (char *text, int state)
+{
+	static int len;
+	static GList *li;
+
+	if(!state) {
+		len = strlen (text);
+		li = plugin_list;
+	}
+
+	while(li) {
+		plugin_t *plg = li->data;
+		li = g_list_next(li);
+		if(!plg->base)
+			continue;
+		if(strncmp(plg->base,text,len)==0)
+			return strdup(plg->base);
+	}
+
+	return NULL;
+}
+
 static char **
 tab_completion (char *text, int start, int end)
 {
@@ -175,9 +201,17 @@ tab_completion (char *text, int start, int end)
 	    strncmp(p,"load\t",5)==0)) {
 		return NULL;
 	}
+
+	if(toplevelokg &&
+	   (strncmp(p,"plugin ",7)==0 ||
+	    strncmp(p,"plugin\t",7)==0)) {
+		return completion_matches (text, plugin_generator);
+	}
+	
 	
 	if(toplevelokg &&
-	   (!*p || strncmp(p,"load",strlen(p))==0))
+	   (!*p || strncmp(p,"load",strlen(p))==0 ||
+	    strncmp(p,"plugin",strlen(p))==0))
 		addtoplevels = TRUE;
 	else
 		addtoplevels = FALSE;

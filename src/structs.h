@@ -37,6 +37,7 @@ typedef union _ETree ETree;
 /*typedef struct _ETreeNull ETreeNull;*/
 typedef struct _ETreeValue ETreeValue;
 typedef struct _ETreeMatrix ETreeMatrix;
+typedef struct _ETreeSet ETreeSet;
 typedef struct _ETreeOperator ETreeOperator;
 typedef struct _ETreeIdentifier ETreeIdentifier;
 typedef struct _ETreeString ETreeString;
@@ -73,10 +74,10 @@ struct _EFunc {
 };
 
 typedef enum {
-	NULL_NODE,
+	NULL_NODE=0,
 	VALUE_NODE,
 	MATRIX_NODE,
-	/*SET_NODE,*/
+	SET_NODE,
 	OPERATOR_NODE,
 	IDENTIFIER_NODE,
 	STRING_NODE,
@@ -84,7 +85,7 @@ typedef enum {
 	COMPARISON_NODE,
 	
 	/*marker nodes*/
-	MATRIX_ROW_NODE,
+	MATRIX_ROW_NODE=1000,
 	MATRIX_START_NODE,
 	EXPRLIST_START_NODE,
 	SPACER_NODE
@@ -103,6 +104,12 @@ struct _ETreeMatrix {
 	ETreeType type;
 	MatrixW *matrix;
 	guint quoted:1;
+};
+
+struct _ETreeSet {
+	ETreeType type;
+	GList *items;
+	guint multiset:1;
 };
 
 /*struct _ETreeSet {
@@ -165,6 +172,7 @@ union _ETree {
 	/*ETreeNull null;*/
 	ETreeValue val;
 	ETreeMatrix mat;
+	ETreeSet set;
 	ETreeOperator op;
 	ETreeIdentifier id;
 	ETreeString str;

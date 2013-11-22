@@ -1,3 +1,100 @@
+Thu Sep 02 14:05:50 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.5
+
+Thu Sep 02 14:00:19 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: don't check/free values after mpw_clear again
+
+Wed Sep 01 20:36:01 1999  George Lebl  <jirka@5z.com>
+
+	* src/calc.h,src/eval.c,src/genius.c,src/gnome-genius.c: add an
+	  option for limitting the number of errors printed out
+
+	* README: document the above option and full_expressions
+
+Wed Sep 01 19:50:41 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.[ch],src/parse.y: backdivision for matrices
+
+	* src/funclib.c: don't allow trying exp of non-square matrices
+
+Fri Aug 20 22:06:43 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: get around a gmp bug with converting negative
+	  rationals to floats
+
+	* src/calc.c,configure.in,aclocal.h: if wordexp is not present
+	  use an ugly shell popen hack to try to do the same, but it's
+	  not 100% working
+
+Tue Aug 17 22:25:44 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c,src/calc.[ch],src/util.[ch],funclib.c: made the thing
+	  not print out huge expressions by default
+
+	* src/genius.c,src/gnome-genius.c: added options for the maximum
+	  size thing
+
+	* src/funclib.c: fixed getting some arguments
+
+1999-08-09  Tomas Ogren  <stric@ing.umu.se>
+
+	* configure.in (ALL_LINGUAS): 'de' does exist (it's revived).
+
+1999-08-08  Anders Carlsson  <anders.carlsson@tordata.se>
+
+	* configure.in (ALL_LINGUAS): Removed 'de' since no .po file exists
+	for that language.
+
+1999-08-08  Tomas Ogren  <stric@ing.umu.se>
+
+	* configure.in: Removed 'ga', it was removed from cvs (and
+	  contained 1 translated message)
+
+Mon Aug 02 08:08:41 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c,src/testplugin.c: fix coshbug and testplugin not
+	  including config.h reported by
+	  Jeroen Nijhof <J.H.B.Nijhof@aston.ac.uk>
+
+Wed Jul 28 02:09:51 1999  George Lebl  <jirka@5z.com>
+
+	* src/*: removed unused variables
+
+	* src/{test.plugin.in,plugin.[ch],plugread*.c,genius.c,gnome-genius.c}:
+	  added a GUI parameter to plugin description to specify if this
+	  plugin is GUI only, and don't even add it to the list on the
+	  command line version
+
+	* src/{calc.c,eval.[ch],funclib.c}: change parameter setting getting
+	  routines and do a preprocessing run on the tree to set and get
+	  the parameters as vars
+
+	* README,NEWS: updated
+
+Tue Jul 27 05:33:47 1999  George Lebl  <jirka@5z.com>
+
+	* src/{parse.y,lexer.l,eval.c}: added mod evaluation
+
+	* src/{lib.gel,funclib.c}: added some more help strings
+
+	* src/{eval.[ch],funclib.c}: added way to call gel functions
+	  internally and implemented a simple exp for matrixes that has
+	  the correct result
+
+Thu Jul 15 05:13:35 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: much nicer/faster way of computing fibbonachi numbers
+	  from njh@cs.monash.edu.au
+
+Fri Jul 02 06:50:54 1999  George Lebl  <jirka@5z.com>
+
+	* src/{lexer.l,parse.y,calc.c,plugread*.c,plugin.h}: added a plugin
+	  toplevel command to load in plugins, and for loading files I use
+	  wordexp call since that actually does the right thing instead of
+	  splitting at spaces and glob
+
 Tue Jun 22 06:51:08 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.4.4

@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <termcap.h>
 #include "calc.h"
 #include "util.h"
 #include "dict.h"
@@ -57,7 +58,9 @@ calcstate_t curstate={
 	256,
 	0,
 	FALSE,
-	FALSE
+	FALSE,
+	FALSE,
+	5
 	};
 	
 extern calc_error_t error_num;
@@ -67,6 +70,8 @@ extern int parenth_depth;
 extern int interrupted;
 
 static int use_readline = TRUE;
+
+static int errors_printed = 0;
 
 static void
 puterror(char *s)
@@ -80,6 +85,23 @@ puterror(char *s)
 		fprintf(stderr,_("line %d: %s\n"),line,s);
 	else
 		fprintf(stderr,"%s\n",s);
+}
+
+static void
+calc_puterror(char *s)
+{
+	if(curstate.max_errors == 0 ||
+	   errors_printed++<curstate.max_errors)
+		puterror(s);
+}
+
+static void
+printout_error_num_and_reset(void)
+{
+	if(errors_printed-curstate.max_errors > 0)
+		fprintf(stderr,_("Too many errors! (%d followed)\n"),
+			errors_printed-curstate.max_errors);
+	errors_printed = 0;
 }
 
 static void
@@ -116,6 +138,8 @@ main(int argc, char *argv[])
 	int do_compile = FALSE;
 	int be_quiet = FALSE;
 
+	is_gui = FALSE;
+
 #ifdef GNOME_SUPPORT
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 #else
@@ -145,6 +169,12 @@ main(int argc, char *argv[])
 			curstate.scientific_notation = TRUE;
 		else if(strcmp(argv[i],"--noscinot")==0)
 			curstate.scientific_notation = FALSE;
+		else if(strcmp(argv[i],"--fullexp")==0)
+			curstate.full_expressions = TRUE;
+		else if(strcmp(argv[i],"--nofullexp")==0)
+			curstate.full_expressions = FALSE;
+		else if(sscanf(argv[i],"--maxerrors=%d",&val)==1)
+			curstate.max_errors = val;
 		else if(strcmp(argv[i],"--readline")==0)
 			use_readline = TRUE;
 		else if(strcmp(argv[i],"--noreadline")==0)
@@ -168,6 +198,8 @@ main(int argc, char *argv[])
 			       "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
 			       "\t--[no]floatresult \tAll results as floats [OFF]\n"
 			       "\t--[no]scinot      \tResults in scientific notation [OFF]\n"
+			       "\t--[no]fullexp     \tAlways print full expressions [OFF]\n"
+			       "\t--maxerrors=num   \tMaximum errors to display (0=no limit) [5]\n"
 			       "\t--[no]readline    \tUse readline if it is available [ON]\n"
 			       "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
 			       "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
@@ -192,9 +224,15 @@ main(int argc, char *argv[])
 	}
 
 	set_new_calcstate(curstate);
-	set_new_errorout(puterror);
+	set_new_errorout(calc_puterror);
 	set_new_infoout(puterror);
-	
+
+	/*init the context stack and clear out any stale dictionaries
+	  except the global one, if this is the first time called it
+	  will also register the builtin routines with the global
+	  dictionary*/
+	d_singlecontext();
+
 	if(!do_compile) {
 		file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
 		load_compiled_file(file,FALSE);
@@ -231,6 +269,8 @@ main(int argc, char *argv[])
 	if(inter && use_readline) {
 		init_inter();
 	}
+
+	printout_error_num_and_reset();
 	
 	rl_event_hook = nop;
 
@@ -249,6 +289,8 @@ main(int argc, char *argv[])
 				if(interrupted)
 					got_eof = TRUE;
 			}
+			if(inter)
+				printout_error_num_and_reset();
 
 			if(got_eof) {
 				if(inter)
@@ -282,6 +324,8 @@ main(int argc, char *argv[])
 		} else
 			break;
 	}
+
+	printout_error_num_and_reset();
 	
 	if(fp != stdin)
 		fclose(fp);
@@ -293,4 +337,18 @@ main(int argc, char *argv[])
 	}
 
 	return 0;
+}
+
+int
+get_term_width(void)
+{
+	char buf[2048];
+	char *term = getenv("TERM");
+
+	if(!term) return 80;
+
+	if(tgetent(buf,term)<=0)
+		return 80;
+
+	return tgetnum("co");
 }

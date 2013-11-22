@@ -34,8 +34,9 @@
 
 #include "parseutil.h"
 
-extern evalstack_t evalstack;
+extern GList *evalstack;
 extern ETree *free_trees;
+
 
 int
 push_func(void)

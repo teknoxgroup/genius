@@ -40,6 +40,7 @@ readplugin(char *dir_name,char *file_name)
 	char *copyright;
 	char *author;
 	char *description;
+	int gui;
 	plugin_t *plg;
 
 	p = g_strconcat("=",dir_name,"/",file_name,
@@ -51,6 +52,7 @@ readplugin(char *dir_name,char *file_name)
 	copyright = gnome_config_get_translated_string("Copyright");
 	author = gnome_config_get_string("Author");
 	description = gnome_config_get_translated_string("Description");
+	gui = gnome_config_get_bool("GUI");
 	gnome_config_pop_prefix();
 	p = g_strconcat("=",dir_name,"/",file_name,
 			"=",NULL);
@@ -66,9 +68,13 @@ readplugin(char *dir_name,char *file_name)
 	}
 	plg = g_new0(plugin_t,1);
 	plg->name = name;
+	plg->base = g_strdup(file_name);
+	p = strstr(plg->base,".plugin");
+	if(p) *p='\0';
 	plg->file = file;
 	plg->copyright = copyright;
 	plg->author = author;
 	plg->description = description;
+	plg->gui = gui;
 	return plg;
 }

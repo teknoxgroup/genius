@@ -1,4 +1,4 @@
-dnl aclocal.m4 generated automatically by aclocal 1.4a
+dnl aclocal.m4 generated automatically by aclocal 1.4
 
 dnl Copyright (C) 1994, 1995-8, 1999 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
@@ -428,8 +428,6 @@ dnl AM_INIT_AUTOMAKE(package,version, [no-define])
 
 AC_DEFUN(AM_INIT_AUTOMAKE,
 [AC_REQUIRE([AC_PROG_INSTALL])
-dnl We require 2.13 because we rely on SHELL being computed by configure.
-AC_PREREQ([2.13])
 PACKAGE=[$1]
 AC_SUBST(PACKAGE)
 VERSION=[$2]
@@ -1306,7 +1304,7 @@ AC_DEFUN([GNOME_COMPILE_WARNINGS],[
     if test "x$GCC" = "xyes"; then
       case " $CFLAGS " in
       *[\ \	]-Wall[\ \	]*) ;;
-      *) warnCFLAGS="-Wall -Wno-unused" ;;
+      *) warnCFLAGS="-Wall -Wunused" ;;
       esac
 
       ## -W is not all that useful.  And it cannot be controlled
@@ -1499,7 +1497,7 @@ AC_DEFUN([GNOME_INIT_HOOK],[
 	if test -n "$3"; then
 	  n="$3"
 	  for i in $n; do
-	    AC_MSG_CHECKING(extra library $i)
+	    AC_MSG_CHECKING(extra library \"$i\")
 	    case $i in 
 	      applets)
 		AC_SUBST(GNOME_APPLETS_LIBS)

@@ -38,9 +38,10 @@ int first_tok = STARTTOK;
 int return_ret = FALSE;
 int parenth_depth = 0;
 int lex_init = TRUE;
-extern evalstack_t evalstack;
+extern GList *evalstack;
 extern int got_eof;
 static int matrix_entry=0;
+
 
 #define NO_RET {return_ret = FALSE;}
 #define DO_RET { \
@@ -84,31 +85,8 @@ static int matrix_entry=0;
 			return LOADFILE;
 		}
 
-^[ 	]*load[ 	]+\"([^"]|\\\")*\"[ 	]*$ {
-			char *s;
-			char *end;
-			if(evalstack || parenth_depth) {REJECT;}
-			s=strchr(yytext,'"')+1; /*find the beginning*/
-			end=strrchr(yytext,'"'); /*find the end*/
-			yylval.id = unescape_string(s,end,NULL);
-			DO_RET;
-			return LOADFILE;
-		}
-
-^[ 	]*load[ 	]+\'([^']|\\\')*\'[ 	]*$ {
-			char *s;
-			char *end;
-			if(evalstack || parenth_depth) {REJECT;}
-			s=strchr(yytext,'\'')+1; /*find the beginning*/
-			end=strrchr(yytext,'\''); /*find the end*/
-			yylval.id = g_strndup(s,end-s);
-			DO_RET;
-			return LOADFILE;
-		}
-
 ^[ 	]*load[ 	]+[^ 	].*$ {
 			char *s;
-			char *end;
 			if(evalstack || parenth_depth) {REJECT;}
 			s=strchr(yytext,'d')+1; /*move after the load*/
 			/*btw from the above RE we know this will work*/
@@ -117,6 +95,18 @@ static int matrix_entry=0;
 			yylval.id = g_strdup(s);
 			DO_RET;
 			return LOADFILE_GLOB;
+		}
+
+^[ 	]*plugin[ 	]+[^ 	].*$ {
+			char *s;
+			if(evalstack || parenth_depth) {REJECT;}
+			s=strchr(yytext,'n')+1; /*move after the load*/
+			/*btw from the above RE we know this will work*/
+			while(*s==' ' || *s=='\t')
+				s++;
+			yylval.id = g_strdup(s);
+			DO_RET;
+			return LOAD_PLUGIN;
 		}
 
 ";"		{ DO_RET; return SEPAR; }
@@ -166,6 +156,8 @@ bailout		{ DO_RET; return BAILOUT; }
 exception	{ DO_RET; return EXCEPTION; }
 continue	{ DO_RET; return CONTINUE; }
 break		{ DO_RET; return BREAK; }
+
+mod		{ NO_RET; return MOD; }
 
 null		{ DO_RET; return '.'; }
 

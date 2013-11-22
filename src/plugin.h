@@ -23,11 +23,13 @@
 #define _PLUGIN_H_
 
 typedef struct _plugin_t {
+	char *base;
 	char *file;
 	char *name;
 	char *author;
 	char *copyright;
 	char *description;
+	int gui;
 } plugin_t;
 
 /*read or reread the plugin list from the share/genius/plugins directory*/
@@ -35,5 +37,7 @@ void read_plugin_list(void);
 extern GList *plugin_list;
 
 void open_plugin(plugin_t *plug);
+
+extern int is_gui;
 
 #endif

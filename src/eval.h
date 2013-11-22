@@ -27,8 +27,6 @@
 /*declarations of structures*/
 #include "structs.h"
 
-typedef GList * evalstack_t;
-
 /* builtin primitives */
 enum {
 	E_SEPAR = 1,
@@ -38,6 +36,7 @@ enum {
 	E_MINUS,
 	E_MUL,
 	E_DIV,
+	E_BACK_DIV,
 	E_MOD,
 	E_NEG,
 	E_EXP,
@@ -78,6 +77,7 @@ enum {
 	E_EXCEPTION,
 	E_CONTINUE,
 	E_BREAK,
+	E_MOD_CALC,
 };
 
 /*functions for manipulating a tree*/
@@ -86,7 +86,7 @@ ETree * makenum_use(mpw_t num); /*don't create a new number*/
 ETree * makenum_ui(unsigned long num);
 ETree * makenum_si(long num);
 ETree * makenum_null(void);
-ETree * makeoperator(int oper, evalstack_t * stack);
+ETree * makeoperator(int oper, GList **stack);
 
 /*returns the number of args for an operator, or -1 if it takes up till
   exprlist marker -2 if it takes 1 past the marker for the first argument*/
@@ -112,8 +112,11 @@ ETree *evalnode_full(ETree *n,int do_ret);
 int isnodetrue(ETree *n, int *bad_node);
 int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 
+/*call a function (arguments should have already been evaluated)*/
+ETree * funccall(EFunc *func, ETree **args, int nargs);
 
 ETree * gather_comparisons(ETree *n);
+ETree * replace_parameters(ETree *n);
 
 #define GET_ABCDE(n,a,b,c,d,e) { \
 	a = n->op.args->data; \
@@ -151,6 +154,9 @@ ETree * gather_comparisons(ETree *n);
 }
 
 #define EMPTY_RET ((void *)0x1)
+
+extern EFunc *_internal_ln_function;
+extern EFunc *_internal_exp_function;
 
 
 #endif

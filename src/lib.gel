@@ -111,23 +111,11 @@ function fib(x) = (
 		(error("fib: argument not an integer");bailout)
 	else if(x<0) then
 		(error("fib: argument less then zero");bailout)
-	else if(x==0) then 0
-	else if(x==1) then 1
-	else (
-		i=0;
-		c=1;
-		p=0;
-		x=x-2;
-		while(x>=i) do (
-			c=c+p;
-			p=c-p;
-			i=i+1
-		);
-		c
-	)
+	else (([1,1:1,0]^x)@(1,2))
 )
 
 #calculate a trace function
+sethelp("trace","Calculate the trace of a matrix");
 function trace(m) = (
 	if(not is_matrix(m) or not is_value_only(m)) then
 		(error("trace: argument not a value only matrix");bailout)
@@ -138,6 +126,7 @@ function trace(m) = (
 )
 
 #calculate an infinite sum until the new terms stop making a difference
+sethelp("infsum","Try to calculate an infinite sum");
 function infsum(func,start,inc) = (
 	if(not is_value(start) or not is_value(inc)) then
 		(error("infsum: start,inc arguments not values");bailout)
@@ -154,11 +143,12 @@ function infsum(func,start,inc) = (
 )
 
 #calculate an infinite sum until the new terms stop making a difference
+sethelp("infsum2","Try to calculate an infinite sum");
 function infsum2(func,arg,start,inc) = (
 	if(not is_value(start) or not is_value(inc)) then
-		(error("infsum: start,inc arguments not values");bailout)
+		(error("infsum2: start,inc arguments not values");bailout)
 	else if(not is_function(func)) then
-		(error("infsum: func argument not a function");bailout);
+		(error("infsum2: func argument not a function");bailout);
 	sum = 0.0;
 	while 1 do (
 		newsum = sum + func(arg,start);
@@ -170,6 +160,7 @@ function infsum2(func,arg,start,inc) = (
 )
 
 #calculate convolution of two horizontal vectors
+sethelp("convol","Calculate convolution of two horizontal vectors");
 function convol(a,b) = (
 	if(not is_matrix(a) or not is_value_only(a) or
 	   not is_matrix(b) or not is_value_only(b) or
@@ -185,6 +176,7 @@ function convol(a,b) = (
 
 #calculate convolution of two horizontal vectors and return the result
 #not added together but in a vector
+sethelp("convol_vec","Calculate convolution of two horizontal vectors");
 function convol_vec(a,b) = (
 	if(not is_matrix(a) or not is_value_only(a) or
 	   not is_matrix(b) or not is_value_only(b) or
@@ -200,6 +192,7 @@ function convol_vec(a,b) = (
 )
 
 #calculate the sum of all elements in a matrix
+sethelp("matsum","Calculate the sum of all elements in a matrix");
 function matsum(a) = (
 	if(not is_matrix(a) or not is_value_only(a)) then
 		(error("matsum: argument not a value only matrix");bailout);
@@ -209,6 +202,7 @@ function matsum(a) = (
 		sum = sum + n
 )
 
+sethelp("matsum_sq","Calculate the sum of squares of all elements in a matrix");
 function matsum_sq(a) = (
 	if(not is_matrix(a) or not is_value_only(a)) then
 		(error("matsum_sq: argument not a value only matrix");bailout);
@@ -219,6 +213,7 @@ function matsum_sq(a) = (
 )
 
 #calculate the product of all elements in a matrix
+sethelp("matprod","Calculate the product of all elements in a matrix");
 function matprod(a) = (
 	if(not is_matrix(a) or not is_value_only(a)) then
 		(error("matprod: argument not a value only matrix");bailout);
@@ -227,6 +222,7 @@ function matprod(a) = (
 		prod = prod * n
 )
 
+sethelp("asin","The arcsin (reverse sin) function");
 function asin(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,asin)
@@ -234,6 +230,7 @@ function asin(x) = (
 		(error("asin: argument not a value");bailout);
 	atan(x/sqrt(1-x^2))
 )
+sethelp("asinh","The arcsinh (reverse sinh) function");
 function asinh(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,asinh)
@@ -241,6 +238,7 @@ function asinh(x) = (
 		(error("asinh: argument not a value");bailout);
 	ln(x+sqrt((x^2)+1))
 )
+sethelp("acos","The arccos (reverse cos) function");
 function acos(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,acos)
@@ -248,6 +246,7 @@ function acos(x) = (
 		(error("acos: argument not a value");bailout);
 	atan(sqrt(1-x^2)/x)+(if x>0 then 0 else pi)
 )
+sethelp("acosh","The arccosh (reverse cosh) function");
 function acosh(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,acosh)
@@ -256,6 +255,7 @@ function acosh(x) = (
 	ln(x+sqrt((x^2)-1))
 )
 
+sethelp("cot","The cotangent function");
 function cot(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,cot)
@@ -263,6 +263,7 @@ function cot(x) = (
 		(error("cot: argument not a value");bailout);
 	1/tan(x)
 )
+sethelp("coth","The hyperbolic cotangent function");
 function coth(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,coth)
@@ -270,6 +271,7 @@ function coth(x) = (
 		(error("coth: argument not a value");bailout);
 	1/tanh(x)
 )
+sethelp("acot","The arccot (reverse cot) function");
 function acot(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,acot)
@@ -277,6 +279,7 @@ function acot(x) = (
 		(error("acot: argument not a value");bailout);
 	atan(1/x)
 )
+sethelp("acoth","The arccoth (reverse coth) function");
 function acoth(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,acoth)
@@ -357,6 +360,7 @@ function asech(x) = (
 	acosh(1/x)
 )
 
+sethelp("sign","Return the sign (-1,0,1)");
 function sign(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,sign)
@@ -370,6 +374,7 @@ function sign(x) = (
 		-1
 	) else 0
 )
+sethelp("log","Logarithm of any base");
 function log(x,b) = (
 	if(is_matrix(x) or is_matrix(b)) then
 		return apply_over_matrix2(x,b,log)
@@ -377,6 +382,7 @@ function log(x,b) = (
 		(error("log: arguments not values");bailout);
 	ln(x)/ln(b)
 )
+sethelp("log10","Base 10 logarithm");
 function log10(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,log10)
@@ -384,6 +390,7 @@ function log10(x) = (
 		(error("log10: argument not a value");bailout);
 	ln(x)/ln(10)
 )
+sethelp("log10","Base 2 logarithm");
 function log2(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,log2)
@@ -399,6 +406,7 @@ function conj(x) = (
 	Re(x)-(Im(x)*1i)
 )
 
+sethelp("catalan","Get n'th catalan number");
 function catalan(n) = (
 	if(is_matrix(n)) then
 		return apply_over_matrix1(n,catalan)
@@ -443,6 +451,7 @@ function delrowcol(m,row,col) = (
 )
 
 #adjoint of a matrix
+sethelp("adj","Get the adjoint of a matrix");
 function adj(m) = (
 	if(not is_matrix(m) or not is_value_only(m)) then
 		(error("adj: argument not a value-only matrix");bailout)
@@ -460,6 +469,7 @@ function adj(m) = (
 	a
 )
 
+sethelp("rad2deg","Convert radians to degrees");
 function rad2deg(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,rad2deg)
@@ -468,6 +478,7 @@ function rad2deg(x) = (
 	(x*180)/pi
 )
 
+sethelp("deg2rad","Convert degrees to radians");
 function deg2rad(x) = (
 	if(is_matrix(x)) then
 		return apply_over_matrix1(x,deg2rad)
@@ -669,11 +680,14 @@ function stdevp(m) = (
 )
 
 #just for somewhat of "source compatibility"
+sethelp("abs","Absolute value");
 function abs(x) = |x|
 
 #make something a string
+sethelp("string","Make a string");
 function string(s) = s + ""
 
+sethelp("pascal","Get the pascal's triangle as a matrix");
 function pascal(i) = (
 	if(not is_integer(i)) then
 		(error("pascal: argument not an integer");bailout)

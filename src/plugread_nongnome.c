@@ -38,6 +38,7 @@ readplugin(char *dir_name,char *file_name)
 	char *copyright = NULL;
 	char *author = NULL;
 	char *description = NULL;
+	int gui = FALSE;
 	plugin_t *plg;
 	p = g_strconcat(dir_name,"/",file_name,NULL);
 	fp = fopen(p,"r");
@@ -60,6 +61,8 @@ readplugin(char *dir_name,char *file_name)
 			author = g_strdup(g_strstrip(p));
 		else if(strcmp(buf,"Description")==0)
 			description = g_strdup(g_strstrip(p));
+		else if(strcmp(buf,"GUI")==0)
+			gui = strcmp(g_strstrip(p),"true")==0;
 	}
 	fclose(fp);
 	
@@ -74,8 +77,12 @@ readplugin(char *dir_name,char *file_name)
 	plg = g_new0(plugin_t,1);
 	plg->name = name;
 	plg->file = file;
+	plg->base = g_strdup(file_name);
+	p = strstr(plg->base,".plugin");
+	if(p) *p='\0';
 	plg->copyright = copyright;
 	plg->author = author;
 	plg->description = description;
+	plg->gui = gui;
 	return plg;
 }

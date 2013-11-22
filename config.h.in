@@ -55,6 +55,7 @@
 #undef HAVE_LC_MESSAGES
 #undef HAVE_STPCPY
 #undef HAVE_GMP2_INCLUDE_DIR
+#undef HAVE_WORDEXP
 
 /* Define if you have the __argz_count function.  */
 #undef HAVE___ARGZ_COUNT

@@ -64,7 +64,8 @@ gnome_genius_LDADD = \
 	@LEXLIB@ \
 	$(INTLLIBS) \
 	@ZVT_LIBS@ \
-	@READLINE_LIB@
+	@READLINE_LIB@ \
+	@TERMCAP_LIB@
 
 genius_SOURCES = 	\
 	calc.c		\
@@ -108,7 +109,8 @@ genius_LDADD = \
 	@GMP_LIB@ \
 	@LEXLIB@ \
 	$(INTLLIBS) \
-	@READLINE_LIB@
+	@READLINE_LIB@ \
+	@TERMCAP_LIB@
 
 plugin_include_HEADERS = \
 	plug_api.h	\

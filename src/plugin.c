@@ -65,21 +65,29 @@ static GHashTable *info = NULL;
 extern void (*errorout)(char *);
 extern void (*infoout)(char *);
 
+int is_gui = FALSE;
+
+static void
+free_plugin(plugin_t *plg)
+{
+	g_free(plg->base);
+	g_free(plg->file);
+	g_free(plg->name);
+	g_free(plg->author);
+	g_free(plg->copyright);
+	g_free(plg->description);
+	g_free(plg);
+}
+
 void
 read_plugin_list(void)
 {
-	GList *li;
 	DIR *dir;
 	char *dir_name;
 	struct dirent *dent;
 
 	/*free the previous list*/
-	for(li=plugin_list;li;li=g_list_next(li)) {
-		plugin_t *plg = li->data;
-		g_free(plg->file);
-		g_free(plg->name);
-		g_free(plg);
-	}
+	g_list_foreach(plugin_list,(GFunc)free_plugin,NULL);
 	g_list_free(plugin_list);
 	plugin_list = NULL;
 	
@@ -101,8 +109,12 @@ read_plugin_list(void)
 		if(!p || strcmp(p,".plugin")!=0)
 			continue;
 		plg = readplugin(dir_name,dent->d_name);
-		if(plg)
-			plugin_list = g_list_prepend(plugin_list,plg);
+		if(plg) {
+			if(plg->gui && !is_gui)
+				free_plugin(plg);
+			else
+				plugin_list = g_list_prepend(plugin_list,plg);
+		}
 	}
 	g_free(dir_name);
 	plugin_list = g_list_reverse(plugin_list);

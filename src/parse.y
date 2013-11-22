@@ -34,12 +34,13 @@
 	
 #include "parseutil.h"
 
-extern evalstack_t evalstack;
+extern GList *evalstack;
 extern ETree *free_trees;
 
 extern int return_ret; /*should the lexer return on \n*/
 extern char *loadfile;
 extern char *loadfile_glob;
+extern char *load_plugin;
 
 %}
 
@@ -50,7 +51,7 @@ extern char *loadfile_glob;
 
 %token STARTTOK
 
-%token LOADFILE LOADFILE_GLOB
+%token LOADFILE LOADFILE_GLOB LOAD_PLUGIN
 
 %token <val> NUMBER
 %token <id> STRING
@@ -73,6 +74,8 @@ extern char *loadfile_glob;
 
 %left SEPAR
 
+%left MOD
+
 %nonassoc LOWER_THEN_ELSE
 %nonassoc WHILE UNTIL DO IF FOR TO BY IN THEN ELSE FUNCTION CALL RETURNTOK
 
@@ -86,7 +89,7 @@ extern char *loadfile_glob;
 %right EQ_CMP NE_CMP LT_CMP GT_CMP LE_CMP GE_CMP
 
 %left '+' '-'
-%left '*' '/' '%'
+%left '*' '/' '\\' '%'
 
 %right '\''
 %right '!'
@@ -100,13 +103,15 @@ extern char *loadfile_glob;
 fullexpr:	STARTTOK expr '\n' { YYACCEPT; }
 	|	STARTTOK LOADFILE '\n' { loadfile = $<id>2; YYACCEPT; }
 	|	STARTTOK LOADFILE_GLOB '\n' { loadfile_glob = $<id>2; YYACCEPT; }
+	|	STARTTOK LOAD_PLUGIN '\n' { load_plugin = $<id>2; YYACCEPT; }
 	|	STARTTOK '\n' { YYACCEPT; }
 	|	STARTTOK expr SEPAR '\n' { push_null(); PUSH_ACT(E_SEPAR); YYACCEPT; }
 	|	error '\n' { return_ret = TRUE; yyclearin; YYABORT; }
 	|	error { return_ret = TRUE; }
 	;
-	
+
 expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
+	|	expr MOD expr		{ PUSH_ACT(E_MOD_CALC); }
 	|	'(' expr SEPAR ')'	{ push_null(); PUSH_ACT(E_SEPAR);
 					  push_spacer(); }
 	|	'(' expr ')'		{ push_spacer(); }
@@ -116,6 +121,7 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr '-' expr		{ PUSH_ACT(E_MINUS); }
 	|	expr '*' expr		{ PUSH_ACT(E_MUL); }
 	|	expr '/' expr		{ PUSH_ACT(E_DIV); }
+	|	expr '\\' expr		{ PUSH_ACT(E_BACK_DIV); }
 	|	expr '%' expr		{ PUSH_ACT(E_MOD); }
 	|	expr CMP_CMP expr	{ PUSH_ACT(E_CMP_CMP); }
 
@@ -156,8 +162,12 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	  crap
 	|	LT_CMP exprlist GT_CMP 	{SYNTAX_ERROR;}
 	*/
-	/*FIXME: ordered set (multiset)*/
-	|	'(' expr ',' exprlist ')'	{SYNTAX_ERROR;}/*FIXME: ordered set (multiset)*/
+	/*FIXME: vector */
+	|	'(' exprlist ',' expr ')'	{
+			if(!push_matrix_row()) {SYNTAX_ERROR;}
+			if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;}
+			if(!push_matrix(TRUE)) {SYNTAX_ERROR;}
+					}
 	|	'{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: set*/
 	|	'`' '{' exprlist '}'	{SYNTAX_ERROR;}/*FIXME: nonordered multiset*/
 	|	WHILE expr DO expr	{ PUSH_ACT(E_WHILE_CONS); }
@@ -198,7 +208,10 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 deref:		'*' ident		{ PUSH_ACT(E_DEREFERENCE); }
 	;
 	
-ident:		FUNCID			{ PUSH_IDENTIFIER($<id>1); g_free($<id>1); }
+ident:		FUNCID			{
+				PUSH_IDENTIFIER($<id>1);
+				g_free($<id>1);
+					}
 	;
 	
 funcdef:	'(' identlist')' EQUALS expr { if(!push_func()) {SYNTAX_ERROR;} }

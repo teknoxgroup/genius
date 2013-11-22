@@ -1,3 +1,18 @@
+Changes to 0.4.5
+
+* modular arithmetic support (e.g. "expr mod n")
+* different parsing of files on the load line (you can now pass multiple
+  files with quotes everywhere, just like in a shell
+* plugin toplevel command to load plugins from command line
+* more function descriptions for the help command
+* possibility to run gel function from inside of genius code
+* exp function now behaves properly for matrices (sort of)
+* setting calculator parameters is now more natural, just as setting variables
+* option for maximum line output length for expression output, and for
+  maximum number of errors printed
+* backdivision for matrices (e.g. X=A\B means A*X=B)
+* bug and portability fixes
+
 Changes to 0.4.4
 
 * bugfixes, bugfixes, bugfixes

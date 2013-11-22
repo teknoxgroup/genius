@@ -252,7 +252,6 @@ matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data)
 void
 matrix_free(Matrix *matrix)
 {
-	gpointer *a;
 	MatrixFreeList *mf;
 	
 	g_return_if_fail(matrix != NULL);

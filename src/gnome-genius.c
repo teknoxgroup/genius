@@ -53,7 +53,9 @@ calcstate_t curstate={
 	256,
 	0,
 	FALSE,
-	FALSE
+	FALSE,
+	FALSE,
+	5
 	};
 	
 extern calc_error_t error_num;
@@ -66,7 +68,8 @@ static GtkWidget *window = NULL;
 static GtkWidget *zvt = NULL;
 static GString *errors=NULL;
 static GString *infos=NULL;
-static int chpid = 0;
+
+static int errors_printed = 0;
 
 typedef struct {
 	int error_box;
@@ -103,6 +106,30 @@ geniuserrorbox(char *s)
 	gtk_widget_show(mb);
 }
 
+static void
+printout_error_num_and_reset(void)
+{
+	if(cursetup.error_box) {
+		if(errors) {
+			if(errors_printed-curstate.max_errors > 0) {
+				g_string_sprintfa(errors,
+						  _("\nToo many errors! (%d followed)"),
+						  errors_printed-curstate.max_errors);
+			}
+			geniuserrorbox(errors->str);
+			g_string_free(errors,TRUE);
+			errors=NULL;
+		}
+	} else {
+		if(errors_printed-curstate.max_errors > 0) {
+			fprintf(rl_outstream,
+				_("\e[01;31mToo many errors! (%d followed)\e[0m\n"),
+				errors_printed-curstate.max_errors);
+		}
+	}
+	errors_printed = 0;
+}
+
 /*get error message*/
 static void
 geniuserror(char *s)
@@ -110,6 +137,10 @@ geniuserror(char *s)
 	char *file;
 	int line;
 	char *str;
+	if(curstate.max_errors > 0 &&
+	   errors_printed++>=curstate.max_errors)
+		return;
+
 	get_file_info(&file,&line);
 	if(file)
 		str = g_strdup_printf("%s:%d: %s",file,line,s);
@@ -144,6 +175,16 @@ geniusinfobox(char *s)
 				     GTK_WINDOW(window));
 
 	gtk_widget_show(mb);
+}
+
+static void
+printout_info(void)
+{
+	if(infos) {
+		geniusinfobox(infos->str);
+		g_string_free(infos,TRUE);
+		infos=NULL;
+	}
 }
 
 /*get info message*/
@@ -207,11 +248,15 @@ set_properties (void)
 	gnome_config_set_bool("/genius/properties/error_box", cursetup.error_box);
 	gnome_config_set_bool("/genius/properties/info_box", cursetup.info_box);
 	gnome_config_set_bool("/genius/properties/max_digits", 
-			      (curstate.max_digits == 0) ? TRUE : FALSE);
+			      curstate.max_digits);
 	gnome_config_set_bool("/genius/properties/results_as_floats",
-			     curstate.results_as_floats);
+			      curstate.results_as_floats);
 	gnome_config_set_bool("/genius/properties/scientific_notation",
-			     curstate.scientific_notation);
+			      curstate.scientific_notation);
+	gnome_config_set_bool("/genius/properties/full_expressions",
+			      curstate.full_expressions);
+	gnome_config_set_int("/genius/properties/max_errors",
+			     curstate.max_errors);
 	
 	gnome_config_sync();
 }
@@ -317,7 +362,7 @@ setup_calc(GtkWidget *widget, gpointer data)
 				       gtk_label_new(_("Output")));
 
 	
-	frame=gtk_frame_new(_("Number output options"));
+	frame=gtk_frame_new(_("Number/Expression output options"));
 	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
 	box=gtk_vbox_new(FALSE,GNOME_PAD);
 	gtk_container_border_width(GTK_CONTAINER(box),GNOME_PAD);
@@ -363,6 +408,14 @@ setup_calc(GtkWidget *widget, gpointer data)
 		   GTK_SIGNAL_FUNC(optioncb),
 		   (gpointer)&tmpstate.scientific_notation);
 
+	w=gtk_check_button_new_with_label(_("Always print full expressions"));
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
+	gtk_toggle_button_set_state(GTK_TOGGLE_BUTTON(w), 
+				    tmpstate.full_expressions);
+	gtk_signal_connect(GTK_OBJECT(w), "toggled",
+		   GTK_SIGNAL_FUNC(optioncb),
+		   (gpointer)&tmpstate.full_expressions);
+
 
 	frame=gtk_frame_new(_("Error/Info output options"));
 	gtk_box_pack_start(GTK_BOX(hbox),frame,FALSE,FALSE,0);
@@ -387,6 +440,29 @@ setup_calc(GtkWidget *widget, gpointer data)
 	gtk_signal_connect(GTK_OBJECT(w), "toggled",
 		   GTK_SIGNAL_FUNC(optioncb),
 		   (gpointer)&tmpsetup.info_box);
+	
+	b=gtk_hbox_new(FALSE,GNOME_PAD);
+	gtk_box_pack_start(GTK_BOX(box),b,FALSE,FALSE,0);
+	gtk_box_pack_start(GTK_BOX(b),
+		   gtk_label_new(_("Maximum errors to display (0=unlimited)")),
+		   FALSE,FALSE,0);
+	adj = (GtkAdjustment *)gtk_adjustment_new(tmpstate.max_errors,
+						  0,
+						  256,
+						  1,
+						  5,
+						  0);
+	w = gtk_spin_button_new(adj,1.0,0);
+	gtk_spin_button_set_numeric(GTK_SPIN_BUTTON(w),TRUE);
+	gtk_spin_button_set_update_policy (GTK_SPIN_BUTTON(w),
+					   GTK_UPDATE_ALWAYS);
+	gtk_spin_button_set_snap_to_ticks(GTK_SPIN_BUTTON(w),
+					  TRUE);
+	gtk_widget_set_usize(w,80,0);
+	gtk_box_pack_start(GTK_BOX(b),w,FALSE,FALSE,0);
+	gtk_signal_connect(GTK_OBJECT(adj),"value_changed",
+			   GTK_SIGNAL_FUNC(intspincb),&tmpstate.max_errors);
+
 
 	hbox = gtk_hbox_new(FALSE, GNOME_PAD);
 	gtk_container_border_width(GTK_CONTAINER(hbox),GNOME_PAD);
@@ -514,17 +590,9 @@ really_load_cb(GtkWidget *w,GtkFileSelection *fs)
 	}
 	load_guess_file(s,TRUE);
 
-	if(infos) {
-		geniusinfobox(infos->str);
-		g_string_free(infos,TRUE);
-		infos=NULL;
-	}
+	printout_info();
 
-	if(errors) {
-		geniuserrorbox(errors->str);
-		g_free(errors);
-		errors=NULL;
-	}
+	printout_error_num_and_reset();
 }
 
 static void
@@ -639,15 +707,21 @@ get_properties (void)
 		   (cursetup.info_box)?"true":"false");
 	cursetup.info_box = gnome_config_get_bool(buf);
 	
-	g_snprintf(buf,256,"/genius/properties/max_digits=%s",
-		   (curstate.max_digits == 0)?"true":"false");
-	curstate.max_digits = (gnome_config_get_bool(buf))? 0 : 12;
+	g_snprintf(buf,256,"/genius/properties/max_digits=%d",
+		   curstate.max_digits);
+	curstate.max_digits = gnome_config_get_int(buf);
 	g_snprintf(buf,256,"/genius/properties/results_as_floats=%s",
 		   curstate.results_as_floats?"true":"false");
 	curstate.results_as_floats = gnome_config_get_bool(buf);
 	g_snprintf(buf,256,"/genius/properties/scientific_notation=%s",
 		   curstate.scientific_notation?"true":"false");
 	curstate.scientific_notation = gnome_config_get_bool(buf);
+	g_snprintf(buf,256,"/genius/properties/full_expressions=%s",
+		   curstate.full_expressions?"true":"false");
+	curstate.full_expressions = gnome_config_get_bool(buf);
+	g_snprintf(buf,256,"/genius/properties/max_errors=%d",
+		   curstate.max_errors);
+	curstate.max_errors = gnome_config_get_int(buf);
 }
 
 /*stolen from xchat*/
@@ -768,8 +842,9 @@ main(int argc, char *argv[])
 	GtkWidget *w;
 	GtkTooltips *tips;
 	char *file;
-	char buf[256];
 	GnomeUIInfo *plugins;
+
+	is_gui = TRUE;
 	
 	pipe(torl);
 	pipe(fromrl);
@@ -887,6 +962,12 @@ main(int argc, char *argv[])
 	set_new_calcstate(curstate);
 	set_new_errorout(geniuserror);
 	set_new_infoout(geniusinfo);
+	
+	/*init the context stack and clear out any stale dictionaries
+	  except the global one, if this is the first time called it
+	  will also register the builtin routines with the global
+	  dictionary*/
+	d_singlecontext();
 
 	file = g_strconcat(LIBRARY_DIR,"/gel/lib.cgel",NULL);
 	load_compiled_file(file,FALSE);
@@ -900,17 +981,9 @@ main(int argc, char *argv[])
 		load_file(file,FALSE);
 	g_free(file);
 
-	if(infos) {
-		geniusinfobox(infos->str);
-		g_string_free(infos,TRUE);
-		infos=NULL;
-	}
+	printout_info();
 
-	if(errors) {
-		geniuserrorbox(errors->str);
-		g_free(errors);
-		errors=NULL;
-	}
+	printout_error_num_and_reset();
 
 	for(;;) {
 		ETree *e;
@@ -921,17 +994,9 @@ main(int argc, char *argv[])
 			fprintf(rl_outstream,"\e[0m");
 		}
 
-		if(infos) {
-			geniusinfobox(infos->str);
-			g_string_free(infos,TRUE);
-			infos=NULL;
-		}
+		printout_info();
 
-		if(errors) {
-			geniuserrorbox(errors->str);
-			g_string_free(errors,TRUE);
-			errors=NULL;
-		}
+		printout_error_num_and_reset();
 
 		if(got_eof) {
 			fprintf(rl_outstream,"\n");
@@ -942,4 +1007,10 @@ main(int argc, char *argv[])
 
 
 	return 0;
+}
+
+int
+get_term_width(void)
+{
+	return ZVT_TERM(zvt)->vx->vt.width;
 }

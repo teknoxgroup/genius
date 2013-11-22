@@ -143,7 +143,6 @@ EFunc *
 d_copyfunc(EFunc *o)
 {
 	EFunc *n;
-	GList *li;
 
 	if(!free_funcs)
 		n = g_new(EFunc,1);
@@ -173,7 +172,6 @@ EFunc *
 d_makerealfunc(EFunc *o,Token *id, int use)
 {
 	EFunc *n;
-	GList *li;
 
 	if(!free_funcs)
 		n = g_new(EFunc,1);
@@ -214,8 +212,6 @@ d_makerealfunc(EFunc *o,Token *id, int use)
 void
 d_setrealfunc(EFunc *n,EFunc *fake, int use)
 {
-	GList *li;
-	
 	if(n->type == USER_FUNC ||
 	   n->type == VARIABLE_FUNC)
 		freetree(n->data.user);
@@ -274,14 +270,14 @@ d_initcontext(void)
 }
 
 /*compare two EFunc's by their context numbers*/
-static int
+/*static int
 compare_func_bycontext(gconstpointer p1, gconstpointer p2)
 {
 	EFunc *func1 = (EFunc *)p1;
 	EFunc *func2 = (EFunc *)p2;
 	
 	return func1->context < func2->context;
-}
+}*/
 
 /*add a function struct to the dict (in current context)*/
 EFunc *
@@ -325,7 +321,6 @@ d_setvalue(Token *id,ETree *value)
 EFunc *
 d_lookup_local(Token *id)
 {
-	GList *list;
 	EFunc *func;
 	
 	if(!id ||
@@ -346,7 +341,6 @@ d_lookup_local(Token *id)
 EFunc *
 d_lookup_global_up1(Token *id)
 {
-	GList *list;
 	EFunc *func;
 	
 	if(!id ||
@@ -410,7 +404,6 @@ freedict(GList *n)
 void
 freefunc(EFunc *n)
 {
-	GList *li;
 	if(!n)
 		return;
 	g_assert(!n->id || g_list_find(n->id->refs,n)==NULL);
@@ -432,8 +425,6 @@ freefunc(EFunc *n)
 void
 replacefunc(EFunc *old,EFunc *new)
 {
-	GList *li;
-
 	g_return_if_fail(old && new);
 	g_return_if_fail(old->id == new->id);
 
@@ -451,7 +442,6 @@ replacefunc(EFunc *old,EFunc *new)
 void
 d_set_ref(EFunc *n,EFunc *ref)
 {
-	GList *li;
 	if(!n || !ref)
 		return;
 	if(n->type == USER_FUNC ||
@@ -469,7 +459,6 @@ d_set_ref(EFunc *n,EFunc *ref)
 void
 d_set_value(EFunc *n,ETree *value)
 {
-	GList *li;
 	if(!n || !value)
 		return;
 	if(n->type == USER_FUNC ||

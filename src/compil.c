@@ -50,7 +50,6 @@ static void
 append_string(GString *gs,char *s)
 {
 	char *p;
-	int i;
 	char out[3]="aa";
 	for(p=s;*p;p++) {
 		out[0]='a'+((*p)&0xF);
