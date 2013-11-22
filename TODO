@@ -1,5 +1,5 @@
 *	matrix powers for rational numbers, and scalar^matrix (as matlab
-	does it
+	does it)
 
 *	add gui display to genius and use when genius run in X
 
@@ -12,3 +12,9 @@
 
 *	result display (optional) ... for matrix display and normal
 	numbers ...
+
+*	plugin support
+
+*	cleanup engine, separate parsing/execution
+
+*	more calculator functions for use in plugins etc

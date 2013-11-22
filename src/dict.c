@@ -231,11 +231,20 @@ d_setrealfunc(EFunc *n,EFunc *fake)
 void
 d_initcontext(void)
 {
+	Token *tok;
 	context.top=0; /*0 means that element 0 exists!*/
 	/*add an empty dictionary*/
 	context.stack=g_list_prepend(NULL,NULL);
 
 	dictionary = g_hash_table_new(g_str_hash,g_str_equal);
+
+	/*add Ans and ans as the same token*/
+
+	tok = g_new(Token,1);
+	tok->token = g_strdup("Ans");
+	tok->refs = NULL;
+	g_hash_table_insert(dictionary,tok->token,tok);
+	g_hash_table_insert(dictionary,g_strdup("ans"),tok);
 
 	/*this is where the built in functions register into the global
 	  dictionary*/
@@ -309,6 +318,28 @@ d_lookup_local(Token *id)
 		return NULL;
 
 	return func;
+}
+
+/*lookup a function in the dictionary NOT in the current context*/
+EFunc *
+d_lookup_global_up1(Token *id)
+{
+	GList *list;
+	EFunc *func;
+	
+	if(!id ||
+	   !id->refs)
+		return NULL;
+	
+	/*the first one must be the lowest context*/
+	func = id->refs->data;
+	
+	if(func->context<context.top)
+		return func;
+	if(!id->refs->next)
+		return NULL;
+	
+	return id->refs->next->data;
 }
 
 Token *

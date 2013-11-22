@@ -142,7 +142,7 @@ matrixw_set_size(MatrixW *m, int width, int height)
 		height = tmp;
 	}
 	
-	if(m->region.w >= width ||
+	if(m->region.w >= width &&
 	   m->region.h >= height) {
 		/*if we're the sole owner, we'll have to zero out some things*/
 		if(m->m->use==1) {

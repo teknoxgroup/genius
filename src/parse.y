@@ -29,266 +29,15 @@
 #include "calc.h"
 #include "matrix.h"
 #include "matrixw.h"
+	
+#include "parseutil.h"
 
 extern evalstack_t evalstack;
+extern ETree *free_trees;
 
 extern int return_ret; /*should the lexer return on \n*/
-extern calc_error_t error_num;
-extern int got_eof;
-extern ETree *free_trees;
 extern char *loadfile;
 extern char *loadfile_glob;
-
-#define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
-
-#define PUSH_ACT(ACT) { \
-	ETree *tree = makeoperator(ACT,&evalstack); \
-	if(!tree) {SYNTAX_ERROR;} \
-	stack_push(&evalstack,tree); \
-}
-
-#define PUSH_IDENTIFIER(ID) { \
-	ETree * tree; \
-	GET_NEW_NODE(tree); \
-	tree->type = IDENTIFIER_NODE; \
-	tree->data.id = d_intern(ID); \
-	tree->args = NULL; \
-	tree->nargs = 0; \
-	stack_push(&evalstack,tree); \
-}
-
-#define PUSH_STRING(ID) { \
-	ETree * tree; \
-	GET_NEW_NODE(tree); \
-	tree->type = STRING_NODE; \
-	tree->data.str = ID; \
-	tree->args = NULL; \
-	tree->nargs = 0; \
-	stack_push(&evalstack,tree); \
-}
-
-static int
-push_func(void)
-{
-	ETree * tree;
-	ETree * val;
-	GList * list = NULL;
-	int i = 0;
-	
-	val = stack_pop(&evalstack);
-	if(!val)
-		return FALSE;
-
-
-	for(;;) {
-		tree = stack_pop(&evalstack);
-		if(tree && tree->type==EXPRLIST_START_NODE) {
-			freetree(tree);
-			break;
-		}
-		/*we have gone all the way to the top and haven't found a
-		  marker or tree is not an ident node*/
-		if(!tree || tree->type != IDENTIFIER_NODE) {
-			if(tree) freetree(tree);
-			g_list_foreach(list,(GFunc)freetree,NULL);
-			g_list_free(list); 
-			return FALSE;
-		}
-		list = g_list_prepend(list,tree->data.id);
-		freetree(tree);
-		i++;
-	}
-	
-	GET_NEW_NODE(tree);
-
-	tree->type = FUNCTION_NODE;
-	tree->data.func = d_makeufunc(NULL,val,list,i);
-	tree->data.func->context = -1;
-	tree->args = NULL;
-	tree->nargs = 0;
-
-	stack_push(&evalstack,tree);
-
-	return TRUE;
-}
-
-/*pops the last expression, pushes a marker
-  entry and puts the last expression back*/
-static int
-push_marker(ETreeType markertype)
-{
-	ETree * last_expr = stack_pop(&evalstack);
-	ETree * tree;
-	
-	if(!last_expr)
-		return FALSE;
-       
-	GET_NEW_NODE(tree);
-	tree->type = markertype;
-	tree->args = NULL;
-	tree->nargs = 0;
-	stack_push(&evalstack,tree);
-	stack_push(&evalstack,last_expr);
-	return TRUE;
-}
-
-/*pushes a marker*/
-static void
-push_marker_simple(ETreeType markertype)
-{
-	ETree *tree;
-	GET_NEW_NODE(tree);
-	tree->type = markertype;
-	tree->args = NULL;
-	tree->nargs = 0;
-	stack_push(&evalstack,tree);
-}
-
-/*puts a spacer into the tree, spacers are just useless nodes to be removed
-  before evaluation, they just signify where there were parenthesis*/
-static int
-push_spacer(void)
-{
-	ETree * last_expr = stack_pop(&evalstack);
-	
-	if(!last_expr)
-		return FALSE;
-	else if(last_expr->type == SPACER_NODE)
-		stack_push(&evalstack,last_expr);
-	else {
-		ETree * tree;
-		GET_NEW_NODE(tree);
-		tree->type = SPACER_NODE;
-		tree->args = g_list_append(NULL,last_expr);
-		tree->nargs = 1;
-		stack_push(&evalstack,tree);
-	}
-	return TRUE;
-}
-	
-/*gather all expressions up until a row start marker and push the
-  result as a MATRIX_ROW_NODE*/
-static int
-push_matrix_row(void)
-{
-	ETree *tree;
-	GList *row = NULL;
-	int i=0;
-	for(;;) {
-		tree = stack_pop(&evalstack);
-		/*we have gone all the way to the top and haven't found a
-		  marker*/
-		if(!tree) {
-			g_list_foreach(row,(GFunc)freetree,NULL);
-			g_list_free(row); 
-			return FALSE;
-		}
-		if(tree->type==EXPRLIST_START_NODE) {
-			freetree(tree);
-			break;
-		}
-		row = g_list_prepend(row,tree);
-		i++;
-	}
-	GET_NEW_NODE(tree);
-	tree->type = MATRIX_ROW_NODE;
-	tree->args = row;
-	tree->nargs = i;
-
-	stack_push(&evalstack,tree);
-	
-	return TRUE;
-}
-	
-/*gather all expressions up until a row start marker and push the
-  result as a matrix*/
-static int
-push_matrix(void)
-{
-	ETree *tree;
-	int i,j;
-	int cols,rows;
-	GList *rowl = NULL;
-	GList *lix,*liy;
-	
-	Matrix *matrix;
-	
-	rows=0;
-	cols=0;
-	for(;;) {
-		tree = stack_pop(&evalstack);
-		/*we have gone all the way to the top and haven't found a
-		  marker*/
-		if(!tree) {
-			GList *li;
-			for(li=rowl;li;li=g_list_next(li)) {
-				g_list_foreach(li->data,(GFunc)freetree,
-					       NULL);
-				g_list_free(li->data); 
-			}
-			g_list_free(rowl);
-			/**/g_warning("BAD MATRIX, NO START MARKER");
-			return FALSE;
-		} else if(tree->type==MATRIX_START_NODE) {
-			freetree(tree);
-			break;
-		} else if(tree->type==MATRIX_ROW_NODE) {
-			if(tree->nargs>cols)
-				cols = tree->nargs;
-			rowl = g_list_prepend(rowl,tree->args);
-			tree->args = NULL;
-			tree->nargs = 0;
-			freetree(tree);
-			rows++;
-			continue;
-		} else {
-			GList *li;
-			freetree(tree);
-			for(li=rowl;li;li=g_list_next(li)) {
-				g_list_foreach(li->data,(GFunc)freetree,
-					       NULL);
-				g_list_free(li->data); 
-			}
-			g_list_free(rowl);
-			/**/g_warning("BAD MATRIX, A NON ROW ELEMENT FOUND");
-			return FALSE;
-		}
-	}
-
-	matrix = matrix_new();
-	matrix_set_size(matrix, cols, rows);
-	
-	for(j=0,liy=rowl;liy;j++,liy=g_list_next(liy)) {
-		for(i=0,lix=liy->data;lix;i++,lix=g_list_next(lix)) {
-			matrix_index(matrix,i,j) = lix->data;
-		}
-		g_list_free(liy->data);
-	}
-	g_list_free(rowl);
-	
-	GET_NEW_NODE(tree);
-	tree->type = MATRIX_NODE;
-	tree->data.matrix = matrixw_new_with_matrix(matrix);
-	tree->args = NULL;
-	tree->nargs = 0;
-	
-	stack_push(&evalstack,tree);
-	return TRUE;
-}
-
-/*pushes a NULL onto the stack, null cannot be evaluated, it will be
-  read as ""*/
-static void
-push_null(void)
-{
-	ETree *tree;
-	GET_NEW_NODE(tree);
-	tree->type = NULL_NODE;
-	tree->args = NULL;
-	tree->nargs = 0;
-
-	stack_push(&evalstack,tree);
-}
 
 %}
 
@@ -340,7 +89,7 @@ push_null(void)
 %right '\''
 %right '!'
 %right '^'
-%right UMINUS
+%right UMINUS UPLUS
 
 %left AT
 
@@ -382,7 +131,9 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr '!'		{ PUSH_ACT(E_FACT); }
 	|	expr '\''		{ PUSH_ACT(E_TRANSPOSE); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
+	|	'+' expr %prec UPLUS
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
+	|	expr AT expr ')'	{ PUSH_ACT(E_GET_VELEMENT); }
 	|	expr AT expr ',' expr ')' { PUSH_ACT(E_GET_ELEMENT); }
 	|	expr AT reg ',' expr ')' { PUSH_ACT(E_GET_REGION); }
 	|	expr AT expr ',' reg ')' { PUSH_ACT(E_GET_REGION); }

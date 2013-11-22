@@ -37,6 +37,8 @@
 #include "util.h"
 #include "dict.h"
 
+#include "inter.h"
+
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -52,8 +54,7 @@ calcstate_t curstate={
 	256,
 	0,
 	FALSE,
-	FALSE,
-	FALSE /*handle interrupts*/
+	FALSE
 	};
 	
 extern calc_error_t error_num;
@@ -497,7 +498,70 @@ interrupt_calc(GtkWidget *widget, gpointer data)
 	interrupted = TRUE;
 }
 
+static void
+fs_destroy_cb(GtkWidget *w, GtkWidget **fs)
+{
+	*fs = NULL;
+}
+
+static void
+really_load_cb(GtkWidget *w,GtkFileSelection *fs)
+{
+	char *s;
+	s = gtk_file_selection_get_filename(fs);
+	if(!s || !g_file_exists(s)) {
+		gnome_app_error(GNOME_APP(window), _("Can not open file!"));
+		return;
+	}
+	load_guess_file(s,TRUE);
+
+	if(infos) {
+		geniusinfobox(infos->str);
+		g_string_free(infos,TRUE);
+		infos=NULL;
+	}
+
+	if(errors) {
+		geniuserrorbox(errors->str);
+		g_free(errors);
+		errors=NULL;
+	}
+}
+
+static void
+load_cb(GtkWidget *w)
+{
+	static GtkWidget *fs = NULL;
+	
+	if(fs) {
+		gtk_widget_show_now(fs);
+		gdk_window_raise(fs->window);
+		return;
+	}
+
+	fs = gtk_file_selection_new(_("Load GEL file"));
+	
+	gtk_window_position (GTK_WINDOW (fs), GTK_WIN_POS_MOUSE);
+
+	gtk_signal_connect (GTK_OBJECT (fs), "destroy",
+			    GTK_SIGNAL_FUNC(fs_destroy_cb), &fs);
+	
+	gtk_signal_connect (GTK_OBJECT (GTK_FILE_SELECTION (fs)->ok_button),
+			    "clicked", GTK_SIGNAL_FUNC(really_load_cb),
+			    fs);
+
+	gtk_signal_connect_object (GTK_OBJECT (GTK_FILE_SELECTION (fs)->ok_button),
+				   "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
+				   GTK_OBJECT(fs));
+	gtk_signal_connect_object (GTK_OBJECT (GTK_FILE_SELECTION (fs)->cancel_button),
+				   "clicked", GTK_SIGNAL_FUNC(gtk_widget_destroy),
+				   GTK_OBJECT(fs));
+
+	gtk_widget_show (fs);
+}
+
 static GnomeUIInfo file_menu[] = {
+	GNOMEUIINFO_ITEM_NONE(N_("_Load"),N_("Load and execute a file in genius"),load_cb),
 	GNOMEUIINFO_MENU_EXIT_ITEM(quitapp,NULL),
 	GNOMEUIINFO_END,
 };
@@ -581,79 +645,6 @@ get_properties (void)
 	curstate.scientific_notation = gnome_config_get_bool(buf);
 }
 
-static int addtoplevels = FALSE;
-static char *toplevels[] = {
-	"load",
-	NULL
-};
-static char *operators[] = {
-	"not","and","xor","or","while","until","for","do","to","by","in","if",
-	"then","else","define","function","call","return","bailout","exception",
-	"continue","break","null",
-	NULL
-};
-
-
-static char *
-command_generator (char *text, int state)
-{
-	static int oi,ti,len;
-	static GList *fli;
-
-	if(!state) {
-		oi = 0;
-		if(addtoplevels)
-			ti = 0;
-		else
-			ti = -1;
-		len = strlen (text);
-		fli = d_getcontext();
-	}
-	
-	while(ti>=0 && toplevels[ti]) {
-		char *s = toplevels[ti++];
-		if(strncmp(s,text,len)==0)
-			return strdup(s);
-	}
-
-	while(operators[oi]) {
-		char *s = operators[oi++];
-		if(strncmp(s,text,len)==0)
-			return strdup(s);
-	}
-
-	while(fli) {
-		EFunc *f = fli->data;
-		fli = g_list_next(fli);
-		if(!f->id || !f->id->token)
-			continue;
-		if(strncmp(f->id->token,text,len)==0)
-			return strdup(f->id->token);
-	}
-
-	return NULL;
-}
-
-static char **
-tab_completion (char *text, int start, int end)
-{
-	char *p;
-	for(p=rl_line_buffer;*p==' ' || *p=='\t';p++)
-		;
-	if(parenth_depth==0 &&
-	   (strncmp(p,"load ",5)==0 ||
-	    strncmp(p,"load\t",5)==0)) {
-		return NULL;
-	}
-
-	if (parenth_depth==0)
-		addtoplevels = TRUE;
-	else
-		addtoplevels = FALSE;
-
-	return completion_matches (text, command_generator);
-}
-
 /*stolen from xchat*/
 static void
 term_change_pos(GtkWidget *widget)
@@ -675,6 +666,10 @@ the_getc(FILE *fp)
 			in_recursive = FALSE;
 			if(need_quitting) {
 				gtk_exit(0);
+			}
+			if(interrupted) {
+				readbuf = g_array_set_size(readbuf,0);
+				return '\n';
 			}
 		}
 		if(readbufl>0) {
@@ -744,6 +739,8 @@ catch_interrupts(GtkWidget *w, GdkEvent *e)
 		if(e->key.keyval == GDK_c &&
 		   e->key.state&GDK_CONTROL_MASK) {
 			interrupted = TRUE;
+			if(in_recursive)
+				gtk_main_quit();
 			return TRUE;
 		}
 	}
@@ -769,7 +766,7 @@ main(int argc, char *argv[])
 
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
 	textdomain(PACKAGE);
-	
+
 	gnome_init("genius", NULL, argc, argv);
 
 	/*read gnome_config parameters */
@@ -839,11 +836,10 @@ main(int argc, char *argv[])
 	gtk_widget_show_all(window);
 	
 	
-	rl_readline_name = "Genius";
+	init_inter();
 	rl_instream = fdopen(torl[0],"r");
 	rl_outstream = fdopen(fromrl[1],"w");
 	rl_getc_function = the_getc;
-	rl_attempted_completion_function = (CPPFunction *)tab_completion;
 	
 	outputfp = rl_outstream;
 
@@ -882,8 +878,13 @@ main(int argc, char *argv[])
 	}
 
 	for(;;) {
+		char *str;
 		rewind_file_info();
-		evalexp(NULL,NULL,rl_outstream,NULL,"= \e[01;34m",TRUE);
+		do
+			str = get_expression(&got_eof);
+		while(interrupted);
+		evalexp(str,NULL,rl_outstream,NULL,"= \e[01;34m",TRUE);
+		g_free(str);
 		fprintf(rl_outstream,"\e[0m");
 
 		if(infos) {

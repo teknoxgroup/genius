@@ -30,14 +30,11 @@
 #include "calc.h"
 #include "parse.h"
 #include "util.h"
-#include <readline/readline.h>
-#include <readline/history.h>
 
 int lex_fd[2];
 int first_tok = STARTTOK;
 int return_ret = FALSE;
 int parenth_depth = 0;
-int use_readline = FALSE;
 int lex_init = TRUE;
 extern evalstack_t evalstack;
 extern int got_eof;
@@ -49,35 +46,6 @@ static int matrix_entry=0;
 		return_ret = TRUE; \
 	else \
 		return_ret = FALSE; \
-}
-
-#define NEXT_LINE {							\
-	while(use_readline) {						\
-		char *s = readline("      > ");				\
-		if(!s) {						\
-			got_eof = TRUE;					\
-			return '\n';					\
-		}							\
-		if(!*s)	{						\
-			free(s);					\
-			continue;					\
-		}							\
-		add_history(s);						\
-									\
-		/*this seems ugly but for some reason that's the only	\
-		  way it works*/					\
-		close(lex_fd[0]);					\
-		fclose(yyin);						\
-									\
-		pipe(lex_fd);						\
-		yyin=fdopen(lex_fd[0],"r");				\
-									\
-		write(lex_fd[1],s,strlen(s));				\
-		write(lex_fd[1],"\n",1);				\
-		close(lex_fd[1]);					\
-		free(s);						\
-		break;							\
-	}								\
 }
 
 %}
@@ -299,18 +267,16 @@ null		{ DO_RET; return '.'; }
 			return NUMBER;
 		}
 		
-\\\n		{ incr_file_info(); NEXT_LINE; }
+\\\n		{ incr_file_info(); }
 		
 [\t ]*\n	{ 
 			incr_file_info();
 			if(matrix_entry) {
-				NEXT_LINE;
 				return ':';
 			} else if(return_ret) {
 				first_tok = 0;
 				return '\n';
 			}
-			NEXT_LINE;
 		}
 		
 ^[\t ][\t ]*	;
@@ -340,3 +306,6 @@ null		{ DO_RET; return '.'; }
 .		{ NO_RET; return yytext[0]; }
 
 %%
+
+int my_yyinput(void);
+int my_yyinput(void) { return input(); }

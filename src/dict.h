@@ -68,7 +68,11 @@ void d_set_ref(EFunc *n,EFunc *ref);
 
 /*lookup a function in the dictionary, either the whole thing, or just the
   current context otherwise*/
+/*lookup a function in the dictionary in the current context*/
 EFunc * d_lookup_local(Token *id);
+EFunc * d_lookup_global_up1(Token *id);
+/*lookup a function in the dictionary, if there are more return the one in the
+  highest context*/
 #define d_lookup_global(id) ((id&&id->refs)?id->refs->data:NULL)
 
 Token * d_intern(char *id);

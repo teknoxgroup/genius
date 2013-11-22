@@ -22,7 +22,8 @@
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
-#define _(x) x
+#include <libintl.h>
+#define _(x) gettext(x)
 #endif
 
 #include <stdio.h>
@@ -105,6 +106,7 @@ branches(int op)
 		case E_LOGICAL_XOR: return 2;
 		case E_LOGICAL_NOT: return 1;
 		case E_REGION_SEP: return 2;
+		case E_GET_VELEMENT: return 2;
 		case E_GET_ELEMENT: return 3;
 		case E_GET_REGION: return 3;
 		case E_GET_ROW_REGION: return 2;
@@ -677,7 +679,8 @@ get_matrix_index_num(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree 
 }
 
 static int
-get_index_region(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr, 
+get_index_region(ETree *n, ETree *l, ETree *set, ETree *m,
+		 ETree *ll, ETree *rr, 
 		 ETree *num, ETree **ret, int *from, int *to)
 {
 	if(num->type == OPERATOR_NODE &&
@@ -704,7 +707,8 @@ get_index_region(ETree *n, ETree *l, ETree *set, ETree *m, ETree *ll, ETree *rr,
 }
 
 static int
-get_matrix_index(ETree *n, ETree *l, ETree *set, ETree **m, ETree **ll, ETree **rr, 
+get_matrix_index(ETree *n, ETree *l, ETree *set, ETree **m,
+		 ETree **ll, ETree **rr, 
 		 int do_row, int do_column,
 		 int *rowfrom, int *rowto,
 		 int *colfrom, int *colto,
@@ -877,6 +881,7 @@ equalsop(ETree *n)
 	GET_LR(n,l,r);
 	
 	if(l->type != IDENTIFIER_NODE &&
+	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_VELEMENT) &&
 	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_ELEMENT) &&
 	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_REGION) &&
 	   !(l->type == OPERATOR_NODE && l->data.oper == E_GET_COL_REGION) &&
@@ -979,6 +984,37 @@ equalsop(ETree *n)
 		freetree(rr);
 		
 		matrixw_set_element(mat,ri-1,li-1,copynode(set));
+	} else if(l->data.oper == E_GET_VELEMENT) {
+		MatrixW *mat;
+		ETree *ll,*rr,*m;
+		ETree *ret = NULL;
+		int li; 
+
+		set = evalnode(r);
+		/*exception*/
+		if(!set)
+			return NULL;
+		
+		if(!get_matrix_index(n,l,set,&m,&ll,&rr,TRUE,FALSE,
+				     &li,&li,NULL,NULL,&ret))
+			return ret;
+
+		if(!(mat = get_matrix_p(n,l,set,m,ll,rr,NULL,&ret)))
+			return ret;
+
+		freetree(ll);
+		freetree(rr);
+		
+		if(matrixw_height(mat)==1) {
+			matrixw_set_element(mat,li-1,0,copynode(set));
+		} else if(matrixw_width(mat)==1) {
+			matrixw_set_element(mat,0,li-1,copynode(set));
+		} else {
+			int x,y;
+			x = (li-1)%matrixw_width(mat);
+			y = (li-1)/matrixw_width(mat);
+			matrixw_set_element(mat,x,y,copynode(set));
+		}
 	} else /*l->data.oper == E_GET_REGION E_GET_COL_REGION E_GET_ROW_REGION*/ {
 		MatrixW *mat;
 		ETree *ll,*rr,*m;
@@ -1200,7 +1236,7 @@ funccallop(ETree *n,int direct_call)
 			} else if(r[i]->type == OPERATOR_NODE &&
 			   r[i]->data.oper == E_REFERENCE) {
 				ETree *t = r[i]->args->data;
-				EFunc *rf = d_lookup_global(t->data.id);
+				EFunc *rf = d_lookup_global_up1(t->data.id);
 				if(!rf) {
 					freedict(d_popcontext());
 					(*errorout)(_("Referencing an undefined variable!"));
@@ -2412,8 +2448,7 @@ matrix_mul_op(ETree *n, ETree *arg[],gpointer f)
 		MatrixW *m1,*m2;
 		m1 = arg[0]->data.matrix;
 		m2 = arg[1]->data.matrix;
-		if((matrixw_width(m1) != matrixw_height(m2)) ||
-		   (matrixw_height(m1) != matrixw_width(m2))) {
+		if((matrixw_width(m1) != matrixw_height(m2))) {
 			(*errorout)(_("Can't multiply matricies of wrong sizes"));
 			return copynode_args(n,arg);
 		}
@@ -2831,9 +2866,15 @@ get_element(ETree *n)
 	ETree *ret = NULL;
 	int li,ri; 
 
-	if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,TRUE,
-			     &li,&li,&ri,&ri,&ret))
-		return ret;
+	if(n->data.oper==E_GET_ELEMENT) {
+		if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,TRUE,
+				     &li,&li,&ri,&ri,&ret))
+			return ret;
+	} else /*E_GET_VELEMENT*/ {
+		if(!get_matrix_index(NULL,n,NULL,&m,&ll,&rr,TRUE,FALSE,
+				     &li,&li,NULL,NULL,&ret))
+			return ret;
+	}
 
 	if(m->type != MATRIX_NODE) {
 		ETree *arg[3];
@@ -2842,6 +2883,11 @@ get_element(ETree *n)
 		arg[1]=ll;
 		arg[2]=rr;
 		return copynode_args(n,arg);
+	}
+
+	if(n->data.oper == E_GET_VELEMENT) {
+		ri = ((li-1)%matrixw_width(m->data.matrix))+1;
+		li = ((li-1)/matrixw_width(m->data.matrix))+1;
 	}
 	
 	if(matrixw_width(m->data.matrix) < ri ||
@@ -3005,6 +3051,7 @@ evaloper(ETree *n, int argeval)
 				return copynode_args(n,arg);
 			}
 
+		case E_GET_VELEMENT:
 		case E_GET_ELEMENT:
 			return get_element(n);
 

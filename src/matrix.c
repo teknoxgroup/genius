@@ -65,22 +65,28 @@ matrix_set_size(Matrix *matrix, int width, int height)
 {
 	GPtrArray *na;
 	int i;
+	int wpadding;
+	int hpadding;
 
 	g_return_if_fail(matrix != NULL);
 	g_return_if_fail(width>0);
 	g_return_if_fail(height>0);
 	
 	if(!matrix->data) {
+		wpadding = width/10;
+		hpadding = height/10;
+		if(wpadding>10) wpadding = 10;
+		if(hpadding>10) hpadding = 10;
 		matrix->width = width;
-		matrix->realwidth = width+10;
+		matrix->realwidth = width+wpadding;
 		matrix->height = height;
-		matrix->fullsize=(width+10)*(height+10);
+		matrix->fullsize=(width+wpadding)*(height+hpadding);
 
 		matrix->data = g_ptr_array_new();
 		g_ptr_array_set_size(matrix->data,matrix->fullsize);
 
-		memset(matrix->data->pdata, 0,
-		       (matrix->fullsize*sizeof(void *)));
+		/*memset(matrix->data->pdata, 0,
+		       (matrix->fullsize*sizeof(void *)));*/
 		return;
 	}
 	
@@ -92,26 +98,34 @@ matrix_set_size(Matrix *matrix, int width, int height)
 		}
 		if(width<matrix->width) {
 			for(i=0;i<matrix->height;i++)
-				memset(matrix->data->pdata+((matrix->realwidth*i)+width)*sizeof(void *),0,(matrix->width-width)*sizeof(void *));
+				memset(matrix->data->pdata+((matrix->realwidth*i)+width),0,(matrix->width-width)*sizeof(void *));
 		}
 		if(height<matrix->height) {
-			memset(matrix->data->pdata+(matrix->realwidth*height)*sizeof(void *),0,((matrix->realwidth*matrix->height)-(matrix->realwidth*height))*sizeof(void *));
+			memset(matrix->data->pdata+(matrix->realwidth*height),0,
+			       ((matrix->realwidth*matrix->height)-(matrix->realwidth*height))*sizeof(void *));
 		}
 		matrix->width = width;
 		matrix->height = height;
 		return;
 	}
+
+	wpadding = width/10;
+	hpadding = height/10;
+	if(wpadding>10) wpadding = 10;
+	if(hpadding>10) hpadding = 10;
 	
-	matrix->fullsize = (width+10)*(height+10);
+	matrix->fullsize = (width+wpadding)*(height+hpadding);
 	na = g_ptr_array_new();
 	g_ptr_array_set_size(na,matrix->fullsize);
-	memset(na->pdata,0,matrix->fullsize*sizeof(void *));
+	/*memset(na->pdata,0,matrix->fullsize*sizeof(void *));*/
 	
 	for(i=0;i<matrix->height;i++) {
-		memcpy(na->pdata+((width+10)*i)*sizeof(void *),matrix->data->pdata+(matrix->realwidth*i)*sizeof(void *),matrix->width*sizeof(void *));
+		memcpy(na->pdata+((width+wpadding)*i),
+		       matrix->data->pdata+(matrix->realwidth*i),
+		       matrix->width*sizeof(void *));
 	}
 	
-	matrix->realwidth = width+10;
+	matrix->realwidth = width+wpadding;
 	matrix->width = width;
 	matrix->height = height;
 

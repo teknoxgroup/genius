@@ -42,7 +42,6 @@ typedef struct _calcstate_t {
 	int max_digits; /*max digits in the display 0= as many as I got*/
 	int results_as_floats;  /*give result as float*/
 	int scientific_notation; /*always scientific notation*/
-	int do_interrupts; /*handle SIGINT*/
 } calcstate_t;
 
 
@@ -63,6 +62,12 @@ char * addparenth(char *s);
   result, expression is in str or if str is NULL then in infd,
   pretty will use pretty_print_etree*/
 void evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty);
+
+/*these are parts of the above*/
+/*note that parseexp will actually load AND execute files if there are load
+  toplevel instructions, as those don't translate into an ETree*/
+ETree * parseexp(char *str, FILE *infile, int load_files);
+ETree * runexp(ETree *exp);
 
 void compile_all_user_funcs(FILE *outfile);
 void load_compiled_file(char *file, int warn);

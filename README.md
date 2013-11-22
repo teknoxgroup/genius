@@ -70,6 +70,8 @@ The "Ans" variable can be used to get the result of the last expression
 so if you did some calculation and just wanted to add 389 to the result,
 you'd do "Ans+389"
 
+(you can also use the lowercase "ans" as well)
+
 Functions:
 
 For variables use the = operator, that operator sets the variable and
@@ -187,19 +189,19 @@ is_function	1 (anything)		returns true if the argument is a
 					function (anonymous)
 is_function_ref	1 (anything)		returns true if the argument is a
 					reference variable to a function
-is_complex	1 (value)		returns true if the argument is a
-					complex number, it will fail if
-					the argument is not a value
-is_integer	1 (value)		returns true if the argument is an
-					integer, it will fail if
-					the argument is not a value
-is_rational	1 (value)		returns true if the argument is an
-					rational, note that it is false if
-					it's an integer! also it will fail if
-					the argument is not a value
-is_float	1 (value)		returns true if the argument is a
-					floating point number, it will fail if
-					the argument is not a value
+is_complex	1 (anything)		returns true if the argument is a
+					value and a complex number
+is_real		1 (anything)		returns true if the argument is a
+					value and a real number (note that
+					this is not exactly the opposite of
+					is_complex)
+is_integer	1 (anything)		returns true if the argument is a
+					non complex integer value
+is_rational	1 (anything)		returns true if the argument is a
+					non complex rational value, note that
+					it returns false for integers!
+is_float	1 (anything)		returns true if the argument is a
+					non complex floating point value
 
 is_poly		1 (vector)		does this vector look like a
 					polynomial (horizontal with value
@@ -248,6 +250,9 @@ infsum2		4 (function,arg,start,inc)
 					index as the second
 nPr		2 (integer,integer)	calculate permutations
 nCr		2 (integer,integer)	calculate combinations
+pascal		1 (integer)		get the pascal's triangle as a matrix
+					up to the n'th row (one more row then
+					the argument)
 fib		1 (integer)		returns n'th fibbonachi number
 catalan		1 (integer)		returns the n'th catalan number
 minimize	1 (func,x,incr)		"minimize" the function: start
@@ -411,13 +416,17 @@ a@(b,c)		get element of a matrix
 a@(b,)		get row of a matrix
 a@(,c)		get column of a matrix
 a..b		specify a row, column region
+a@(b)		get an element from a matrix treating it as a vector
 
 NOTE: the @() operator for matrixes is the only place you can use the ..
 operator. With it you can specify a range of values instead of just
 one. So that a@(2..4,6) is the rows 2,3,4 of the column 6. Or a@(,1..2)
 will get you the first two columns of a matrix. You can also assign to
 the @() operator, as long as the right value is a matrix that matches the
-region in size, or if it is any other type of value.
+region in size, or if it is any other type of value. The exception to the
+above rule is the a@(b) operator which will only take a single value,
+it tries to treat the matrix as a vector, if the matrix is not a vector,
+it will traverse the matrix row-wise.
 
 NOTE: the comparison operators (except for the <=> operator which behaves
 normally), are not strictly binary operators, they can in fact be grouped

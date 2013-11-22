@@ -1,3 +1,88 @@
+Mon May 10 21:01:42 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.2
+
+Mon May 10 20:52:18 1999  George Lebl  <jirka@5z.com>
+
+	* src/*,po/*: try to get NLS to work but I just can't get it
+	  working
+
+Mon May 10 18:45:53 1999  George Lebl  <jirka@5z.com>
+
+	* src/calc.[ch]: separated evalexp into more logical functions,
+	  removed do_interrupts from state
+
+	* src/{genius.c,gnome-genius.c,inter.c,calc.c}: handle interrupts
+	  in input as well and handle SIGINT in genius.c
+
+Mon May 10 02:11:03 1999  George Lebl  <jirka@5z.com>
+
+	* src/inter.[ch]: this file contains the readline stuff now as
+	  it is separated from the rest of the code. It contains a HACK
+	  however to figure out the bounds of a single expression in the
+	  same way that the lexer/parser do. This is of course not
+	  possible without a parser, but it should be ok for normal use
+	  and only differs in functionality in cases of errors (or should)
+
+	* src/{genius.c,gnome-genius.c,calc.c,lexer.l}: get rid of readline
+	  stuff that is now in inter
+
+	* src/gnome-genius.c: add a Load file menu item which is the same
+	  as the load command
+
+	* src/Makefile.am: add inter.[ch]
+
+	* src/parse.y: accept unary '+' as well as a no op
+
+	* src/geniustests.txt: add some simple tests
+
+Sat May 08 15:15:50 1999  George Lebl  <jirka@5z.com>
+
+	* src/matrixw.c: don't use padding of 10 but 0.1 of the size to a
+	  maximum of 10 for allocation of new space, this improves the
+	  performance by about 15% in calculations heavy on allocation of
+	  new small matrices. Also fixed a segfault in reallocating matrix
+	  to a larger size
+
+	* configure.in: raise version number
+
+Sat May 08 14:09:21 1999  George Lebl  <jirka@5z.com>
+
+	* src/dict.c: Make "ans" be a synomym for "Ans" to make matlab
+	  people happy
+
+	* src/funclib.c: is_rational,is_integer,is_complex and is_float, now
+	  never fail, they just return 0, also added is_real as well
+
+	* src/lib.gel: updated to use the above fact to make the argument
+	  tests nicer and faster
+
+	* README: updated for the above
+
+Fri May 07 20:25:04 1999  George Lebl  <jirka@5z.com>
+
+	* src/{eval.[ch],calc.c}: add a vector element operator
+
+	* src/lib.gel: fix the delrowcol function and add a pascal
+	  function
+
+	* README: update
+
+Fri May 07 14:50:54 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: correct check for matrix dimensions on multiplication
+
+Thu May 06 21:20:01 1999  George Lebl  <jirka@5z.com>
+
+	* src/{dict.[ch],eval.c}: don't look up the dereference in the
+	  immediate context when assigning to a function argument
+
+	* src/geniustests.txt: add test for the above
+
+Thu May 06 17:48:02 1999  George Lebl  <jirka@5z.com>
+
+	* src/matrixw.c: fix a segfault on matrix size setting
+
 Thu May 06 00:26:37 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.4.1

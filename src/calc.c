@@ -22,7 +22,8 @@
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
-#define _(x) x
+#include <libintl.h>
+#define _(x) gettext(x)
 #endif
 #include <stdlib.h>
 #include <unistd.h>
@@ -51,7 +52,6 @@
 extern int lex_fd[2];
 extern int first_tok;
 extern int lex_init;
-extern int use_readline;
 
 extern FILE *yyin;
 extern char *yytext;
@@ -95,6 +95,9 @@ int interrupted = FALSE;
 
 static GList *curfile = NULL;
 static GList *curline = NULL;
+
+/*from lexer.l*/
+int my_yyinput(void);
 
 void
 add_description(char *func, char *desc)
@@ -310,6 +313,15 @@ appendoper(GString *gs,FILE *out, ETree *n)
 
 		case E_REGION_SEP:
 			append_binaryoper(gs,out,"..",n); break;
+
+		case E_GET_VELEMENT:
+			GET_LR(n,l,r);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout(gs,out,"@(");
+			print_etree(gs,out,r);
+			appendout(gs,out,"))");
+			break;
 
 		case E_GET_ELEMENT:
 		case E_GET_REGION:
@@ -932,6 +944,8 @@ load_fp(FILE *fp)
 			got_eof = FALSE;
 			break;
 		}
+		if(interrupted)
+			break;
 	}
 	fclose(fp);
 }
@@ -982,13 +996,6 @@ load_guess_file(char *file, int warn)
 	}
 }
 
-static void
-interrupt(int x)
-{
-	interrupted = TRUE;
-	signal(SIGINT,SIG_IGN);
-}
-
 void
 set_new_errorout(void (*func)(char *))
 {
@@ -1001,74 +1008,9 @@ set_new_infoout(void (*func)(char *))
 	infoout = func;
 }
 
-
-void
-evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+static void
+do_load_files(void)
 {
-	int stacklen;
-	ETree *ret;
-	int willquit = FALSE;
-	
-	if(!outputfp)
-		outputfp=stdout;
-	
-	if(outstring)
-		*outstring = NULL;
-	
-	/*init the context stack and clear out any stale dictionaries
-	  except the global one, if this is the first time called it
-	  will also register the builtin routines with the global
-	  dictionary*/
-	d_singlecontext();
-	
-	error_num=NO_ERROR;
-	
-	/*if we this was set, then the mp library was initialized for
-	  sure*/
-	g_assert(calcstate.float_prec>0);
-
-	first_tok = STARTTOK;
-
-	use_readline = FALSE;
-	if(str || !infile) {
-		pipe(lex_fd);
-		yyin=fdopen(lex_fd[0],"r");
-		if(str) {
-			write(lex_fd[1],str,strlen(str));
-		}
-	 	else {
-			char *s = readline("genius> ");
-			if(!s) {
-				got_eof = TRUE;
-				return;
-			}
-			if(*s)
-				add_history(s);
-			write(lex_fd[1],s,strlen(s));
-			free(s);
-			use_readline = TRUE;
-		}
-		write(lex_fd[1],"\n",1);
-		close(lex_fd[1]);
-	} else
-		yyin = infile;
-
-	g_free(loadfile); loadfile = NULL;
-	g_free(loadfile_glob); loadfile_glob = NULL;
-
-	lex_init = TRUE;
-	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
-	yyparse();
-
-	/*while(yyparse() && !feof(yyin))
-		;*/
-
-	if(str || !infile) {
-		close(lex_fd[0]);
-		fclose(yyin);
-		yyin = NULL;
-	}
-
 	if(loadfile) {
 		char *file = loadfile;
 		loadfile=NULL;
@@ -1076,7 +1018,6 @@ evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,
 			freetree(stack_pop(&evalstack));
 		load_file(file,TRUE);
 		g_free(file);
-		return;
 	}
 
 	if(loadfile_glob) {
@@ -1094,41 +1035,120 @@ evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,
 				char *s = tilde_expand_word(gs.gl_pathv[i]);
 				load_guess_file(s,TRUE);
 				free(s);
+				if(interrupted) {
+					globfree(&gs);
+					free(flist);
+					return;
+				}
 			}
 			globfree(&gs);
 			f = strtok(NULL,"\t ");
 		}
 		free(flist);
-		return;
+	}
+}
+
+ETree *
+parseexp(char *str, FILE *infile, int load_files)
+{
+	int stacklen;
+	
+	interrupted = FALSE;
+	
+	/*init the context stack and clear out any stale dictionaries
+	  except the global one, if this is the first time called it
+	  will also register the builtin routines with the global
+	  dictionary*/
+	d_singlecontext();
+	
+	error_num=NO_ERROR;
+	
+	/*if we this was set, then the mp library was initialized for
+	  sure*/
+	g_assert(calcstate.float_prec>0);
+
+	first_tok = STARTTOK;
+	
+	g_assert(str || infile);
+	g_assert(!(str && infile));
+
+	if(str) {
+		pipe(lex_fd);
+		yyin=fdopen(lex_fd[0],"r");
+		if(str)
+			write(lex_fd[1],str,strlen(str));
+		write(lex_fd[1],"\n",1);
+		close(lex_fd[1]);
+	} else
+		yyin = infile;
+
+	g_free(loadfile); loadfile = NULL;
+	g_free(loadfile_glob); loadfile_glob = NULL;
+
+	lex_init = TRUE;
+	/*yydebug=TRUE;*/  /*turn debugging of parsing on here!*/
+	yyparse();
+
+	/*while(yyparse() && !feof(yyin))
+		;*/
+
+	if(str) {
+		while(my_yyinput()!=EOF)
+			;
+		close(lex_fd[0]);
+		fflush(yyin);
+		fclose(yyin);
+		yyin = NULL;
+	}
+	
+	if(!load_files) {
+		g_free(loadfile); loadfile = NULL;
+		g_free(loadfile_glob); loadfile_glob = NULL;
+	} else if(loadfile || loadfile_glob) {
+		do_load_files();
+		return NULL;
 	}
 	
 	/*catch parsing errors*/
 	if(error_num!=NO_ERROR) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
-		return;
+		return NULL;
 	}
 	
 	stacklen = g_list_length(evalstack);
 	
 	if(stacklen==0)
-		return;
+		return NULL;
 
 	/*stack is supposed to have only ONE entry*/
 	if(stacklen!=1) {
 		while(evalstack)
 			freetree(stack_pop(&evalstack));
 		(*errorout)(_("ERROR: Probably corrupt stack!"));
-		return;
+		return NULL;
 	}
 	evalstack->data = gather_comparisons(evalstack->data);
+	
+	return stack_pop(&evalstack);
+}
 
+ETree *
+runexp(ETree *exp)
+{
+	static int busy = FALSE;
+	ETree *ret;
+	
+	if(busy) {
+		(*errorout)(_("ERROR: Can't execute more things at once!"));
+		return NULL;
+	}
+	
+	busy = TRUE;
 
+	error_num=NO_ERROR;
+	
 	push_file_info(NULL,0);
-#ifdef LEAK_DEBUG_CONTRAPTION
-for(;;) {
-	ETree *node = copynode(evalstack->data);
-#endif
 	if(returnval)
 		freetree(returnval);
 	returnval = NULL;
@@ -1137,11 +1157,9 @@ for(;;) {
 	interrupted = FALSE;
 	if(inloop) g_slist_free(inloop);
 	inloop = g_slist_prepend(NULL,GINT_TO_POINTER(0));
-	if(calcstate.do_interrupts)
-		signal(SIGINT,interrupt);
-	ret = evalnode(evalstack->data);
-	if(calcstate.do_interrupts)
-		signal(SIGINT,SIG_IGN);
+
+	ret = evalnode(exp);
+
 	g_slist_free(inloop);
 	inloop = NULL;
 	if(interrupted || inbailout || inexception) {
@@ -1150,29 +1168,43 @@ for(;;) {
 	}
 	inbailout = FALSE;
 	inexception = FALSE;
-	interrupted = FALSE;
-	freetree(stack_pop(&evalstack));
+	/* we need to catch this later as well: interrupted = FALSE;*/
 	if(!ret && returnval)
 		ret = returnval;
 	else if(returnval)
 		freetree(returnval);
 	returnval = NULL;
-#ifdef LEAK_DEBUG_CONTRAPTION
-	if(infile) break;
-	if(ret) freetree(ret);
-	ret = NULL;
-	stack_push(&evalstack,node);
-}
-#endif
 	pop_file_info();
+
+	busy = FALSE;
 
 	/*catch evaluation errors*/
 	if(!ret)
-		return;
+		return NULL;
 	if(error_num!=NO_ERROR) {
 		freetree(ret);
-		return;
+		return NULL;
 	}
+	return ret;
+}
+
+void
+evalexp(char * str, FILE *infile, FILE *outfile, char **outstring, char *prefix,int pretty)
+{
+	ETree *parsed;
+	ETree *ret;
+	
+	if(!outputfp)
+		outputfp=stdout;
+	
+	if(outstring)
+		*outstring = NULL;
+	
+	parsed = parseexp(str,infile,TRUE);
+	if(!parsed) return;
+	ret = runexp(parsed);
+	freetree(parsed);
+	if(!ret) return;
 
 	if(ret->type != NULL_NODE && (outstring || outfile)) {
 		GString *gs = NULL;
@@ -1218,8 +1250,6 @@ for(;;) {
 		freetree(ret);
 	} else
 		d_addfunc(d_makevfunc(d_intern("Ans"),ret));
-
-	return;
 }
 
 /*just to make the compiler happy*/
@@ -1229,8 +1259,19 @@ void
 yyerror(char *s)
 {
 	char *out=NULL;
-	out=g_strconcat(_("ERROR: "),s,_(" before '"),yytext,"'",NULL);
+	char *p;
 	
+	if(strcmp(yytext,"\n")==0) {
+		out=g_strconcat(_("ERROR: "),s,_(" before newline"),NULL);
+	} else {
+		char *tmp = g_strdup(yytext);
+		while((p=strchr(tmp,'\n')))
+			*p='.';
+
+		out=g_strconcat(_("ERROR: "),s,_(" before '"),tmp,"'",NULL);
+		g_free(tmp);
+	}
+
 	(*errorout)(out);
 	g_free(out);
 	error_num=PARSE_ERROR;

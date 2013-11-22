@@ -26,7 +26,8 @@
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
-#define _(x) x
+#include <libintl.h>
+#define _(x) gettext(x)
 #endif
 
 #include "config.h"
@@ -37,10 +38,12 @@
 #include <unistd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include "calc.h"
 #include "util.h"
 #include "dict.h"
+#include "inter.h"
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -52,13 +55,16 @@ calcstate_t curstate={
 	256,
 	0,
 	FALSE,
-	FALSE,
-	TRUE
+	FALSE
 	};
 	
 extern calc_error_t error_num;
 extern int got_eof;
 extern int parenth_depth;
+
+extern int interrupted;
+
+static int use_readline = TRUE;
 
 static void
 puterror(char *s)
@@ -74,83 +80,26 @@ puterror(char *s)
 		fprintf(stderr,"%s\n",s);
 }
 
-static int addtoplevels = FALSE;
-static char *toplevels[] = {
-	"load",
-	NULL
-};
-static char *operators[] = {
-	"not","and","xor","or","while","until","for","do","to","by","in","if",
-	"then","else","define","function","call","return","bailout","exception",
-	"continue","break","null",
-	NULL
-};
-
-
-static char *
-command_generator (char *text, int state)
-{
-	static int oi,ti,len;
-	static GList *fli;
-
-	if(!state) {
-		oi = 0;
-		if(addtoplevels)
-			ti = 0;
-		else
-			ti = -1;
-		len = strlen (text);
-		fli = d_getcontext();
-	}
-	
-	while(ti>=0 && toplevels[ti]) {
-		char *s = toplevels[ti++];
-		if(strncmp(s,text,len)==0)
-			return strdup(s);
-	}
-
-	while(operators[oi]) {
-		char *s = operators[oi++];
-		if(strncmp(s,text,len)==0)
-			return strdup(s);
-	}
-
-	while(fli) {
-		EFunc *f = fli->data;
-		fli = g_list_next(fli);
-		if(!f->id || !f->id->token)
-			continue;
-		if(strncmp(f->id->token,text,len)==0)
-			return strdup(f->id->token);
-	}
-
-	return NULL;
-}
-
-static char **
-tab_completion (char *text, int start, int end)
-{
-	char *p;
-	for(p=rl_line_buffer;*p==' ' || *p=='\t';p++)
-		;
-	if(parenth_depth==0 &&
-	   (strncmp(p,"load ",5)==0 ||
-	    strncmp(p,"load\t",5)==0)) {
-		return NULL;
-	}
-
-	if (parenth_depth==0)
-		addtoplevels = TRUE;
-	else
-		addtoplevels = FALSE;
-
-	return completion_matches (text, command_generator);
-}
-
 static void
 set_state(calcstate_t state)
 {
 	curstate = state;
+}
+
+static void
+interrupt(int sig)
+{
+	interrupted = TRUE;
+	if(use_readline)
+		rl_stuff_char('\n');
+	signal(SIGINT,interrupt);
+}
+
+static int
+nop(void)
+{
+	usleep(10000);
+	return 0;
 }
 
 int
@@ -158,7 +107,6 @@ main(int argc, char *argv[])
 {
 	int i;
 	int inter;
-	int use_readline = TRUE;
 	int lastarg = FALSE;
 	GList *files = NULL;
 	char *file;
@@ -168,8 +116,12 @@ main(int argc, char *argv[])
 
 #ifdef GNOME_SUPPORT
 	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
-	textdomain(PACKAGE);
+#else
+	bindtextdomain(PACKAGE,LOCALEDIR);
 #endif
+	textdomain(PACKAGE);
+
+	signal(SIGINT,interrupt);
 
 	statechange_hook = set_state;
 
@@ -231,11 +183,8 @@ main(int argc, char *argv[])
 		     "Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
 		     "This is free software with ABSOLUTELY NO WARRANTY.\n"
 		     "For details type `warranty'.\n\n"),VERSION);
-		signal(SIGINT,SIG_IGN);
-		curstate.do_interrupts = TRUE;
 		be_quiet = FALSE;
-	} else
-		curstate.do_interrupts = FALSE;
+	}
 
 	set_new_calcstate(curstate);
 	set_new_errorout(puterror);
@@ -275,21 +224,28 @@ main(int argc, char *argv[])
 		push_file_info(NULL,1);
 	}
 	if(inter && use_readline) {
-		rl_readline_name = "Genius";
-		rl_attempted_completion_function =
-			(CPPFunction *)tab_completion;
+		init_inter();
 	}
+	
+	rl_event_hook = nop;
 
 	for(;;) {
 		for(;;) {
 			if(inter && use_readline) /*use readline mode*/ {
+				char *str;
 				rewind_file_info();
-				evalexp(NULL,NULL,stdout,NULL,"= ",TRUE);
+				do
+					str = get_expression(&got_eof);
+				while(interrupted);
+				evalexp(str,NULL,stdout,NULL,"= ",TRUE);
+				g_free(str);
 			} else {
 				if(be_quiet)
 					evalexp(NULL,fp,NULL,NULL,NULL,FALSE);
 				else
 					evalexp(NULL,fp,stdout,NULL,NULL,FALSE);
+				if(interrupted)
+					got_eof = TRUE;
 			}
 
 			if(got_eof) {

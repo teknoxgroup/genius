@@ -24,7 +24,8 @@
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
-#define _(x) x
+#include <libintl.h>
+#define _(x) gettext(x)
 #endif
 
 #include <string.h>
@@ -534,23 +535,30 @@ is_function_ref_op(ETree * * a, int *exception)
 static ETree *
 is_complex_op(ETree * * a, int *exception)
 {
-	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("is_complex: argument not a number"));
-		return NULL;
-	}
-	if(mpw_is_complex(a[0]->data.value))
+	if(a[0]->type!=VALUE_NODE)
+		return makenum_ui(0);
+	else if(mpw_is_complex(a[0]->data.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
 }
 static ETree *
+is_real_op(ETree * * a, int *exception)
+{
+	if(a[0]->type!=VALUE_NODE)
+		return makenum_ui(0);
+	else if(mpw_is_complex(a[0]->data.value))
+		return makenum_ui(0);
+	else
+		return makenum_ui(1);
+}
+static ETree *
 is_integer_op(ETree * * a, int *exception)
 {
-	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("is_integer: argument not a number"));
-		return NULL;
-	}
-	if(mpw_is_integer(a[0]->data.value))
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value))
+		return makenum_ui(0);
+	else if(mpw_is_integer(a[0]->data.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -558,11 +566,10 @@ is_integer_op(ETree * * a, int *exception)
 static ETree *
 is_rational_op(ETree * * a, int *exception)
 {
-	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("is_rational: argument not a number"));
-		return NULL;
-	}
-	if(mpw_is_rational(a[0]->data.value))
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value))
+		return makenum_ui(0);
+	else if(mpw_is_rational(a[0]->data.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -570,11 +577,10 @@ is_rational_op(ETree * * a, int *exception)
 static ETree *
 is_float_op(ETree * * a, int *exception)
 {
-	if(a[0]->type!=VALUE_NODE) {
-		(*errorout)(_("is_float: argument not a number"));
-		return NULL;
-	}
-	if(mpw_is_float(a[0]->data.value))
+	if(a[0]->type!=VALUE_NODE ||
+	   mpw_is_complex(a[0]->data.value))
+		return makenum_ui(0);
+	else if(mpw_is_float(a[0]->data.value))
 		return makenum_ui(1);
 	else
 		return makenum_ui(0);
@@ -1862,6 +1868,7 @@ funclib_addall(void)
 	d_addfunc(d_makebifunc(d_intern("is_function"),is_function_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_function_ref"),is_function_ref_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_complex"),is_complex_op,1));
+	d_addfunc(d_makebifunc(d_intern("is_real"),is_real_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_integer"),is_integer_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_rational"),is_rational_op,1));
 	d_addfunc(d_makebifunc(d_intern("is_float"),is_float_op,1));

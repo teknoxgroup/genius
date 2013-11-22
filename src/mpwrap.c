@@ -22,7 +22,8 @@
 #ifdef GNOME_SUPPORT
 #include <gnome.h>
 #else
-#define _(x) x
+#include <libintl.h>
+#define _(x) gettext(x)
 #endif
 
 #include <string.h>

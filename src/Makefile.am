@@ -42,7 +42,10 @@ gnome_genius_SOURCES = 	\
 	compil.h	\
 	structs.h	\
 	lexer.l		\
-	parse.h		\
+	parseutil.h	\
+	parseutil.c	\
+	inter.c		\
+	inter.h		\
 	parse.y
 
 gnome_genius_LDADD = \
@@ -77,6 +80,10 @@ genius_SOURCES = 	\
 	compil.c	\
 	compil.h	\
 	structs.h	\
+	parseutil.h	\
+	parseutil.c	\
+	inter.c		\
+	inter.h		\
 	lexer.l		\
 	parse.y
 
