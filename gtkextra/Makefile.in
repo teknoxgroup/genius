@@ -214,6 +214,8 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 POFILES = @POFILES@
 POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
@@ -271,7 +273,6 @@ libdir = @libdir@
 libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
-lt_ECHO = @lt_ECHO@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
@@ -800,13 +801,13 @@ uninstall-am:
 
 
 $(srcdir)/gtkextra-marshal.h: gtkextra-marshal.list
-        ( @GLIB_GENMARSHAL@ --prefix=gtkextra gtkextra-marshal.list --header > gtkextra-marshal.tmp \
-        && mv gtkextra-marshal.tmp gtkextra-marshal.h ) \
-        || ( rm -f gtkextra-marshal.tmp && exit 1 )
+	( @GLIB_GENMARSHAL@ --prefix=gtkextra gtkextra-marshal.list --header > gtkextra-marshal.tmp \
+	&& mv gtkextra-marshal.tmp gtkextra-marshal.h ) \
+	|| ( rm -f gtkextra-marshal.tmp && exit 1 )
 $(srcdir)/gtkextra-marshal.c: gtkextra-marshal.h
-        ( @GLIB_GENMARSHAL@ --prefix=gtkextra gtkextra-marshal.list --body > gtkextra-marshal.tmp \
-        && mv gtkextra-marshal.tmp gtkextra-marshal.c ) \
-        || ( rm -f gtkextra-marshal.tmp && exit 1 )
+	( @GLIB_GENMARSHAL@ --prefix=gtkextra gtkextra-marshal.list --body > gtkextra-marshal.tmp \
+	&& mv gtkextra-marshal.tmp gtkextra-marshal.c ) \
+	|| ( rm -f gtkextra-marshal.tmp && exit 1 )
 
 $(srcdir)/gtkextratypebuiltins.h: $(public_h_sources)
 	( cd $(srcdir) && glib-mkenums \

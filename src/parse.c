@@ -1,10 +1,9 @@
-
-/* A Bison parser, made by GNU Bison 2.4.1.  */
+/* A Bison parser, made by GNU Bison 2.4.3.  */
 
 /* Skeleton implementation for Bison's Yacc-like parsers in C
    
-      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+      Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
+   2009, 2010 Free Software Foundation, Inc.
    
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,7 +45,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "2.4.1"
+#define YYBISON_VERSION "2.4.3"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -96,7 +95,7 @@ void yyerror(char *);
 
 
 /* Line 189 of yacc.c  */
-#line 100 "y.tab.c"
+#line 99 "y.tab.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -273,7 +272,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 277 "y.tab.c"
+#line 276 "y.tab.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -285,7 +284,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 289 "y.tab.c"
+#line 288 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -335,7 +334,7 @@ typedef short int yytype_int16;
 #define YYSIZE_MAXIMUM ((YYSIZE_T) -1)
 
 #ifndef YY_
-# if YYENABLE_NLS
+# if defined YYENABLE_NLS && YYENABLE_NLS
 #  if ENABLE_NLS
 #   include <libintl.h> /* INFRINGES ON USER NAME SPACE */
 #   define YY_(msgid) dgettext ("bison-runtime", msgid)
@@ -1373,9 +1372,18 @@ static const yytype_uint8 yystos[] =
 
 /* Like YYERROR except do call yyerror.  This remains here temporarily
    to ease the transition to the new meaning of YYERROR, for GCC.
-   Once GCC version 2 has supplanted version 1, this can go.  */
+   Once GCC version 2 has supplanted version 1, this can go.  However,
+   YYFAIL appears to be in use.  Nevertheless, it is formally deprecated
+   in Bison 2.4.2's NEWS entry, where a plan to phase it out is
+   discussed.  */
 
 #define YYFAIL		goto yyerrlab
+#if defined YYFAIL
+  /* This is here to suppress warnings from the GCC cpp's
+     -Wunused-macros.  Normally we don't worry about that warning, but
+     some users do, and we want to make it easy for users to remove
+     YYFAIL uses, which will produce warnings from Bison 2.5.  */
+#endif
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
@@ -1432,7 +1440,7 @@ while (YYID (0))
    we won't break user code: when these are the locations we know.  */
 
 #ifndef YY_LOCATION_PRINT
-# if YYLTYPE_IS_TRIVIAL
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
 #  define YY_LOCATION_PRINT(File, Loc)			\
      fprintf (File, "%d.%d-%d.%d",			\
 	      (Loc).first_line, (Loc).first_column,	\
@@ -2171,112 +2179,112 @@ yyreduce:
     {
         case 2:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 116 "parse.y"
     { YYACCEPT; }
     break;
 
   case 3:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 117 "parse.y"
     { gel_command = GEL_LOADFILE; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 4:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 118 "parse.y"
     { gel_command = GEL_LOADFILE_GLOB; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 5:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 119 "parse.y"
     { gel_command = GEL_CHANGEDIR; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 6:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 120 "parse.y"
     { gel_command = GEL_LS; YYACCEPT; }
     break;
 
   case 7:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 121 "parse.y"
     { gel_command = GEL_LS_ARG; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 8:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 122 "parse.y"
     { gel_command = GEL_HELP; YYACCEPT; }
     break;
 
   case 9:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 123 "parse.y"
     { gel_command = GEL_HELP_ARG; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 10:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 124 "parse.y"
     { gel_command = GEL_PWD; YYACCEPT; }
     break;
 
   case 11:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 125 "parse.y"
     { gel_command = GEL_LOADPLUGIN; gel_command_arg = (yyvsp[(2) - (3)].id); YYACCEPT; }
     break;
 
   case 12:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 126 "parse.y"
     { YYACCEPT; }
     break;
 
   case 13:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 127 "parse.y"
     { gp_push_null(); PUSH_ACT(GEL_E_SEPAR); YYACCEPT; }
     break;
 
   case 14:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 128 "parse.y"
     { gel_return_ret = TRUE; yyclearin; YYABORT; }
     break;
 
   case 15:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 129 "parse.y"
     { gel_return_ret = TRUE; }
     break;
 
   case 16:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 132 "parse.y"
     { PUSH_ACT(GEL_E_SEPAR); }
     break;
 
   case 17:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 133 "parse.y"
     { if ( ! gp_push_local_all ()) {
 						SYNTAX_ERROR;
@@ -2286,7 +2294,7 @@ yyreduce:
 
   case 18:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 137 "parse.y"
     { if ( ! gp_push_local_idents ()) {
 						SYNTAX_ERROR;
@@ -2296,14 +2304,14 @@ yyreduce:
 
   case 19:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 141 "parse.y"
     { PUSH_ACT(GEL_E_MOD_CALC); }
     break;
 
   case 20:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 142 "parse.y"
     { gp_push_null(); PUSH_ACT(GEL_E_SEPAR);
 					  gp_push_spacer(); }
@@ -2311,14 +2319,14 @@ yyreduce:
 
   case 21:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 144 "parse.y"
     { gp_push_spacer(); }
     break;
 
   case 22:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 145 "parse.y"
     { mpw_t i;
 					  mpw_init (i);
@@ -2331,238 +2339,238 @@ yyreduce:
 
   case 23:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 152 "parse.y"
     { PUSH_ACT(GEL_E_EQUALS); }
     break;
 
   case 24:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 153 "parse.y"
     { PUSH_ACT(GEL_E_DEFEQUALS); }
     break;
 
   case 25:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 154 "parse.y"
     { PUSH_ACT(GEL_E_ABS); }
     break;
 
   case 26:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 155 "parse.y"
     { PUSH_ACT(GEL_E_PLUS); }
     break;
 
   case 27:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 156 "parse.y"
     { PUSH_ACT(GEL_E_ELTPLUS); }
     break;
 
   case 28:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 157 "parse.y"
     { PUSH_ACT(GEL_E_MINUS); }
     break;
 
   case 29:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 158 "parse.y"
     { PUSH_ACT(GEL_E_ELTMINUS); }
     break;
 
   case 30:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 159 "parse.y"
     { PUSH_ACT(GEL_E_MUL); }
     break;
 
   case 31:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 160 "parse.y"
     { PUSH_ACT(GEL_E_ELTMUL); }
     break;
 
   case 32:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 161 "parse.y"
     { PUSH_ACT(GEL_E_DIV); }
     break;
 
   case 33:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 162 "parse.y"
     { PUSH_ACT(GEL_E_ELTDIV); }
     break;
 
   case 34:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 163 "parse.y"
     { PUSH_ACT(GEL_E_BACK_DIV); }
     break;
 
   case 35:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 164 "parse.y"
     { PUSH_ACT(GEL_E_ELT_BACK_DIV); }
     break;
 
   case 36:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 165 "parse.y"
     { PUSH_ACT(GEL_E_MOD); }
     break;
 
   case 37:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 166 "parse.y"
     { PUSH_ACT(GEL_E_ELTMOD); }
     break;
 
   case 38:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 167 "parse.y"
     { PUSH_ACT(GEL_E_CMP_CMP); }
     break;
 
   case 39:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 169 "parse.y"
     { PUSH_ACT(GEL_E_EQ_CMP); }
     break;
 
   case 40:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 170 "parse.y"
     { PUSH_ACT(GEL_E_NE_CMP); }
     break;
 
   case 41:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 171 "parse.y"
     { PUSH_ACT(GEL_E_LT_CMP); }
     break;
 
   case 42:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 172 "parse.y"
     { PUSH_ACT(GEL_E_GT_CMP); }
     break;
 
   case 43:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 173 "parse.y"
     { PUSH_ACT(GEL_E_LE_CMP); }
     break;
 
   case 44:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 174 "parse.y"
     { PUSH_ACT(GEL_E_GE_CMP); }
     break;
 
   case 45:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 176 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_AND); }
     break;
 
   case 46:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 177 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_OR); }
     break;
 
   case 47:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 178 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_XOR); }
     break;
 
   case 48:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 179 "parse.y"
     { PUSH_ACT(GEL_E_LOGICAL_NOT); }
     break;
 
   case 49:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 184 "parse.y"
     { PUSH_ACT(GEL_E_FACT); }
     break;
 
   case 50:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 185 "parse.y"
     { PUSH_ACT(GEL_E_DBLFACT); }
     break;
 
   case 51:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 186 "parse.y"
     { PUSH_ACT(GEL_E_CONJUGATE_TRANSPOSE); }
     break;
 
   case 52:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 187 "parse.y"
     { PUSH_ACT(GEL_E_TRANSPOSE); }
     break;
 
   case 53:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 188 "parse.y"
     { PUSH_ACT(GEL_E_NEG); }
     break;
 
   case 55:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 190 "parse.y"
     { PUSH_ACT(GEL_E_EXP); }
     break;
 
   case 56:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 191 "parse.y"
     { PUSH_ACT(GEL_E_ELTEXP); }
     break;
 
   case 57:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 193 "parse.y"
     {
 				if (gp_prepare_push_region_sep ()) {
@@ -2575,7 +2583,7 @@ yyreduce:
 
   case 58:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 201 "parse.y"
     { /* FIXME: do nothing?, this is just a 
 					     get all */ }
@@ -2583,63 +2591,63 @@ yyreduce:
 
   case 59:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 203 "parse.y"
     { PUSH_ACT(GEL_E_GET_VELEMENT); }
     break;
 
   case 60:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 204 "parse.y"
     { PUSH_ACT(GEL_E_GET_ELEMENT); }
     break;
 
   case 61:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 205 "parse.y"
     { PUSH_ACT(GEL_E_GET_ROW_REGION); }
     break;
 
   case 62:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 206 "parse.y"
     { PUSH_ACT(GEL_E_GET_ROW_REGION); }
     break;
 
   case 63:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 207 "parse.y"
     { PUSH_ACT(GEL_E_GET_COL_REGION); }
     break;
 
   case 64:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 208 "parse.y"
     { PUSH_ACT(GEL_E_GET_COL_REGION); }
     break;
 
   case 65:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 209 "parse.y"
     { if(!gp_push_matrix(FALSE)) {SYNTAX_ERROR;} }
     break;
 
   case 66:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 210 "parse.y"
     { if(!gp_push_matrix(TRUE)) {SYNTAX_ERROR;} }
     break;
 
   case 67:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 217 "parse.y"
     {
 			if(!gp_push_matrix_row()) {SYNTAX_ERROR;}
@@ -2650,126 +2658,126 @@ yyreduce:
 
   case 68:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 222 "parse.y"
     {SYNTAX_ERROR;}
     break;
 
   case 69:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 223 "parse.y"
     {SYNTAX_ERROR;}
     break;
 
   case 70:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 224 "parse.y"
     { PUSH_ACT(GEL_E_WHILE_CONS); }
     break;
 
   case 71:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 225 "parse.y"
     { PUSH_ACT(GEL_E_UNTIL_CONS); }
     break;
 
   case 72:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 226 "parse.y"
     { PUSH_ACT(GEL_E_DOWHILE_CONS); }
     break;
 
   case 73:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 227 "parse.y"
     { PUSH_ACT(GEL_E_DOUNTIL_CONS); }
     break;
 
   case 74:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 228 "parse.y"
     { PUSH_ACT(GEL_E_FOR_CONS); }
     break;
 
   case 75:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 229 "parse.y"
     { PUSH_ACT(GEL_E_FORBY_CONS); }
     break;
 
   case 76:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 230 "parse.y"
     { PUSH_ACT(GEL_E_FORIN_CONS); }
     break;
 
   case 77:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 231 "parse.y"
     { PUSH_ACT(GEL_E_SUM_CONS); }
     break;
 
   case 78:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 232 "parse.y"
     { PUSH_ACT(GEL_E_SUMBY_CONS); }
     break;
 
   case 79:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 233 "parse.y"
     { PUSH_ACT(GEL_E_SUMIN_CONS); }
     break;
 
   case 80:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 234 "parse.y"
     { PUSH_ACT(GEL_E_PROD_CONS); }
     break;
 
   case 81:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 235 "parse.y"
     { PUSH_ACT(GEL_E_PRODBY_CONS); }
     break;
 
   case 82:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 236 "parse.y"
     { PUSH_ACT(GEL_E_PRODIN_CONS); }
     break;
 
   case 83:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 237 "parse.y"
     { PUSH_ACT(GEL_E_IF_CONS); }
     break;
 
   case 84:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 238 "parse.y"
     { PUSH_ACT(GEL_E_IFELSE_CONS); }
     break;
 
   case 85:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 239 "parse.y"
     { gp_convert_identifier_to_bool ();
 					  /* convert true/false to bool */}
@@ -2777,21 +2785,21 @@ yyreduce:
 
   case 86:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 241 "parse.y"
     { PUSH_ACT(GEL_E_QUOTE); }
     break;
 
   case 87:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 242 "parse.y"
     { PUSH_ACT(GEL_E_REFERENCE); }
     break;
 
   case 89:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 244 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_DIRECTCALL); }
@@ -2799,14 +2807,14 @@ yyreduce:
 
   case 90:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 246 "parse.y"
     { PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 91:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 247 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_DIRECTCALL); }
@@ -2814,21 +2822,21 @@ yyreduce:
 
   case 92:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 249 "parse.y"
     { PUSH_ACT(GEL_E_DIRECTCALL); }
     break;
 
   case 93:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 250 "parse.y"
     { PUSH_ACT(GEL_E_CALL); }
     break;
 
   case 94:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 251 "parse.y"
     { gp_push_marker_simple(GEL_EXPRLIST_START_NODE);
 					  PUSH_ACT(GEL_E_CALL); }
@@ -2836,49 +2844,49 @@ yyreduce:
 
   case 95:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 253 "parse.y"
     { PUSH_ACT(GEL_E_DEFEQUALS); }
     break;
 
   case 99:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 257 "parse.y"
     { PUSH_ACT(GEL_E_RETURN); }
     break;
 
   case 100:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 258 "parse.y"
     { PUSH_ACT(GEL_E_BAILOUT); }
     break;
 
   case 101:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 259 "parse.y"
     { PUSH_ACT(GEL_E_EXCEPTION); }
     break;
 
   case 102:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 260 "parse.y"
     { PUSH_ACT(GEL_E_CONTINUE); }
     break;
 
   case 103:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 261 "parse.y"
     { PUSH_ACT(GEL_E_BREAK); }
     break;
 
   case 104:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 262 "parse.y"
     { gel_stack_push(&gel_parsestack,
 							 gel_makenum_use((yyvsp[(1) - (1)].val))); }
@@ -2886,35 +2894,35 @@ yyreduce:
 
   case 105:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 264 "parse.y"
     { PUSH_CONST_STRING((yyvsp[(1) - (1)].id)); }
     break;
 
   case 106:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 265 "parse.y"
     { gp_push_null(); }
     break;
 
   case 107:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 268 "parse.y"
     { PUSH_ACT(GEL_E_DEREFERENCE); }
     break;
 
   case 108:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 271 "parse.y"
     { PUSH_IDENTIFIER((yyvsp[(1) - (1)].id)); }
     break;
 
   case 109:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 274 "parse.y"
     {
 			gp_prepare_push_param (FALSE);
@@ -2924,7 +2932,7 @@ yyreduce:
 
   case 112:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 288 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2938,7 +2946,7 @@ yyreduce:
 
   case 113:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 296 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -2952,7 +2960,7 @@ yyreduce:
 
   case 114:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 304 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2966,7 +2974,7 @@ yyreduce:
 
   case 115:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 312 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -2980,7 +2988,7 @@ yyreduce:
 
   case 116:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 320 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -2994,7 +3002,7 @@ yyreduce:
 
   case 117:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 328 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -3008,7 +3016,7 @@ yyreduce:
 
   case 118:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 337 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -3022,7 +3030,7 @@ yyreduce:
 
   case 119:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 345 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */,
@@ -3036,7 +3044,7 @@ yyreduce:
 
   case 120:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 353 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */,
@@ -3050,36 +3058,36 @@ yyreduce:
 
   case 122:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 364 "parse.y"
     { if(!gp_push_marker(GEL_EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 125:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 371 "parse.y"
     { if(!gp_push_marker(GEL_EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 126:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 374 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} }
     break;
 
   case 127:
 
-/* Line 1455 of yacc.c  */
+/* Line 1464 of yacc.c  */
 #line 375 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} if(!gp_push_marker(GEL_MATRIX_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
 
 
-/* Line 1455 of yacc.c  */
-#line 3083 "y.tab.c"
+/* Line 1464 of yacc.c  */
+#line 3091 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -3290,7 +3298,7 @@ yyreturn:
 
 
 
-/* Line 1675 of yacc.c  */
+/* Line 1684 of yacc.c  */
 #line 378 "parse.y"
 
 

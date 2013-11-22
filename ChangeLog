@@ -1,3 +1,49 @@
+Sun Nov 07 11:48:14 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, NEWS: I will be releasing 1.0.12 shortly
+
+Sun Nov 07 11:39:40 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add recent files menu
+
+Tue Nov 02 11:44:08 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/Makefile.am: Add the self test files that were missing to
+	  EXTRA_DIST.  Thanks to Matthias Drochner of NetBSD
+
+Thu Oct 28 16:09:42 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Don't run ps2epsi by default, and make it an option
+	  on the export dialog.  ps2epsi can take really really long
+	  sometimes, generate large files, and most of the time I found out
+	  you don't want it anyway.
+	
+	* src/eval.c: fix 64 bit build
+
+Sat Oct 09 12:23:07 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* Makefile.am: apply patch from Dominique Leuenberger
+	  (dominique at leuenberger dot net) to fix build on Make 3.82
+
+Thu Oct 07 12:38:44 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/lexer.l: note that [^?] is may include newlines,
+	  must explicitly exclude them
+
+	* src/gnome-genius.c:  Add a trailing newline to programs unless
+	  given.  Fixes parse errors at end of file if ends on a comment
+	  or a lexer rule which expects endofline
+
+Thu Sep 30 15:28:50 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: Fix CrossProduct and
+	  make it return a column vector.
+
+	* src/geniustests.txt: add a test
+
+	* help/C/gel-function-list.xml: note that the result is a column
+	  vector
+
 Thu Sep 09 22:47:54 2010  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.11
