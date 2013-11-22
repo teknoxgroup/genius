@@ -1,3 +1,66 @@
+Thu Mar 22 11:25:49 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: remove some redundant code, load the exp for
+	  matrices lazily
+
+Wed Mar 21 15:39:04 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/*.[ch]: mark a bunch of functions as pure.  Probably doesn't
+	  help with optimization, but it might.
+
+Tue Mar 20 13:13:48 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/*/figures/*.eps: remove .eps figures, there is no need for
+	  them and they take up lots of space
+
+	* help/{fr,de}/figures/*.png: quantize and optimize
+
+Tue Mar 20 11:39:45 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/gel-function-list.xml, help/C/genius.xml: Add Commutative
+	  Algebra section and document the Macaulay stuff (at least stub it).
+	  Also add a note to the doc on ceil.
+
+	* src/graphing.c: Fix zooming using pointer for functions that take
+	  a long time to draw by moving the zooming code into an idle
+	  handler.
+
+	* lib/number_theory/primes.gel: update where GIMPS has gotten in
+	  doublechecking
+
+	* po/POTFILES.in: remove glade-helper.c
+
+Sun Dec 25 10:28:09 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel: update where GIMPS has gotten in
+	  doublechecking
+
+Wed Dec 07 01:40:42 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: fix roots of negative numbers when numerator of power
+	  is positive.  Also fix exact roots when power is negative.
+
+	* src/geniustests.txt: add tests for above
+
+Fri Nov 18 00:53:09 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/symbolic.c: accept log instead of ln for natural log when doing
+	  derivative when called as a single variable function.
+
+Mon Nov 07 00:28:58 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c, help/C/gel-function-list.xml:  Add CurrentTime
+	  to return the current UNIX time 
+
+Mon Sep 26 17:39:27 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, lib/Makefile.am, lib/communtative_algebra/Makefile.am,
+	  lib/commutative_algebra/macaulay.gel, src/funclib.c:
+	  Add MacaulayRep, MacaulayLowerOperator, and MacaulayBound
+	  functions and a Commutative Algebra section
+
+	* src/geniustests.txt: Add tests of the above
+
 Fri Jul 29 09:06:50 2011  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.14

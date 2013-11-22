@@ -2800,7 +2800,7 @@ fi
 
 # Define the identity of the package.
  PACKAGE=genius
- VERSION=1.0.14
+ VERSION=1.0.15
 
 
 cat >>confdefs.h <<_ACEOF
@@ -13165,7 +13165,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="ar az ca cs da de dz el en_CA en_GB es eu fr ga gl hi hr it ja ko lv mk ml nb ne nl oc pa pl pt_BR pt rw sl sq sr@Latn sr sv zh_CN zh_TW"
+ALL_LINGUAS="ar az ca cs da de dz el en_CA en_GB es eu fr ga gl hi hr it ja ko lv mk ml nb ne nl oc pa pl pt_BR pt ro rw sl sq sr@Latn sr sv zh_CN zh_TW"
 
    for ac_header in locale.h
 do :
@@ -13750,6 +13750,10 @@ else
                DATADIRNAME=lib
 fi
 
+	    ;;
+	    *-*-openbsd*)
+	    CATOBJEXT=.mo
+            DATADIRNAME=share
 	    ;;
 	    *)
 	    CATOBJEXT=.mo
@@ -15263,7 +15267,7 @@ fi
 
 
 
-ac_config_files="$ac_config_files genius.spec Makefile src/Makefile lib/Makefile lib/calculus/Makefile lib/combinatorics/Makefile lib/equation_solving/Makefile lib/functions/Makefile lib/linear_algebra/Makefile lib/misc/Makefile lib/sets/Makefile lib/number_theory/Makefile lib/statistics/Makefile lib/symbolic/Makefile ve/Makefile gtkextra/Makefile pixmaps/Makefile pixmaps/32x32/Makefile pixmaps/48x48/Makefile po/Makefile.in help/Makefile"
+ac_config_files="$ac_config_files genius.spec Makefile src/Makefile lib/Makefile lib/calculus/Makefile lib/combinatorics/Makefile lib/equation_solving/Makefile lib/functions/Makefile lib/linear_algebra/Makefile lib/misc/Makefile lib/sets/Makefile lib/number_theory/Makefile lib/statistics/Makefile lib/symbolic/Makefile lib/commutative_algebra/Makefile ve/Makefile gtkextra/Makefile pixmaps/Makefile pixmaps/32x32/Makefile pixmaps/48x48/Makefile po/Makefile.in help/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16318,6 +16322,7 @@ do
     "lib/number_theory/Makefile") CONFIG_FILES="$CONFIG_FILES lib/number_theory/Makefile" ;;
     "lib/statistics/Makefile") CONFIG_FILES="$CONFIG_FILES lib/statistics/Makefile" ;;
     "lib/symbolic/Makefile") CONFIG_FILES="$CONFIG_FILES lib/symbolic/Makefile" ;;
+    "lib/commutative_algebra/Makefile") CONFIG_FILES="$CONFIG_FILES lib/commutative_algebra/Makefile" ;;
     "ve/Makefile") CONFIG_FILES="$CONFIG_FILES ve/Makefile" ;;
     "gtkextra/Makefile") CONFIG_FILES="$CONFIG_FILES gtkextra/Makefile" ;;
     "pixmaps/Makefile") CONFIG_FILES="$CONFIG_FILES pixmaps/Makefile" ;;

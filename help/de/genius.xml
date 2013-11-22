@@ -2,8 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "<application>Genius Mathematics Tool</application>">
 <!ENTITY appname "Genius">
-<!ENTITY appversion "1.0.13">
-<!ENTITY date "July 2011">
+<!ENTITY appversion "1.0.15">
+<!ENTITY date "March 2012">
 <!ENTITY legal SYSTEM "legal.xml">
 <!ENTITY manrevision "0.2">
 <!ENTITY lt "&#60;">
@@ -26,17 +26,17 @@
 <!-- please do not change the id; for translations, change lang to -->
 <!-- appropriate code -->
   <bookinfo>
-	  <abstract role="description"><para>Manual for the Genius Math Tool.</para></abstract>
+	  <abstract role="description"><para>Handbuch für das Genius Mathematikwerkzeug.</para></abstract>
     <title>Genius-Handbuch</title>       
 
     <copyright>
-      <year>1997-2011</year>
+      <year>1997-2012</year>
       <holder>Jiří (George) Lebl</holder>
     </copyright>
     <copyright>
       <year>2004</year>
       <holder>Kai Willadsen</holder>
-    </copyright><copyright><year>2009</year><holder>Mario Blättermann (mariobl@gnome.org)</holder></copyright>
+    </copyright><copyright><year>2009, 2011</year><holder>Mario Blättermann (mariobl@freenet.de)</holder></copyright>
 <!-- translators: uncomment this:
   <copyright>
    <year>2002</year>
@@ -74,7 +74,7 @@
 		<firstname>Jiří</firstname> 
 		<surname>Lebl</surname> 
 		<affiliation> 
-	  		<orgname>University of Illinois, Urbana-Champaign</orgname> 
+	  		<orgname>University of Wisconsin-Madison</orgname> 
 	  		<address> <email>jirka@5z.com</email> </address> 
 		</affiliation> 
       </author> 
@@ -152,15 +152,13 @@
     <revhistory>
       <revision> 
 		<revnumber>0.2</revnumber> 
-		<date>July 2011</date> 
+		<date>March 2012</date> 
 		<revdescription> 
-	  		<para role="author">Jiri (George) Lebl
-	    	<email>jirka@5z.com</email>
-	  		</para>
+	  		<para role="author">Jiri (George) Lebl <email>jirka@5z.com</email></para>
 		</revdescription> 
       </revision> 
     </revhistory>
-    <releaseinfo>This manual describes version 1.0.13 of Genius.
+    <releaseinfo>This manual describes version 1.0.15 of Genius.
     </releaseinfo> 
     <legalnotice> 
       <title>Rückmeldungen</title> 
@@ -172,34 +170,11 @@
 <!-- ============= Introduction =============================== -->
   <chapter id="genius-introduction"> 
     <title>Einführung</title> 
-    <para>
-	The <application>Genius Mathematics Tool</application> application is a general calculator for use as a desktop
-	calculator, an educational tool in mathematics, and is useful even for
-	research.  The language used in <application>Genius Mathematics Tool</application> is designed to be
-	‘mathematical’ in the sense that it should be ‘what
-	you mean is what you get’.  Of course that is not an
-	entirely attainable goal.  <application>Genius Mathematics Tool</application> features rationals, arbitrary
-	precision integers and multiple precision floats using the GMP library.
-	It handles complex numbers using cartesian notation.  It has good
-	vector and matrix manipulation and can handle basic linear algebra.
-	The programming language allows user defined functions, variables and
-	modification of parameters.
-    </para> 
+    <para>Die Anwendung <application>Genius Mathematikwerkzeug</application> ist ein allgemeines Rechenprogramm, ein Hilfsmittel zur mathematischen Ausbildung und sogar dienlich für Forschungszwecke. Die in <application>Genius Mathematikwerkzeug</application> verwendete Sprache ist »mathematisch« im Sinne von »man bekommt, was man meint«. Natürlich ist das ein nicht vollständig erreichbares Ziel. <application>Genius Mathematikwerkzeug</application> arbeitet mit rationalen Zahlen, langen Ganzzahlen und Gleitkommazahlen unterschiedlicher Genauigkeit unter Verwendung der GMP-Bibliothek. Es arbeitet mit komplexen Zahlen in kartesischer Form. Darüber hinaus stehen umfangreiche Vektor- und Matrixoperationen, sowie grundlegende Lineare Algebra zur Verfügung. Die Programmiersprache erlaubt benutzerdefinierte Funktionen, Variablen und Veränderungen von Parametern.</para> 
 
-    <para>
-	<application>Genius Mathematics Tool</application> comes in two versions.  One version is the graphical GNOME
-	version, which features an IDE style interface and the ability 
-	to plot functions of one or two variables.
-	The command line version does not require GNOME, but of course
-	does not implement any feature that requires the graphical interface.
-    </para> 
+    <para>Es gibt zwei Versionen von <application>Genius Mathematikwerkzeug</application>. Die eine Version ist die graphische GNOME-Version, welche eine Schnittstelle im Stil einer integrierten Entwicklungsumgebung bietet und die Möglichkeit, Funktionen mit einer oder zwei Variablen darzustellen. Die Befehlszeilenversion benötigt kein GNOME, allerdings beinhaltet sie keine Funktionalitäten, welche eine graphische Schnittstelle erfordern.</para> 
 
-    <para>
-	This manual describes mostly the graphical version of the calculator,
-	but the language is of course the same.  The command line only version
-	lacks the graphing capabilities and all other capabilities that require
-	the graphical user interface.
-    </para>
+    <para>Dieses Handbuch beschreibt hauptsächlich die graphische Version des Rechners, wobei die Sprache natürlich für beide dieselbe ist. In der Befehlszeilenversion fehlen die graphischen Möglichkeiten und andere Funktionalitäten, die eine graphische Schnittstelle benötigen.</para>
 
   </chapter>
 
@@ -214,44 +189,20 @@
         <varlistentry>
           <term>Menü <guimenu>Anwendungen</guimenu></term>
           <listitem>
-	    <para>
-	      Depending on your operating system and version, the
-	      menu item for <application>Genius Mathematics Tool</application> could appear in a number of different
-	      places.  It can be in the 
-              <guisubmenu>Education</guisubmenu>, 
-              <guisubmenu>Accessories</guisubmenu>, 
-              <guisubmenu>Office</guisubmenu>, 
-              <guisubmenu>Science</guisubmenu>, or
-	      similar submenu, depending on your particular setup.
-	      The menu item name you are looking for is
-	      <guimenuitem>Genius Math Tool</guimenuitem>.  Once you locate
-	      this menu item click on it to start <application>Genius Mathematics Tool</application>.
-            </para>
+	    <para>Abhängig von Ihrem Betriebssystem und dessen Version kann sich der Menüeintrag für <application>Genius Mathematikwerkzeug</application> an verschiedenen Stellen befinden. Es kann sich unter <guisubmenu>Bildung</guisubmenu>, <guisubmenu>Zubehör</guisubmenu>, <guisubmenu>Büro</guisubmenu>, <guisubmenu>Wissenschaft</guisubmenu> oder einem ähnlichen Untermenü befinden, abhängig von den Einstellungen Ihres Systems. Der Menüeintrag, nach dem Sie suchen sollten, lautet <guimenuitem>Genius Mathematikwerkzeug</guimenuitem>. Sobald Sie diesen Menüeintrag gefunden haben, klicken Sie darauf, um <application>Genius Mathematikwerkzeug</application> zu starten.</para>
 	      </listitem>
         </varlistentry>
         <varlistentry>
           <term><guilabel>Ausführen</guilabel>-Dialog</term>
           <listitem>
-	    <para>
-	      Depending on your system installation the menu item 
-	      may not be available.  If it is not, you can open the Run dialog
-              and execute <command>gnome-genius</command>.
-            </para>
+	    <para>Es kann auch vorkommen, dass der Menüeintrag bei Ihrem System nicht vorhanden ist. In diesem Fall können Sie das Dialogfeld zum Ausführen von Programmen öffnen und den Befehl <command>gnome-genius</command> eingeben.</para>
 	      </listitem>
         </varlistentry>
         <varlistentry>
     	  <term>Befehlszeile</term>
     	  <listitem>
-    	    <para>
-	      To start the GNOME version of <application>Genius Mathematics Tool</application> execute
-	      <command>gnome-genius</command> from the command line.
-	    </para>
-	    <para>
-	      To start the command line only version,
-              execute the following command: <command>genius</command>.
-	      This version does not include the graphical environment
-	      and some functionality such as plotting will not be available.
-            </para> 
+    	    <para>Um die GNOME-Version des <application>Genius Mathematikwerkzeug</application> von der Befehlszeile aus zu starten, geben Sie <command>gnome-genius</command> ein.</para>
+	    <para>Zum Starten der Befehlszeilen-Version führen Sie folgenden Befehl aus: <command>genius</command>. Diese Version enthält keine graphische Umgebung und einige Funktionen wie zum Beispiel die Darstellung stehen nicht zur Verfügung.</para> 
           </listitem>
         </varlistentry>
       </variablelist>
@@ -272,7 +223,7 @@
               <imagedata fileref="figures/genius_window.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-	      <phrase>Zeigt das Hauptfenster von <application>Genius Mathematikwerkzeug</application>. Enthält Titelleiste, Menüleiste, Werkzeugleiste und Arbeitsplatz. Die Menüleiste enthält die Menüs <guilabel>Datei</guilabel>, <guilabel>Bearbeiten</guilabel>, <guilabel>Calculator</guilabel>, <guilabel>Einstellungen</guilabel> und <guilabel>Hilfe</guilabel>.</phrase> 
+	      <phrase>Zeigt das Hauptfenster von <application>Genius Mathematikwerkzeug</application>. Enthält Titelleiste, Menüleiste, Werkzeugleiste und Arbeitsplatz. Die Menüleiste enthält die Menüs <guilabel>Datei</guilabel>, <guilabel>Bearbeiten</guilabel>, <guilabel>Taschenrechner</guilabel>, <guilabel>Einstellungen</guilabel> und <guilabel>Hilfe</guilabel>.</phrase> 
             </textobject> 
           </mediaobject>
         </screenshot> 
@@ -283,19 +234,8 @@
         <varlistentry>
           <term>Menüleiste.</term>
           <listitem>
-            <para>The menus on the menubar contain all of the commands that you need to work with files in <application>Genius Mathematics Tool</application>.
-	     The <guilabel>File</guilabel> menu contains items for loading and saving items and creating
-	     new programs.  The <guilabel>Load and Run...</guilabel> command does not open a new window for
-	     the program, but just executes the program directly.  It is equivalent to the <command>load</command>
-	     command.</para>
-	    <para>
-		The <guilabel>Calculator</guilabel> menu controls the
-calculator engine.  It allows you to run the currently selected program or to
-interrupt the current calculation.  You can also look at the full expression of
-the last answer (useful if the last answer was too large to fit onto the
-console), or you can view a listing of the values of all user defined
-variables.  Finally it allows plotting functions using a user friendly dialog box.
-	   </para>
+            <para>Die Menüleiste beinhaltet alle Befehle, die Sie benötigen, um mit dem <application>Genius Mathematikwerkzeug</application> zu arbeiten. Das <guilabel>Datei</guilabel>-Menü enthält Einträge zum Öffnen und Speichern von Dateien sowie zum Erstellen neuer Programme. Der Befehl <guilabel>Laden und ausführen …</guilabel> öffnet kein neues Fenster für das Programm, sondern führt das Programm direkt aus. Dies entspricht dem Befehl <command>load</command>.</para>
+	    <para>Das <guilabel>Rechner</guilabel>-Menü steuert die Rechen-Engine. Es ermöglicht, das aktuell gewählte Programm auszuführen oder die momentan laufende Berechnung zu unterbrechen. Sie können sich auch die vollständige, letzte Antwort anzeigen lassen (nützlich, wenn die letzte Antwort zu lang für die Konsole war) oder einen Blick auf die Werte der Benutzervariablen werfen. Darüber hinaus können Funktionen anhand benutzerfreundlicher Dialogfenster dargestellt werden.</para>
 	   <para>Die anderen Menüs beinhalten ähnliche Funktionen wie in anderen Anwendungen.</para>
           </listitem>
         </varlistentry>
@@ -309,17 +249,8 @@ variables.  Finally it allows plotting functions using a user friendly dialog bo
           <term>Arbeitsplatz</term>
           <listitem>
             <para>Der Arbeitsplatz stellt die vorrangige Methode zur Interaktion mit der Anwendung dar.</para>
-	    <para>
-	    	The working area initially has just the <guilabel>Console</guilabel> tab which is
-		the main way of interacting with the calculator.  Here you
-		type expressions and the results are immediately returned
-		after you hit the Enter key.
-	    </para>
-	    <para>
-	    	Alternatively you can write longer programs and those can
-		appear in separate tabs and can be stored in files for later
-		retrieval.
-	    </para>
+	    <para>Der Arbeitsplatz beinhaltet zu Beginn nur den Reiter <guilabel>Konsole</guilabel>, welcher hauptsächlich für Interaktionen mit dem Rechner verwendet wird. Hier können Sie Ausdrücke eingeben und die Ergebnisse werden sofort nach Betätigung der Eingabetaste angezeigt.</para>
+	    <para>Alternativ können Sie längere Programme schreiben, wobei sich diese in unterschiedlichen Reitern befinden können. Eine Speicherung der Programme für die spätere Verwendung ist möglich.</para>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -334,123 +265,48 @@ variables.  Finally it allows plotting functions using a user friendly dialog bo
     <sect1 id="genius-usage-workarea"> 
       <title>Benutzung des Arbeitsplatzes</title> 
 
-      <para>
-        Normally you interact with the calculator in the <guilabel>Console</guilabel> tab of the
-	work area.  If you are running the text only version then the console
-	will be the only thing that is available to you.  If you want to use
-	<application>Genius Mathematics Tool</application> as a calculator only, just type in your expression here and it
-	will be evaluated.
-      </para>
+      <para>Normalerweise interagieren Sie mit dem Rechenprogramm im Reiter <guilabel>Konsole</guilabel> des Arbeitsplatzes. Falls Sie die textbasierte Version verwenden, wird Ihnen nur diese Konsole zur Verfügung stehen. Wenn Sie das <application>Genius Mathematikwerkzeug</application> als reines Rechenprogramm verwenden wollen, geben Sie einfach Ihren Ausdruck hier ein, und das Ergebnis wird berechnet.</para>
 
-      <para>
-	Type your expression into the <guilabel>Console</guilabel> work area and press enter and
-	the expression will be evaluated.  Expressions are written in a
-language called GEL.  The most simple GEL expression just looks like
-mathematics.  For example
-<screen><prompt>genius&gt; </prompt><userinput>30*70 + 67^3.0 + ln(7) * (88.8/100)</userinput>
-</screen>
-or
-<screen><prompt>genius&gt; </prompt><userinput>62734 + 812634 + 77^4 mod 5</userinput>
-</screen>
-or
-<screen><prompt>genius&gt; </prompt><userinput>| sin(37) - e^7 |</userinput>
-</screen>
-or
-<screen><prompt>genius&gt; </prompt><userinput>sum n=1 to 70 do 1/n</userinput>
-</screen>
-(Last is the harmonic sum from 1 to 70)
-</para>
-<para>
-To get a list of functions and commands, type:
-<screen><prompt>genius&gt; </prompt><userinput>help</userinput>
-</screen>
-If you wish to get more help on a specific function, type:
-<screen><prompt>genius&gt; </prompt><userinput>help FunctionName</userinput>
-</screen>
-To view this manual, type:
-<screen><prompt>genius&gt; </prompt><userinput>manual</userinput>
-</screen>
-</para>
-<para>
-Suppose you have previously saved some GEL commands as a program to a file and
-you now want to execute them.
-To load this program from the file <filename>path/to/program.gel</filename>,
-type
-<screen><prompt>genius&gt; </prompt><userinput>load path/to/program.gel</userinput>
-</screen>
-<application>Genius Mathematics Tool</application> keeps track of the current directory.
-To list files in the current directory type <command>ls</command>, to change directory
-do <userinput>cd directory</userinput> as in the unix command shell.
-</para>
+      <para>Geben Sie Ihren Ausdruck in den Arbeitsbereich der <guilabel>Konsole</guilabel> ein, drücken Sie die Eingabetaste und im Anschluss wird Ihr Ausdruck ausgewertet. Ausdrücke werden in einer Sprache namens GEL geschrieben. Die einfachsten GEL-Ausdrücke sehen wie Mathematik aus. Einige Beispiele: <screen><prompt>genius&gt; </prompt><userinput>30*70 + 67^3.0 + ln(7) * (88.8/100)</userinput>
+</screen> oder <screen><prompt>genius&gt; </prompt><userinput>62734 + 812634 + 77^4 mod 5</userinput>
+</screen> oder <screen><prompt>genius&gt; </prompt><userinput>| sin(37) - e^7 |</userinput>
+</screen> oder <screen><prompt>genius&gt; </prompt><userinput>sum n=1 to 70 do 1/n</userinput>
+</screen> (Das letzte Ergebnis ist die Summe der harmonischen Reihe von 1 bis 70)</para>
+<para>So erhalten Sie eine Liste mit Funktionen und Befehlen: <screen><prompt>genius&gt; </prompt><userinput>help</userinput>
+</screen> Wenn Sie zusätzliche Hilfe zu einer bestimmten Funktion wünschen, geben Sie Folgendes ein: <screen><prompt>genius&gt; </prompt><userinput>help FunktionsName</userinput>
+</screen> Dieses Handbuch zeigen Sie folgendermaßen an: <screen><prompt>genius&gt; </prompt><userinput>manual</userinput>
+</screen></para>
+<para>Angenommen, Sie haben zuvor einige GEL-Befehle als Programm in einer Datei abgespeichert und möchten diese nun ausführen. Um dieses Programm aus der Datei <filename>pfad/zu/programm.gel</filename> zu laden, geben Sie Folgendes ein: <screen><prompt>genius&gt; </prompt><userinput>load pfad/zu/programm.gel</userinput>
+</screen><application>Genius Mathematik-Werkzeug</application> verwendet den aktuellen Ordner. Um alle Dateien im aktuellen Ordner anzuzeigen, geben Sie <command>ls</command> ein. Der Ordnerwechsel erfolgt wie unter Unix üblich mittels <userinput>cd Ordner</userinput>.</para>
     </sect1>
 
     <sect1 id="genius-usage-create-program"> 
       <title>Erstellen eines neuen Programms</title> 
-      <para>
-To start writing a new program, choose
-<menuchoice><guimenu>File</guimenu><guimenuitem>New
-Program</guimenuitem></menuchoice>. A new tab will appear in the work area. You
-can write a <link linkend="genius-gel">GEL</link> program in this work area.
-Once you have written your program you can run it by 
-<menuchoice><guimenu>Calculator</guimenu><guimenuitem>Run</guimenuitem></menuchoice>.
-This will execute your program and will display any output on the <guilabel>Console</guilabel> tab.
-Executing a program is equivalent of taking the text of the program and
-typing it into the console.  The only difference is that this input is done
-independent of the console and just the output goes onto the console.
-<menuchoice><guimenu>Calculator</guimenu><guimenuitem>Run</guimenuitem></menuchoice>
-will always run the currently selected program even if you are on the <guilabel>Console</guilabel>
-tab.  The currently selected program has its tab in bold type.  To select a
-program, just click on its tab.
-      </para>
+      <para>Um ein neues Programm zu erstellen, wählen Sie <menuchoice><guimenu>Datei</guimenu><guimenuitem>Neues Programm</guimenuitem></menuchoice>. Im Arbeitsbereich erscheint ein neuer Reiter, wo Sie ein <link linkend="genius-gel">GEL</link>-Programm schreiben können. Anschließend können Sie es mittels <menuchoice><guimenu>Rechner</guimenu><guimenuitem>Ausführen</guimenuitem></menuchoice> starten. Nun wird Ihr Programm ausgeführt und jegliche Ausgaben werden im Reiter <guilabel>Konsole</guilabel> angezeigt. Das Ausführen eines Programms entspricht der Eingabe des Programmtextes in die Konsole. Der einzige Unterschied ist, dass die Eingabe unabhängig von der Konsole erfolgt und nur die Ausgabe des Programms in der Konsole erscheint. <menuchoice><guimenu>Rechner</guimenu><guimenuitem>Ausführen</guimenuitem></menuchoice> startet immer das aktuell gewählte Programm, sogar wenn Sie sich im Reiter <guilabel>Konsole</guilabel> befinden. Das aktuell gewählte Programm ist am fett erscheinenden Programmnamen des Reiters erkennbar. Um ein Programm auszuwählen, brauchen Sie nur auf dessen Reiter zu klicken.</para>
       <para>Um das soeben geschriebene Programm zu speichern, wählen Sie <menuchoice><guimenu>Datei</guimenu><guimenuitem>Speichern unter</guimenuitem></menuchoice></para>
     </sect1>
 
     <sect1 id="genius-usage-open-program"> 
       <title>Öffnen und Ausführen eines Programms</title> 
       <para>Um eine Datei zu öffnen, wählen Sie <menuchoice><guimenu>Datei</guimenu><guimenuitem>Öffnen</guimenuitem></menuchoice>. Ein neuer Reiter erscheint im Arbeitsplatz, der diese Datei enthält. Hier können Sie die Datei bearbeiten.</para>
-      <para>
-To run a program from a file, choose
-<menuchoice><guimenu>File</guimenu><guimenuitem>Load and
-Run...</guimenuitem></menuchoice>.  This will run the program without opening it
-in a separate tab.  This is equivalent to the <command>load</command> command.
-      </para>
+      <para>Wählen Sie <menuchoice><guimenu>Datei</guimenu><guimenuitem>Laden und ausführen …</guimenuitem></menuchoice>, um ein Programm aus einer Datei zu starten. Auf diese Weise wird das Programm ausgeführt, ohne dabei einen eigenen Reiter zu öffnen. Dies entspricht dem <command>load</command>-Befehl.</para>
     </sect1>
 
   </chapter>
 
   <!-- ============= Plotting ============================== -->
   <chapter id="genius-gel-plotting">
-    <title>Plotting</title>
+    <title>Darstellung</title>
 
-    <para>
-      Plotting support is only available in the graphical GNOME version.
-      All plotting accessible from the graphical interface is available from
-      the <guilabel>Create Plot</guilabel> window.  You can access this window by either clicking
-      on the <guilabel>Plot</guilabel> button on the toolbar or selecting <guilabel>Plot</guilabel> from the <guilabel>Calculator</guilabel>
-      menu.  You can also access the plotting functionality by using the
-      <link linkend="genius-gel-function-list-plotting">plotting
-      functions</link> of the GEL language.  See 
-      <xref linkend="genius-gel"/> to find out how to
-      enter expressions that Genius understands.
-    </para>
+    <para>Die Darstellung von Funktionen steht nur in der graphischen GNOME-Version zur Verfügung. Alle Darstellungen mittels graphischer Schnittstelle können über das Fenster <guilabel>Darstellung erstellen</guilabel> erreicht werden. In dieses Fenster gelangen Sie entweder durch Klick auf den Knopf <guilabel>Darstellen</guilabel> in der Werkzeugleiste oder durch Auswahl von <guilabel>Darstellen …</guilabel> im Menü <guilabel>Rechner</guilabel>. Sie können die Darstellungsmöglichkeiten auch unter Verwendung der GEL-<link linkend="genius-gel-function-list-plotting">Darstellungsfunktionen</link> einsetzen. Sehen Sie auch unter <xref linkend="genius-gel"/> nach, um herauszufinden, wie Sie Ausdrücke eingeben können, die von Genius verstanden werden.</para>
 
     <sect1 id="genius-line-plots">
-      <title>Line Plots</title>
-      <para>
-	To graph real valued functions of one variable open the <guilabel>Create Plot</guilabel>
-	window.  You can also use the
-        <link linkend="gel-function-LinePlot"><function>LinePlot</function></link> function
-	on the command line (see its documentation).
-      </para>
-      <para>
-	Once you click the <guilabel>Plot</guilabel> button, a window opens up with some notebooks in it.
-	You want to be in the <guilabel>Function line plot</guilabel> notebook
-tab, and inside you want to be on the <guilabel>Functions / Expressions</guilabel> notebook tab.
-See <xref linkend="lineplot-fig"/>.
-      </para>
+      <title>Kurvendarstellungen</title>
+      <para>Um Funktionen einer Variablen mit reellen Zahlen darzustellen, öffnen Sie das Fenster <guilabel>Darstellung erstellen</guilabel>. Sie können auch die Funktion <link linkend="gel-function-LinePlot"><function>LinePlot</function></link> auf der Befehlszeile verwenden (siehe Dokumentation dazu).</para>
+      <para>Sobald Sie auf den <guilabel>Darstellen</guilabel>-Knopf im Hauptfenster klicken, öffnet sich ein Fenster mit einigen Reitern darin. Sie befinden sich nun im Reiter <guilabel>Funktionsgraphen darstellen</guilabel> und darin im Reiter <guilabel>Funktionen / Ausdrücke</guilabel>. Siehe auch <xref linkend="lineplot-fig"/>.</para>
 
       <figure id="lineplot-fig"> 
-        <title>Create Plot Window</title> 
+        <title>Fenster »Darstellung erstellen«</title> 
         <screenshot> 
           <mediaobject> 
             <imageobject>
@@ -460,26 +316,16 @@ See <xref linkend="lineplot-fig"/>.
               <imagedata fileref="figures/line_plot.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-              <phrase>Shows the line plotting window.</phrase> 
+              <phrase>Anzeige des Kurven-Darstellungsfensters.</phrase> 
             </textobject> 
           </mediaobject> 
         </screenshot> 
       </figure>
 
-      <para>
-	Into the text boxes just type in expressions where <userinput>x</userinput> is
-	the independent variable.  You can also just give names of functions such as
-	<userinput>cos</userinput> rather then having to type <userinput>cos(x)</userinput>.
-	You can graph up to ten functions.  If you make a mistake and Genius cannot
-	parse the input it will signify this with a warning icon on the right of the text
-	input box where the error occurred, as well as giving you an error dialog.
-	You can change the ranges of the dependent and independent variables in the bottom
-	part of the dialog.
-	Pressing the <guilabel>Plot</guilabel> button produces the graph shown in <xref linkend="lineplot2-fig"/>.
-      </para>
+      <para>Geben Sie die Ausdrücke in die Textfelder ein, wobei <userinput>x</userinput> die unabhängige Variable ist. Sie können auch nur die Namen der Funktionen wie zum Beispiel <userinput>cos</userinput> eingeben, anstelle der vollständigen Eingabe von <userinput>cos(x)</userinput>. Bis zu zehn Funktionen können dargestellt werden. Wenn Sie einen Fehler machen und Genius die Eingabe nicht verarbeiten kann, so wird ein Warnsymbol rechts neben dem Texteingabefeld angezeigt, in welchem der Fehler aufgetreten ist, sowie zusätzlich ein Fehlerdialog. Die Bereiche der abhängigen und unabhängigen Variablen können Sie im unteren Bereich des Fensters einstellen. Durch Klicken des <guilabel>Darstellen</guilabel>-Knopfes wird ein Graph wie in <xref linkend="lineplot2-fig"/> angezeigt.</para>
 
       <figure id="lineplot2-fig"> 
-        <title>Plot Window</title> 
+        <title>Fenster »Darstellen«</title> 
         <screenshot> 
           <mediaobject> 
             <imageobject>
@@ -489,37 +335,23 @@ See <xref linkend="lineplot-fig"/>.
               <imagedata fileref="figures/line_plot_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-              <phrase>The graph produced.</phrase> 
+              <phrase>Erstellter Graph.</phrase> 
             </textobject> 
           </mediaobject> 
         </screenshot> 
       </figure>
 
-      <para>
-	From here you can print out the plot, create encapsulated postscript
-	or a PNG version of the plot or change the zoom.  If the dependent axis was
-	not set correctly you can have Genius fit it by finding out the extrema of
-	the graphed functions.
-      </para>
+      <para>Von hier aus können Sie die Darstellung ausdrucken, PostScript-, EPS- oder PNG-Versionen davon erstellen und die Vergrößerungsstufe verändern.</para>
 
-      <para>
-	For plotting using the command line see the documentation of the
-        <link linkend="gel-function-LinePlot"><function>LinePlot</function></link> function.
-      </para>
+      <para>Um Darstellungen von der Befehlszeile aus zu erstellen, lesen Sie bitte die Dokumentation der <link linkend="gel-function-LinePlot"><function>LinePlot</function></link>-Funktion.</para>
     </sect1>
 
     <sect1 id="genius-parametric-plots">
-      <title>Parametric Plots</title>
-      <para>
-	In the create plot window, you can also choose the <guilabel>Parametric</guilabel> notebook
-        tab to create two dimensional parametric plots.  This way you can
-	plot a single parametric function.  You can either specify the
-	points as x and y, or giving a single complex number.
-	See <xref linkend="paramplot-fig"/>.
-      </para>
+      <title>Parametrische Darstellungen</title>
+      <para>Im Fenster »Darstellung erstellen« können Sie den Reiter <guilabel>Parametrisch</guilabel> wählen, um zweidimensionale parametrische Darstellungen zu erstellen. Auf diese Weise können Sie eine einzelne parametrische Funktion darstellen. Sie können die Punkte entweder als x und y oder mittels einzelner komplexer Zahl angeben. Siehe dazu auch <xref linkend="paramplot-fig"/>.</para>
 
       <figure id="paramplot-fig"> 
-        <title>Parametric Plot Tab</title> 
+        <title>Reiter »Parametrische Darstellung«</title> 
         <screenshot> 
           <mediaobject> 
             <imageobject>
@@ -529,24 +361,16 @@ See <xref linkend="lineplot-fig"/>.
               <imagedata fileref="figures/parametric.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-              <phrase>Parametric plotting tab in the <guilabel>Create Plot</guilabel> window.</phrase> 
+              <phrase>Reiter »Parametrische Darstellung« im <guilabel>Darstellung erstellen</guilabel>-Fenster.</phrase> 
             </textobject> 
           </mediaobject> 
         </screenshot> 
       </figure>
 
-      <para>
-	An example of a parametric plot is given in
-	<xref linkend="paramplot-fig"/>.
-	Similar operations can be
-	done on such graphs as can be done on the other line plots.
-	For plotting using the command line see the documentation of the
-        <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> or
-        <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link> function.
-      </para>
+      <para>Ein Beispiel für eine parametrische Darstellung ist im <xref linkend="paramplot-fig"/> angegeben. Auf derartige Graphen können ähnliche Operationen angewendet werden wie bei anderen Kurvendarstellungen. Wie Sie Darstellungen von der Befehlszeile aus erzeugen, können Sie in der Dokumentation der Funktionen <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> oder <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link> nachlesen.</para>
 
       <figure id="paramplot2-fig"> 
-        <title>Parametric Plot</title> 
+        <title>Parametrische Darstellung</title> 
         <screenshot> 
           <mediaobject> 
             <imageobject>
@@ -556,7 +380,7 @@ See <xref linkend="lineplot-fig"/>.
               <imagedata fileref="figures/parametric_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-              <phrase>Parametric plot produced</phrase> 
+              <phrase>Erstellte parametrische Darstellung</phrase> 
             </textobject> 
           </mediaobject> 
         </screenshot> 
@@ -565,93 +389,33 @@ See <xref linkend="lineplot-fig"/>.
     </sect1>
 
     <sect1 id="genius-slopefield-plots">
-      <title>Slopefield Plots</title>
-      <para>
-	In the create plot window, you can also choose the <guilabel>Slope field</guilabel> notebook
-        tab to create a two dimensional slope field plot.
-	Similar operations can be
-	done on such graphs as can be done on the other line plots.
-	For plotting using the command line see the documentation of the
-        <link linkend="gel-function-SlopefieldPlot"><function>SlopefieldPlot</function></link> function.
-      </para>
+      <title>Richtungsfeld-Darstellungen</title>
+      <para>Im Fenster »Darstellung erstellen« können Sie den Reiter <guilabel>Richtungsfeld</guilabel> wählen, um eine zweidimensionale Richtungsfeld-Darstellung zu erstellen. Auf derartige Graphen können ähnliche Operationen angewendet werden wie bei anderen Kurvendarstellungen. Wie Sie Darstellungen von der Befehlszeile aus erzeugen, können Sie in der Dokumentation der Funktion <link linkend="gel-function-SlopefieldPlot"><function>SlopefieldPlot</function></link> nachlesen.</para>
 
-      <para>
-	When a slope field is active, there is an extra <guilabel>Solver</guilabel> menu available,
-	through which you can bring up the solver dialog.  Here you can have Genius plot specific
-	solutions for the given initial conditions.  You can either specify initial conditions in the dialog,
-	or you can click on the plot directly to specify the initial point.  While the solver dialog
-	is active, the zooming by clicking and dragging does not work.  You have to close the dialog first
-	if you want to zoom using the mouse.
-      </para>
+      <para>Wenn ein Richtungsfeld dargestellt wird, so steht ein zusätzlicher Menüeintrag <guilabel>Löser</guilabel> zur Verfügung. Damit gelangen Sie zum Löser-Dialogfeld und Sie können Genius bestimmte Lösungen zu den gegebenen Anfangsbedingungen darstellen lassen. Sie können die Anfangsbedingungen entweder im Dialogfeld angeben oder Sie klicken direkt auf die Darstellung, um den Anfangspunkt festzulegen. Während das Löser-Dialogfeld aktiv ist, funktionieren Größenänderungen durch Klicken und Ziehen nicht. Wenn Sie die Vergrößerungsstufe mit der Maus verändern möchten, müssen Sie zuerst das Dialogfenster schließen.</para>
 
-      <para>
-	The solver uses the standard Runge-Kutta method.
-	The plots will stay on the screen until cleared.  The solver will stop whenever it reaches the boundary
-	of the plot window.  Zooming does not change the limits or parameters of the solutions,
-	you will have to clear and redraw them with appropriate parameters.
-	You can also use the
-        <link linkend="gel-function-SlopefieldDrawSolution"><function>SlopefieldDrawSolution</function></link>
-	function to draw solutions from the command line or programs.  
-      </para>
+      <para>Der Löser verwendet das klassische Runge-Kutta-Verfahren. Die Darstellungen bleiben so lange am Bildschirm erhalten, bis sie gelöscht werden. Der Löser stoppt, sobald er die Grenzen des Darstellungsfensters erreicht hat. Durch Ändern der Vergrößerungsstufe werden die Grenzen der Parameter der Lösungen nicht verändert, dazu müssen Sie die Lösungen löschen und mit den gewünschten Parametern neu darstellen. Sie können auch die Funktion <link linkend="gel-function-SlopefieldDrawSolution"><function>SlopefieldDrawSolution</function></link> verwenden, um Lösungen von der Befehlszeile oder von Programmen aus darzustellen.</para>
 
     </sect1>
 
     <sect1 id="genius-vectorfield-plots">
-      <title>Vectorfield Plots</title>
-      <para>
-	In the create plot window, you can also choose the <guilabel>Vector field</guilabel> notebook
-        tab to create a two dimensional vector field plot.
-	Similar operations can be
-	done on such graphs as can be done on the other line plots.
-	For plotting using the command line see the documentation of the
-        <link linkend="gel-function-VectorfieldPlot"><function>VectorfieldPlot</function></link> function.
-      </para>
+      <title>Vektorfeld-Darstellungen</title>
+      <para>Im Fenster »Darstellung erstellen« können Sie den Reiter <guilabel>Vektorfeld</guilabel> wählen, um eine zweidimensionale Vektorfeld-Darstellung zu erstellen. Auf derartige Graphen können ähnliche Operationen angewendet werden wie bei anderen Kurvendarstellungen. Wie Sie Darstellungen von der Befehlszeile aus erzeugen, können Sie in der Dokumentation der Funktion <link linkend="gel-function-SlopefieldPlot"><function>VectorfieldPlot</function></link> nachlesen.</para>
 
-      <para>
-	By default the direction and magnitude of the vector field is shown.
-	To only show direction and not the magnitude, check the appropriate
-	checkbox to normalize the arrow lengths.
-      </para>
+      <para>Standardmäßig werden Richtung und Größe des Vektorfelds angezeigt. Sie können das Ankreuzfeld <guilabel>Pfeillänge normalisieren</guilabel> aktivieren, um nur die Richtung und nicht die Größe anzuzeigen.</para>
 
-      <para>
-	When a vector field is active, there is an extra <guilabel>Solver</guilabel> menu available,
-	through which you can bring up the solver dialog.  Here you can have Genius plot specific
-	solutions for the given initial conditions.  You can either specify initial conditions in the dialog,
-	or you can click on the plot directly to specify the initial point.  While the solver dialog
-	is active, the zooming by clicking and dragging does not work.  You have to close the dialog first
-	if you want to zoom using the mouse.
-      </para>
+      <para>Wenn ein Vektorfeld dargestellt wird, so steht ein zusätzlicher Menüeintrag <guilabel>Löser</guilabel> zur Verfügung. Damit gelangen Sie zum Löser-Dialogfeld und Sie können Genius bestimmte Lösungen zu den gegebenen Anfangsbedingungen darstellen lassen. Sie können die Anfangsbedingungen entweder im Dialogfeld angeben oder Sie klicken direkt auf die Darstellung, um den Anfangspunkt festzulegen. Während das Löser-Dialogfeld aktiv ist, funktioniert das Ändern der Vergrößerungsstufe durch Klicken und Ziehen nicht. Wenn Sie mit der Maus die Vergrößerungsstufe ändern möchten, müssen Sie zuerst das Dialogfenster schließen.</para>
 
-      <para>
-	The solver uses the standard Runge-Kutta method.
-	The plots will stay on the screen until cleared.
-	Zooming does not change the limits or parameters of the solutions,
-	you will have to clear and redraw them with appropriate parameters.
-	You can also use the
-        <link linkend="gel-function-VectorfieldDrawSolution"><function>VectorfieldDrawSolution</function></link>
-	function to draw solutions from the command line or programs.  
-      </para>
+      <para>Der Löser verwendet das klassische Runge-Kutta-Verfahren. Die Darstellungen bleiben so lange am Bildschirm erhalten, bis sie gelöscht werden. Durch Ändern der Vergrößerungsstufe werden die Grenzen der Parameter der Lösungen nicht verändert, dazu müssen Sie die Lösungen löschen und mit den gewünschten Parametern neu darstellen. Sie können auch die Funktion <link linkend="gel-function-VectorfieldDrawSolution"><function>VectorfieldDrawSolution</function></link> verwenden, um Lösungen von der Befehlszeile oder von Programmen aus darzustellen.</para>
 
     </sect1>
 
     <sect1 id="genius-surface-plots">
-      <title>Surface Plots</title>
-      <para>
-	Genius can also plot surfaces.  Select the <guilabel>Surface plot</guilabel> tab in the
-	main notebook of the <guilabel>Create Plot</guilabel> window.  Here you can specify a single
-	expression which should use either <varname>x</varname> and <varname>y</varname> as real independent variables
-	or <varname>z</varname> as a complex variable (where <varname>x</varname> is the real part of <varname>z</varname> and <varname>y</varname> is the
-	imaginary part).  For example to plot the modulus of the cosine
-	function for complex parameters,
-	you could enter <userinput>|cos(z)|</userinput>.  This would be
-	equivalent to <userinput>|cos(x+1i*y)|</userinput>.
-	See <xref linkend="surfaceplot-fig"/>.
-	For plotting using the command line see the documentation of the
-        <link linkend="gel-function-SurfacePlot"><function>SurfacePlot</function></link> function.
-      </para>
+      <title>2D-Darstellungen</title>
+      <para>Genius kann auch 2D-Darstellungen erzeugen. Wählen Sie den Reiter <guilabel>2D-Darstellung</guilabel> im Fenster <guilabel>Darstellung erstellen</guilabel>. Hier können Sie einen einzelnen Ausdruck angeben, in dem entweder <varname>x</varname> und <varname>y</varname> als reelle unabhängige Variablen oder <varname>z</varname> als komplexe Variable vorkommen (wobei <varname>x</varname> der reelle Teil von <varname>z</varname> und <varname>y</varname> der imaginäre Teil ist). Wenn Sie zum Beispiel den Modulus der Kosinus-Funktion für komplexe Parameter darstellen möchten, geben Sie <userinput>|cos(z)|</userinput> ein. Dies ist äquivalent zu <userinput>|cos(x+1i*y)|</userinput>. Siehe <xref linkend="surfaceplot-fig"/>. Für Darstellungen mittels Befehlszeile siehe Dokumentation der Funktion <link linkend="gel-function-SurfacePlot"><function>SurfacePlot</function></link>.</para>
 
       <figure id="surfaceplot-fig"> 
-        <title>Surface Plot</title> 
+        <title>2D-Darstellung</title> 
         <screenshot> 
           <mediaobject> 
             <imageobject>
@@ -661,7 +425,7 @@ See <xref linkend="lineplot-fig"/>.
               <imagedata fileref="figures/surface_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
-              <phrase>Modulus of the complex cosine function.</phrase> 
+              <phrase>Modulus der komplexen Kosinus-Funktion.</phrase> 
             </textobject> 
           </mediaobject> 
         </screenshot> 
@@ -673,7 +437,7 @@ See <xref linkend="lineplot-fig"/>.
 
   <!-- ============= GEL ====================================== -->
   <chapter id="genius-gel"> 
-    <title>GEL Basics</title> 
+    <title>GEL-Grundlagen</title> 
 
 	<para>
 	  GEL stands for Genius Extension Language.    It is the language you use
@@ -686,14 +450,12 @@ See <xref linkend="lineplot-fig"/>.
 	</para>
 
     <sect1 id="genius-gel-values">
-      <title>Values</title>
+      <title>Werte</title>
 
-      <para>
-Values in GEL can be <link linkend="genius-gel-values-numbers">numbers</link>, <link linkend="genius-gel-values-booleans">Booleans</link> or <link linkend="genius-gel-values-strings">strings</link>. Values can be used in calculations, assigned to variables and returned from functions, among other uses.
-      </para>
+      <para>Werte in GEL können <link linkend="genius-gel-values-numbers">Zahlen</link>, <link linkend="genius-gel-values-booleans">Wahrheitswerte</link> oder <link linkend="genius-gel-values-strings">Zeichenketten</link> sein. Werte können unter anderem in Berechnungen eingesetzt, Variablen zugeordnet und von Funktionen zurückgegeben werden.</para>
 
       <sect2 id="genius-gel-values-numbers">
-        <title>Numbers</title>
+        <title>Zahlen</title>
         <para>
 Integers are the first type of number in GEL. Integers are written in the normal way.
 <programlisting>1234
@@ -754,7 +516,7 @@ In order to use mixed fraction notation with imaginary numbers you must have the
 
 
       <sect2 id="genius-gel-values-booleans">
-        <title>Booleans</title>
+        <title>Wahrheitswerte</title>
         <para>
 Genius also supports native Boolean values. The two Boolean constants are
 defined as <constant>true</constant> and <constant>false</constant>; these
@@ -789,10 +551,10 @@ always evaluates to <constant>true</constant> since 1 will be converted to <cons
         <title>Strings</title>
         <para>
 Like numbers and Booleans, strings in GEL can be stored as values inside variables and passed to functions. You can also concatenate a string with another value using the plus operator. For example:
-<programlisting>a=2+3;"The result is: "+a
+<programlisting>a=2+3;"Das Ergebnis ist: "+a
 </programlisting>
 will create the string:
-<programlisting>The result is: 5
+<programlisting>Das Ergebnis ist: 5
 </programlisting>
 You can also use C-like escape sequences such as <literal>\n</literal>,<literal>\t</literal>,<literal>\b</literal>,<literal>\a</literal> and <literal>\r</literal>. To get a <literal>\</literal> or <literal>"</literal> into the string you can quote it with a <literal>\</literal>. For example:
 <programlisting>"Slash: \\ Quotes: \" Tabs: \t1\t2\t3"
@@ -858,10 +620,8 @@ You can use Tab completion to get Genius to complete variable names for you. Try
       </tip>
 
       <important>
-        <title>Variable names are case sensitive</title>
-        <para>
-The names of variables are case sensitive. That means that variables named <varname>hello</varname>, <varname>HELLO</varname> and <varname>Hello</varname> are all different variables.
-        </para>
+        <title>Groß-/Kleinschreibung für Variablennamen</title>
+        <para>Bei Variablennamen wird zwischen Groß- und Kleinschreibung unterschieden. Das bedeutet, dass die Variablennamen <varname>hello</varname>, <varname>HELLO</varname> und <varname>Hello</varname> als unterschiedliche Variablen erkannt werden.</para>
       </important>
 
 
@@ -901,7 +661,7 @@ See <xref linkend="genius-gel-function-list-constants"/> for a full list.
 
 
       <sect2 id="genius-gel-previous-result">
-        <title>Previous Result Variable</title>
+        <title>Vorherige Ergebnisvariable</title>
         <para>
 The <varname>Ans</varname> and <varname>ans</varname> variables can be used to get the result of the last expression. For example, if you had performed some calculation, to add 389 to the result you could do:
 <programlisting>Ans+389
@@ -938,7 +698,7 @@ You can use Tab completion to get Genius to complete function names for you. Try
       </tip>
 
       <important>
-        <title>Function names are case sensitive</title>
+        <title>Groß-/Kleinschreibung für Funktionsnamen</title>
         <para>
 The names of functions are case sensitive. That means that functions named <function>dosomething</function>, <function>DOSOMETHING</function> and <function>DoSomething</function> are all different functions.
         </para>
@@ -976,7 +736,7 @@ Then <userinput>f(1,2,3)</userinput> yields <computeroutput>[2,3]</computeroutpu
 
 
       <sect2 id="genius-gel-functions-passing-functions">
-        <title>Passing Functions to Functions</title>
+        <title>Übergabe von Funktionen an Funktionen</title>
 
         <para>
 In Genius, it is possible to pass a function as an argument to another function. This can be done using either ‘function nodes’ or anonymous functions.
@@ -1007,7 +767,7 @@ This will return 5.
 
 
     <sect2 id="genius-gel-functions-operations">
-      <title>Operations on Functions</title>
+      <title>Operationen mit Funktionen</title>
       <para>
 Some functions allow arithmetic operations, and some single argument functions such as <function>exp</function> or <function>ln</function>, to operate on the function. For example,
 <programlisting>exp(sin*cos+4)
@@ -1037,7 +797,7 @@ Not all functions can be used in this way.  For example, when you use a binary o
     </sect1>
 
     <sect1 id="genius-gel-absolute-value-modulus">
-      <title>Absolute Value / Modulus</title>
+      <title>Absoluter Wert / Modulus</title>
       <para>
 You can make an absolute value of something by putting the
 <literal>|</literal>'s around it.  For example:
@@ -1052,7 +812,7 @@ returns 3.
     </sect1>
 
     <sect1 id="genius-gel-separator">
-      <title>Separator</title>
+      <title>Trenner</title>
       <para>
 In GEL if you want to type more than one command you have to use
 the <literal>;</literal> operator, which is a way to separate expressions,
@@ -1078,7 +838,7 @@ the code if it is executed too often as there is one more operator involved.
     </sect1>
 
     <sect1 id="genius-gel-modular-evaluation">
-      <title>Modular Evaluation</title>
+      <title>Modulare Auswertung</title>
       <para>
 	      Genius implements modular arithmetic.
 To use it you just add "mod &lt;integer&gt;" after
@@ -1123,7 +883,7 @@ genius&gt; 2*2 mod 7
     </sect1>
 
     <sect1 id="genius-gel-operator-list">
-      <title>List of GEL Operators</title>
+      <title>Liste der GEL-Operatoren</title>
 
       <para>
 	      Everything in gel is really just an expression.  Expressions are stringed together with
@@ -1444,9 +1204,7 @@ different from <literal>=</literal> because it never gets translated to a
         <varlistentry>
          <term><synopsis>a xor b</synopsis></term>
          <listitem>
-           <para>
-             Logical xor.
-           </para>
+           <para>Logisches XOR.</para>
          </listitem>
         </varlistentry>
 
@@ -1454,9 +1212,7 @@ different from <literal>=</literal> because it never gets translated to a
         <varlistentry>
          <term><synopsis>not a</synopsis></term>
          <listitem>
-           <para>
-             Logical not.
-           </para>
+           <para>Logisches NICHT.</para>
          </listitem>
         </varlistentry>
 
@@ -1464,9 +1220,7 @@ different from <literal>=</literal> because it never gets translated to a
         <varlistentry>
          <term><synopsis>-a</synopsis></term>
          <listitem>
-           <para>
-             Negation operator.
-           </para>
+           <para>Negationsoperator.</para>
          </listitem>
         </varlistentry>
 
@@ -1700,7 +1454,7 @@ be careful how you use it and if in doubt, add parentheses.
     <title>Programmierung mit GEL</title>
 
     <sect1 id="genius-gel-conditionals">
-      <title>Conditionals</title>
+      <title>Bedingungen</title>
       <para>
 Syntax:
 <programlisting><![CDATA[if <expression1> then <expression2> [else <expression3>]
@@ -1754,7 +1508,7 @@ Loop with identifier being set to all values from <literal>&lt;from&gt;</literal
       </sect2>
 
       <sect2 id="genius-gel-loops-foreach">
-        <title>Foreach Loops</title>
+        <title>Foreach-Schleifen</title>
         <para>
 Syntax:
 <programlisting><![CDATA[for <identifier> in <matrix> do <body>]]></programlisting>
@@ -1855,7 +1609,7 @@ for conditional evaluation works here as well. For example, <literal>1 or a=1</l
     </sect1>
 
       <sect1 id="genius-gel-variables-global">
-        <title>Global Variables and Scope of Variables</title>
+        <title>Globale Variablen und Variablenbereiche</title>
 	<para>
 	  GEL is a
 	  <ulink url="http://en.wikipedia.org/wiki/Scope_%28programming%29">
@@ -1976,7 +1730,7 @@ or:
       </sect1>
 
       <sect1 id="genius-gel-parameters">
-        <title>Parameter variables</title>
+        <title>Parametervariablen</title>
 	<para>
 	  As we said before, there exist special variables called parameters
 	  that exist in all scopes.  To declare a parameter called
@@ -2000,7 +1754,7 @@ or:
       </sect1>
 
     <sect1 id="genius-gel-returning">
-      <title>Returning</title>
+      <title>Rückgabewerte</title>
 	<para>
 	  Normally a function is one or several expressions separated by a
 semicolon, and the value of the last expression is returned.  This is fine for
@@ -2062,7 +1816,7 @@ gives us 4.
     </sect1>
 
     <sect1 id="genius-gel-lvalues">
-      <title>Lvalues</title>
+      <title>Lvalues (linke Werte)</title>
       <para>
 	An lvalue is the left hand side of an assignment. In other words, an
 	lvalue is what you assign something to.  Valid lvalues are:
@@ -2141,7 +1895,7 @@ could use the following code.
     </sect1>
 
     <sect1 id="genius-gel-toplevel-syntax">
-      <title>Toplevel Syntax</title>
+      <title>Übergeordnete Syntax</title>
       <para>
 	The synatax is slightly different if you enter statements on
 	the top level versus when they are inside parentheses or
@@ -2179,7 +1933,7 @@ else
     </sect1>
 
      <sect1 id="genius-gel-returning-functions">
-       <title>Returning Functions</title>
+       <title>Funktionen als Rückgabe</title>
 	<para>
 	  It is possible to return functions as value.  This way you can
 	  build functions that construct special purpose functions according
@@ -2288,7 +2042,7 @@ g(10)
     </sect1>
 
     <sect1 id="genius-gel-true-local-variables">
-      <title>True Local Variables</title>
+      <title>Echte lokale Variablen</title>
       <para>
 	When passing functions into other functions, the normal scoping of
 	variables might be undesired.  For example:
@@ -2353,7 +2107,7 @@ f(r,1)
     </sect1>
 
     <sect1 id="genius-gel-startup-procedure">
-      <title>GEL Startup Procedure</title>
+      <title>GEL Startprozedur</title>
       <para>
 First the program looks for the installed library file (the compiled version <filename>lib.cgel</filename>) in the installed directory, then it looks into the current directory, and then it tries to load an uncompiled file called
 <filename>~/.geniusinit</filename>.
@@ -2382,7 +2136,7 @@ ls *.gel
 
   <!-- ============= Matrices ================================= -->
   <chapter id="genius-gel-matrices">
-    <title>Matrices in GEL</title>
+    <title>Matrizen in GEL</title>
 
     <para>
       Genius has support for vectors and matrices and a sizable library of
@@ -2390,7 +2144,7 @@ ls *.gel
     </para>
 
     <sect1 id="genius-gel-matrix-support">
-      <title>Entering Matrices</title>
+      <title>Matrizen eingeben</title>
       <para>
 To enter matrixes, you can use one of the following two syntaxes. You can either enter
 the matrix on one line, separating values by commas and rows by semicolons.  Or you
@@ -2457,7 +2211,7 @@ there.  You will start a new row.
     </sect1>
 
     <sect1 id="genius-gel-matrix-transpose">
-      <title>Conjugate Transpose and Transpose Operator</title>
+      <title>Operatoren für konjugierte Transposition und Transposition</title>
       <para>
 You can conjugate transpose a matrix by using the <literal>'</literal> operator.  That is
 the entry in the
@@ -2526,7 +2280,7 @@ calls to <function>rref</function> will be very fast.
 
   <!-- ============= Polynomials ============================== -->
   <chapter id="genius-gel-polynomials">
-    <title>Polynomials in GEL</title>
+    <title>Polynome in GEL</title>
 
     <para>
       Currently Genius can handle polynomials of one variable written out
@@ -2535,7 +2289,7 @@ calls to <function>rref</function> will be very fast.
     </para>
 
     <sect1 id="genius-gel-polynomials-using">
-      <title>Using Polynomials</title>
+      <title>Verwendung von Polynomen</title>
       <para>
 Currently
 polynomials in one variable are just horizontal vectors with value only nodes.
@@ -2592,7 +2346,7 @@ for the rest of functions acting on polynomials.
 
   <!-- ============= Set Theory ============================== -->
   <chapter id="genius-gel-settheory">
-    <title>Set Theory in GEL</title>
+    <title>Mengenlehre in GEL</title>
 
     <para>
       Genius has some basic set theoretic functionality built in.  Currently a set is
@@ -2600,7 +2354,7 @@ for the rest of functions acting on polynomials.
     </para>
 
     <sect1 id="genius-gel-sets-using">
-      <title>Using Sets</title>
+      <title>Mengen verwenden</title>
       <para>
 	Just like vectors, objects
       in sets can include numbers, strings, <constant>null</constant>, matrices and vectors.  It is
@@ -2712,7 +2466,7 @@ should use the
     </sect1>
 
     <sect1 id="genius-gel-function-list-basic">
-      <title>Basic</title>
+      <title>Grundlegendes</title>
       <variablelist>
         <varlistentry id="gel-function-AskButtons">
          <term>AskButtons</term>
@@ -2930,6 +2684,14 @@ is called inside a block that was evaluated using modular arithmetic (using <lit
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-CurrentTime">
+         <term>CurrentTime</term>
+         <listitem>
+          <synopsis>CurrentTime</synopsis>
+          <para>Returns the current UNIX time with microsecond precision as a floating point number.  That is, returns the number of seconds since January 1st 1970.</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-display">
          <term>display</term>
          <listitem>
@@ -3045,7 +2807,7 @@ unprotected variables as user defined.</para>
          <term>undefine</term>
          <listitem>
           <synopsis>undefine (id)</synopsis>
-          <para>Alias: <function>Undefine</function></para>
+          <para>Aliase: <function>Undefine</function></para>
           <para>Undefine a variable.  This includes locals and globals,
 	    every value on all context levels is wiped.  This function
 	    should really not be used on local variables.  A vector of
@@ -3186,7 +2948,7 @@ except possibly user interface events are processed.</para>
          <term>FloatPrecision</term>
          <listitem>
           <synopsis>FloatPrecision = Zahl</synopsis>
-          <para>Floating point precision.</para>
+          <para>Gleitkommagenauigkeit</para>
          </listitem>
         </varlistentry>
 
@@ -3257,7 +3019,7 @@ except possibly user interface events are processed.</para>
          <term>MaxDigits</term>
          <listitem>
           <synopsis>MaxDigits = Zahl</synopsis>
-          <para>Maximum digits to display.</para>
+          <para>Maximal anzuzeigende Stellen.</para>
          </listitem>
         </varlistentry>
 
@@ -3265,7 +3027,7 @@ except possibly user interface events are processed.</para>
          <term>MaxErrors</term>
          <listitem>
           <synopsis>MaxErrors = Zahl</synopsis>
-          <para>Maximum errors to display.</para>
+          <para>Maximal anzuzeigende Fehler.</para>
          </listitem>
         </varlistentry>
 
@@ -3349,7 +3111,7 @@ greater than or equal to
          <term>ResultsAsFloats</term>
          <listitem>
           <synopsis>ResultsAsFloats = boolean</synopsis>
-          <para>Convert all results to floats before printing.</para>
+          <para>Wandelt alle Ergebnisse vor der Ausgabe in Gleitkommazahlen um.</para>
          </listitem>
         </varlistentry>
 
@@ -3357,7 +3119,7 @@ greater than or equal to
          <term>ScientificNotation</term>
          <listitem>
           <synopsis>ScientificNotation = boolean</synopsis>
-          <para>Use scientific notation.</para>
+          <para>Wissenschaftliche Notation verwenden.</para>
          </listitem>
         </varlistentry>
 
@@ -3491,7 +3253,7 @@ vectorfield plot.  (See <link linkend="gel-function-VectorfieldPlot"><function>V
          <term>Gravity</term>
          <listitem>
           <synopsis>Gravity</synopsis>
-          <para>Free fall acceleration at sea level.</para>
+          <para>Beschleunigung im freien Fall auf Meeresspiegelhöhe.</para>
           <para>
 	    See
 	    <ulink url="http://en.wikipedia.org/wiki/Standard_gravity">Wikipedia</ulink> for more information.
@@ -3539,7 +3301,7 @@ vectorfield plot.  (See <link linkend="gel-function-VectorfieldPlot"><function>V
     </sect1>
 
     <sect1 id="genius-gel-function-list-numeric">
-      <title>Numeric</title>
+      <title>Numerik</title>
       <variablelist>
         <varlistentry id="gel-function-AbsoluteValue">
          <term>AbsoluteValue</term>
@@ -3750,7 +3512,21 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>ceil (x)</synopsis>
           <para>Aliases: <function>Ceiling</function></para>
-          <para>Get the lowest integer more than or equal to n.</para>
+	  <para>Get the lowest integer more than or equal to <varname>n</varname>. Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>ceil(1.1)</userinput>
+= 2
+<prompt>genius&gt;</prompt> <userinput>ceil(-1.1)</userinput>
+= -1
+</screen>
+           </para>
+	   <para>Note that you should be careful and notice that floating point
+		   numbers are stored an binary and so may not be what you
+		   expect.  For example <userinput>ceil(420/4.2)</userinput>
+		   returns 101 instead of the expected 100.  This is because
+		   4.2 is actually very slightly less than 4.2.  Use rational
+		   representation <userinput>42/10</userinput> if you want
+		   exact arithmetic.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -4444,7 +4220,7 @@ precalculated and returned in the second column.</para>
          <term>IsEven</term>
          <listitem>
           <synopsis>IsEven (n)</synopsis>
-          <para>Tests if an integer is even.</para>
+          <para>Überprüft, ob eine Ganzzahl gerade ist.</para>
          </listitem>
         </varlistentry>
 
@@ -4492,7 +4268,7 @@ precalculated and returned in the second column.</para>
          <term>IsOdd</term>
          <listitem>
           <synopsis>IsOdd (n)</synopsis>
-          <para>Tests if an integer is odd.</para>
+          <para>Überprüft, ob eine Ganzzahl ungerade ist.</para>
          </listitem>
         </varlistentry>
 
@@ -4940,7 +4716,7 @@ that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calles the <function
     </sect1>
 
     <sect1 id="genius-gel-function-list-matrix">
-      <title>Matrix Manipulation</title>
+      <title>Matrixoperationen</title>
       <variablelist>
         <varlistentry id="gel-function-ApplyOverMatrix">
          <term>ApplyOverMatrix</term>
@@ -4999,7 +4775,7 @@ that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calles the <function
          <term>DeleteColumn</term>
          <listitem>
           <synopsis>DeleteColumn (M,col)</synopsis>
-          <para>Delete a column of a matrix.</para>
+          <para>Löscht eine Spalte einer Matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -5007,7 +4783,7 @@ that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calles the <function
          <term>DeleteRow</term>
          <listitem>
           <synopsis>DeleteRow (M,row)</synopsis>
-          <para>Delete a row of a matrix.</para>
+          <para>Löscht eine Zeile einer Matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -6642,7 +6418,7 @@ do (
     </sect1>
 
     <sect1 id="genius-gel-function-list-calculus">
-      <title>Calculus</title>
+      <title>Analysis</title>
       <variablelist>
         <varlistentry id="gel-function-CompositeSimpsonsRule">
          <term>CompositeSimpsonsRule</term>
@@ -7244,7 +7020,7 @@ and has period <userinput>b-a</userinput>.</para>
     </sect1>
 
     <sect1 id="genius-gel-function-list-equation-solving">
-      <title>Equation Solving</title>
+      <title>Gleichungen lösen</title>
       <variablelist>
 
         <varlistentry id="gel-function-CubicFormula">
@@ -7707,7 +7483,7 @@ and has period <userinput>b-a</userinput>.</para>
     </sect1>
 
     <sect1 id="genius-gel-function-list-set-theory">
-      <title>Set Theory</title>
+      <title>Mengenlehre</title>
       <variablelist>
         <varlistentry id="gel-function-Intersection">
          <term>Intersection</term>
@@ -7760,6 +7536,35 @@ and has period <userinput>b-a</userinput>.</para>
       </variablelist>
     </sect1>
 
+    <sect1 id="genius-gel-function-list-commutative-algebra">
+      <title>Commutative Algebra</title>
+      <variablelist>
+        <varlistentry id="gel-function-MacaulayBound">
+         <term>MacaulayBound</term>
+         <listitem>
+          <synopsis>MacaulayBound (c,d)</synopsis>
+          <para>For a Hilbert function that is c for degree d, given the Macaulay bound for the Hilbert function of degree d+1 (The c^&lt;d&gt; operator from Green's proof).</para>
+         </listitem>
+        </varlistentry>
+	
+        <varlistentry id="gel-function-MacaulayLowerOperator">
+         <term>MacaulayLowerOperator</term>
+         <listitem>
+          <synopsis>MacaulayLowerOperator (c,d)</synopsis>
+          <para>The c_&lt;d&gt; operator from Green's proof of Macaulay's Theorem.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-MacaulayRep">
+         <term>MacaulayRep</term>
+         <listitem>
+          <synopsis>MacaulayRep (c,d)</synopsis>
+          <para>Return the dth Macaulay representation of a positive integer c.</para>
+         </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect1>
+
     <sect1 id="genius-gel-function-list-miscellaneous">
       <title>Verschiedenes</title>
       <variablelist>
@@ -7799,7 +7604,7 @@ and has period <userinput>b-a</userinput>.</para>
     </sect1>
 
     <sect1 id="genius-gel-function-list-symbolic">
-      <title>Symbolic Operations</title>
+      <title>Symbolische Operationen</title>
       <variablelist>
         <varlistentry id="gel-function-SymbolicDerivative">
          <term>SymbolicDerivative</term>
@@ -7860,7 +7665,7 @@ and has period <userinput>b-a</userinput>.</para>
     </sect1>
 
     <sect1 id="genius-gel-function-list-plotting">
-      <title>Plotting</title>
+      <title>Darstellung</title>
       <variablelist>
         <varlistentry id="gel-function-LinePlot">
          <term>LinePlot</term>
@@ -8150,7 +7955,7 @@ optionally the limits as <userinput>x1,x2,y1,y2</userinput>.
 
   <!-- ============= GEL examples ============================= -->
   <chapter id="genius-gel-example-programs">
-    <title>Example Programs in GEL</title>
+    <title>Beispielprogramme in GEL</title>
 
     <para>
 Here is a function that calculates factorials:
@@ -8265,7 +8070,7 @@ As an example, you can set the maximum number of digits in a result to 12 by typ
     </note>
 
     <sect1 id="genius-prefs-output"> 
-      <title>Output</title> 
+      <title>Ausgabe</title> 
       <variablelist> 
 	<varlistentry>
 	  <term> 
@@ -8353,7 +8158,7 @@ As an example, you can set the maximum number of digits in a result to 12 by typ
 	    <guilabel>Display errors in a dialog</guilabel>
       </term> 
 	  <listitem>
-        <para>If set the errors will be displayed in a seprate dialog, if
+        <para>If set the errors will be displayed in a separate dialog, if
 	unset the errors will be printed on the console.</para>
 	  </listitem>
 	</varlistentry>
@@ -8363,7 +8168,7 @@ As an example, you can set the maximum number of digits in a result to 12 by typ
 	    <guilabel>Display information messages in a dialog</guilabel>
       </term> 
 	  <listitem>
-	<para>If set the information messages will be displayed in a seprate
+	<para>If set the information messages will be displayed in a separate
 	dialog, if unset the information messages will be printed on the
 	console.</para>
 	  </listitem>
@@ -8419,11 +8224,11 @@ typsetting in LaTeX, MathML (XML), or in Troff.</para>
    </sect1> 
 
     <sect1 id="genius-prefs-precision"> 
-      <title>Precision</title> 
+      <title>Genauigkeit</title> 
       <variablelist> 
 	<varlistentry>
 	  <term> 
-	    <guilabel>Floating point precision</guilabel>
+	    <guilabel>Gleitkommagenauigkeit</guilabel>
       </term> 
 	  <listitem>
         <para>
@@ -8441,7 +8246,7 @@ typsetting in LaTeX, MathML (XML), or in Troff.</para>
 
 	<varlistentry>
 	  <term> 
-	    <guilabel>Remember precision setting across sessions</guilabel>
+	    <guilabel>Genauigkeitseinstellungen für folgende Sitzungen merken</guilabel>
       </term> 
 	  <listitem>
         <para>
@@ -8464,10 +8269,10 @@ typsetting in LaTeX, MathML (XML), or in Troff.</para>
       <variablelist> 
 	<varlistentry>
 	  <term> 
-	    <guilabel>Scrollback lines</guilabel>
+	    <guilabel>Zeilen an Scrollback</guilabel>
       </term> 
 	  <listitem>
-        <para>Lines of scrollback in the terminal.</para>
+        <para>Durch Zurückrollen sichtbare Zeilen im Terminal.</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
@@ -8488,7 +8293,7 @@ typsetting in LaTeX, MathML (XML), or in Troff.</para>
 	</varlistentry>
 	<varlistentry>
 	  <term> 
-	    <guilabel>Blinking cursor</guilabel>
+	    <guilabel>Blinkender Cursor</guilabel>
       </term> 
 	  <listitem>
         <para>If the cursor in the terminal should blink when the terminal is in focus.  This can sometimes be annoying and it generates idle traffic if you are using Genius remotely.</para>
@@ -8498,11 +8303,11 @@ typsetting in LaTeX, MathML (XML), or in Troff.</para>
     </sect1> 
 
     <sect1 id="genius-prefs-memory"> 
-      <title>Memory</title> 
+      <title>Speicher</title> 
       <variablelist> 
 	<varlistentry>
 	  <term> 
-	    <guilabel>Maximum number of nodes to allocate</guilabel>
+	    <guilabel>Maximale Anzahl zuzuweisender Knoten</guilabel>
       </term> 
 	  <listitem>
         <para>
@@ -8548,8 +8353,10 @@ beyond being just a desktop calculator.  To find more information about
     <para>Dieses Programm ist freie Software. Sie können es unter den Bedingungen der <citetitle>GNU General Public License</citetitle>, wie von der Free Software Foundation veröffentlicht, weitergeben und/oder modifizieren, entweder gemäß Version 2 der Lizenz oder (nach Ihrer Option) jeder späteren Version. Eine Kopie der <citetitle>GNU General Public License</citetitle> finden Sie in der <ulink url="ghelp:gpl" type="help">GPL</ulink>, oder in der Datei COPYING, die im Quellcode dieses Programms enthalten ist.</para>
 
     <para>Jiří Lebl was during various parts of the development
-      partially supported for the work by NSF grant DMS 0900885 and
-      the University of Illinois at Urbana-Champaign.  The software has
+      partially supported for the work by NSF grant DMS 0900885, 
+      the University of Illinois at Urbana-Champaign,
+      the University of California at San Diego and
+      the University of Wisconsin-Madison.  The software has
       been used for both teaching and research.</para>
 
   </chapter>

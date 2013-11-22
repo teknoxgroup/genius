@@ -2,8 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "<application>Genius Mathematics Tool</application>">
 <!ENTITY appname "Genius">
-<!ENTITY appversion "1.0.13">
-<!ENTITY date "July 2011">
+<!ENTITY appversion "1.0.15">
+<!ENTITY date "March 2012">
 <!ENTITY legal SYSTEM "legal.xml">
 <!ENTITY manrevision "0.2">
 <!ENTITY lt "&#60;">
@@ -30,7 +30,7 @@
     <title>Příručka k aplikaci Genius</title>       
 
     <copyright>
-      <year>1997 – 2011</year>
+      <year>1997 – 2012</year>
       <holder>Jiří (George) Lebl</holder>
     </copyright>
     <copyright>
@@ -74,7 +74,7 @@
 		<firstname>Jiří</firstname> 
 		<surname>Lebl</surname> 
 		<affiliation> 
-	  		<orgname>Univerzita Illinois, Urbana-Champaign</orgname> 
+	  		<orgname>Univerzita Wisconsin-Madison</orgname> 
 	  		<address> <email>jirka@5z.com</email> </address> 
 		</affiliation> 
       </author> 
@@ -152,13 +152,13 @@
     <revhistory>
       <revision> 
 		<revnumber>0.2</revnumber> 
-		<date>červenec 2011</date> 
+		<date>Březen 2012</date> 
 		<revdescription> 
 	  		<para role="author">Jiri (George) Lebl <email>jirka@5z.com</email></para>
 		</revdescription> 
       </revision> 
     </revhistory>
-    <releaseinfo>Tato příručka popisuje aplikaci Genius ve verzi 1.0.13.</releaseinfo> 
+    <releaseinfo>Tato příručka popisuje aplikaci Genius ve verzi 1.0.15.</releaseinfo> 
     <legalnotice> 
       <title>Ohlasy</title> 
       <para>Pokud chcete oznámit chybu nebo navrhnout vylepšení vztahující se k aplikaci <application>matematický nástroj Genius</application> nebo této příručce, postupujte dle instrukcí na stránce <ulink url="ghelp:gnome-feedback" type="help">Stránka s ohlasy na GNOME</ulink>.</para>
@@ -1705,6 +1705,14 @@ f(2)
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-CurrentTime">
+         <term>CurrentTime</term>
+         <listitem>
+          <synopsis>CurrentTime</synopsis>
+          <para>Vrátit aktuální UNIXový čas s přesností na mikrosekundy v podobě desetinného čísla. Prakticky se jedná o počet sekund uplynulých od 1. ledna 1970.</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-display">
          <term>display</term>
          <listitem>
@@ -2383,7 +2391,12 @@ f(2)
          <listitem>
           <synopsis>ceil (x)</synopsis>
           <para>Alternativní názvy: <function>Ceiling</function></para>
-          <para>Vrátit nejmenší celé číslo, které je větší nebo rovno <varname>n</varname>.</para>
+	  <para>Získat nejnižší celé číslo, které je větší nebo rovno <varname>n</varname>. Například: <screen><prompt>genius&gt;</prompt> <userinput>ceil(1.1)</userinput>
+= 2
+<prompt>genius&gt;</prompt> <userinput>ceil(-1.1)</userinput>
+= -1
+</screen></para>
+	   <para>Měli byste být obezřetní a uvědomit si, že desetinná čísla jsou uchovávána v binární podobě, takže nemusí mít naprosto přesně tu hodnotu, kterou očekáváte. Například <userinput>ceil(420/4.2)</userinput> vrací 101 a ne 100, jak byste asi očekávali. To je tím, že 4,2 je ve skutečnosti uloženo jako nepatrně méně než 4,2. Pokud chcete přesné výsledky, použijte racionální vyjádření <userinput>42/10</userinput>.</para>
          </listitem>
         </varlistentry>
 
@@ -2976,7 +2989,7 @@ f(2)
          <listitem>
           <synopsis>IsPrime (n)</synopsis>
           <para>Testuje prvočíselnost celých čísel, pro čísla menší než 2.5e10 je odpověď deterministická (tedy pokud je Riemannova hypotéza platná). Pro větší čísla závisí falešné kladné odpovědi na <link linkend="gel-function-IsPrimeMillerRabinReps"><function>IsPrimeMillerRabinReps</function></link>. Což znamená, že pravděpodobnost nesprávné kladné odpovědi je ¼ umocněná na <function>IsPrimeMillerRabinReps</function>. Výchozí hodnota 22 dává pravděpodobnost zhruba 5.7e-14.</para>
-          <para>Když je vráceno <constant>false<constant>, můžete si být jisti, že se jedná o složené číslo. Jestliže si potřebujete být absolutně jistí, že máte prvočíslo, můžete použít funkci <link linkend="gel-function-MillerRabinTestSure"><function>MillerRabinTestSure</function></link>, ale může to trvat trochu déle.</constant></constant></para>
+          <para>Když je vráceno <constant>false</constant>, můžete si být jisti, že se jedná o složené číslo. Jestliže si potřebujete být absolutně jistí, že máte prvočíslo, můžete použít funkci <link linkend="gel-function-MillerRabinTestSure"><function>MillerRabinTestSure</function></link>, ale může to trvat trochu déle.</para>
           <para>Více informací najdete v encyklopediích <ulink url="http://planetmath.org/encyclopedia/PrimeNumber.html">Planetmath</ulink> (text je v angličtině), <ulink url="http://mathworld.wolfram.com/PrimeNumber.html">Mathworld</ulink> (text je v angličtině) nebo <ulink url="http://cs.wikipedia.org/wiki/Prvo%C4%8D%C3%ADslo">Wikipedia</ulink>.</para>
          </listitem>
         </varlistentry>
@@ -5337,6 +5350,35 @@ do (
       </variablelist>
     </sect1>
 
+    <sect1 id="genius-gel-function-list-commutative-algebra">
+      <title>Komutativní algebra</title>
+      <variablelist>
+        <varlistentry id="gel-function-MacaulayBound">
+         <term>MacaulayBound</term>
+         <listitem>
+          <synopsis>MacaulayBound (c,d)</synopsis>
+          <para>Pro Hilbertovu funkci jde o c pro stupeň d, daný Macaulayho ohraničením pro Hilbertovu funkci stupně d+1 (operátor c^&lt;d&gt; z Greenova důkazu)</para>
+         </listitem>
+        </varlistentry>
+	
+        <varlistentry id="gel-function-MacaulayLowerOperator">
+         <term>MacaulayLowerOperator</term>
+         <listitem>
+          <synopsis>MacaulayLowerOperator (c,d)</synopsis>
+          <para>Operátor c_&lt;d&gt; z Greenova důkazu Macaulayova teorému</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-MacaulayRep">
+         <term>MacaulayRep</term>
+         <listitem>
+          <synopsis>MacaulayRep (c,d)</synopsis>
+          <para>Vrátit d-tou Macaulayho reprezentaci celého kladného čísla c.</para>
+         </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect1>
+
     <sect1 id="genius-gel-function-list-miscellaneous">
       <title>Různé</title>
       <variablelist>
@@ -5860,7 +5902,7 @@ function MyOwnREF(m) = (
 
     <para>Tento program je šířen podle ustanovení licence GNU General Public License, vydávané Free Software Foundation; a to buď verze 2 této licence anebo (podle vlastního uvážení) kterékoliv pozdější verze. Kopii této licence naleznete <ulink url="ghelp:gpl" type="help">pod tímto odkazem</ulink> nebo v souboru COPYING přiloženém ke zdrojovým kódům tohoto programu.</para>
 
-    <para>Jiří Lebl byl během různých částí vývoje částečně podporován v práci od NSF grantem DMS 0900885 a Univerzitou Illinois v Urbana-Champaign. Software byl využíván jak k výuce, tak k výzkumu.</para>
+    <para>Jiří Lebl byl během různých částí vývoje částečně podporován v práci od NSF grantem DMS 0900885 a univerzitou Illinois v Urbana-Champaign, univerzitou California v San Diegu a univerzitou Wisconsin-Madison. Software byl využíván jak k výuce, tak k výzkumu.</para>
 
   </chapter>
 

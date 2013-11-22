@@ -40,7 +40,7 @@
 
 #include "binreloc.h"
 
-static GelEFunc *_internal_ln_function = NULL;
+/* FIXME:static GelEFunc *_internal_ln_function = NULL; */
 static GelEFunc *_internal_exp_function = NULL;
 
 static GelEFunc *conj_function = NULL;
@@ -362,6 +362,21 @@ static GelETree *
 false_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	return gel_makenum_bool (0);
+}
+
+static GelETree *
+CurrentTime_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpw_t tm;
+	struct timeval tv;
+
+	mpw_init (tm);
+	gettimeofday (&tv, NULL);
+	mpw_set_ui (tm, tv.tv_usec);
+	mpw_make_float (tm);
+	mpw_div_ui (tm, tm, 1000000);
+	mpw_add_ui (tm, tm, tv.tv_sec);
+	return gel_makenum_use (tm);
 }
 
 /*sin function*/
@@ -1973,6 +1988,19 @@ exp_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 			gel_errorout (_("%s: matrix argument is not square"),
 				      "exp");
 			return NULL;
+		}
+		if G_UNLIKELY (_internal_exp_function == NULL) {
+			_internal_exp_function = d_makeufunc(d_intern("<internal>exp"),
+							     gel_parseexp
+							     ("s = float(x^0); "
+							      "fact = 1; "
+							      "for i = 1 to 100 do "
+							      "(fact = fact * x / i; "
+							      "s = s + fact) ; s",
+							      NULL, FALSE, FALSE,
+							      NULL, NULL),
+							     g_slist_append(NULL,d_intern("x")),1,
+							     NULL);
 		}
 		return gel_funccall(ctx,_internal_exp_function,a,1);
 	}
@@ -6282,6 +6310,7 @@ gel_funclib_addall(void)
 	gel_new_category ("statistics", N_("Statistics"), TRUE /* internal */);
 	gel_new_category ("polynomial", N_("Polynomials"), TRUE /* internal */);
 	gel_new_category ("sets", N_("Set Theory"), TRUE /* internal */);
+	gel_new_category ("commutative_algebra", N_("Commutative Algebra"), TRUE /* internal */);
 	gel_new_category ("misc", N_("Miscellaneous"), TRUE /* internal */);
 
 	FUNC (manual, 0, "", "basic", N_("Displays the user manual"));
@@ -6295,6 +6324,8 @@ gel_funclib_addall(void)
 	ALIAS (True, 0, true);
 	FUNC (false, 0, "", "basic", N_("The false boolean value"));
 	ALIAS (False, 0, false);
+
+	FUNC (CurrentTime, 0, "", "basic", N_("Unix time in seconds as a floating point number"));
 
 	/* FIXME: TRUE, FALSE aliases can't be done with the macros in funclibhelper.cP! */
 	d_addfunc (d_makebifunc (d_intern ("TRUE"), true_op, 0));
@@ -6615,6 +6646,9 @@ gel_funclib_addall(void)
 	f->no_mod_all_args = 1;
 
 	/*temporary until well done internal functions are done*/
+	/* Search also for _internal_exp_function above, it's done on
+	 * demand */
+#if 0
 	_internal_ln_function = d_makeufunc(d_intern("<internal>ln"),
 					    /*FIXME:this is not the correct 
 					      function*/
@@ -6623,17 +6657,7 @@ gel_funclib_addall(void)
 							 NULL, NULL),
 					    g_slist_append(NULL,d_intern("x")),1,
 					    NULL);
-	_internal_exp_function = d_makeufunc(d_intern("<internal>exp"),
-					     gel_parseexp
-					     ("s = float(x^0); "
-					      "fact = 1; "
-					      "for i = 1 to 100 do "
-					      "(fact = fact * x / i; "
-					      "s = s + fact) ; s",
-					      NULL, FALSE, FALSE,
-					      NULL, NULL),
-					     g_slist_append(NULL,d_intern("x")),1,
-					     NULL);
+#endif
 
 	gel_add_symbolic_functions ();
 
