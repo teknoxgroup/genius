@@ -10,10 +10,14 @@ while(<TESTS>) {
 		$options = $1;
 	} elsif(/^([^	]+)	+([^	]+)$/) {
 		$tests++;
-		open(GENIUS,"echo '$1' | ./genius $options |") ||
-			die "can't open pipe!";
-		print "$1\n";
+		$command = $1;
 		$shd=$2;
+		print "$1\n";
+		#something weird happens and the following modifies $1 and $2
+		#as well, I guess those can only be used from the last regexp
+		$command =~ s/'/'\\''/g;
+		open(GENIUS,"echo '$command' | ./genius $options |") ||
+			die "can't open pipe!";
 
 		if($rep=<GENIUS>) {
 			chomp $shd;

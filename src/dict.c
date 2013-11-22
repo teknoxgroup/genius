@@ -36,7 +36,7 @@ static context_t context={NULL,-1};
 
 static GHashTable *dictionary;
 
-static EFunc *free_funcs = NULL;
+EFunc *free_funcs = NULL;
 
 /*return current context number (0 is global, -1 is uninitialized)*/
 int
@@ -163,7 +163,7 @@ d_setrealfunc(EFunc *n,EFunc *fake)
 	GList *li;
 	
 	if(n->type == USER_FUNC)
-		freenode(n->data.user);
+		freetree(n->data.user);
 	
 	n->type = fake->type;
 	n->data = fake->data;

@@ -29,7 +29,7 @@
 #ifdef WITH_READLINE_SUPPORT
 #include <readline/readline.h>
 #endif
-	
+
 int lex_fd[2];
 int first_tok = STARTTOK;
 int return_ret = FALSE;
@@ -38,6 +38,7 @@ int use_readline = FALSE;
 int lex_init = TRUE;
 extern evalstack_t evalstack;
 extern int got_eof;
+static int matrix_entry=0;
 
 #define NO_RET {return_ret = FALSE;}
 #define DO_RET { \
@@ -50,7 +51,7 @@ extern int got_eof;
 #ifdef WITH_READLINE_SUPPORT
 #define NEXT_LINE {							\
 	while(use_readline) {						\
-		char *s = readline(!evalstack?"genius> ":"> ");		\
+		char *s = readline(!evalstack?"genius> ":"      > ");	\
 		if(!s) {						\
 			got_eof = TRUE;					\
 			return '\n';					\
@@ -98,14 +99,12 @@ extern int got_eof;
 
 \;		{ DO_RET; return SEPAR; }
 
-\"[^"]\"	{ 
+\"[^"]*\"	{ 
 			DO_RET;
 			yylval.id = g_strdup(&yytext[1]);
 			yylval.id[strlen(yylval.id)-1]='\0';
 			return STRING;
 		}
-
-~		{ NO_RET; return NEG; }
 
 ==		{ NO_RET; return EQ_CMP; }
 !=		{ NO_RET; return NE_CMP; }
@@ -135,26 +134,43 @@ define		{ NO_RET; return DEFINE; }
 call		{ NO_RET; return CALL; }
 
 return		{ NO_RET; return RETURNTOK; }
+bailout		{ DO_RET; return BAILOUT; }
+exception	{ DO_RET; return EXCEPTION; }
 
-@[]]		{
+@[(]		{
 			parenth_depth++;
 			NO_RET;
 			return AT;
 		}
-
-[[({]		{
+		
+[[][\t ]*	{
+			matrix_entry++;
 			parenth_depth++;
 			NO_RET;
 			return yytext[0];
 		}
 
-[])}]		{
+[\t ]*[]]	{
+			matrix_entry--;
+			parenth_depth--;
+			DO_RET;
+			return yytext[0];
+		}
+			
+
+[({]		{
+			parenth_depth++;
+			NO_RET;
+			return yytext[0];
+		}
+
+[)}]		{
 			parenth_depth--;
 			DO_RET;
 			return yytext[0];
 		}
 
-[a-zA-Z][a-zA-Z0-9]*	{
+[a-zA-Z][a-zA-Z0-9_]*	{
 				/* identifier*/
 				yylval.id = g_strdup(yytext);
 				DO_RET;
@@ -218,16 +234,29 @@ return		{ NO_RET; return RETURNTOK; }
 		
 \\\n		{ NEXT_LINE; }
 		
-\n		{ 
-			if(return_ret) {
+[\t ]*\n	{ 
+			if(matrix_entry) {
+				NEXT_LINE;
+				return ':';
+			} else if(return_ret) {
 				first_tok = 0;
 				return '\n';
 			}
 			NEXT_LINE;
 		}
+		
+^[\t ][\t ]*	;
+
+[\t ]*,[\t ]*	{ return ','; }
+
+[\t][\t ]*	{
+			if(matrix_entry)
+				return ',';
+		}
+
 [ \t\r]+	; /*ignore whitespace*/
 
-\!		{
+[!']		{
 			DO_RET;
 			return yytext[0];
 		}

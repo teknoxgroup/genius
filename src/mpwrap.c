@@ -22,6 +22,7 @@
 #include <string.h>
 #include <glib.h>
 #include <math.h>
+#include <limits.h>
 #include "calc.h"
 #include "util.h"
 #include "mymath.h"
@@ -62,7 +63,7 @@ static MpwRealNum *one = NULL;
 		if(n->i != zero) {			\
 			n->i->alloc.usage--;		\
 			if(n->i->alloc.usage==0)	\
-				mpwl_free(n->i);	\
+				mpwl_free(n->i,FALSE);	\
 			n->i = zero;			\
 			zero->alloc.usage++;		\
 		}					\
@@ -79,6 +80,12 @@ static void mympf_pow_z(mpf_t rop,mpf_t op,mpz_t e);
 
 /*my own power function for ints, very simple :) */
 static void mympz_pow_z(mpz_t rop,mpz_t op,mpz_t e);
+
+/*simple exponential function*/
+static void mympf_exp(mpf_t rop,mpf_t op);
+
+/*ln function*/
+static int mympf_ln(mpf_t rop,mpf_t op);
 
 /*clear extra variables of type type, if type=op->type nothing is done*/
 static void mpwl_clear_extra_type(MpwRealNum *op,int type);
@@ -101,7 +108,7 @@ static void mpwl_clear(MpwRealNum *op);
 
 static void mpwl_init_type(MpwRealNum *op,int type);
 
-static void mpwl_free(MpwRealNum *op);
+static void mpwl_free(MpwRealNum *op, int local);
 
 static int mpwl_sgn(MpwRealNum *op);
 
@@ -140,7 +147,7 @@ static int mpwl_pow_q(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
 /*power to an unsigned long and optionaly invert the answer*/
 static void mpwl_pow_ui(MpwRealNum *rop,MpwRealNum *op1,unsigned int e,
-	int reverse);
+			int reverse);
 
 static void mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
@@ -149,6 +156,9 @@ static int mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 static int mpwl_pow(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2);
 
 static int mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op);
+
+static void mpwl_exp(MpwRealNum *rop,MpwRealNum *op);
+static int mpwl_ln(MpwRealNum *rop,MpwRealNum *op);
 
 static int mpwl_cmp(MpwRealNum *op1, MpwRealNum *op2);
 
@@ -171,6 +181,9 @@ static void mpwl_set_str_int(MpwRealNum *rop,char *s,int base);
 /**************/
 /*output stuff*/
 
+/*get a long if possible*/
+static long mpwl_get_long(MpwRealNum *op, int *ex);
+
 /*round off the number at some digits*/
 static void str_make_max_digits(char *s,int digits);
 
@@ -178,18 +191,249 @@ static void str_make_max_digits(char *s,int digits);
 static char * str_format_float(char *p,long int e,int scientific_notation);
 
 static char * str_getstring_z(mpz_t num, int max_digits,
-	int scientific_notation);
+			      int scientific_notation);
 static char * str_getstring_q(mpq_t num, int max_digits,
-	int scientific_notation);
+			      int scientific_notation);
 static char * str_getstring_f(mpf_t num, int max_digits,
-	int scientific_notation);
+			      int scientific_notation);
 
 static char * mpwl_getstring(MpwRealNum * num, int max_digits,
-	int scientific_notation, int results_as_floats);
+			     int scientific_notation, int results_as_floats);
 
 /*************************************************************************/
 /*low level stuff                                                        */
 /*************************************************************************/
+
+/*exponential function uses the fact that e^x == (e^(x/2))^2*/
+/*precision is OFF ... bc mathlib defines it as "scale = 6 + scale + .44*x"*/
+static void
+mympf_exp(mpf_t rop,mpf_t op)
+{
+	mpf_t x;
+	mpf_t fres;
+	mpf_t foldres;
+	mpf_t fact;
+	mpf_t top;
+	mpf_t cmp;
+	unsigned long int i;
+	unsigned long int f=0;
+	unsigned long int prec;
+
+	int sgn;
+	
+	sgn = mpf_sgn(op);
+	if(sgn == 0) {
+		mpf_set_ui(rop,1);
+		return;
+	}
+
+	/* 4bits is about 1 digit I guess */
+	prec = 6*4 + mpf_get_prec(op);
+
+	mpf_init2(x,prec);
+	mpf_set(x,op);
+
+	if(sgn<0)
+		mpf_neg(x,x);
+	
+	mpf_init_set_d(cmp,1.0);
+	while(mpf_cmp(x,cmp)>0) {
+		mpf_div_2exp(x,x,1);
+		f++;
+
+		if(f==ULONG_MAX) {
+			mpf_clear(x);
+			mpf_clear(cmp);
+			(*errorout)("Number too large to compute exponential!");
+			error_num=NUMERICAL_MPW_ERROR;
+			return;
+		}
+	}
+	mpf_clear(cmp);
+	
+	mpf_init2(fres,prec);
+	mpf_init2(foldres,prec);
+	mpf_set_d(foldres,1.0);
+
+	mpf_init2(fact,prec);
+	mpf_set_d(fact,1.0);
+
+	mpf_init2(top,prec);
+	mpf_set_d(top,1.0);
+
+	for(i=1;;i++) {
+		mpf_mul_ui(fact,fact,i);
+		mpf_mul(top,top,x);
+		mpf_div(fres,top,fact);
+		
+		mpf_add(fres,foldres,fres);
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+	
+	mpf_clear(fact);
+	mpf_clear(x);
+	mpf_clear(top);
+	mpf_clear(foldres);
+	
+	while(f--)
+		mpf_mul(fres,fres,fres);
+	
+	if(sgn<0)
+		mpf_ui_div(fres,1,fres);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+}
+
+/*ln function using 2*ln(x) == ln(x^2)*/
+static int
+mympf_ln(mpf_t rop,mpf_t op)
+{
+	int neg = TRUE;
+	mpf_t x;
+	mpf_t top;
+	mpf_t fres;
+	mpf_t foldres;
+	mpf_t cmp;
+	unsigned long int i;
+	unsigned long int f = 0;
+	unsigned long int prec;
+
+	if(mpf_cmp_ui(op,0)<=0)
+		return FALSE;
+
+	/* 4bits is about 1 digit I guess */
+	prec = 6*4 + mpf_get_prec(op);
+	
+	mpf_init2(x,prec);
+	mpf_set(x,op);
+	
+	/*make x be 1/2 < x < 2 and set 2^f to the approriate multiplier*/
+
+	mpf_init_set_d(cmp,0.5);
+	while(mpf_cmp(x,cmp)<0) {
+		f++;
+		mpf_sqrt(x,x);
+	}
+
+	mpf_set_d(cmp,2.0);
+	while(mpf_cmp(x,cmp)>=0) {
+		f++;
+		mpf_sqrt(x,x);
+	}
+	mpf_clear(cmp);
+	
+	/*we must work with -1 < x < 1*/
+	mpf_sub_ui(x,x,1);
+	
+	mpf_init2(fres,prec);
+	mpf_init2(foldres,prec);
+
+	mpf_init2(top,prec);
+	mpf_set_ui(top,1);
+
+	/* x = op-1 */
+	/* sum from 1 to infinity of (-1)^i * x^i / i*/
+	for(i=1;;i++) {
+		mpf_mul(top,top,x);
+		mpf_div_ui(fres,top,i);
+		
+		if(neg)
+			mpf_sub(fres,foldres,fres);
+		else
+			mpf_add(fres,foldres,fres);
+		neg = !neg;
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+
+	mpf_clear(foldres);
+	mpf_clear(top);
+	mpf_clear(x);
+
+	mpf_mul_2exp(fres,fres,f);
+
+	mpf_neg(fres,fres);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+	
+	return TRUE;
+}
+
+/*these functions may be more precise but slow as HELL*/
+#if 0
+/*ln function for ranges op>=1/2*/
+static void
+mympf_ln_top(mpf_t rop,mpf_t op)
+{
+	mpf_t x;
+	mpf_t top;
+	mpf_t bottom;
+	mpf_t fres;
+	mpf_t foldres;
+	unsigned long int i;
+	
+	mpf_init_set(x,op);
+	mpf_sub_ui(x,x,1);
+	
+	mpf_init(fres);
+	mpf_init(foldres);
+
+	mpf_init(top);
+	mpf_set_ui(top,1);
+	mpf_init(bottom);
+	mpf_set_ui(bottom,1);
+
+	/* x = op-1 */
+	/* sum from 1 to infinity of x^i / ( i * op^i ) */
+	/* top = x^i, bottom = op^i */
+	for(i=1;;i++) {
+		mpf_mul(top,top,x);
+
+		mpf_mul(bottom,bottom,op);
+		mpf_mul_ui(fres,bottom,i);
+
+		mpf_div(fres,top,fres);
+		
+		mpf_add(fres,fres,foldres);
+
+		if(mpf_cmp(foldres,fres)==0)
+			break;
+		mpf_set(foldres,fres);
+	}
+	
+	mpf_clear(foldres);
+	mpf_clear(top);
+	mpf_clear(bottom);
+	mpf_clear(x);
+
+	mpf_set(rop,fres);
+
+	mpf_clear(fres);
+}
+
+/*ln function*/
+static int
+mympf_ln(mpf_t rop,mpf_t op)
+{
+	if(mpf_cmp_ui(op,2)>=0) {
+		mympf_ln_top(rop,op);
+		return TRUE;
+	} else if(mpf_cmp_ui(op,0)>0) {
+		mympf_ln_bottom(rop,op);
+		return TRUE;
+	} else
+		return FALSE;
+}
+#endif
 
 /*my own power function for floats, very simple :) */
 static void
@@ -291,16 +535,25 @@ mpwl_clear_extra_type(MpwRealNum *op,int type)
 		return;
 	switch(type) {
 	case MPW_INTEGER:
-		if(op->data.ival)
+		if(op->data.ival) {
 			mpz_clear(op->data.ival);
+			g_free(op->data.ival);
+			op->data.ival = NULL;
+		}
 		break;
 	case MPW_RATIONAL:
-		if(op->data.rval)
+		if(op->data.rval) {
 			mpq_clear(op->data.rval);
+			g_free(op->data.rval);
+			op->data.rval = NULL;
+		}
 		break;
 	case MPW_FLOAT:
-		if(op->data.fval)
+		if(op->data.fval) {
 			mpf_clear(op->data.fval);
+			g_free(op->data.fval);
+			op->data.fval = NULL;
+		}
 		break;
 	}
 }
@@ -426,19 +679,20 @@ mpwl_clear(MpwRealNum *op)
 {
 	if(!op) return;
 
-	switch(op->type) {
-	case MPW_INTEGER:
-		if(op->data.ival)
-			mpz_clear(op->data.ival);
-		break;
-	case MPW_RATIONAL:
-		if(op->data.rval)
-			mpq_clear(op->data.rval);
-		break;
-	case MPW_FLOAT:
-		if(op->data.fval)
-			mpf_clear(op->data.fval);
-		break;
+	if(op->data.ival) {
+		mpz_clear(op->data.ival);
+		g_free(op->data.ival);
+		op->data.ival = NULL;
+	}
+	if(op->data.rval) {
+		mpq_clear(op->data.rval);
+		g_free(op->data.rval);
+		op->data.rval = NULL;
+	}
+	if(op->data.fval) {
+		mpf_clear(op->data.fval);
+		g_free(op->data.fval);
+		op->data.fval = NULL;
 	}
 }
 
@@ -468,23 +722,29 @@ mpwl_init_type(MpwRealNum *op,int type)
 			op->data.fval = g_new(__mpf_struct,1);
 		mpf_init(op->data.fval);
 		break;
+	default: ;
 	}
 }
 
 static void
-mpwl_free(MpwRealNum *op)
+mpwl_free(MpwRealNum *op, int local)
 {
 	if(!op) return;
 	mpwl_clear(op);
 	/*FIXME: the 2000 should be settable*/
-	if(free_reals_n>2000) {
+	/*if we want to store this so that we don't allocate new one
+	  each time, up to a limit of 2000, unless it was some local
+	  var in which case it can't be freed nor put on the free
+	  stack*/
+	if(local || free_reals_n>2000) {
 		if(op->data.fval)
 			g_free(op->data.fval);
 		if(op->data.rval)
 			g_free(op->data.rval);
 		if(op->data.ival)
 			g_free(op->data.ival);
-		g_free(op);
+		if(!local)
+			g_free(op);
 	} else {
 		op->alloc.next = free_reals;
 		free_reals = op;
@@ -586,6 +846,10 @@ mpwl_set_si(MpwRealNum *rop,signed long int i)
 		mpwl_clear(rop);
 		break;
 	case MPW_INTEGER:
+		if(i==LONG_MIN) {
+			mpz_set_si(rop->data.ival,i);
+			return;
+		}
 		mpwl_clear(rop);
 		break;
 	}
@@ -639,12 +903,21 @@ mpwl_move(MpwRealNum *rop,MpwRealNum *op)
 {
 	if(rop==op)
 		return;
-
+	
 	rop->type = op->type;
 	rop->data.nval = op->data.nval;
-	if(rop->data.ival) g_free(rop->data.ival);
-	if(rop->data.rval) g_free(rop->data.rval);
-	if(rop->data.fval) g_free(rop->data.fval);
+	if(rop->data.ival) {
+		mpz_clear(rop->data.ival);
+		g_free(rop->data.ival);
+	}
+	if(rop->data.rval) {
+		mpq_clear(rop->data.rval);
+		g_free(rop->data.rval);
+	}
+	if(rop->data.fval) {
+		mpf_clear(rop->data.fval);
+		g_free(rop->data.fval);
+	}
 	rop->data.ival = op->data.ival;
 	rop->data.rval = op->data.rval;
 	rop->data.fval = op->data.fval;
@@ -881,13 +1154,12 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 
 	/*special case*/
 	if(op1->type==op2->type && rop!=op1 && rop!=op2) {
-		if(rop->type != op1->type) {
-			mpwl_clear(rop);
-			mpwl_init_type(rop,op1->type);
-		}
 		switch(op1->type) {
 		case MPW_NATIVEINT:
-			mpwl_init_type(rop,MPW_INTEGER);
+			if(rop->type != MPW_INTEGER) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_INTEGER);
+			}
 			mpz_set_si(rop->data.ival,op1->data.nval);
 			if(op2->data.nval>=0)
 				mpz_mul_ui(rop->data.ival,rop->data.ival,op2->data.nval);
@@ -897,13 +1169,25 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			}
 			break;
 		case MPW_FLOAT:
+			if(rop->type != MPW_FLOAT) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_FLOAT);
+			}
 			mpf_mul(rop->data.fval,op1->data.fval,op2->data.fval);
 			break;
 		case MPW_RATIONAL:
+			if(rop->type != MPW_RATIONAL) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_RATIONAL);
+			}
 			mpq_mul(rop->data.rval,op1->data.rval,op2->data.rval);
 			mpwl_make_int(rop,FALSE);
 			break;
 		case MPW_INTEGER:
+			if(rop->type != MPW_INTEGER) {
+				mpwl_clear(rop);
+				mpwl_init_type(rop,MPW_INTEGER);
+			}
 			mpz_mul(rop->data.ival,op1->data.ival,op2->data.ival);
 			break;
 		}
@@ -911,8 +1195,6 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	}
 
 	t=mpwl_make_same_extra_type(op1,op2);
-
-	mpwl_init_type(&r,t);
 
 	switch(t) {
 	case MPW_NATIVEINT:
@@ -926,13 +1208,16 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		}
 		break;
 	case MPW_FLOAT:
+		mpwl_init_type(&r,t);
 		mpf_mul(r.data.fval,op1->data.fval,op2->data.fval);
 		break;
 	case MPW_RATIONAL:
+		mpwl_init_type(&r,t);
 		mpq_mul(r.data.rval,op1->data.rval,op2->data.rval);
 		mpwl_make_int(&r,FALSE);
 		break;
 	case MPW_INTEGER:
+		mpwl_init_type(&r,t);
 		mpz_mul(r.data.ival,op1->data.ival,op2->data.ival);
 		break;
 	}
@@ -944,14 +1229,10 @@ mpwl_mul(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 static void
 mpwl_mul_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 {
-	if(rop->type!=op->type) {
-		mpwl_clear(rop);
-		mpwl_init_type(rop,op->type);
-	}
-
 	switch(op->type) {
 	case MPW_NATIVEINT:
 		if(rop!=op) {
+			mpwl_clear(rop);
 			mpwl_init_type(rop,MPW_INTEGER);
 			mpz_set(rop->data.ival,op->data.ival);
 			mpz_mul_ui(rop->data.ival,rop->data.ival,i);
@@ -961,14 +1242,26 @@ mpwl_mul_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 		}
 		break;
 	case MPW_FLOAT:
+		if(rop->type!=MPW_FLOAT) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_FLOAT);
+		}
 		mpf_mul_ui(rop->data.fval,op->data.fval,i);
 		break;
 	case MPW_RATIONAL:
+		if(rop->type!=MPW_RATIONAL) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_RATIONAL);
+		}
 		mpz_mul_ui(mpq_numref(rop->data.rval),
 			   mpq_numref(op->data.rval),i);
 		mpwl_make_int(rop,FALSE);
 		break;
 	case MPW_INTEGER:
+		if(rop->type!=MPW_INTEGER) {
+			mpwl_clear(rop);
+			mpwl_init_type(rop,MPW_INTEGER);
+		}
 		mpz_mul_ui(rop->data.ival,op->data.ival,i);
 		break;
 	}
@@ -999,7 +1292,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			mpq_div(rop->data.rval,op1->data.rval,op2->data.rval);
 			mpwl_make_int(rop,FALSE);
 			break;
-		case MPW_INTEGER: break;
+		default: ;
 		}
 		return;
 	}
@@ -1021,6 +1314,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 		mpq_set_z(r.data.rval,op1->data.ival);
 		mpz_set(mpq_denref(r.data.rval),
 			op2->data.ival);
+		mpwl_make_int(&r,FALSE);
 		break;
 	case MPW_NATIVEINT:
 		mpwl_init_type(&r,MPW_RATIONAL);
@@ -1037,7 +1331,6 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	mpwl_clear_extra_type(op1,t);
 	mpwl_clear_extra_type(op2,t);
 	mpwl_move(rop,&r);
-
 }
 
 static void
@@ -1484,7 +1777,6 @@ mpwl_pow_z(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 			mpz_neg(op2->data.ival,op2->data.ival);
 
 		mpwl_move(rop,&r);
-
 	} else {
 		if(mpz_sgn(op2->data.ival)==0)
 			mpwl_set_ui(rop,1);
@@ -1499,19 +1791,30 @@ static int
 mpwl_pow_f(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 {
 	MpwRealNum r={0};
-	int retval;
 
 	if(op2->type!=MPW_FLOAT) {
 		error_num=INTERNAL_MPW_ERROR;
 		return FALSE;
 	}
-
+	
 	mpwl_init_type(&r,MPW_FLOAT);
-	mpwl_set(&r,op2);
-	mpwl_make_type(&r,MPW_RATIONAL);
-	retval = mpwl_pow_q(rop,op1,&r);
-	mpwl_clear(&r);
-	return retval;
+
+	mpwl_make_extra_type(op1,MPW_FLOAT);
+	
+	if(mpf_sgn(op1->data.fval)<=0) {
+		mpwl_clear_extra_type(op1,MPW_FLOAT);
+		mpwl_free(&r,TRUE);
+		return TRUE;
+	}
+
+	mympf_ln(r.data.fval,op1->data.fval);
+	mpf_mul(r.data.fval,r.data.fval,op2->data.fval);
+	mympf_exp(r.data.fval,r.data.fval);
+
+	mpwl_clear_extra_type(op1,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+	return FALSE;
 }
 
 static int
@@ -1560,6 +1863,39 @@ mpwl_sqrt(MpwRealNum *rop,MpwRealNum *op)
 }
 
 static void
+mpwl_exp(MpwRealNum *rop,MpwRealNum *op)
+{
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	mympf_exp(r.data.fval,op->data.fval);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+
+	mpwl_move(rop,&r);
+}
+
+static int
+mpwl_ln(MpwRealNum *rop,MpwRealNum *op)
+{
+	int ret;
+	MpwRealNum r={0};
+
+	mpwl_init_type(&r,MPW_FLOAT);
+	mpwl_make_extra_type(op,MPW_FLOAT);
+	ret = mympf_ln(r.data.fval,op->data.fval);
+	mpwl_clear_extra_type(op,MPW_FLOAT);
+	if(!ret) {
+		mpwl_free(&r,TRUE);
+		return FALSE;
+	}
+
+	mpwl_move(rop,&r);
+	
+	return TRUE;
+}
+
+static void
 mpwl_make_int(MpwRealNum *rop, int floats)
 {
 	mpf_t fr;
@@ -1574,6 +1910,8 @@ mpwl_make_int(MpwRealNum *rop, int floats)
 				mpz_init_set(rop->data.ival,
 					mpq_numref(rop->data.rval));
 				mpq_clear(rop->data.rval);
+				g_free(rop->data.rval);
+				rop->data.rval = NULL;
 				rop->type=MPW_INTEGER;
 			}
 			break;
@@ -1590,8 +1928,13 @@ mpwl_make_int(MpwRealNum *rop, int floats)
 			if(mpf_cmp(fr,rop->data.fval)==0) {
 				rop->type=MPW_INTEGER;
 				mpf_clear(rop->data.fval);
-			} else
+				g_free(rop->data.fval);
+				rop->data.fval = NULL;
+			} else {
 				mpz_clear(rop->data.ival);
+				g_free(rop->data.ival);
+				rop->data.ival = NULL;
+			}
 			mpf_clear(fr);
 			break;
 	}
@@ -1645,14 +1988,13 @@ mpwl_ceil(MpwRealNum *rop)
 			mpz_set_f(rop->data.ival,rop->data.fval);
 			mpf_init(fr);
 			mpf_set_z(fr,rop->data.ival);
-			if(mpf_cmp(fr,rop->data.fval)==0) {
-				mpf_clear(rop->data.fval);
-			} else {
+			if(mpf_cmp(fr,rop->data.fval)!=0) {
 				if(mpf_sgn(rop->data.fval)>0)
 					mpz_add_ui(rop->data.ival,
 						   rop->data.ival,1);
-				mpf_clear(rop->data.fval);
 			}
+			g_free(rop->data.fval);
+			rop->data.fval = NULL;
 			mpf_clear(fr);
 		} else /*MPW_RATIONAL*/ {
 			mpq_canonicalize(rop->data.rval);
@@ -1663,6 +2005,8 @@ mpwl_ceil(MpwRealNum *rop)
 				mpz_init_set(rop->data.ival,
 					     mpq_numref(rop->data.rval));
 				mpq_clear(rop->data.rval);
+				g_free(rop->data.rval);
+				rop->data.rval = NULL;
 			} else {
 				if(mpq_sgn(rop->data.rval)>0) {
 					mpwl_make_type(rop,MPW_INTEGER);
@@ -1688,14 +2032,14 @@ mpwl_floor(MpwRealNum *rop)
 			mpz_set_f(rop->data.ival,rop->data.fval);
 			mpf_init(fr);
 			mpf_set_z(fr,rop->data.ival);
-			if(mpf_cmp(fr,rop->data.fval)==0) {
-				mpf_clear(rop->data.fval);
-			} else {
+			if(mpf_cmp(fr,rop->data.fval)!=0) {
 				if(mpf_sgn(rop->data.fval)<0)
 					mpz_sub_ui(rop->data.ival,
 						   rop->data.ival,1);
-				mpf_clear(rop->data.fval);
 			}
+			mpf_clear(rop->data.fval);
+			g_free(rop->data.fval);
+			rop->data.fval = NULL;
 			mpf_clear(fr);
 		} else /*MPW_RATIONAL*/ {
 			mpq_canonicalize(rop->data.rval);
@@ -1706,6 +2050,8 @@ mpwl_floor(MpwRealNum *rop)
 				mpz_init_set(rop->data.ival,
 					     mpq_numref(rop->data.rval));
 				mpq_clear(rop->data.rval);
+				g_free(rop->data.rval);
+				rop->data.rval = NULL;
 			} else {
 				if(mpq_sgn(rop->data.rval)<0) {
 					mpwl_make_type(rop,MPW_INTEGER);
@@ -1752,6 +2098,25 @@ mpwl_set_str_int(MpwRealNum *rop,char *s,int base)
 
 /**************/
 /*output stuff*/
+
+/*get a long if possible*/
+static long
+mpwl_get_long(MpwRealNum *op, int *ex)
+{
+	if(op->type > MPW_INTEGER) {
+		*ex = 1;
+		return 0;
+	} else if(op->type == MPW_NATIVEINT) {
+		return op->data.nval;
+	} else { /*real integer*/
+		if(mpz_cmp_si(op->data.ival,LONG_MAX)>0) {
+			*ex = 2;
+			return 0;
+		} else
+			return mpz_get_si(op->data.ival);
+	}
+
+}
 
 /*round off the number at some digits*/
 static void
@@ -2040,9 +2405,9 @@ mpw_clear(mpw_ptr op)
 	op->r->alloc.usage--;
 	op->i->alloc.usage--;
 	if(op->r->alloc.usage==0)
-		mpwl_free(op->r);
+		mpwl_free(op->r,FALSE);
 	if(op->i->alloc.usage==0)
-		mpwl_free(op->i);
+		mpwl_free(op->i,FALSE);
 	op->type=0;
 }
 
@@ -2087,7 +2452,7 @@ mpw_set_si(mpw_ptr rop,signed long int i)
 		if(rop->r != zero) {
 			rop->r->alloc.usage--;
 			if(rop->r->alloc.usage==0)
-				mpwl_free(rop->r);
+				mpwl_free(rop->r,FALSE);
 			rop->r = zero;
 			zero->alloc.usage++;
 		}
@@ -2095,7 +2460,7 @@ mpw_set_si(mpw_ptr rop,signed long int i)
 		if(rop->r != one) {
 			rop->r->alloc.usage--;
 			if(rop->r->alloc.usage==0)
-				mpwl_free(rop->r);
+				mpwl_free(rop->r,FALSE);
 			rop->r = one;
 			one->alloc.usage++;
 		}
@@ -2113,7 +2478,7 @@ mpw_set_ui(mpw_ptr rop,unsigned long int i)
 		if(rop->r != zero) {
 			rop->r->alloc.usage--;
 			if(rop->r->alloc.usage==0)
-				mpwl_free(rop->r);
+				mpwl_free(rop->r,FALSE);
 			rop->r = zero;
 			zero->alloc.usage++;
 		}
@@ -2121,7 +2486,7 @@ mpw_set_ui(mpw_ptr rop,unsigned long int i)
 		if(rop->r != one) {
 			rop->r->alloc.usage--;
 			if(rop->r->alloc.usage==0)
-				mpwl_free(rop->r);
+				mpwl_free(rop->r,FALSE);
 			rop->r = one;
 			one->alloc.usage++;
 		}
@@ -2237,8 +2602,8 @@ mpw_mul(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		mpwl_add(rop->r,rop->r,&tr);
 		mpwl_add(rop->i,rop->i,&ti);
 
-		mpwl_clear(&tr);
-		mpwl_clear(&ti);
+		mpwl_free(&tr,TRUE);
+		mpwl_free(&ti,TRUE);
 
 		mpw_uncomplex(rop);
 	}
@@ -2312,8 +2677,8 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 
 		mpwl_div(rop->i,rop->i,&t2);
 
-		mpwl_clear(&t1);
-		mpwl_clear(&t2);
+		mpwl_free(&t1,TRUE);
+		mpwl_free(&t2,TRUE);
 
 		mpw_uncomplex(rop);
 	}
@@ -2378,7 +2743,6 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 
 		mpwl_div(rop->r,rop->r,&t2);
 
-
 		/*imaginary part (- r1i2)/(r2r2 + i2i2)*/
 		mpwl_mul_ui(rop->i,op->i,i);
 		mpwl_neg(rop->i,rop->i);
@@ -2387,8 +2751,8 @@ mpw_ui_div(mpw_ptr rop,unsigned int i,mpw_ptr op)
 
 		mpwl_div(rop->i,rop->i,&t2);
 
-		mpwl_clear(&t1);
-		mpwl_clear(&t2);
+		mpwl_free(&t1,TRUE);
+		mpwl_free(&t2,TRUE);
 
 		mpw_uncomplex(rop);
 	}
@@ -2457,6 +2821,35 @@ mpw_sqrt(mpw_ptr rop,mpw_ptr op)
 	} else {
 		/*FIXME: complex numbers*/
 		(*errorout)("sqrt: can't deal with complex numbers");
+	}
+}
+
+void
+mpw_exp(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		mpwl_exp(rop->r,op->r);
+	} else {
+		/*FIXME: complex numbers*/
+		(*errorout)("exp: can't deal with complex numbers");
+	}
+}
+
+void
+mpw_ln(mpw_ptr rop,mpw_ptr op)
+{
+	if(op->type==MPW_REAL) {
+		MAKE_REAL(rop);
+		MAKE_COPY(rop->r);
+		if(!mpwl_ln(rop->r,op->r)) {
+			(*errorout)("ln: argument out of range");
+			error_num=NUMERICAL_MPW_ERROR;
+		}
+	} else {
+		/*FIXME: complex numbers*/
+		(*errorout)("ln: can't deal with complex numbers");
 	}
 }
 
@@ -2660,7 +3053,7 @@ mpw_is_integer(mpw_ptr op)
 		error_num=NUMERICAL_MPW_ERROR;
 		return FALSE;
 	}
-	return op->r->type == MPW_INTEGER;
+	return op->r->type == MPW_INTEGER || op->r->type == MPW_NATIVEINT;
 }
 
 int
@@ -2751,4 +3144,27 @@ mpw_trunc(mpw_ptr rop, mpw_ptr op)
 		mpwl_trunc(rop->i);
 		mpw_uncomplex(rop);
 	}
+}
+
+long
+mpw_get_long(mpw_ptr op)
+{
+	long r;
+	int ex = 0;
+	if(op->type==MPW_COMPLEX) {
+		(*errorout)("Can't convert complex number into integer");
+		error_num=NUMERICAL_MPW_ERROR;
+		return 0;
+	} 
+	r = mpwl_get_long(op->r,&ex);
+	if(ex==1) {
+		(*errorout)("Can't convert real number to integer");
+		error_num=NUMERICAL_MPW_ERROR;
+		return 0;
+	} else if(ex==2) {
+		(*errorout)("Integer too large for this operation");
+		error_num=NUMERICAL_MPW_ERROR;
+		return 0;
+	}
+	return r;
 }

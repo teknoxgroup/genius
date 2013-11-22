@@ -23,6 +23,8 @@
  * this is a command line genius interface program!
  */
 
+#include "config.h"
+
 #include <glib.h>
 
 #include <string.h>
@@ -105,27 +107,44 @@ main(int argc, char *argv[])
 		     "For details type `warranty'.\n");
 	}
 	
-	if((fp = fopen(LIBRARY_FILE,"r"))) {
+	file = g_strconcat(LIBRARY_DIR,"/lib.gel",NULL);
+	if((fp = fopen(file,"r"))) {
 		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror));
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
 			if(got_eof) {
 				got_eof = FALSE;
 				break;
 			}
 		}
+		fclose(fp);
+	}
+	g_free(file);
+
+	/*try the library file in the current directory*/
+	if((fp = fopen("lib.gel","r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
+		fclose(fp);
 	}
 	
 	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
 
+	fp = NULL;
 	if(file && (fp = fopen(file,"r"))) {
 		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror));
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,puterror,FALSE));
 			if(got_eof) {
 				got_eof = FALSE;
 				break;
 			}
 		}
 	}
+	if(fp) fclose(fp);
 
 	if(files) {
 		GList *t;
@@ -139,10 +158,10 @@ main(int argc, char *argv[])
 		while(1/*!feof(fp)*/) {
 #ifdef WITH_READLINE_SUPPORT
 			if(inter) /*use readline mode*/
-				evalexp(NULL,NULL,stdout,"= ",curstate,puterror);
+				evalexp(NULL,NULL,stdout,"= ",curstate,puterror,TRUE);
 			else
 #endif
-				evalexp(NULL,fp,stdout,NULL,curstate,puterror);
+				evalexp(NULL,fp,stdout,NULL,curstate,puterror,FALSE);
 
 			if(got_eof) {
 				if(inter)

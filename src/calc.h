@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -51,14 +51,18 @@ int yyparse(void);
 
 /*make a string representation of an expression*/
 void print_etree(GString *gs, FILE *out, ETree *n);
+/*make a string representation of an expression, with the first node prettied
+  (currently only for matrix)*/
+void pretty_print_etree(GString *gs, FILE *out, ETree *n);
 
 /*add the right parenthesis and brackets to the end of the expression*/
 char * addparenth(char *s);
 
 /*this is the function to be mostly called outsied of calc.c
   evaluate the xpression string and give back a string with the
-  result, expression is in str or if str is NULL then in infd*/
+  result, expression is in str or if str is NULL then in infd,
+  pretty will use pretty_print_etree*/
 char * evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
-	       calcstate_t state,void (*errorfunc)(char *));
+	       calcstate_t state,void (*errorfunc)(char *), int pretty);
 
 #endif

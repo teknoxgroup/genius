@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -18,7 +18,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  */
+#ifdef GNOME_SUPPORT
 #include <gnome.h>
+#else
+#define _(x) x
+#endif
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -49,6 +53,8 @@ extern char *yytext;
 extern int yydebug;
 
 extern ETree *returnval;
+extern int inbailout;
+extern int inexception;
 
 /* stack ... has to be global:-( */
 evalstack_t evalstack=NULL;
@@ -136,6 +142,13 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			appendout_c(gs,out,'!');
 			appendout_c(gs,out,')');
 			break;
+		case E_TRANSPOSE:
+			GET_L(n,l);
+			appendout_c(gs,out,'(');
+			print_etree(gs,out,l);
+			appendout_c(gs,out,'\'');
+			appendout_c(gs,out,')');
+			break;
 
 		case E_EQ_CMP:
 			append_binaryoper(gs,out,"==",n); break;
@@ -164,11 +177,11 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			GET_LRR(n,l,r,rr);
 			appendout_c(gs,out,'(');
 			print_etree(gs,out,l);
-			appendout(gs,out,"@[");
+			appendout(gs,out,"@(");
 			print_etree(gs,out,r);
 			appendout_c(gs,out,',');
 			print_etree(gs,out,rr);
-			appendout(gs,out,"])");
+			appendout(gs,out,"))");
 			break;
 		case E_GET_ROW:
 			GET_LR(n,l,r);
@@ -276,12 +289,40 @@ appendoper(GString *gs,FILE *out, ETree *n)
 			break;
 		case E_RETURN:
 			append_unaryoper(gs,out,"return ",n); break;
+		case E_BAILOUT:
+			appendout(gs,out,"bailout"); break;
+		case E_EXCEPTION:
+			appendout(gs,out,"exception"); break;
 
 		default:
 			(*errorout)(_("Unexpected operator!"));
 			appendout(gs,out,"(???)");
 		       break;
 	}
+}
+
+static void
+appendmatrix(GString *gs, FILE *out, Matrix *m)
+{
+	int i,j;
+	appendout(gs,out,"[");
+	
+	print_etree(gs,out,matrix_index(m,0,0));
+	
+	for(i=1;i<m->width;i++) {
+		appendout(gs,out,",");
+		print_etree(gs,out,matrix_index(m,i,0));
+	}
+	for(j=1;j<m->height;j++) {
+		appendout(gs,out,":");
+		print_etree(gs,out,matrix_index(m,0,j));
+		for(i=1;i<m->width;i++) {
+			appendout(gs,out,",");
+			print_etree(gs,out,matrix_index(m,i,j));
+		}
+	}
+
+	appendout(gs,out,"]");
 }
 
 
@@ -309,9 +350,7 @@ print_etree(GString *gs, FILE *out, ETree *n)
 		g_free(p);
 		break;
 	case MATRIX_NODE:
-	case MATRIX_ROW_NODE:
-		/*FIXME: add matrixen*/
-		appendout(gs,out,"(FIXME:matrix)");
+		appendmatrix(gs,out,n->data.matrix);
 		break;
 	case OPERATOR_NODE:
 		appendoper(gs,out,n);
@@ -360,6 +399,27 @@ print_etree(GString *gs, FILE *out, ETree *n)
 		appendout(gs,out,"(???)");
 	       break;
 	}
+}
+
+void
+pretty_print_etree(GString *gs, FILE *out, ETree *n)
+{
+	/*do a nice printout of matrices if that's the
+	  top node*/
+	if(n->type == MATRIX_NODE) {
+		int i,j;
+		appendout(gs,out,"\n[");
+		for(j=0;j<n->data.matrix->height;j++) {
+			if(j>0) appendout(gs,out,"\n ");
+			for(i=0;i<n->data.matrix->width;i++) {
+				if(i>0) appendout(gs,out,"\t");
+				print_etree(gs, out,
+					    matrix_index(n->data.matrix,i,j));
+			}
+		}
+		appendout(gs,out,"]");
+	} else
+		print_etree(gs,out,n);
 }
 
 /*add the right parenthesis and brackets to the end of the expression*/
@@ -417,7 +477,7 @@ addparenth(char *s)
 
 char *
 evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
-	calcstate_t state,void (*errorfunc)(char *))
+	calcstate_t state,void (*errorfunc)(char *),int pretty)
 {
 	char * p;
 	int stacklen;
@@ -503,7 +563,15 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 	if(returnval)
 		freetree(returnval);
 	returnval = NULL;
+	inbailout = FALSE;
+	inexception = FALSE;
 	ret = evalnode(evalstack->data);
+	if(inbailout || inexception) {
+		if(returnval) freetree(returnval);
+		returnval = NULL;
+	}
+	inbailout = FALSE;
+	inexception = FALSE;
 	freetree(stack_pop(&evalstack));
 	if(!ret && returnval)
 		ret = returnval;
@@ -521,16 +589,20 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 
 	p = NULL;
 	if(ret->type != NULL_NODE) {
-		GString *gs = g_string_new("");
+		GString *gs = NULL;
+		if(!outfile)
+			gs = g_string_new(NULL);
 		if(prefix) {
 			if(outfile)
 				fputs(prefix,outfile);
 			else
 				g_string_append(gs,prefix);
 		}
-		print_etree(gs, outfile,ret);
+		if(pretty)
+			pretty_print_etree(gs,outfile,ret);
+		else
+			print_etree(gs,outfile,ret);
 		if(outfile) {
-			g_string_free(gs,TRUE);
 			fputc('\n',outfile);
 		} else {
 			p = gs->str;
@@ -538,7 +610,18 @@ evalexp(char * str, FILE *infile, FILE *outfile, char *prefix,
 		}
 	}
 
-	freetree(ret);
+	/*set ans to the last answer*/
+	if(ret->type == FUNCTION_NODE) {
+		d_addfunc(d_makerealfunc(ret->data.func,d_intern("Ans")));
+		freetree(ret);
+	} else if(ret->type == OPERATOR_NODE &&
+		ret->data.oper == E_REFERENCE) {
+		ETree *t = ret->args->data;
+		EFunc *rf = d_lookup_global(t->data.id);
+		d_addfunc(d_makereffunc(d_intern("Ans"),rf));
+		freetree(ret);
+	} else
+		d_addfunc(d_makeufunc(d_intern("Ans"),ret,NULL,0));
 
 	return p;
 }

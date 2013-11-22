@@ -75,12 +75,14 @@ GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
 GNOMEGNORBA_LIBS = @GNOMEGNORBA_LIBS@
 GNOMEUI_LIBS = @GNOMEUI_LIBS@
-GNOME_APPLET_LIBS = @GNOME_APPLET_LIBS@
+GNOME_APPLETS_LIBS = @GNOME_APPLETS_LIBS@
+GNOME_CAPPLET_LIBS = @GNOME_CAPPLET_LIBS@
 GNOME_CONFIG = @GNOME_CONFIG@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_INCLUDEDIR = @GNOME_INCLUDEDIR@
 GNOME_LIBDIR = @GNOME_LIBDIR@
 GNOME_LIBS = @GNOME_LIBS@
+GNOME_SUPPORT = @GNOME_SUPPORT@
 GNORBA_CFLAGS = @GNORBA_CFLAGS@
 GNORBA_LIBS = @GNORBA_LIBS@
 GTKXMHTML_LIBS = @GTKXMHTML_LIBS@
@@ -120,6 +122,7 @@ USE_NLS = @USE_NLS@
 VERSION = @VERSION@
 XPM_LIBS = @XPM_LIBS@
 YACC = @YACC@
+ZVT_LIBS = @ZVT_LIBS@
 l = @l@
 
 Utilitiesdir = $(datadir)/apps/Utilities
@@ -127,7 +130,7 @@ Librarydir = $(datadir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
-CFLAGS = @CFLAGS@ @READLINE_SUPPORT@ -DLIBRARY_FILE=\""$(datadir)/genius/lib.gel"\"
+CFLAGS = @CFLAGS@ @READLINE_SUPPORT@ @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
 
 INCLUDES =  	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	-DLOCALEDIR=\"$(datadir)/locale\" 	-I$(includedir) 	$(GMP_INCLUDEDIR) 	$(GNOME_INCLUDEDIR)
 
@@ -150,7 +153,7 @@ genius_LDADD =  	-lm 	$(GLIB_LIBS) 	@GMP_LIB@ 	@LEXLIB@ 	$(INTLLIBS) 	@READLINE_
 
 BUILT_SOURCES = parse.h
 
-EXTRA_DIST = geniustest.pl geniustests.txt lib.gel gnome-genius.desktop #gnome-genius-mdi.desktop
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel #gnome-genius-mdi.desktop
 
 Utilities_DATA = gnome-genius.desktop #gnome-genius-mdi.desktop
 
@@ -362,24 +365,23 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-calc.o: calc.c calc.h structs.h mpwrap.h ../config.h eval.h util.h \
-	dict.h funclib.h parse.h
-dict.o: dict.c eval.h mpwrap.h ../config.h structs.h dict.h util.h \
+calc.o: calc.c calc.h structs.h mpwrap.h matrix.h eval.h util.h dict.h \
+	funclib.h parse.h
+dict.o: dict.c eval.h mpwrap.h structs.h matrix.h dict.h util.h \
 	funclib.h
-eval.o: eval.c mpwrap.h ../config.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h mymath.h
-funclib.o: funclib.c mpwrap.h ../config.h eval.h structs.h dict.h \
-	funclib.h mymath.h calc.h
-genius.o: genius.c calc.h structs.h mpwrap.h ../config.h util.h
+eval.o: eval.c mpwrap.h eval.h structs.h matrix.h calc.h dict.h util.h \
+	funclib.h mymath.h
+funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h matrix.h \
+	dict.h funclib.h mymath.h calc.h
+genius.o: genius.c ../config.h calc.h structs.h mpwrap.h matrix.h util.h
 gnome-genius.o: gnome-genius.c ../config.h gnome-genius.h calc.h \
-	structs.h mpwrap.h util.h
-lexer.o: lexer.c mpwrap.h ../config.h eval.h structs.h dict.h calc.h \
+	structs.h mpwrap.h matrix.h util.h
+lexer.o: lexer.c mpwrap.h eval.h structs.h matrix.h dict.h calc.h \
 	parse.h
 matrix.o: matrix.c matrix.h
-mpwrap.o: mpwrap.c calc.h structs.h mpwrap.h ../config.h util.h mymath.h
-mymath.o: mymath.c mpwrap.h ../config.h mymath.h
-parse.o: parse.c structs.h mpwrap.h ../config.h eval.h dict.h util.h \
-	calc.h
+mpwrap.o: mpwrap.c calc.h structs.h mpwrap.h matrix.h util.h mymath.h
+mymath.o: mymath.c mpwrap.h mymath.h
+parse.o: parse.c structs.h mpwrap.h matrix.h eval.h dict.h util.h calc.h
 util.o: util.c util.h
 
 info-am:

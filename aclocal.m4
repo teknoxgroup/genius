@@ -554,23 +554,24 @@ AC_DEFUN([AM_ACLOCAL_INCLUDE],
 [
 	AM_CONDITIONAL(INSIDE_GNOME_COMMON, test x = y)
 
+	test -n "$ACLOCAL_FLAGS" && ACLOCAL="$ACLOCAL $ACLOCAL_FLAGS"
+
 	for k in $1 ; do ACLOCAL="$ACLOCAL -I $k" ; done
 ])
 
 dnl
-dnl GNOME_INIT_HOOK (script-if-gnome-enabled, failflag)
+dnl GNOME_INIT_HOOK (script-if-gnome-enabled, [failflag], [additional-inits])
 dnl
 dnl if failflag is "fail" then GNOME_INIT_HOOK will abort if gnomeConf.sh
 dnl is not found. 
 dnl
 
-AC_DEFUN([GNOME_INIT_HOOK],
-[	
+AC_DEFUN([GNOME_INIT_HOOK],[
 	AC_SUBST(GNOME_LIBS)
 	AC_SUBST(GNOMEUI_LIBS)
 	AC_SUBST(GNOMEGNORBA_LIBS)
 	AC_SUBST(GTKXMHTML_LIBS)
-	AC_SUBST(GNOME_APPLET_LIBS)
+	AC_SUBST(ZVT_LIBS)
 	AC_SUBST(GNOME_LIBDIR)
 	AC_SUBST(GNOME_INCLUDEDIR)
 
@@ -618,7 +619,7 @@ AC_DEFUN([GNOME_INIT_HOOK],
 	        GNOMEUI_LIBS="`$GNOME_CONFIG --libs-only-l gnomeui`"
 	        GNOMEGNORBA_LIBS="`$GNOME_CONFIG --libs-only-l gnorba gnomeui`"
 	        GTKXMHTML_LIBS="`$GNOME_CONFIG --libs-only-l gtkxmhtml`"
-	        GNOME_APPLET_LIBS="`$GNOME_CONFIG --libs-only-l applets`"
+		ZVT_LIBS="`$GNOME_CONFIG --libs-only-l zvt`"
 	        GNOME_LIBDIR="`$GNOME_CONFIG --libs-only-L gnorba gnomeui`"
 	        GNOME_INCLUDEDIR="`$GNOME_CONFIG --cflags gnorba gnomeui`"
                 $1
@@ -654,10 +655,33 @@ AC_DEFUN([GNOME_INIT_HOOK],
 	      fi
             fi
 	fi
+
+	if test -n "$3"; then
+	  n="$3"
+	  for i in $n; do
+	    AC_MSG_CHECKING(extra library $i)
+	    case $i in 
+	      applets)
+		AC_SUBST(GNOME_APPLETS_LIBS)
+		GNOME_APPLETS_LIBS=`$GNOME_CONFIG --libs-only-l applets`
+		AC_MSG_RESULT($GNOME_APPLETS_LIBS);;
+	      capplet)
+		AC_SUBST(GNOME_CAPPLET_LIBS)
+		GNOME_CAPPLET_LIBS=`$GNOME_CONFIG --libs-only-l capplet`
+		AC_MSG_RESULT($GNOME_CAPPLET_LIBS);;
+	      *)
+		AC_MSG_RESULT(unknown library)
+	    esac
+	  done
+	fi
 ])
 
+dnl
+dnl GNOME_INIT ([additional-inits])
+dnl
+
 AC_DEFUN([GNOME_INIT],[
-	GNOME_INIT_HOOK([],fail)
+	GNOME_INIT_HOOK([],fail,$1)
 ])
 
 dnl
@@ -1475,8 +1499,7 @@ dnl   gnome_cv_passdown_{x_libs,X_LIBS,X_CFLAGS}
 dnl
 AC_DEFUN([GNOME_X_CHECKS],
 [
-	AM_PATH_GTK(1.1.12,,AC_MSG_ERROR(GTK not installed, or gtk-config not in path))
-
+	AM_PATH_GTK(1.2.0,,AC_MSG_ERROR(GTK not installed, or gtk-config not in path))
 	dnl Hope that GTK_CFLAGS have only -I and -D.  Otherwise, we could
 	dnl   test -z "$x_includes" || CPPFLAGS="$CPPFLAGS -I$x_includes"
 	dnl
@@ -1561,7 +1584,7 @@ AC_ARG_ENABLE(gtktest, [  --disable-gtktest       Do not try to compile and run 
   do
       case "$module" in
          gthread) 
-             glib_config_args="$glib_config_args gthread"
+             gtk_config_args="$gtk_config_args gthread"
          ;;
       esac
   done

@@ -188,7 +188,7 @@ dorun(GtkWidget * widget, gpointer * data)
 	if(!t[1] || t[1][0]=='\0')
 		return;
 	t[1]=addparenth(t[1]); /*add missing parenthesis*/
-	o[1]=evalexp(t[1],NULL,NULL,NULL,curstate,geniuserror);
+	o[1]=evalexp(t[1],NULL,NULL,NULL,curstate,geniuserror,FALSE);
 
 	if(errors) {
 		geniuserrorbox(errors);
@@ -690,28 +690,45 @@ main(int argc, char *argv[])
 
 	gdk_color_white(gtk_widget_get_colormap(history),&rescol);
 	
+	file = g_strconcat(LIBRARY_DIR,"/lib.gel",NULL);
 	/*read standard files and init scripts*/
-	if((fp = fopen(LIBRARY_FILE,"r"))) {
+	if((fp = fopen(file,"r"))) {
 		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror));
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
 			if(got_eof) {
 				got_eof = FALSE;
 				break;
 			}
 		}
+		fclose(fp);
+	}
+	g_free(file);
+
+	/*try the library file in the current directory*/
+	if((fp = fopen("lib.gel","r"))) {
+		while(1) {
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
+			if(got_eof) {
+				got_eof = FALSE;
+				break;
+			}
+		}
+		fclose(fp);
 	}
 	
 	file = g_strconcat(getenv("HOME"),"/.geniusinit",NULL);
 
+	fp = NULL;
 	if(file && (fp = fopen(file,"r"))) {
 		while(1) {
-			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror));
+			g_free(evalexp(NULL,fp,NULL,NULL,curstate,geniuserror,FALSE));
 			if(got_eof) {
 				got_eof = FALSE;
 				break;
 			}
 		}
 	}
+	if(fp) fclose(fp);
 
 	if(errors) {
 		geniuserrorbox(errors);

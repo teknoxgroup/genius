@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -35,23 +35,32 @@ struct _Matrix {
 	int realwidth;
 	int fullsize;
 };
+typedef gpointer (*ElementCopyFunc)(gpointer,gpointer);
 
 /*make new matrix*/
 Matrix * matrix_new(void);
 
 /*set size of a matrix*/
 void matrix_set_size(Matrix *matrix, int width, int height);
+/*set the size of the matrix to be at least this*/
+void matrix_at_least_size(Matrix *matrix, int width, int height);
 
 /*set element*/
 void matrix_set_element(Matrix *matrix, int x, int y, gpointer data);
 
 /*copy a matrix*/
-void matrix_copy(Matrix *matrix, Matrix *source);
+Matrix * matrix_copy(Matrix *source, ElementCopyFunc el_copy, gpointer func_data);
+
+/*transpose a matrix*/
+Matrix * matrix_transpose(Matrix *matrix);
+
+/*run a GFunc for each non-null element*/
+void matrix_foreach(Matrix *matrix, GFunc func, gpointer func_data);
 
 /*free a matrix*/
 void matrix_free(Matrix *matrix);
 
 /*get the value at*/
-#define matrix_index(m,x,y) (g_str_array_index(m->data,x+y*m->realwidth))
+#define matrix_index(m,x,y) (g_ptr_array_index((m)->data,(x)+(y)*(m)->realwidth))
 
 #endif

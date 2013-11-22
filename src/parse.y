@@ -33,6 +33,8 @@ extern evalstack_t evalstack;
 extern int return_ret; /*should the lexer return on \n*/
 extern calc_error_t error_num;
 extern int got_eof;
+extern ETree *free_trees;
+extern EFunc *free_funcs;
 
 #define SYNTAX_ERROR {yyerror("syntax error"); YYERROR;}
 
@@ -44,17 +46,21 @@ extern int got_eof;
 
 #define PUSH_IDENTIFIER(ID) { \
 	ETree * tree; \
-	tree = g_new0(ETree,1); \
+	GET_NEW_NODE(tree); \
 	tree->type = IDENTIFIER_NODE; \
 	tree->data.id = d_intern(ID); \
+	tree->args = NULL; \
+	tree->nargs = 0; \
 	stack_push(&evalstack,tree); \
 }
 
 #define PUSH_STRING(ID) { \
 	ETree * tree; \
-	tree = g_new0(ETree,1); \
+	GET_NEW_NODE(tree); \
 	tree->type = STRING_NODE; \
 	tree->data.str = g_strdup(ID); \
+	tree->args = NULL; \
+	tree->nargs = 0; \
 	stack_push(&evalstack,tree); \
 }
 
@@ -91,7 +97,13 @@ push_func(void)
 		i++;
 	}
 	
-	func = g_new0(EFunc,1);
+	if(!free_funcs)
+		func = g_new0(EFunc,1);
+	else {
+		func = free_funcs;
+		free_funcs = free_funcs->data.next;
+		memset(func,0,sizeof(EFunc));
+	}
 	
 	func->type = USER_FUNC;
 	func->context = -1;
@@ -99,10 +111,12 @@ push_func(void)
 	func->named_args = list;
 	func->data.user = val;
 
-	tree = g_new0(ETree,1);
+	GET_NEW_NODE(tree);
 
 	tree->type = FUNCTION_NODE;
 	tree->data.func = func;
+	tree->args = NULL;
+	tree->nargs = 0;
 
 	stack_push(&evalstack,tree);
 
@@ -120,8 +134,10 @@ push_marker(ETreeType markertype)
 	if(!last_expr)
 		return FALSE;
        
-	tree = g_new0(ETree,1);
+	GET_NEW_NODE(tree);
 	tree->type = markertype;
+	tree->args = NULL;
+	tree->nargs = 0;
 	stack_push(&evalstack,tree);
 	stack_push(&evalstack,last_expr);
 	return TRUE;
@@ -131,8 +147,11 @@ push_marker(ETreeType markertype)
 static void
 push_marker_simple(ETreeType markertype)
 {
-	ETree * tree = g_new0(ETree,1);
+	ETree *tree;
+	GET_NEW_NODE(tree);
 	tree->type = markertype;
+	tree->args = NULL;
+	tree->nargs = 0;
 	stack_push(&evalstack,tree);
 }
 	
@@ -160,7 +179,7 @@ push_matrix_row(void)
 		row = g_list_prepend(row,tree);
 		i++;
 	}
-	tree = g_new(ETree,1);
+	GET_NEW_NODE(tree);
 	tree->type = MATRIX_ROW_NODE;
 	tree->args = row;
 	tree->nargs = i;
@@ -173,7 +192,74 @@ push_matrix_row(void)
 static int
 push_matrix(void)
 {
-	/*FIXME: add matrix code here*/
+	ETree *tree;
+	int i,j;
+	int cols,rows;
+	GList *rowl = NULL;
+	GList *lix,*liy;
+	
+	Matrix *matrix;
+	
+	rows=0;
+	cols=0;
+	for(;;) {
+		tree = stack_pop(&evalstack);
+		/*we have gone all the way to the top and haven't found a
+		  marker*/
+		if(!tree) {
+			GList *li;
+			for(li=rowl;li;li=g_list_next(li)) {
+				g_list_foreach(li->data,(GFunc)freetree,
+					       NULL);
+				g_list_free(li->data); 
+			}
+			g_list_free(rowl);
+			/**/g_warning("BAD MATRIX, NO START MARKER");
+			return FALSE;
+		} else if(tree->type==MATRIX_START_NODE) {
+			freetree(tree);
+			break;
+		} else if(tree->type==MATRIX_ROW_NODE) {
+			if(tree->nargs>cols)
+				cols = tree->nargs;
+			rowl = g_list_prepend(rowl,tree->args);
+			tree->args = NULL;
+			tree->nargs = 0;
+			freetree(tree);
+			rows++;
+			continue;
+		} else {
+			GList *li;
+			freetree(tree);
+			for(li=rowl;li;li=g_list_next(li)) {
+				g_list_foreach(li->data,(GFunc)freetree,
+					       NULL);
+				g_list_free(li->data); 
+			}
+			g_list_free(rowl);
+			/**/g_warning("BAD MATRIX, A NON ROW ELEMENT FOUND");
+			return FALSE;
+		}
+	}
+
+	matrix = matrix_new();
+	matrix_set_size(matrix, cols, rows);
+	
+	for(j=0,liy=rowl;liy;j++,liy=g_list_next(liy)) {
+		for(i=0,lix=liy->data;lix;i++,lix=g_list_next(lix)) {
+			matrix_index(matrix,i,j) = lix->data;
+		}
+		g_list_free(liy->data);
+	}
+	g_list_free(rowl);
+	
+	GET_NEW_NODE(tree);
+	tree->type = MATRIX_NODE;
+	tree->data.matrix = matrix;
+	tree->args = NULL;
+	tree->nargs = 0;
+	
+	stack_push(&evalstack,tree);
 	return TRUE;
 }
 
@@ -183,8 +269,10 @@ static void
 push_null(void)
 {
 	ETree *tree;
-	tree = g_new0(ETree,1);
+	GET_NEW_NODE(tree);
 	tree->type = NULL_NODE;
+	tree->args = NULL;
+	tree->nargs = 0;
 
 	stack_push(&evalstack,tree);
 }
@@ -204,11 +292,11 @@ push_null(void)
 
 %token DEFINE CALL
 
-%token RETURNTOK
+%token RETURNTOK BAILOUT EXCEPTION
 
 %token WHILE UNTIL DO IF THEN ELSE
 
-%token NEG AT
+%token AT
 
 %token SEPAR EQUALS
 
@@ -233,9 +321,10 @@ push_null(void)
 %left '+' '-'
 %left '*' '/' '%'
 
+%right '\''
 %right '!'
 %right '^'
-%right NEG UMINUS
+%right UMINUS
 
 %left AT
 
@@ -268,13 +357,13 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	expr LOGICAL_XOR expr	{ PUSH_ACT(E_LOGICAL_XOR); }
 	|	LOGICAL_NOT expr	{ PUSH_ACT(E_LOGICAL_NOT); }
 	|	expr '!'		{ PUSH_ACT(E_FACT); }
-	| 	NEG expr 		{ PUSH_ACT(E_NEG); }
+	|	expr '\''		{ PUSH_ACT(E_TRANSPOSE); }
 	|	'-' expr %prec UMINUS	{ PUSH_ACT(E_NEG); }
 	| 	expr '^' expr		{ PUSH_ACT(E_EXP); }
-	|	expr AT expr ',' expr ']'
+	|	expr AT expr ',' expr ')'
 					{ PUSH_ACT(E_GET_ELEMENT); }
-	|	expr AT expr ',' ']'	{ PUSH_ACT(E_GET_ROW); }
-	|	expr AT ',' expr ']'	{ PUSH_ACT(E_GET_COLUMN); }
+	|	expr AT expr ',' ')'	{ PUSH_ACT(E_GET_ROW); }
+	|	expr AT ',' expr ')'	{ PUSH_ACT(E_GET_COLUMN); }
 	|	'[' matrixrows ']'	{ if(!push_matrix()) {SYNTAX_ERROR;} }
 	|	WHILE expr DO expr	{ PUSH_ACT(E_WHILE_CONS); }
 	|	UNTIL expr DO expr	{ PUSH_ACT(E_UNTIL_CONS); }
@@ -298,6 +387,8 @@ expr:		expr SEPAR expr		{ PUSH_ACT(E_SEPAR); }
 	|	DEFINE ident funcdef	{ PUSH_ACT(E_EQUALS); }
 	|	'`' funcdef
 	|	RETURNTOK expr		{ PUSH_ACT(E_RETURN); }
+	|	BAILOUT			{ PUSH_ACT(E_BAILOUT); }
+	|	EXCEPTION		{ PUSH_ACT(E_EXCEPTION); }
 	|	NUMBER			{ stack_push(&evalstack,makenum($1));
 					  mpw_clear($1);
 					}
@@ -325,7 +416,7 @@ exprlist:	exprlist ',' expr
 	;
 	
 matrixrows:	matrixrows ':' exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} }
-	|	exprlist { if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
+	|	exprlist { if(!push_matrix_row()) {SYNTAX_ERROR;} if(!push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
 	;
 	
 %%

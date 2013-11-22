@@ -42,6 +42,7 @@ enum {
 	E_NEG,
 	E_EXP,
 	E_FACT,
+	E_TRANSPOSE,
 	E_IF_CONS,
 	E_IFELSE_CONS,
 	E_WHILE_CONS,
@@ -67,6 +68,8 @@ enum {
 	E_DIRECTCALL,
 	E_CALL,
 	E_RETURN,
+	E_BAILOUT,
+	E_EXCEPTION,
 };
 
 /*functions for manipulating a tree*/
@@ -87,20 +90,15 @@ ETree * copynode(ETree *o);
 ETree * copynode_args(ETree *o, ETree *r[]);
 
 /*functions for reclaiming memory*/
-void freenode(ETree *n);
 void freetree(ETree *n);
-/*free arguments to a dictionary function*/
-void freeargs(ETree *n);
-
-/*returns 0 if all numeric, 1 if numeric/matrix, 2 otherwise*/
-int arglevel(ETree *r[], int cnt);
 
 /*evaluate a treenode, the treenode will become a number node*/
 /*returns a newly allocated tree, doesn't hurt n*/
 ETree *evalnode(ETree *n);
 
-/*return TRUE if node is true (a number node !=0), false otherwise*/
-int isnodetrue(ETree *n);
+/*return TRUE if node is true (a number node !=0, or nonempty string),
+  false otherwise*/
+int isnodetrue(ETree *n, int *bad_node);
 int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 
 #define GET_LRR(n,l,r,rr) { l = n->args->data; \
@@ -109,6 +107,15 @@ int eval_isnodetrue(ETree *n, int *exception, ETree **errorret);
 }
 #define GET_LR(n,l,r) { l = n->args->data; r = n->args->next->data; }
 #define GET_L(n,l) { l = n->args->data; }
+
+#define GET_NEW_NODE(n) {				\
+	if(!free_trees)					\
+		n = g_new(ETree,1);			\
+	else {						\
+		n = free_trees;				\
+		free_trees = free_trees->data.next;	\
+	}						\
+}
 
 
 #endif

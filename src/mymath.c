@@ -29,7 +29,7 @@ mympw_sin(mpw_t rop, mpw_t op)
 	mpw_t ftmp;
 	mpw_t fres;
 	mpw_t foldres;
-	unsigned int i;
+	unsigned long int i;
 	int negate=TRUE;
 
 	/*special case*/
@@ -72,7 +72,7 @@ mympw_cos(mpw_t rop, mpw_t op)
 	mpw_t ftmp;
 	mpw_t fres;
 	mpw_t foldres;
-	unsigned int i;
+	unsigned long int i;
 	int negate=TRUE;
 
 	/*special case*/
@@ -103,45 +103,6 @@ mympw_cos(mpw_t rop, mpw_t op)
 	mpw_clear(ftmp);
 	mpw_clear(foldres);
 
-	mpw_set(rop,fres);
-
-	mpw_clear(fres);
-}
-
-/*get e*/
-void
-mympw_gete(mpw_t rop)
-{
-	static mpw_t cache;
-	static int iscached=FALSE;
-
-	mpw_t fres;
-	mpw_t foldres;
-	unsigned int i;
-
-	if(iscached)
-		mpw_set(rop,cache);
-
-	/*taylor series for x=1*/
-	mpw_init(fres);
-	mpw_init(foldres);
-	mpw_set_d(foldres,2.0);
-
-	for(i=2;;i++) {
-		mpw_fac_ui(fres,i);
-		mpw_ui_div(fres,1,fres);
-		mpw_add(fres,fres,foldres);
-
-		if(mpw_cmp(foldres,fres)==0)
-			break;
-		mpw_set(foldres,fres);
-	}
-	
-	mpw_clear(foldres);
-
-	iscached=TRUE;
-	mpw_init(cache);
-	mpw_set(cache,fres);
 	mpw_set(rop,fres);
 
 	mpw_clear(fres);

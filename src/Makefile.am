@@ -4,7 +4,7 @@ Librarydir = $(datadir)/genius
 
 #YACCFLAGS += -d -t
 YFLAGS += -d -t
-CFLAGS += @READLINE_SUPPORT@ -DLIBRARY_FILE=\""$(datadir)/genius/lib.gel"\"
+CFLAGS += @READLINE_SUPPORT@ @GNOME_SUPPORT@ -DLIBRARY_DIR=\""$(datadir)/genius/"\"
 
 
 INCLUDES = \
@@ -82,7 +82,7 @@ genius_LDADD = \
 
 BUILT_SOURCES = parse.h
 
-EXTRA_DIST = geniustest.pl geniustests.txt lib.gel gnome-genius.desktop #gnome-genius-mdi.desktop
+EXTRA_DIST = geniustest.pl geniustests.txt gnome-genius.desktop lib.gel #gnome-genius-mdi.desktop
 
 Utilities_DATA = gnome-genius.desktop #gnome-genius-mdi.desktop
 

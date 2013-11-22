@@ -1,5 +1,5 @@
 /* GnomENIUS Calculator
- * Copyright (C) 1997, 1998 the Free Software Foundation.
+ * Copyright (C) 1997, 1998, 1999 the Free Software Foundation.
  *
  * Author: George Lebl
  *
@@ -23,6 +23,7 @@
 #define _STRUCTS_H_
 
 #include "mpwrap.h"
+#include "matrix.h"
 
 /*dictionary function structure*/
 typedef enum {
@@ -59,13 +60,13 @@ typedef enum {
 	NULL_NODE,
 	VALUE_NODE,
 	MATRIX_NODE,
-	MATRIX_ROW_NODE,
 	OPERATOR_NODE,
 	IDENTIFIER_NODE,
 	STRING_NODE,
 	FUNCTION_NODE, /*only used for anonymous functions*/
 	
 	/*marker nodes*/
+	MATRIX_ROW_NODE,
 	MATRIX_START_NODE,
 	EXPRLIST_START_NODE
 } ETreeType;
@@ -78,6 +79,7 @@ struct _ETree {
 		Token *id;
 		char *str;
 		EFunc *func; /*anon function*/
+		Matrix *matrix;
 		ETree *next; /*this is for keeping a free list*/
 	} data;
 	int nargs;

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNOME-utils 0.13\n"
-"POT-Creation-Date: 1999-02-19 00:00-0800\n"
+"POT-Creation-Date: 1999-04-13 01:24-0700\n"
 "PO-Revision-Date: 1998-09-03 05:33:03+0900\n"
 "Last-Translator: Sung-Hyun Nam <namsh@lgic.co.kr>\n"
 "Language-Team: Korean <ko@li.org>\n"
@@ -83,127 +83,187 @@ msgstr ""
 msgid "Scientific"
 msgstr "공학용"
 
-#: src/eval.c:364
-msgid "Lvalue not an identifier/dereference!"
+#: src/eval.c:582
+msgid "Lvalue not an identifier/dereference/matrix location!"
 msgstr ""
 
-#: src/eval.c:385
+#: src/eval.c:599 src/eval.c:649 src/eval.c:1174
+msgid "Referencing an undefined variable!"
+msgstr ""
+
+#: src/eval.c:619 src/eval.c:749 src/eval.c:886
 msgid "Dereference of non-identifier!"
 msgstr ""
 
-#: src/eval.c:391
+#: src/eval.c:628 src/eval.c:755 src/eval.c:892
+msgid "Dereference of undefined variable!"
+msgstr ""
+
+#: src/eval.c:635 src/eval.c:759 src/eval.c:896
 msgid "Dereference of non-reference!"
 msgstr ""
 
-#: src/eval.c:486
+#: src/eval.c:688 src/eval.c:831 src/eval.c:2332 src/eval.c:2417
+msgid "Wrong argument type as matrix index"
+msgstr ""
+
+#: src/eval.c:704 src/eval.c:842 src/eval.c:2360 src/eval.c:2434
+msgid "Matrix index too large"
+msgstr ""
+
+#: src/eval.c:727 src/eval.c:764 src/eval.c:863 src/eval.c:901
+msgid "Indexed Lvalue not user function"
+msgstr ""
+
+#: src/eval.c:781 src/eval.c:919
+msgid "Indexed Lvalue not an identifier or a dereference"
+msgstr ""
+
+#: src/eval.c:825
+msgid "Can't set a row/column to a non-vector matrix"
+msgstr ""
+
+#: src/eval.c:933
+msgid "Can't set a row to a vector of a different size"
+msgstr ""
+
+#: src/eval.c:947
+msgid "Can't set a column to a vector of a different size"
+msgstr ""
+
+#: src/eval.c:1110
 #, fuzzy, c-format
 msgid "Function '%s' used unintialized"
 msgstr "초기화되지 않은 변수가 사용됨!"
 
-#: src/eval.c:502 src/eval.c:652
+#: src/eval.c:1126 src/eval.c:1280
 #, fuzzy, c-format
 msgid "Variable '%s' used unintialized"
 msgstr "초기화되지 않은 변수가 사용됨!"
 
-#: src/eval.c:510
+#: src/eval.c:1134
 #, c-format
 msgid "Can't dereference '%s'!"
 msgstr ""
 
-#: src/eval.c:519
+#: src/eval.c:1143
 msgid "Can't call a non-function!"
 msgstr ""
 
-#: src/eval.c:529 src/eval.c:656 src/eval.c:747
+#: src/eval.c:1153 src/eval.c:1284 src/eval.c:1380
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be %d)"
 msgstr ""
 
-#: src/eval.c:557 src/eval.c:672 src/eval.c:754 src/eval.c:1233
+#: src/eval.c:1184 src/eval.c:1300 src/eval.c:1387 src/eval.c:2544
 msgid "Extraneous return value!"
 msgstr ""
 
-#: src/eval.c:595
+#: src/eval.c:1233
 msgid "Reference function with arguments encountered!"
 msgstr ""
 
-#: src/eval.c:602
+#: src/eval.c:1240
 msgid "Unnamed reference function encountered!"
 msgstr ""
 
-#: src/eval.c:633 src/eval.c:726 src/eval.c:728 src/eval.c:805
+#: src/eval.c:1261 src/eval.c:1359 src/eval.c:1361 src/eval.c:1443
 msgid "Unevaluatable function type encountered!"
 msgstr ""
 
-#: src/eval.c:661
+#: src/eval.c:1289
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr ""
 
-#: src/eval.c:667
+#: src/eval.c:1295
 msgid "NULL reference encountered!"
 msgstr ""
 
-#: src/eval.c:699
+#: src/eval.c:1342
 msgid "Unnamed reference function encountered"
 msgstr ""
 
-#: src/eval.c:740
+#: src/eval.c:1373
 #, fuzzy, c-format
 msgid "Variable '%s' used unitialized"
 msgstr "초기화되지 않은 변수가 사용됨!"
 
-#: src/eval.c:1195
-msgid "Logical not only define on numbers"
+#: src/eval.c:1870
+msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
 
-#: src/eval.c:1242
+#: src/eval.c:1894
+msgid "Can't add two matricies of different sizes"
+msgstr ""
+
+#: src/eval.c:1966
+msgid "Can't subtract two matricies of different sizes"
+msgstr ""
+
+#: src/eval.c:2123
+msgid "Can't multiply matricies of wrong sizes"
+msgstr ""
+
+#: src/eval.c:2280
+msgid "Can't transpose non-matrix"
+msgstr ""
+
+#: src/eval.c:2320 src/eval.c:2408
+msgid "Index works only on matricies"
+msgstr ""
+
+#: src/eval.c:2370 src/eval.c:2443
+msgid "Matrix index out of range"
+msgstr ""
+
+#: src/eval.c:2553
 msgid "Can't evaluate return value!"
 msgstr ""
 
-#: src/calc.c:281 src/eval.c:1253
+#: src/calc.c:298 src/eval.c:2582
 msgid "Unexpected operator!"
 msgstr ""
 
-#: src/calc.c:359 src/eval.c:1275
+#: src/calc.c:398 src/eval.c:2604
 msgid "Unexpected node!"
 msgstr ""
 
-#: src/eval.c:1311
+#: src/eval.c:2660
 msgid "Could not evaluate predicate into a numeric boolean value!"
 msgstr ""
 
-#: src/calc.c:256 src/calc.c:263
+#: src/calc.c:269 src/calc.c:276
 msgid "Bad identifier for function node!"
 msgstr ""
 
-#: src/calc.c:295
+#: src/calc.c:336
 msgid "NULL tree!"
 msgstr ""
 
-#: src/calc.c:334
+#: src/calc.c:373
 msgid "NULL function!"
 msgstr ""
 
-#: src/calc.c:353
+#: src/calc.c:392
 msgid "Unexpected function type!"
 msgstr ""
 
-#: src/calc.c:499
+#: src/calc.c:559
 msgid "ERROR: Probably corrupt stack!"
 msgstr "에러: 스택이 깨진 것 같음!"
 
-#: src/calc.c:550
+#: src/calc.c:633
 msgid "ERROR: "
 msgstr "에러: "
 
-#: src/calc.c:550
+#: src/calc.c:633
 msgid " before '"
 msgstr ""
 
-#: src/util.c:128
+#: src/util.c:132
 msgid "Stack underflow!"
 msgstr "스택 아래넘침!"
 

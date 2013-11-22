@@ -1,11 +1,6 @@
 Genius Calculator
 =================
 
-**********************************************************
-(Read Changes-0.2 for changes description from 0.1 to 0.2)
-Read NEWS for new stuff
-**********************************************************
-
 Although it's under heavy development, it's actually getting usable.
 I use it myself as my desktop calculator.
 
@@ -16,14 +11,14 @@ Language) :)
 Here's what doesn't work or isn't done yet: (somewhat of a TODO list)
 
 - need to make more built-in functions!
-- complex numbers (they mostly work now but need to be finished)
+- complete complex number and matrix support, right now neither is complete
 - CORBA interface
 - do a code clean-up (such as split up eval.[ch]) and make the names of
   types, functions and variables more consistent
-- clean up calc.[ch] to be a better "interface to the calculator
-- make the string functions stop reallocating ALL the time
+- clean up calc.[ch] to be a better "interface to the calculator"
 - profile and make the code leaner and meaner
 - optimize the engine a bit more
+- find all the annoying memory leaks
 
 Features of Genius:
 
@@ -31,14 +26,14 @@ Features of Genius:
  * uses rationals when possible
  * will calculate and show half calculated expressions if the calculation
    could not be completed
- * tries to optionally convert floats to integers to make calculatons more
-   acurate (since integers are arbitrary precision)
  * variables
  * user functions
  * variable and function references with C like syntax
  * anonymous functions
- * it will now add missing parenthesis on the ends of expressions (only in
+ * it will add missing parenthesis on the ends of expressions (only in
    the GUI version)
+ * matrix support
+ * complex numbers
  * more ...
 
 How to use this thing: (this is just a quick description)
@@ -49,9 +44,12 @@ A simple GEL expression looks just like a math expression. So you don't need
 to learn GEL to use the calculator. GEL is used when you want to define 
 and use functions, and variables.
 
-The program reads two files as gel programs as startup
-<prefix>/share/genius/lib.gel and ~/.gnomeinit, lib.gel has some standard
-functions of the language implemented in gel itself
+The command line version is actually nicer to use I think and in the future
+I'll work on the GUI a bit more to make it as good as the command line
+version. To call up the command line version just execute "genius". I myself
+don't use the GUI version because of it's shortcomings. Most likely the next
+version of the GUI will be the comman dline version running in a terminal
+widget with some GUI stuff added to it.
 
 ****************************************************************************
 What follows is a simple description of GEL:
@@ -59,12 +57,21 @@ What follows is a simple description of GEL:
 A program in GEL is basically an expression which evaluates to a number,
 since there exist only numbers.
 
+Previous result:
+
+The "Ans" variable can be used to get the result of the last expression
+
+so if you did some calculation and just wanted to add 389 to the result,
+you'd do "Ans+389"
+
+Functions:
+
 For variables use the = operator, that operator sets the variable and
 returns the number you set, so you can do something like "a=b=5", just
 like in C. Variables are really functions with no argument
 
 There are a number of built in functions (currently "e" "pi" "sin" "cos"
-"tan", and a number of other (check funclib.c, all the way on the bottom))
+"tan", and more)
 
 To type functions in:
 
@@ -75,7 +82,82 @@ function
 (of course the number of arguments is different for each function)
 
 NOTE: that if there are no arguments you can but don't have to put
-the parentheses in
+the parentheses in.
+
+Current built in functions:
+
+name:		# of arguments:		description:
+
+warranty	0			prints warranty and license info
+exit		0			exits genius
+quit		0			exits genius
+error		1 (string)		prints an error to the error channel
+print		1 (string)		prints a string onto the standard
+					output
+printn		1 (string)		prints a string onto the standard
+					output without trailing carrige
+					return
+display		2 (string,value)	prints a string, a colon and then the
+					value
+
+sin		1 (value)		calculates the sin function
+cos		1 (value)		calculates the cos function
+tan		1 (value)		calculates the tan function
+pi		0 			the number pi
+e		0 			the number e (same as exp(1), but
+					answer is cached)
+sqrt		1 (value)		calculates the sqare root
+exp		1 (value)		calculates the e^value (exponential
+					function)
+ln		1 (value)		calculates the natural logarithm
+gcd		2 (integer,integer)	the greatest common divisor function
+lcm		2 (integer,integer)	the least common multiple function
+max		2 (value,value)		returns the larger of the two values
+min		2 (value,value)		returns the smaller of the two values
+prime		1 (integer)		returns the n'th prime for primes up
+					to n==100000
+round		1 (value)		rounds the value
+floor		1 (value)		greatest integer <= value
+ceil		1 (value)		least integer >= value
+trunc		1 (value)		truncate the number to an integer
+Re		1 (value)		return the real part of a complex number
+Im		1 (value)		return the imaginary part of a complex number
+I		1 (integer)		return an identity matrix of the size n
+
+is_value	1 			returns true if the argument is a
+					scalar value
+is_string	1 			returns true if the argument is a
+					string
+is_matrix	1 			returns true if the argument is a
+					matrix
+is_complex	1 			returns true if the argument is a
+					complex number
+is_integer	1 			returns true if the argument is an
+					integer
+is_rational	1 			returns true if the argument is an
+					rational, note that it is false if
+					it's an integer!
+is_float	1			returns true if the argument is a
+					floating point number
+is_null		1			returns true if the argument is a
+					null (empty result not a 0)
+
+Functions in the standard library (lib.gel):
+
+name:		# of arguments:		description:
+
+sum		3 (from,to,function)	calculates the sum of the function
+					which should take one argument
+					which is an integer stepped from
+					"from" to "to
+prod		3 (from,to,function)	calculates the product of the
+					function which should take one
+					argument which is an integer
+					stepped from "from" to "to
+nPr		2 (integer,integer)	calculate permutations
+nCr		2 (integer,integer)	calculate combinations
+fib		1 (integer)		returns n'th fibbonachi number
+
 
 To define a function do:
 
@@ -94,7 +176,16 @@ define sum(a,b,c) { a+b+c}
 
 then "sum(1,1,1)" yields 3
 
-finally there is the ';' operator, which is a way to separate expressions,
+Absoulte value:
+
+You can make an absolute value of something by putting the |'s around it.
+Example:
+
+|a-b|
+
+Separator:
+
+Finally there is the ';' operator, which is a way to separate expressions,
 such a combined expression will return whatever is the result of the last
 one, so
 
@@ -102,8 +193,39 @@ one, so
 
 yeilds 5
 
-this will require some parenthesizing to make it unambiguous sometimes,
-especially if the ; is not the top most primitive
+This will require some parenthesizing to make it unambiguous sometimes,
+especially if the ; is not the top most primitive. This slightly differs
+from other programming languages where the ; is a terminator of statements,
+whereas in GEL it's actually a binary operator.
+
+The GEL operators:
+
+a;b		separator, just evaluates both but returns only b
+a=b		assignment operator asigns b to a (a must be a valid lvalue)
+|a|		absolute value
+a^b		exponentiation
+a+b		addition
+a-b		subtraction
+a*b		multiplication
+a/b		division
+a%b		the mod operator
+a!		factorial operator
+a==b		equality operator (returns 1 or 0)
+a!=b		inequality operator (returns 1 or 0)
+a<=b		inequality operator (returns 1 or 0)
+a>=b		inequality operator (returns 1 or 0)
+a<=>b		comparison operator (returns -1, 0 or 1)
+a and b		logical and
+a or b		logical or
+a xor b		logical xor
+not a		logical not
+-a		negation operator
+&a		variable referencing (to pass a reference to something)
+*a		variable dereferencing (to access a referenced varible)
+a'		matrix transpose
+a@(b,c)		get element of a matrix
+a@(b,)		get row of a matrix
+a@(,c)		get column of a matrix
 
 There are also a number of constructs:
 
@@ -213,6 +335,84 @@ You can also use function references for that:
     define b(x){x*x};
     f(&b,2)
 
+Matrix entry:
+
+To enter matrixes use one of the following two syntaxes. You can either
+enter the matrix separating values by commas and rows by semicolons, or
+separating values by tabs and rows by returns, or any combination of the
+two. So to enter a 3x3 matrix of numbers 1-9 you could do
+
+[1,2,3:4,5,6:7,8,9]
+
+or
+
+[1	2	3
+ 4	5	6
+ 7	8	9]
+
+or
+
+[1,2,3
+ 4,5,6
+ 7,8,9]
+
+Do not use both ':' and return at once on the same line though. You can
+however use tabs and commas together, as long as you use at most 1 comma
+to separate values. To enter tabs inside the command line version, you have
+to do M-Tab (usually Alt-Tab), or however else you have your .inputrc set
+up (since it uses readline)
+
+You can also use the matrix expansion functionality to enter matricies.
+For example you can do:
+a = [	1	2	3
+	4	5	6
+	7	8	9]
+b = [	a	10
+	11	12]
+
+and you should get
+
+[1	2	3	10
+ 4	5	6	10
+ 7	8	9	10
+ 11	11	11	12]
+
+similiarly you can build matricies out of vectors and other stuff like that.
+
+Another thing is that non-specified spots are initialized to 0, so
+
+[1	2	3
+ 4	5
+ 6]
+
+will end up being
+
+[1	2	3
+ 4	5	0
+ 6	0	0]
+
+NOTE: be careful about using whitespace and returns for expressions inside
+the '[',']' brackets, they have a slightly different meaning and could mess
+you up.
+
+Transpose operator:
+
+You can transpose a matrix by using the ' operator, example:
+
+[1,2,3]*[4,5,6]'
+
+We transpose the second vector to make matrix multiplication possible.
+
+Error handeling:
+
+If you detect an error in your function, you can bail out of it. You can
+either fail to compute the function which is for normal errors, such as
+wrong types of arguments, just add the empty statement "bailout". If something
+went really wrong and you want to completely kill the current computation,
+you can use "exception".
+
+Look at lib.gel for some examples.
+
 
 EXAMPLE PROGRAM in GEL:
     a user factorial function (there already is one built in so
@@ -261,8 +461,9 @@ Requirements:
 	- lex (tested under flex)
 	- yacc (tested under bison -y)
 	- gmp (tested with 2.0.2)
-	- gtk+
-	- gnome libs
+	- glib
+	- gtk+ (only for the GUI version)
+	- gnome libs (only for the GUI version)
 All except gmp seem to be pretty much standard or Linux systems, and even
 on most other platforms. (except gtk and gnome libs, but since this is
 distributed with gnome ...)

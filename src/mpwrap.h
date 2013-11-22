@@ -22,8 +22,6 @@
 #ifndef _MPWRAP_H_
 #define _MPWRAP_H_
 
-#include "config.h"
-
 #ifdef HAVE_GMP2_INCLUDE_DIR
 #include <gmp2/gmp.h>
 #else
@@ -118,6 +116,9 @@ void mpw_pow(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2);
 void mpw_pow_ui(mpw_ptr rop,mpw_ptr op, unsigned long int e);
 void mpw_sqrt(mpw_ptr rop,mpw_ptr op);
 
+void mpw_exp(mpw_ptr rop,mpw_ptr op);
+void mpw_ln(mpw_ptr rop,mpw_ptr op);
+
 int mpw_cmp(mpw_ptr op1, mpw_ptr op2);
 int mpw_cmp_ui(mpw_ptr op, unsigned long int i);
 
@@ -161,5 +162,8 @@ void mpw_round(mpw_ptr rop, mpw_ptr op);
 void mpw_floor(mpw_ptr rop, mpw_ptr op);
 void mpw_ceil(mpw_ptr rop, mpw_ptr op);
 void mpw_trunc(mpw_ptr rop, mpw_ptr op);
+
+/*try to get a long number representation of the number*/
+long mpw_get_long(mpw_ptr op);
 
 #endif

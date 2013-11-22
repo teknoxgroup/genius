@@ -1,3 +1,163 @@
+Tue Apr 13 01:16:35 1999  George Lebl  <jirka@5z.com>
+
+	* src/{parse.y,eval.c}: add new transpose "'" operator
+
+	* src/funclib.c: add is_value,is_matrix,is_string functions
+
+	* src/eval.c: implemented matrix +,- and *
+
+	* README: update
+
+	* NEWS: move stuff from Changes-0.2 and add new changes for this
+	  relese (0.3)
+
+	* configure.in: raise version to 0.3.0
+
+Mon Apr 12 16:32:14 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c,README: added some documentation of the built in
+	  functions and change isnull to is_null for consistency
+
+Mon Apr 12 16:06:05 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: add string concatenation, and added error handeling
+	  to primitives, and unified the macros for primitives and
+	  logical operations
+
+Mon Apr 12 04:23:35 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: switched around the order of the indicies for
+	  matricies, to be mathematically correct (row,column) not
+	  (column,row), and implemented all the @(...,...) operations,
+	  including with the equals sign. Plus fixed some error checking
+	  for undefined references all over the place and references on
+	  setting are not global anymore to be consistent
+
+	* src/geniustests.txt: added tests for new operations
+
+	* src/mymath.c,src/funclib.c: implemented "e" using exp(1)
+
+Sun Apr 11 15:46:05 1999  George Lebl  <jirka@5z.com>
+
+	* src/calc.c: small fixes and some sanitizing, the thing still leaks
+	  like hell
+
+Sun Apr 11 15:21:11 1999  George Lebl  <jirka@5z.com>
+
+	* src/{parse.y,eval.[ch],mpwrap.c}: fix outrageous memory leaks
+
+Sun Apr 11 03:05:52 1999  George Lebl  <jirka@5z.com>
+
+	* src/{geniustests.txt,mpwrap.c}: add a couple of tests, and fix
+	  division of integers
+
+Sun Apr 11 02:54:16 1999  George Lebl  <jirka@5z.com>
+
+	* src/funclib.c: new functions: prime (for experiments with smaller
+	  primes, returns the nth prime for n<=100000), and lcm
+
+Sun Apr 11 02:52:36 1999  George Lebl  <jirka@5z.com>
+
+	* src/{eval.c,calc.c,parse.y,lexer.l}: add bailout and exception
+	  operators so that we may do nice errors from gel functions
+
+	* src/lib.gel: implement argument checking
+
+	* src/{eval.c,calc.c,funclib.c,util.c,Makefile.am},configure.in:
+	  make a define when using gnome ... and when not using it don't
+	  include gnome.h and define _() to be a no-op
+
+Fri Apr 09 17:26:55 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: sped up exp and ln and implemented floating point
+	  pow function using those, exp might be off in precision bits,
+	  someone with more clue then I has to look at that I guess
+
+Fri Apr 09 01:55:07 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.c: very minor improvements and changes ... these
+	  algorithms really do suck
+
+Thu Apr 08 20:25:18 1999  George Lebl  <jirka@5z.com>
+
+	* src/mpwrap.[ch],src/funclib.c: add exp and ln functions
+
+	* src/mpwrap.c: fix small leak
+
+Mon Apr 05 03:54:10 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: allow _'s in function names
+
+	* src/funclib.c: implement is_rational,is_float,is_integer and
+	  error (which prints an error) functions
+
+	* src/geniustests.txt: added new tests for new features
+
+Mon Apr 05 03:30:28 1999  George Lebl  <jirka@5z.com>
+
+	* src/{parse.y,lexer.l}: change matrix index syntax
+
+	* src/eval.c: implement evaluation of simple matrix index, This
+	  doesn't yet do setting of matrix values, which will become a bit
+	  tricky
+
+	* src/funclib.c: implement I function (identity matrix)
+
+	* src/mpwrap.c: implement mpw_get_long function
+
+Mon Apr 05 01:21:01 1999  George Lebl  <jirka@5z.com>
+
+	* src/calc.c: set Ans to the last answer
+
+	* README: updated a bit and added a section on matrix entry
+
+Fri Apr 02 15:50:45 1999  George Lebl  <jirka@5z.com>
+
+	* src/matrix.h: add parenth for the matrix_index macro to avoid
+	  weird problems
+
+	* src/geniustests.txt: added a test for previously non-working
+	  matrix expansion
+
+	* src/{funclib.c,calc.[ch],genius.c,gnome-genius.c}: made the
+	  pretty printing done only when in command line interactive
+	  mode
+
+Fri Apr 02 02:20:01 1999  George Lebl  <jirka@5z.com>
+
+	* src/eval.c: hopefully finished the correct expanding/evaluating of
+	  matrices, and the basic matrix handeling
+
+	* src/calc.c: printing of matricies
+
+	* src/lexer.l: added alternative way of entering matricies
+
+	* src/structs.h,src/matrix.c: small fixes
+
+	* src/parse.y: get rid of debug info
+
+	* src/geniustests.txt: added tests for matrix expansion
+
+	* configure.in: raise version to 0.2.2
+
+Thu Apr 01 02:36:39 1999  George Lebl  <jirka@5z.com>
+
+	* src/genius.c,src/gnome-genius.c: look for the library file in the
+	  current directory as well
+
+	* src/parse.y,src/matrix.[ch]: more work on the matrix stuff,
+	  hopefully finished the matrix ADT, and finished parsing and
+	  reading of a matrix
+
+Thu Mar 25 01:11:32 1999  George Lebl  <jirka@5z.com>
+
+	* src/lib.gel: added nCr, nPr and fib(for fibonacci numbers), dumb
+	  and simple functions
+
+	* src/lexer.l: accept string longer then one character
+
+	* src/funclib.c: print functions don't print "'s around strings
+
 Thu Feb 18 23:50:19 1999  George Lebl  <jirka@5z.com>
 
 	* src/genius.c,src/gnome-genius.c: read <prefix>/share/genius/lib.gel
