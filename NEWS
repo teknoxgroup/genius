@@ -1,9 +1,15 @@
+Changes to 1.0.11
+
+* Build fix for some versions of ncurses (Stephan Hegel)
+* Minor documentation updates
+
 Changes to 1.0.10
 
 * Allow changing variable names for all plotting functions
 * Add SlopefieldTicks, VectorfieldTicks, LinePlotVariableNames, and
   SurfacePlotVariableNames, parameters
 * Add AskButtons interactive function
+* Add RungeKuttaFull, EulersMethodFull functions
 * CHANGE: spelling fix: AuxiliaryUnitMatrix doesn't have two l's
 * Support for setting legend on LinePlotDrawLine with a "legend" parameter
 * Allow comparisons (== and !=) with null, treating it as an empty matrix
