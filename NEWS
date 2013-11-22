@@ -1,3 +1,21 @@
+Changes to 1.0.2
+
+* Symbolic deriative of erf, yay!
+* @() works correctly with null as an empty range returning null (an empty
+  matrix)
+* Saner switching to scientific notation for floating point output
+* Fix --disable-scrollkeep OMF file installation (Sebastian Dröge)
+* Fix .desktop file (Sebastian Dröge)
+* Fix extraneous space when prettyprinting fractions
+* Fix leaving behind zombie processes when running programs from the IDE
+* Fix building without gtksourceview
+* Fix building with older gtk by not using GTK_STOCK_INFO
+* Use the icon on our windows
+* IsPerfectSquare works on rationals as it should
+* don't mod arguments to trig functions ln, log10, log2, zeta, gamma,
+  exp, round, trunc, floor, ceil, float, CompositeSimpsonsRule
+* Translations (Yannig Marchegay, me)
+
 Changes to 1.0.1
 
 Syntax and semantical changes are marked with CHANGE:

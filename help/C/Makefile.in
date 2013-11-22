@@ -530,30 +530,30 @@ uninstall-am: uninstall-local uninstall-manualDATA
 omf: omf_timestamp
 
 omf_timestamp: $(omffile)
-@ENABLE_SK_TRUE@	-for file in $(omffile); do \
-@ENABLE_SK_TRUE@	  scrollkeeper-preinstall $(docdir)/$(docname).xml $(srcdir)/$$file $$file.out; \
-@ENABLE_SK_TRUE@	done; \
-@ENABLE_SK_TRUE@	touch omf_timestamp
+	-for file in $(omffile); do \
+	  scrollkeeper-preinstall $(docdir)/$(docname).xml $(srcdir)/$$file $$file.out; \
+	done; \
+	touch omf_timestamp
 
 install-data-hook-omf:
-@ENABLE_SK_TRUE@	$(mkinstalldirs) $(DESTDIR)$(omf_dest_dir)
-@ENABLE_SK_TRUE@	for file in $(omffile); do \
-@ENABLE_SK_TRUE@		$(INSTALL_DATA) $$file.out $(DESTDIR)$(omf_dest_dir)/$$file; \
-@ENABLE_SK_TRUE@	done
+	$(mkinstalldirs) $(DESTDIR)$(omf_dest_dir)
+	for file in $(omffile); do \
+		$(INSTALL_DATA) $$file.out $(DESTDIR)$(omf_dest_dir)/$$file; \
+	done
 @ENABLE_SK_TRUE@	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir) -o $(DESTDIR)$(omf_dest_dir)
 
 uninstall-local-omf:
-@ENABLE_SK_TRUE@	-for file in $(srcdir)/*.omf; do \
-@ENABLE_SK_TRUE@		basefile=`basename $$file`; \
-@ENABLE_SK_TRUE@		rm -f $(DESTDIR)$(omf_dest_dir)/$$basefile; \
-@ENABLE_SK_TRUE@	done
-@ENABLE_SK_TRUE@	-rmdir $(DESTDIR)$(omf_dest_dir)
+	-for file in $(srcdir)/*.omf; do \
+		basefile=`basename $$file`; \
+		rm -f $(DESTDIR)$(omf_dest_dir)/$$basefile; \
+	done
+	-rmdir $(DESTDIR)$(omf_dest_dir)
 @ENABLE_SK_TRUE@	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir)
 
 clean-local-omf:
-@ENABLE_SK_TRUE@	-for file in $(omffile); do \
-@ENABLE_SK_TRUE@		rm -f $$file.out; \
-@ENABLE_SK_TRUE@	done
+	-for file in $(omffile); do \
+		rm -f $$file.out; \
+	done
 
 all: omf
 

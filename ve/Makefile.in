@@ -63,8 +63,9 @@ PROGRAMS = $(noinst_PROGRAMS)
 am_test_ve_config_OBJECTS = test-ve-config.$(OBJEXT)
 test_ve_config_OBJECTS = $(am_test_ve_config_OBJECTS)
 am__DEPENDENCIES_1 =
-test_ve_config_DEPENDENCIES = $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+test_ve_config_DEPENDENCIES = $(top_builddir)/ve/libvicious.a \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -317,11 +318,10 @@ test_ve_config_SOURCES = \
 	test-ve-config.c
 
 test_ve_config_LDADD = \
+	$(top_builddir)/ve/libvicious.a		\
 	$(VICIOUS_LIBS)				\
 	$(INTLLIBS)				\
-	$(GLIB_LIBS)				\
-	-L$(top_builddir)/ve			\
-	-lvicious
+	$(GLIB_LIBS)
 
 all: all-recursive
 

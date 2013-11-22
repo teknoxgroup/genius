@@ -30,6 +30,8 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/wait.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -306,8 +308,8 @@ static GnomeUIInfo calc_menu[] = {
 
 	GNOMEUIINFO_ITEM_STOCK(N_("_Interrupt"),N_("Interrupt current calculation"),genius_interrupt_calc,GTK_STOCK_STOP),
 	GNOMEUIINFO_SEPARATOR,
-	GNOMEUIINFO_ITEM_STOCK (N_("Show _Full Answer"), N_("Show the full text of last answer"), full_answer, GTK_STOCK_INFO),
-	GNOMEUIINFO_ITEM_STOCK (N_("Show User _Variables"), N_("Show the current value of all user variables"), show_user_vars, GTK_STOCK_INFO),
+	GNOMEUIINFO_ITEM_STOCK (N_("Show _Full Answer"), N_("Show the full text of last answer"), full_answer, GTK_STOCK_DIALOG_INFO),
+	GNOMEUIINFO_ITEM_STOCK (N_("Show User _Variables"), N_("Show the current value of all user variables"), show_user_vars, GTK_STOCK_DIALOG_INFO),
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_ITEM_STOCK (N_("_Plot"), N_("Plot a function"), genius_plot_dialog, GNOME_STOCK_BOOK_OPEN),
 	GNOMEUIINFO_END,
@@ -1914,6 +1916,8 @@ static void
 really_load_cb (GtkFileChooser *fs, int response, gpointer data)
 {
 	const char *s;
+	char *str;
+
 	if (response != GTK_RESPONSE_OK) {
 		gtk_widget_destroy (GTK_WIDGET (fs));
 		return;
@@ -1932,8 +1936,11 @@ really_load_cb (GtkFileChooser *fs, int response, gpointer data)
 
 	gtk_widget_destroy (GTK_WIDGET (fs));
 
-	vte_terminal_feed (VTE_TERMINAL (term),
-			   "\r\n\e[0mOutput from \e[0;32m", -1);
+	str = g_strdup_printf ("\r\n\e[0m%s\e[0;32m", 
+			       _("Output from "));
+	vte_terminal_feed (VTE_TERMINAL (term), str, -1);
+	g_free (str);
+
 	vte_terminal_feed (VTE_TERMINAL (term), s, -1);
 	vte_terminal_feed (VTE_TERMINAL (term),
 			   "\e[0m (((\r\n", -1);
@@ -1946,8 +1953,9 @@ really_load_cb (GtkFileChooser *fs, int response, gpointer data)
 
 	gel_printout_infos ();
 
-	vte_terminal_feed (VTE_TERMINAL (term),
-			   "\e[0m)))End", -1);
+	str = g_strdup_printf ("\e[0m))) %s", _("End"));
+	vte_terminal_feed (VTE_TERMINAL (term), str, -1);
+	g_free (str);
 
 	/* interrupt the current command line */
 	interrupted = TRUE;
@@ -3050,14 +3058,19 @@ run_program (GtkWidget *menu_item, gpointer data)
 		char *prog;
 		int p[2];
 		FILE *fp;
+		int pid;
+		int status;
+		char *str;
 
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter, 0);
 		gtk_text_buffer_get_iter_at_offset (buffer, &iter_end, -1);
 		prog = gtk_text_buffer_get_text (buffer, &iter, &iter_end,
 						 FALSE /* include_hidden_chars */);
 
-		vte_terminal_feed (VTE_TERMINAL (term),
-				   "\r\n\e[0mOutput from \e[0;32m", -1);
+		str = g_strdup_printf ("\r\n\e[0m%s\e[0;32m", 
+				       _("Output from "));
+		vte_terminal_feed (VTE_TERMINAL (term), str, -1);
+		g_free (str);
 		vte_terminal_feed (VTE_TERMINAL (term), vname, -1);
 		vte_terminal_feed (VTE_TERMINAL (term),
 				   "\e[0m (((\r\n", -1);
@@ -3067,7 +3080,18 @@ run_program (GtkWidget *menu_item, gpointer data)
 
 		/* run this in a fork so that we don't block on very
 		   long input */
-		if (fork () == 0) {
+		pid = fork ();
+		if (pid < 0) {
+			close (p[1]);
+			close (p[0]);
+			g_free (prog);
+			genius_display_error (NULL,
+					      _("<b>Cannot execute program</b>\n\n"
+						"Cannot fork."));
+			return;
+		}
+
+		if (pid == 0) {
 			close (p[0]);
 			write (p[1], prog, strlen (prog));
 			close (p[1]);
@@ -3094,8 +3118,9 @@ run_program (GtkWidget *menu_item, gpointer data)
 				gel_got_eof = FALSE;
 				break;
 			}
-			if(interrupted)
+			if (interrupted) {
 				break;
+			}
 		}
 
 		gel_pop_file_info ();
@@ -3110,13 +3135,21 @@ run_program (GtkWidget *menu_item, gpointer data)
 
 		running_program = NULL;
 
-		vte_terminal_feed (VTE_TERMINAL (term),
-				   "\e[0m)))End", -1);
+		str = g_strdup_printf ("\e[0m))) %s", _("End"));
+		vte_terminal_feed (VTE_TERMINAL (term), str, -1);
+		g_free (str);
 
 		/* interrupt the current command line */
 		interrupted = TRUE;
 		vte_terminal_feed_child (VTE_TERMINAL (term), "\n", 1);
 
+		/* sanity */
+		if (pid > 0) {
+			/* It must have finished by now, so reap the child */
+			/* must kill it, just in case we were interrupted */
+			kill (pid, SIGTERM);
+			waitpid (pid, &status, 0);
+		}
 	}
 
 }
@@ -3599,7 +3632,9 @@ switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num)
 		selection_changed ();
 		gtk_widget_set_sensitive (edit_menu[EDIT_CUT_ITEM].widget,
 					  FALSE);
+#ifdef HAVE_GTKSOURCEVIEW
 		setup_undo_redo ();
+#endif
 		gnome_appbar_pop (GNOME_APPBAR (appbar));
 	} else {
 		char *s;
@@ -3641,7 +3676,9 @@ switch_page (GtkNotebook *notebook, GtkNotebookPage *page, guint page_num)
 		gnome_appbar_push (GNOME_APPBAR (appbar), s);
 		g_free (s);
 
+#ifdef HAVE_GTKSOURCEVIEW
 		setup_undo_redo ();
+#endif
 	}
 }
 
@@ -3843,9 +3880,21 @@ main (int argc, char *argv[])
 
 	/*read gnome_config parameters */
 	get_properties ();
+
+	file = g_build_filename (genius_datadir,
+				 "icons",
+				 "hicolor",
+				 "48x48",
+				 "apps",
+				 "gnome-genius.png",
+				 NULL);
+	gtk_window_set_default_icon_from_file (file, NULL);
+	g_free (file);
+
 	
         /*set up the top level window*/
 	genius_window = create_main_window();
+
 
 	/* Drag and drop support */
 	gtk_drag_dest_set (GTK_WIDGET (genius_window),

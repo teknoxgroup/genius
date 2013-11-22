@@ -1,3 +1,87 @@
+Tue Nov 20 23:20:58 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.2
+
+Tue Nov 20 23:13:36 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: no mod of arguments to round, ceil, trunc, all trig
+	  functions, all log functions, exp, CompositeSimpsonsRule.  It
+	  just doesn't make sense to do so.  Fix IsPerfectSquare for
+	  rationals.
+
+Tue Nov 20 12:26:58 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: one more untranslated string marked
+
+Tue Nov 20 03:34:28 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: set up our icon on all windows
+
+Tue Nov 20 03:22:14 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: saner algorithm to figure out when to print in
+	  scientific notation
+
+Tue Nov 20 02:33:03 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: raise version
+
+	* src/gnome-genius.c: don't leave behind zombie processes from
+	  running programs.  Translate a previously untranslated string,
+	  and handle fork failing.
+
+	* src/eval.c: the @() operator accepts null as range when not used
+	  as an lvalue and just returns null then.  That's the more
+	  correct behaviour, treating it as an empty range, thus returning
+	  an empty matrix.  Plus negligible speed improvement.
+
+	* src/calc.c: kill extraneous newline when prettyprinting fractions
+
+	* src/geniustests.txt: add tests
+
+	* NEWS: update
+
+2007-11-20  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	* src/gnome-genius.desktop.in: Fix category and mimetype fields
+	  of the desktop file.
+
+2007-11-19  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	* help/omf.make: And now fix the OMF file installation if
+	  --disable-scrollkeeper is used for real.
+
+2007-11-19  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	* help/omf.make: Fix OMF file installation if --disable-scrollkeeper
+	  is used.
+
+Mon Nov 19 03:21:44 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.c, src/funclib.c: slight optimization by using
+	  mpfr_zero_p
+
+Mon Nov 19 02:56:58 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/symbolic.c: add erf derivative
+
+Sun Nov 18 14:48:56 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix building with no gtksourceview 
+
+Sat Nov 17 21:27:26 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: use GTK_STOCK_DIALOG_INFO instead of
+	  GTK_STOCK_INFO, as the latter is only available in 2.8 and higher
+	  gtk, thus making genius implicitly depend on 2.8
+
+	* ve/Makefile.am: don't use -l to link to the viciouslib but link it
+	  directly
+
+Fri Nov 16 23:36:57 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.1
+
 Fri Nov 16 23:10:29 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* gtkextra/gtkplot.[ch]: add freeze/thaw functions since otherwise

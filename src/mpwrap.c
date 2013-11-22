@@ -268,7 +268,8 @@ static void mpwl_init_type(MpwRealNum *op,int type);
 
 static void mpwl_free(MpwRealNum *op, int local);
 
-static int mpwl_sgn(MpwRealNum *op);
+static inline int mpwl_sgn (MpwRealNum *op);
+static inline int mpwl_zero_p (MpwRealNum *op);
 
 static long mpwl_get_exp(MpwRealNum *op);
 
@@ -649,13 +650,24 @@ mpwl_free(MpwRealNum *op, gboolean local)
 	}
 }
 
-static int
+static inline int
 mpwl_sgn(MpwRealNum *op)
 {
 	switch(op->type) {
 	case MPW_FLOAT: return mpf_sgn(op->data.fval);
 	case MPW_RATIONAL: return mpq_sgn(op->data.rval);
 	case MPW_INTEGER: return mpz_sgn(op->data.ival);
+	}
+	return 0;
+}
+
+static inline int
+mpwl_zero_p (MpwRealNum *op)
+{
+	switch(op->type) {
+	case MPW_FLOAT: return mpfr_zero_p (op->data.fval);
+	case MPW_RATIONAL: return mpq_sgn(op->data.rval) == 0;
+	case MPW_INTEGER: return mpz_sgn(op->data.ival) == 0;
 	}
 	return 0;
 }
@@ -1202,7 +1214,7 @@ mpwl_div(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 	int t;
 	MpwRealNum r = {{NULL}};
 
-	if G_UNLIKELY (mpwl_sgn(op2)==0) {
+	if G_UNLIKELY (mpwl_zero_p (op2)) {
 		error_num=NUMERICAL_MPW_ERROR;
 		return;
 	}
@@ -1308,7 +1320,7 @@ mpwl_div_ui(MpwRealNum *rop,MpwRealNum *op,unsigned long int i)
 static void
 mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op)
 {
-	if G_UNLIKELY (mpwl_sgn(op)==0) {
+	if G_UNLIKELY (mpwl_zero_p (op)) {
 		error_num=NUMERICAL_MPW_ERROR;
 		return;
 	}
@@ -1347,7 +1359,7 @@ mpwl_ui_div(MpwRealNum *rop,unsigned long int i,MpwRealNum *op)
 static void
 mpwl_mod(MpwRealNum *rop,MpwRealNum *op1,MpwRealNum *op2)
 {
-	if G_UNLIKELY (mpwl_sgn(op2)==0) {
+	if G_UNLIKELY (mpwl_zero_p (op2)) {
 		error_num=NUMERICAL_MPW_ERROR;
 		return;
 	}
@@ -2698,18 +2710,27 @@ str_format_float (char *p,
 {
 	long int len;
 	int i;
+	int max_exp;
 	int min_exp;
+	int trailzeros;
 
-	if (max_digits > 1)
+	len = strlen (p);
+	for (trailzeros = 0; trailzeros < len; trailzeros++)
+		if (p[len-trailzeros-1] != '0')
+			break;
+
+	if (max_digits > 1) {
 		/* Negative 2 is there to ensure that a number is never
 		 * printed as an integer when it is a float that was rounded
 		 * off */
-		min_exp = max_digits-2;
-	else
-		min_exp = 10;
+		max_exp = max_digits-2;
+		min_exp = MIN ((len-trailzeros) - max_digits + 2, -2);
+	} else {
+		max_exp = MAX ((len-trailzeros)-2, 10);
+		min_exp = -10;
+	}
 
-	if(((e-1)<-min_exp || (e-1)>min_exp) || scientific_notation) {
-		int len = strlen (p);
+	if(((e-1)<min_exp || (e-1)>max_exp) || scientific_notation) {
 		if (e != 0)
 			p = g_realloc (p, len+2+((int)log10(abs(e))+2)+1);
 		else
@@ -2737,7 +2758,6 @@ str_format_float (char *p,
 			sprintf(p+len,"e%ld",e-1);
 		}
 	} else if(e>0) {
-		len=strlen(p);
 		if(p[0]=='-')
 			len--;
 		if(e>len) {
@@ -2755,7 +2775,7 @@ str_format_float (char *p,
 		}
 		str_trim_trailing_zeros (p, TRUE /* leave_first_zero */);
 	} else { /*e<=0*/
-		if(strlen(p)==0) {
+		if(len == 0) {
 			p = g_strdup ("0.0");
 		} else {
 			p = g_realloc (p, strlen(p)+2+(-e)+2);
@@ -3054,7 +3074,7 @@ mpwl_getstring(MpwRealNum * num, int max_digits,
 #define mpw_uncomplex(rop)					\
 {								\
 	if ((rop)->i != gel_zero &&				\
-	    mpwl_sgn ((rop)->i) == 0) {				\
+	    mpwl_zero_p ((rop)->i)) {				\
 		(rop)->i->alloc.usage--;			\
 		if ((rop)->i->alloc.usage==0)			\
 			mpwl_free ((rop)->i, FALSE);		\
@@ -3588,7 +3608,7 @@ void
 mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 {
 	if (MPW_IS_REAL (op1) && MPW_IS_REAL (op2)) {
-		if G_UNLIKELY (mpwl_sgn(op2->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op2->r)) {
 			gel_errorout (_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
@@ -3607,7 +3627,7 @@ mpw_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
 		MpwRealNum *i1;
 		MpwRealNum *r2;
 		MpwRealNum *i2;
-		if G_UNLIKELY (mpwl_sgn(op2->r)==0 && mpwl_sgn(op2->i)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op2->r) && mpwl_zero_p (op2->i)) {
 			gel_errorout (_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
@@ -3693,7 +3713,7 @@ void
 mpw_ui_div(mpw_ptr rop,unsigned int in,mpw_ptr op)
 {
 	if (MPW_IS_REAL (op)) {
-		if G_UNLIKELY (mpwl_sgn(op->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op->r)) {
 			gel_errorout (_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
@@ -3710,7 +3730,7 @@ mpw_ui_div(mpw_ptr rop,unsigned int in,mpw_ptr op)
 		MpwRealNum t2 = {{NULL}};
 		MpwRealNum *r;
 		MpwRealNum *i;
-		if G_UNLIKELY (mpwl_sgn(op->r)==0 && mpwl_sgn(op->i)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op->r) && mpwl_zero_p (op->i)) {
 			gel_errorout (_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
@@ -3759,7 +3779,7 @@ void
 mpw_mod (mpw_ptr rop, mpw_ptr op1, mpw_ptr op2)
 {
 	if G_LIKELY (MPW_IS_REAL (op1) && MPW_IS_REAL (op2)) {
-		if G_UNLIKELY (mpwl_sgn(op2->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op2->r)) {
 			gel_errorout (_("Division by zero!"));
 			error_num=NUMERICAL_MPW_ERROR;
 			return;
@@ -3992,7 +4012,7 @@ mpw_exact_zero_p (mpw_ptr op)
 	    (op->r == gel_zero ||
 	     ((op->r->type == MPW_INTEGER ||
 	       op->r->type == MPW_RATIONAL) &&
-	      mpwl_sgn (op->r) == 0))) {
+	      mpwl_zero_p (op->r)))) {
 		return TRUE;
 	} else {
 		return FALSE;
@@ -4002,8 +4022,8 @@ mpw_exact_zero_p (mpw_ptr op)
 gboolean
 mpw_zero_p (mpw_ptr op)
 {
-	if ((op->r == gel_zero || mpwl_sgn (op->r) == 0) &&
-	    (op->i == gel_zero || mpwl_sgn (op->i) == 0)) {
+	if ((op->r == gel_zero || mpwl_zero_p (op->r)) &&
+	    (op->i == gel_zero || mpwl_zero_p (op->i))) {
 		return TRUE;
 	} else {
 		return FALSE;
@@ -4027,7 +4047,7 @@ mpw_pow (mpw_ptr rop, mpw_ptr op1, mpw_ptr op2)
 	} else if (MPW_IS_REAL (op2) &&
 		   op2->r->type == MPW_INTEGER &&
 		   op1->i->type != MPW_FLOAT &&
-		   mpwl_sgn (op1->r) == 0) {
+		   mpwl_zero_p (op1->r)) {
 		MpwRealNum t = {{NULL}};
 		MpwRealNum t2 = {{NULL}};
 		mpwl_init_type (&t, op1->i->type);
@@ -4077,8 +4097,8 @@ mpw_pow (mpw_ptr rop, mpw_ptr op1, mpw_ptr op2)
 	}
 	return;
 backup_mpw_pow:
-	if (mpwl_sgn (op1->r) == 0 &&
-	    mpwl_sgn (op1->i) == 0) {
+	if (mpwl_zero_p (op1->r) &&
+	    mpwl_zero_p (op1->i)) {
 		mpw_set_ui (rop, 0);
 	} else {
 		mpw_t tmp;
@@ -4206,7 +4226,7 @@ void
 mpw_ln(mpw_ptr rop,mpw_ptr op)
 {
 	if (MPW_IS_REAL (op)) {
-		if G_UNLIKELY (mpwl_sgn(op->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op->r)) {
 			gel_errorout (_("%s: can't take logarithm of 0"),
 				      "ln");
 			error_num=NUMERICAL_MPW_ERROR;
@@ -4236,8 +4256,8 @@ mpw_ln(mpw_ptr rop,mpw_ptr op)
 			MAKE_COPY (rop->i);
 		}
 
-		if(mpwl_sgn(op->r)==0) {
-			g_assert(mpwl_sgn(op->i)!=0);
+		if(mpwl_zero_p (op->r)) {
+			g_assert( ! mpwl_zero_p (op->i));
 			/*don't set the pi before the ln, for the case
 			  rop==op*/
 			if(mpwl_ln(rop->r,op->i)) {
@@ -4284,7 +4304,7 @@ void
 mpw_log2(mpw_ptr rop,mpw_ptr op)
 {
 	if (MPW_IS_REAL (op)) {
-		if G_UNLIKELY (mpwl_sgn(op->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op->r)) {
 			gel_errorout (_("%s: can't take logarithm of 0"),
 				      "log2");
 			error_num=NUMERICAL_MPW_ERROR;
@@ -4308,7 +4328,7 @@ mpw_log2(mpw_ptr rop,mpw_ptr op)
 		}
 	} else {
 		mpw_t two;
-		if (mpwl_sgn(op->r)==0) {
+		if (mpwl_zero_p (op->r)) {
 			MpwRealNum t = {{NULL}};
 
 			if (rop != op) {
@@ -4319,7 +4339,7 @@ mpw_log2(mpw_ptr rop,mpw_ptr op)
 				MAKE_COPY (rop->i);
 			}
 
-			g_assert(mpwl_sgn(op->i)!=0);
+			g_assert( ! mpwl_zero_p (op->i));
 			/*don't set the pi before the ln, for the case
 			  rop==op*/
 			if(mpwl_log2(rop->r,op->i)) {
@@ -4349,7 +4369,7 @@ void
 mpw_log10(mpw_ptr rop,mpw_ptr op)
 {
 	if (MPW_IS_REAL (op)) {
-		if G_UNLIKELY (mpwl_sgn(op->r)==0) {
+		if G_UNLIKELY (mpwl_zero_p (op->r)) {
 			gel_errorout (_("%s: can't take logarithm of 0"),
 				      "log10");
 			error_num=NUMERICAL_MPW_ERROR;
@@ -4375,7 +4395,7 @@ mpw_log10(mpw_ptr rop,mpw_ptr op)
 		}
 	} else {
 		mpw_t ten;
-		if (mpwl_sgn(op->r)==0) {
+		if (mpwl_zero_p (op->r)) {
 			MpwRealNum t = {{NULL}};
 
 			if (rop != op) {
@@ -4386,7 +4406,7 @@ mpw_log10(mpw_ptr rop,mpw_ptr op)
 				MAKE_COPY (rop->i);
 			}
 
-			g_assert(mpwl_sgn(op->i)!=0);
+			g_assert( ! mpwl_zero_p (op->i));
 			/*don't set the pi before the ln, for the case
 			  rop==op*/
 			if(mpwl_log10(rop->r,op->i)) {
@@ -4968,7 +4988,7 @@ mpw_getstring(mpw_ptr num, int max_digits,
 			-1 /* chop */);
 	} else {
 		char *p1 = NULL, *p2, *r;
-		gboolean justimaginary = mpwl_sgn(num->r) == 0;
+		gboolean justimaginary = mpwl_zero_p (num->r);
 		if (! justimaginary)
 			p1 = mpwl_getstring(num->r,
 					    max_digits,
@@ -5013,13 +5033,13 @@ mpw_chop_p (mpw_ptr num,
 	    int chop_when)
 {
 	if (MPW_IS_REAL (num)) {
-		if (mpwl_sgn (num->r) == 0)
+		if (mpwl_zero_p (num->r))
 			return FALSE;
 		return (num->r->type == MPW_INTEGER ||
 			/* approximately the exponent base 10 */
 			mpwl_get_exp (num->r) / 3.32192809489 > -chop_when);
 	} else {
-		if (mpwl_sgn (num->r) != 0)
+		if ( ! mpwl_zero_p (num->r))
 			return (num->r->type == MPW_INTEGER ||
 				num->i->type == MPW_INTEGER ||
 				/* approximately the exponent base 10 */
@@ -5055,7 +5075,7 @@ mpw_getstring_chop (mpw_ptr num, int max_digits,
 			force_chop ? chop : -1);
 	} else {
 		char *p1 = NULL, *p2, *r;
-		gboolean justimaginary = mpwl_sgn(num->r) == 0;
+		gboolean justimaginary = mpwl_zero_p (num->r);
 		int chop_tmp = force_chop ? chop : -1;
 
 		if (! justimaginary) {
