@@ -3,8 +3,8 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
   <!ENTITY app "<application>Genius Mathematics Tool</application>">
   <!ENTITY appname "Genius">
-  <!ENTITY appversion "1.0.15">
-  <!ENTITY date "March 2012">
+  <!ENTITY appversion "1.0.16">
+  <!ENTITY date "December 2012">
 
   <!ENTITY legal SYSTEM "legal.xml">
 
@@ -266,10 +266,6 @@ linkend="mainwindow-fig"/> is displayed.</para>
               <imagedata fileref="figures/genius_window.png" format="PNG"
 scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/genius_window.eps" format="EPS"
-scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
 	      <phrase>Shows &app; main window. Contains titlebar, menubar,
 toolbar and working area. Menubar contains <guilabel>File</guilabel>,
@@ -471,9 +467,6 @@ See <xref linkend="lineplot-fig"/>.
             <imageobject>
               <imagedata fileref="figures/line_plot.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Shows the line plotting window.</phrase> 
             </textobject> 
@@ -499,9 +492,6 @@ See <xref linkend="lineplot-fig"/>.
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/line_plot_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>The graph produced.</phrase> 
@@ -540,9 +530,6 @@ See <xref linkend="lineplot-fig"/>.
             <imageobject>
               <imagedata fileref="figures/parametric.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Parametric plotting tab in the <guilabel>Create Plot</guilabel> window.</phrase> 
             </textobject> 
@@ -552,7 +539,7 @@ See <xref linkend="lineplot-fig"/>.
 
       <para>
 	An example of a parametric plot is given in
-	<xref linkend="paramplot-fig"/>.
+	<xref linkend="paramplot2-fig"/>.
 	Similar operations can be
 	done on such graphs as can be done on the other line plots.
 	For plotting using the command line see the documentation of the
@@ -566,9 +553,6 @@ See <xref linkend="lineplot-fig"/>.
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/parametric_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>Parametric plot produced</phrase> 
@@ -672,9 +656,6 @@ See <xref linkend="lineplot-fig"/>.
             <imageobject>
               <imagedata fileref="figures/surface_graph.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/surface_graph.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Modulus of the complex cosine function.</phrase> 
             </textobject> 
@@ -695,7 +676,7 @@ See <xref linkend="lineplot-fig"/>.
 	  stands for George's Ego Leverage. -->  It is the language you use
 	  to write programs in &appname;. A program in GEL is simply an
 	  expression that evaluates to a number.
-	  &app; can therefore be used as a simple calculator, or as a
+	  &app; can be used as a simple calculator, or as a
 	  powerful theoretical research tool.  The syntax is meant to
 	  have as shallow of a learning curve as possible, especially for use
 	  as a calculator.
@@ -749,7 +730,7 @@ The next type if number is floating point. These are entered in a similar fashio
         </para>
 
         <para>
-The final type of number in gel is the complex numbers. You can enter a complex number as a sum of real and imaginary parts. The imaginary part ends with an <literal>i</literal>.  Here are examples of entering complex numbers:
+The final type of number in gel is the complex numbers. You can enter a complex number as a sum of real and imaginary parts. To add an imaginary part, append an <literal>i</literal>.  Here are examples of entering complex numbers:
 <programlisting>1+2i
 8.01i
 77*e^(1.3i)
@@ -1250,7 +1231,9 @@ different from <literal>=</literal> because it never gets translated to a
          <listitem>
            <para>
              Addition.  Adds two numbers, matrices, functions or strings.  If
-	     you add a string to anything the result will just be a string.
+	     you add a string to anything the result will just be a string.  If one is
+	     a square matrix and the other a number, then the number is multiplied by
+	     the identity matrix.
            </para>
          </listitem>
         </varlistentry>
@@ -1291,7 +1274,9 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>a/b</synopsis></term>
          <listitem>
            <para>
-             Division.
+		   Division.  When <varname>a</varname> and <varname>b</varname> are just numbers
+		   this is the normal division.  When they are matrices, then this is
+		   equivalent to <userinput>a*b^-1</userinput>.
            </para>
          </listitem>
         </varlistentry>
@@ -1301,7 +1286,8 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>a./b</synopsis></term>
          <listitem>
            <para>
-             Element by element division.
+		   Element by element division.  Same as <userinput>a/b</userinput> for
+		   numbers, but operarates element by element on matrices.
            </para>
          </listitem>
         </varlistentry>
@@ -1389,8 +1375,9 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>a==b</synopsis></term>
          <listitem>
            <para>
-	     Equality operator
-	     (returns <constant>true</constant> or <constant>false</constant>).
+	     Equality operator.
+	     Returns <constant>true</constant> or <constant>false</constant>
+	     depending on <varname>a</varname> and <varname>b</varname> being equal or not.
            </para>
          </listitem>
         </varlistentry>
@@ -1428,6 +1415,8 @@ different from <literal>=</literal> because it never gets translated to a
 	     returns <constant>true</constant> if <varname>a</varname> is
 	     less than or equal to 
 	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt;= b &lt;= c</userinput> (can
+	     also be combined with the less than operator).
            </para>
          </listitem>
         </varlistentry>
@@ -1441,6 +1430,37 @@ different from <literal>=</literal> because it never gets translated to a
 	     returns <constant>true</constant> if <varname>a</varname> is
 	     greater than or equal to 
 	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt;= b &gt;= c</userinput>
+	     (can also be combine with the greater than operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><synopsis>a&lt;b</synopsis></term>
+         <listitem>
+           <para>
+             Less than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     less than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt; b &lt; c</userinput>
+	     (can also be combine with the less than or equal to operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+         <term><synopsis>a&gt;b</synopsis></term>
+         <listitem>
+           <para>
+             Greater than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     greater than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt; b &gt; c</userinput>
+	     (can also be combine with the greater than or equal to operator).
            </para>
          </listitem>
         </varlistentry>
@@ -1464,7 +1484,10 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>a and b</synopsis></term>
          <listitem>
            <para>
-             Logical and.
+		   Logical and.  Returns true if both
+		   <varname>a</varname> and <varname>b</varname> are true,
+		   else returns false.  If given numbers, nonzero numbers
+		   are treated as true.
            </para>
          </listitem>
         </varlistentry>
@@ -1475,6 +1498,10 @@ different from <literal>=</literal> because it never gets translated to a
          <listitem>
            <para>
              Logical or.
+	     Returns true if both
+	     <varname>a</varname> or <varname>b</varname> are true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
            </para>
          </listitem>
         </varlistentry>
@@ -1485,6 +1512,10 @@ different from <literal>=</literal> because it never gets translated to a
          <listitem>
            <para>
              Logical xor.
+	     Returns true exactly one of
+	     <varname>a</varname> or <varname>b</varname> is true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
            </para>
          </listitem>
         </varlistentry>
@@ -1494,7 +1525,7 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>not a</synopsis></term>
          <listitem>
            <para>
-             Logical not.
+		   Logical not.  Returns the logical negation of <varname>a</varname>
            </para>
          </listitem>
         </varlistentry>
@@ -1525,7 +1556,7 @@ different from <literal>=</literal> because it never gets translated to a
          <term><synopsis>*a</synopsis></term>
          <listitem>
            <para>
-             Variable dereferencing (to access a referenced varible).
+             Variable dereferencing (to access a referenced variable).
 	     See <xref linkend='genius-gel-references' />.
            </para>
          </listitem>
@@ -2309,7 +2340,7 @@ g(5)
 	</para>
 	<para>
 	  When you want the function to not have any private dictionary
-	  when put empty square brackets after the argument list.  Then
+	  then put empty square brackets after the argument list.  Then
 	  no private dictionary will be created at all.  Doing this is
 	  good to increase efficiency when a private dictionary is not
 	  needed or when you want the function to lookup all variables
@@ -2748,7 +2779,7 @@ but this example demonstrates some of the more complex features of GEL.
 <programlisting><![CDATA[# Calculate the row-echelon form of a matrix
 function MyOwnREF(m) = (
   if not IsMatrix(m) or not IsValueOnly(m) then
-    (error("ref: argument not a value only matrix");bailout);
+    (error("MyOwnREF: argument not a value only matrix");bailout);
   s := min(rows(m), columns(m));
   i := 1;
   d := 1;
@@ -2966,7 +2997,7 @@ As an example, you can set the maximum number of digits in a result to 12 by typ
 	  <listitem>
 	<para>A string, can be <literal>"normal"</literal>,
 <literal>"latex"</literal>, <literal>"mathml"</literal> or
-<literal>"troff"</literal> and it will effect how matrices (and perhaps other
+<literal>"troff"</literal> and it will affect how matrices (and perhaps other
 stuff) is printed, useful for pasting into documents.  Normal style is the
 default human readable printing style of &app;.  The other styles are for
 typsetting in LaTeX, MathML (XML), or in Troff.</para>

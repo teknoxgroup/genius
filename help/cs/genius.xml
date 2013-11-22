@@ -2,8 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "<application>Genius Mathematics Tool</application>">
 <!ENTITY appname "Genius">
-<!ENTITY appversion "1.0.15">
-<!ENTITY date "March 2012">
+<!ENTITY appversion "1.0.16">
+<!ENTITY date "December 2012">
 <!ENTITY legal SYSTEM "legal.xml">
 <!ENTITY manrevision "0.2">
 <!ENTITY lt "&#60;">
@@ -152,13 +152,14 @@
     <revhistory>
       <revision> 
 		<revnumber>0.2</revnumber> 
-		<date>Březen 2012</date> 
+		<date>December 2012</date> 
 		<revdescription> 
 	  		<para role="author">Jiri (George) Lebl <email>jirka@5z.com</email></para>
 		</revdescription> 
       </revision> 
     </revhistory>
-    <releaseinfo>Tato příručka popisuje aplikaci Genius ve verzi 1.0.15.</releaseinfo> 
+    <releaseinfo>This manual describes version 1.0.16 of Genius.
+    </releaseinfo> 
     <legalnotice> 
       <title>Ohlasy</title> 
       <para>Pokud chcete oznámit chybu nebo navrhnout vylepšení vztahující se k aplikaci <application>matematický nástroj Genius</application> nebo této příručce, postupujte dle instrukcí na stránce <ulink url="ghelp:gnome-feedback" type="help">Stránka s ohlasy na GNOME</ulink>.</para>
@@ -217,9 +218,6 @@
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/genius_window.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/genius_window.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
 	      <phrase>Ukazuje hlavní okno aplikace <application>Matematický nástroj Genius</application>. Obsahuje záhlaví, lištu nabídek, lištu nástrojů a pracovní oblast. Lišta nabídek obsahuje nabídky <guilabel>Soubor</guilabel>, <guilabel>Upravit</guilabel>, <guilabel>Kalkulátor</guilabel>, <guilabel>Nastavení</guilabel> a <guilabel>Nápověda</guilabel>.</phrase> 
@@ -310,9 +308,6 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
             <imageobject>
               <imagedata fileref="figures/line_plot.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Ukazuje okno vytváření čárového grafu.</phrase> 
             </textobject> 
@@ -328,9 +323,6 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/line_plot_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>Výsledný graf.</phrase> 
@@ -355,9 +347,6 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
             <imageobject>
               <imagedata fileref="figures/parametric.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Parametrický graf v okně <guilabel>Vytváření grafu</guilabel>.</phrase> 
             </textobject> 
@@ -365,7 +354,15 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
         </screenshot> 
       </figure>
 
-      <para>Příklad parametrického grafu je uveden na obrázku <xref linkend="paramplot-fig"/>. Dělat můžete podobné operace jako u jiných čárových grafů. Na to, jak vykreslení provést z příkazového řádku, se podívejte do dokumentace na funkci <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> nebo <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link>.</para>
+      <para>
+	An example of a parametric plot is given in
+	<xref linkend="paramplot2-fig"/>.
+	Similar operations can be
+	done on such graphs as can be done on the other line plots.
+	For plotting using the command line see the documentation of the
+        <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> or
+        <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link> function.
+      </para>
 
       <figure id="paramplot2-fig"> 
         <title>Parametrické grafy</title> 
@@ -373,9 +370,6 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/parametric_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>Výslední parametrický graf.</phrase> 
@@ -419,9 +413,6 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
             <imageobject>
               <imagedata fileref="figures/surface_graph.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/surface_graph.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Modul (absolutní hodnota) komplexní funkce kosinus.</phrase> 
             </textobject> 
@@ -437,7 +428,15 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
   <chapter id="genius-gel"> 
     <title>Základy jazyka GEL</title> 
 
-	<para>GEL znamená Genius Extension Language (rozšiřující jazyk Genius). Jedná se o jazyk, ve kterém píšete programy v kalkulátoru Genius. Program v jazyce GEL je jednoduše výraz, který je vyhodnocen jako číslo. <application>Matematický nástroj Genius</application> tak může sloužit jako jednoduchý kalkulátor nebo mocný nástroj pro teoretický vědecký výzkum. Cílem syntaxe je, aby byla snadná na naučení, jak jen to jde, zejména pro používání jako kalkulačka.</para>
+	<para>
+	  GEL stands for Genius Extension Language.    It is the language you use
+	  to write programs in Genius. A program in GEL is simply an
+	  expression that evaluates to a number.
+	  <application>Genius Mathematics Tool</application> can be used as a simple calculator, or as a
+	  powerful theoretical research tool.  The syntax is meant to
+	  have as shallow of a learning curve as possible, especially for use
+	  as a calculator.
+	</para>
 
     <sect1 id="genius-gel-values">
       <title>Hodnoty</title>
@@ -464,10 +463,13 @@ Pro zobrazení této příručky zadejte: <screen><prompt>genius&gt; </prompt><u
 77e5
 </programlisting> Když Genius vypisuje desetinné číslo, vždy u něj přidá <computeroutput>.0</computeroutput>, i když je celé. Tím se dává najevo, že desetinná čísla nemají dokonalou přesnost. Pokud je číslo zapsáno ve vědecké notaci, jedná se vždy o desetinné číslo a Genius tak nemusí vypisovat <computeroutput>.0</computeroutput>.</para>
 
-        <para>Posledním typem čísel jsou komplexní čísla (complex). Komplexní číslo můžete zadat jako součet reálné a imaginární části. Imaginární část končí <literal>i</literal>. Zde jsou příklady zápisu komplexních čísel: <programlisting>1+2i
+        <para>
+The final type of number in gel is the complex numbers. You can enter a complex number as a sum of real and imaginary parts. To add an imaginary part, append an <literal>i</literal>.  Here are examples of entering complex numbers:
+<programlisting>1+2i
 8.01i
 77*e^(1.3i)
-</programlisting></para>
+</programlisting>
+        </para>
 
         <important>
           <para>Při zadávání imaginárních čísel musí číslo vždy předcházet před <literal>i</literal>. Pokud byste použili samotné <literal>i</literal>, Genius by se k němu stavěl, jako k odkazu na proměnnou <varname>i</varname>. Pokud potřebujete použít právě <literal>i</literal>, použijte místo toho <literal>1i</literal>.</para>
@@ -722,7 +724,12 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a+b</synopsis></term>
          <listitem>
-           <para>Sčítání. Sečte dvě čísla, matice, funkce nebo řetězce. Pokud přičtete řetězec k čemukoliv, výsledkem bude vždy řetězec.</para>
+           <para>
+             Addition.  Adds two numbers, matrices, functions or strings.  If
+	     you add a string to anything the result will just be a string.  If one is
+	     a square matrix and the other a number, then the number is multiplied by
+	     the identity matrix.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -754,7 +761,11 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a/b</synopsis></term>
          <listitem>
-           <para>Dělení.</para>
+           <para>
+		   Division.  When <varname>a</varname> and <varname>b</varname> are just numbers
+		   this is the normal division.  When they are matrices, then this is
+		   equivalent to <userinput>a*b^-1</userinput>.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -762,7 +773,10 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a./b</synopsis></term>
          <listitem>
-           <para>Dělení prvků prvky.</para>
+           <para>
+		   Element by element division.  Same as <userinput>a/b</userinput> for
+		   numbers, but operarates element by element on matrices.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -826,7 +840,11 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a==b</synopsis></term>
          <listitem>
-           <para>Operátor porovnání (vrací <constant>true</constant> nebo <constant>false</constant>).</para>
+           <para>
+	     Equality operator.
+	     Returns <constant>true</constant> or <constant>false</constant>
+	     depending on <varname>a</varname> and <varname>b</varname> being equal or not.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -850,7 +868,14 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a&lt;=b</synopsis></term>
          <listitem>
-           <para>Operátor menší nebo rovno, vrací <constant>true</constant> (pravda) v případě, že <varname>a</varname> je menší než nebo se rovná <varname>b</varname>, jinak vrací <constant>false</constant> (nepravda).</para>
+           <para>
+             Less than or equal operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     less than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt;= b &lt;= c</userinput> (can
+	     also be combined with the less than operator).
+           </para>
          </listitem>
         </varlistentry>
 
@@ -858,7 +883,43 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a&gt;=b</synopsis></term>
          <listitem>
-           <para>Operátor větší nebo rovno, vrací <constant>true</constant> (pravda) v případě, že <varname>a</varname> je větší než nebo se rovná <varname>b</varname>, jinak vrací <constant>false</constant> (nepravda).</para>
+           <para>
+             Greater than or equal operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     greater than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt;= b &gt;= c</userinput>
+	     (can also be combine with the greater than operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><synopsis>a&lt;b</synopsis></term>
+         <listitem>
+           <para>
+             Less than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     less than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt; b &lt; c</userinput>
+	     (can also be combine with the less than or equal to operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+         <term><synopsis>a&gt;b</synopsis></term>
+         <listitem>
+           <para>
+             Greater than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     greater than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt; b &gt; c</userinput>
+	     (can also be combine with the greater than or equal to operator).
+           </para>
          </listitem>
         </varlistentry>
 
@@ -874,7 +935,12 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a and b</synopsis></term>
          <listitem>
-           <para>Logické AND.</para>
+           <para>
+		   Logical and.  Returns true if both
+		   <varname>a</varname> and <varname>b</varname> are true,
+		   else returns false.  If given numbers, nonzero numbers
+		   are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -882,7 +948,13 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a or b</synopsis></term>
          <listitem>
-           <para>Logické OR.</para>
+           <para>
+             Logical or.
+	     Returns true if both
+	     <varname>a</varname> or <varname>b</varname> are true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -890,7 +962,13 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>a xor b</synopsis></term>
          <listitem>
-           <para>Logické XOR.</para>
+           <para>
+             Logical xor.
+	     Returns true exactly one of
+	     <varname>a</varname> or <varname>b</varname> is true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -898,7 +976,9 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>not a</synopsis></term>
          <listitem>
-           <para>Logické NOT.</para>
+           <para>
+		   Logical not.  Returns the logical negation of <varname>a</varname>
+           </para>
          </listitem>
         </varlistentry>
 
@@ -922,7 +1002,10 @@ genius&gt; 5*5 mod 7
         <varlistentry>
          <term><synopsis>*a</synopsis></term>
          <listitem>
-           <para>Dereference proměnné (pro přístup k odkazované proměnné). Viz <xref linkend="genius-gel-references"/>.</para>
+           <para>
+             Variable dereferencing (to access a referenced variable).
+	     See <xref linkend="genius-gel-references"/>.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -1295,7 +1378,18 @@ g(5)
   r
 )
 </programlisting> bude vracet funkci, která při zavolání přičte 5 ke svému argumentu. Lokální kopie <varname>k</varname> byla vytvořena ve chvíli, kdy byla funkce definována.</para>
-	<para>Když chcete, aby funkce neměla žádný privátní slovník, tak vložte za seznam argumentů prázdné hranaté závorky. V takovém případě nebude vytvořen vůbec žádný privátní slovník. To je dobré pro zvýšení efektivity v situacích, kdy žádný privátní slovník není zapotřebí nebo když chcete, aby funkce hledala všechny proměnné takové, jaké jsou v okamžiku volání. Například předpokládejme že chcete, aby funkce vracená funkcí <function>f</function> viděla hodnotu <varname>n</varname> z nejvyšší úrovně, přestože existuje lokální proměnná stejného jména během definování. Potom kód <programlisting>function f() = (
+	<para>
+	  When you want the function to not have any private dictionary
+	  then put empty square brackets after the argument list.  Then
+	  no private dictionary will be created at all.  Doing this is
+	  good to increase efficiency when a private dictionary is not
+	  needed or when you want the function to lookup all variables
+	  as it sees them when called.  For example suppose you want
+	  the function returned from <function>f</function> to see
+	  the value of <varname>k</varname> from the toplevel despite
+	  there being a local variable of the same name during definition.
+	  So the code
+<programlisting>function f() = (
   k := 5;
   function r(x) [] = (x+k);
   r
@@ -1303,7 +1397,11 @@ g(5)
 k := 10;
 g = f();
 g(10)
-</programlisting> bude vrace 20 a ne 15, což by nastalo v případě, že <varname>n</varname> s hodnotou 5 bylo přidáno do privátního slovníku.</para>
+</programlisting>
+	  will return 20 and not 15, which would happen if
+	  <varname>k</varname> with a value of 5 was added to the private
+	  dictionary.
+	</para>
     </sect1>
 
     <sect1 id="genius-gel-true-local-variables">
@@ -1988,6 +2086,16 @@ f(2)
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-LinePlotDrawAxisLabels">
+         <term>LinePlotDrawAxisLabels</term>
+         <listitem>
+          <synopsis>LinePlotDrawAxisLabels = true</synopsis>
+          <para>Tells genius to draw the axis labels for <link linkend="genius-gel-function-list-plotting">line plotting
+	  functions</link> such as <link linkend="gel-function-LinePlot"><function>LinePlot</function></link>.
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-LinePlotVariableNames">
          <term>LinePlotVariableNames</term>
          <listitem>
@@ -2118,6 +2226,16 @@ f(2)
          <listitem>
           <synopsis>SumProductTolerance = číslo</synopsis>
           <para>Tolerance pro funkce <function>InfiniteSum</function> a <function>InfiniteProduct</function>.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotDrawLegends">
+         <term>SurfacePlotDrawLegends</term>
+         <listitem>
+          <synopsis>SurfacePlotDrawLegends = true</synopsis>
+          <para>Tells genius to draw the legends for <link linkend="genius-gel-function-list-plotting">surface plotting
+	  functions</link> such as <link linkend="gel-function-SurfacePlot"><function>SurfacePlot</function></link>.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2897,7 +3015,13 @@ f(2)
          <term>FermatFactorization</term>
          <listitem>
           <synopsis>FermatFactorization (n,pokusy)</synopsis>
-          <para>Zkusit Fermatův rozklad <varname>n</varname> na <userinput>(t-s)*(t+s)</userinput>. Pokud to je možné, vrací <varname>t</varname> a <varname>s</varname> jako vektor, jinak vrací <constant>null</constant>. Argument <varname>pokusy</varname> určuje počet pokusu, než se výpočet vzdá.</para>
+          <para>
+	    Attempt Fermat factorization of <varname>n</varname> into
+	    <userinput>(t-s)*(t+s)</userinput>, returns <varname>t</varname>
+	    and <varname>s</varname> as a vector if possible, <constant>null</constant> otherwise.
+	    <varname>tries</varname> specifies the number of tries before
+	    giving up.
+	  </para>
           <para>Jedná se o docela dobrý rozklad za předpokladu, že je vaše číslo součinem dvou přibližně stejně velkých čísel.</para>
           <para>Více informací najdete v encyklopedii <ulink url="http://en.wikipedia.org/wiki/Fermat_factorization">Wikipedia</ulink> (text je v angličtině).</para>
          </listitem>
@@ -3014,7 +3138,8 @@ f(2)
          <term>IsPseudoprime</term>
          <listitem>
           <synopsis>IsPseudoprime (n,b)</synopsis>
-          <para>Zda je <varname>n</varname> pseudoprvočíslo o základu <varname>b</varname>, ale ne prvočíslo, tj. jestli <userinput>b^(n-1) == 1 mod n</userinput>. Nazývá se to <function>malá Fermatova věta</function>.</para>
+          <para>If <varname>n</varname> is a pseudoprime base <varname>b</varname> but not a prime,
+that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calls the <function>PseudoprimeTest</function></para>
          </listitem>
         </varlistentry>
 
@@ -3293,7 +3418,12 @@ f(2)
          <term>CountZeroColumns</term>
          <listitem>
           <synopsis>CountZeroColumns (M)</synopsis>
-          <para>Spočítat počet nulových sloupců v matici. Například jakmile zredukujete sloupce matice, můžete to využít k nalezení nulovosti. Viz <link linkend="gel-function-cref"><function>cref</function></link> a <link linkend="gel-function-Nullity"><function>Nullity</function></link>.</para>
+          <para>
+	   Count the number of zero columns in a matrix.  For example
+	   once your column reduce a matrix you can use this to find
+	   the nullity.  See <link linkend="gel-function-cref"><function>cref</function></link>
+	   and <link linkend="gel-function-Nullity"><function>Nullity</function></link>.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -3446,7 +3576,7 @@ f(2)
          <term>IsUpperTriangular</term>
          <listitem>
           <synopsis>IsUpperTriangular (M)</synopsis>
-          <para>Jde o horní trojúhelníkovou matici? To je taková, která má všechny prvky pod diagonálou nulové.</para>
+          <para>Is a matrix upper triangular?  That is, a matrix is upper triangular if all the entries below the diagonal are zero.</para>
          </listitem>
         </varlistentry>
 
@@ -3487,7 +3617,10 @@ f(2)
          <listitem>
           <synopsis>MakeDiagonal (v,argument...)</synopsis>
           <para>Alternativní názvy: <function>diag</function></para>
-          <para>Vytvořit diagonální matici z vektoru.</para>
+	  <para>Make diagonal matrix from a vector.  Alternatively you can pass
+		  in the values to put on the diagonal as arguments.  So
+		  <userinput>MakeDiagonal([1,2,3])</userinput> is the same as
+		  <userinput>MakeDiagonal(1,2,3)</userinput>.</para>
           <para>Více informací najdete v encyklopediích <ulink url="http://planetmath.org/encyclopedia/DiagonalMatrix.html">Planetmath</ulink> (text je v angličtině) nebo <ulink url="http://cs.wikipedia.org/wiki/Diagon%C3%A1ln%C3%AD_matice">Wikipedia</ulink>.</para>
          </listitem>
         </varlistentry>
@@ -3552,7 +3685,7 @@ f(2)
          <term>RowSumSquares</term>
          <listitem>
           <synopsis>RowSumSquares (m)</synopsis>
-          <para>Spočítat součet druhých mocnin každého řádku v matici.</para>
+          <para>Calculate sum of squares of each row in a matrix and return a vertical vector with the results.</para>
          </listitem>
         </varlistentry>
 
@@ -3569,7 +3702,12 @@ neco(r)</userinput>.</para>
          <term>SetMatrixSize</term>
          <listitem>
           <synopsis>SetMatrixSize (M,radku,sloupcu)</synopsis>
-          <para>Vytvořit novou matici zadané velikosti z jiné staré. To znamená, že nová matice bude vrácena jako kopie té staré. Prvky, které přebývají, jsou odříznuty a volné místo je vyplněno nulami. Pokud je argument <varname>radku</varname> nebo <varname>sloupcu</varname> roven nule, je vráceno <constant>null</constant>.</para>
+          <para>Make new matrix of given size from old one.  That is, a new
+	  matrix will be returned to which the old one is copied.  Entries that
+	  don't fit are clipped and extra space is filled with zeros.
+	  If <varname>rows</varname> or <varname>columns</varname> are zero
+	  then <constant>null</constant> is returned.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -3902,7 +4040,7 @@ neco(r)</userinput>.</para>
          <term>IsInvertible</term>
          <listitem>
           <synopsis>IsInvertible (n)</synopsis>
-          <para>Je matice (nebo číslo) invertovatelná (matice celých čísel je invertovatelná, když je invertovatelná nad celými čísly).</para>
+          <para>Is a matrix (or number) invertible (Integer matrix is invertible if and only if it is invertible over the integers).</para>
          </listitem>
         </varlistentry>
 
@@ -4103,7 +4241,7 @@ neco(r)</userinput>.</para>
          <term>RosserMatrix</term>
          <listitem>
           <synopsis>RosserMatrix ()</synopsis>
-          <para>Rosserova matice, klasický symetrický problém testu vlastního čísla.</para>
+          <para>Returns the Rosser matrix, which is a classic symmetric eigenvalue test problem.</para>
          </listitem>
         </varlistentry>
 
@@ -4315,7 +4453,7 @@ neco(r)</userinput>.</para>
          <term>Catalan</term>
          <listitem>
           <synopsis>Catalan (n)</synopsis>
-          <para>Získat <varname>n</varname>-té Catalanovo číslo.</para>
+          <para>Get <varname>n</varname>th Catalan number.</para>
           <para>Více informací najdete v encyklopediích <ulink url="http://planetmath.org/encyclopedia/CatalanNumbers.html">Planetmath</ulink> (text je v angličtině) nebo <ulink url="http://cs.wikipedia.org/wiki/Catalanova_%C4%8D%C3%ADsla">Wikipedia</ulink>.</para>
          </listitem>
         </varlistentry>
@@ -4396,7 +4534,7 @@ neco(r)</userinput>.</para>
          <listitem>
           <synopsis>HarmonicNumber (n,r)</synopsis>
           <para>Alternativní názvy: <function>HarmonicH</function></para>
-          <para>Harmonické číslo, <varname>n</varname>-té harmonické číslo řádu <varname>r</varname>.</para>
+          <para>Harmonic Number, the <varname>n</varname>th harmonic number of order <varname>r</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -4412,7 +4550,7 @@ neco(r)</userinput>.</para>
          <term>LinearRecursiveSequence</term>
          <listitem>
           <synopsis>LinearRecursiveSequence (pocatecni_hodnoty,kombinacni_pravidlo,n)</synopsis>
-          <para>Spočítat lineární rekurzivní posloupnost pomocí Galoisova krokování.</para>
+          <para>Compute linear recursive sequence using Galois stepping.</para>
          </listitem>
         </varlistentry>
 
@@ -4503,7 +4641,7 @@ do (
          <term>Triangular</term>
          <listitem>
           <synopsis>Triangular (n)</synopsis>
-          <para>Spočítat <varname>n</varname>-té trojúhelníkové číslo.</para>
+          <para>Calculate the <varname>n</varname>th triangular number.</para>
           <para>Více informací najdete v encyklopediích <ulink url="http://planetmath.org/encyclopedia/TriangularNumbers.html">Planetmath</ulink> (text je v angličtině) nebo <ulink url="http://cs.wikipedia.org/wiki/Troj%C3%BAheln%C3%ADkov%C3%A9_%C4%8D%C3%ADslo">Wikipedia</ulink>.</para>
          </listitem>
         </varlistentry>
@@ -4817,6 +4955,78 @@ do (
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-BesselJ0">
+         <term>BesselJ0</term>
+         <listitem>
+          <synopsis>BesselJ0 (x)</synopsis>
+          <para>Bessel function of the first kind of order 0.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselJ1">
+         <term>BesselJ1</term>
+         <listitem>
+          <synopsis>BesselJ1 (x)</synopsis>
+          <para>Bessel function of the first kind of order 1.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselJn">
+         <term>BesselJn</term>
+         <listitem>
+          <synopsis>BesselJn (n,x)</synopsis>
+	  <para>Bessel function of the first kind of order <varname>n</varname>.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselY0">
+         <term>BesselY0</term>
+         <listitem>
+          <synopsis>BesselY0 (x)</synopsis>
+          <para>Bessel function of the second kind of order 0.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselY1">
+         <term>BesselY1</term>
+         <listitem>
+          <synopsis>BesselY1 (x)</synopsis>
+          <para>Bessel function of the second kind of order 1.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselYn">
+         <term>BesselYn</term>
+         <listitem>
+          <synopsis>BesselYn (n,x)</synopsis>
+	  <para>Bessel function of the second kind of order <varname>n</varname>.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-DirichletKernel">
          <term>DirichletKernel</term>
          <listitem>
@@ -4829,7 +5039,7 @@ do (
          <term>DiscreteDelta</term>
          <listitem>
           <synopsis>DiscreteDelta (v)</synopsis>
-          <para>Vrátit 1, pokud jsou všechny prvky nulové.</para>
+          <para>Returns 1 if and only if all elements are zero.</para>
          </listitem>
         </varlistentry>
 
@@ -4866,7 +5076,7 @@ do (
          <term>KroneckerDelta</term>
          <listitem>
           <synopsis>KroneckerDelta (v)</synopsis>
-          <para>Vrací 1, když se všechny prvky rovnají.</para>
+          <para>Returns 1 if and only if all elements are equal.</para>
          </listitem>
         </varlistentry>
 
@@ -4979,6 +5189,20 @@ do (
          <listitem>
           <synopsis>rad2deg (x)</synopsis>
           <para>Převést radiány na stupně.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-sinc">
+         <term>sinc</term>
+         <listitem>
+          <synopsis>sinc (x)</synopsis>
+	  <para>Calculates the unnormalized sinc function, that is
+		  <userinput>sin(x)/x</userinput>.
+		  If you want the normalized function call <userinput>sinc(pi*x)</userinput>.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Sinc">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -5461,7 +5685,9 @@ do (
          <term>SymbolicTaylorApproximationFunction</term>
          <listitem>
           <synopsis>SymbolicTaylorApproximationFunction (f,x0,n)</synopsis>
-	  <para>Zkusit sestavit Taylorův polynom do n-tého řádku se středem x0, který aproximuje zadanou funkci. (Viz <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)</para>
+	  <para>Attempt to construct the Taylor approximation function around x0 to the nth degree.
+	  (See <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)
+          </para>
          </listitem>
         </varlistentry>
       </variablelist>
@@ -5470,6 +5696,34 @@ do (
     <sect1 id="genius-gel-function-list-plotting">
       <title>Vykreslování</title>
       <variablelist>
+        <varlistentry id="gel-function-ExportPlot">
+         <term>ExportPlot</term>
+         <listitem>
+          <synopsis>ExportPlot (file,type)</synopsis>
+          <synopsis>ExportPlot (file)</synopsis>
+          <para>
+		  Export the contents of the plotting window to a file.
+		  The type is a string that specifies the file type to
+		  use, "png", "eps", or "ps".  If the type is not
+		  specified, then it is taken to be the extension, in
+		  which case the extension must be ".png", ".eps", or ".ps".
+	  </para>
+	  <para>
+		  Note that files are overwritten without asking.
+	  </para>
+	  <para>
+		  On successful export, true is returned.  Otherwise
+		  error is printed and exception is raised.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>ExportPlot("file.png")</userinput>
+<prompt>genius&gt;</prompt> <userinput>ExportPlot("/directory/file","eps")</userinput>
+</screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-LinePlot">
          <term>LinePlot</term>
          <listitem>
@@ -5496,7 +5750,13 @@ do (
          <listitem>
           <synopsis>LinePlotDrawLine (x1,y1,x2,y2,…)</synopsis>
           <synopsis>LinePlotDrawLine (v,…)</synopsis>
-          <para>Vykreslit čáru z <varname>x1</varname>,<varname>y1</varname> do <varname>x2</varname>,<varname>y2</varname>. <varname>x1</varname>,<varname>y1</varname>, <varname>x2</varname>,<varname>y2</varname> může být pro delší čáry nahrazeno maticí <varname>n</varname> krát 2.</para>
+          <para>
+	    Draw a line from <varname>x1</varname>,<varname>y1</varname> to
+	    <varname>x2</varname>,<varname>y2</varname>.
+	    <varname>x1</varname>,<varname>y1</varname>,
+	    <varname>x2</varname>,<varname>y2</varname> can be replaced by an
+	    <varname>n</varname> by 2 matrix for a longer polyline.
+          </para>
           <para>Lze přidat doplňující parametry pro určení barvy čáry, tloušťky čáry, vykreslovacího okna a šipek. Dělá se to přidáním řetězce <userinput>"color"</userinput>, <userinput>"thickness"</userinput>, <userinput>"window"</userinput> nebo <userinput>"arrow"</userinput> následovaného barvou jako řetězec, tloušťkou jako celé číslo, oknem jako 4prvkový vektor a pro šipku buď <userinput>"origin"</userinput> (v počátku), <userinput>"end"</userinput> (na konci), <userinput>"both"</userinput> (na obou stranách) <userinput>"none"</userinput> (nikde). Pro <userinput>"window"</userinput> můžete místo vektoru zadat také <userinput>"fit"</userinput> a rozsah x pak bude nastaven přesně a rozsah y bude nastaven s pětiprocentními okraji okolo čáry. Nakonec je možné zadat pomocí <userinput>"legend"</userinput> řetězec s legendou.</para>
 	  <para>Příklady: <screen><prompt>genius&gt;</prompt> <userinput>LinePlotDrawLine(0,0,1,1,"color","blue","thickness",3)</userinput>
 <prompt>genius&gt;</prompt> <userinput>LinePlotDrawLine([0,0;1,-1;-1,-1])</userinput>
@@ -5563,11 +5823,90 @@ do (
          <listitem>
           <synopsis>SurfacePlot (fce)</synopsis>
           <synopsis>SurfacePlot (fce,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlot (func,[x1,x2,y1,y2,z1,z2])</synopsis>
           <para>Vykreslit funkci plochy, která přebírá buď dva argumenty nebo komplexní číslo. Jako první se předává funkce, pak následují omezení <varname>x1</varname>, <varname>x2</varname>, <varname>y1</varname>, <varname>y2</varname>, <varname>z1</varname>, <varname>z2</varname>. Pokud žádná omezení nejsou zadána, použijí se aktuálně nastavená omezení (viz <link linkend="gel-function-LinePlotWindow"><function>SurfacePlotWindow</function></link>). V současnosti umí Genius vykreslovat jen funkci jedné plochy.</para>
           <para>Příklady: <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlot(|sin|,-1,1,-1,1,0,1.5)</userinput>
 <prompt>genius&gt;</prompt> <userinput>SurfacePlot(`(x,y)=x^2+y,-1,1,-1,1,-2,2)</userinput>
 <prompt>genius&gt;</prompt> <userinput>SurfacePlot(`(z)=|z|^2,-1,1,-1,1,0,2)</userinput>
 </screen></para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotData">
+         <term>SurfacePlotData</term>
+         <listitem>
+          <synopsis>SurfacePlotData (data)</synopsis>
+          <synopsis>SurfacePlotData (data,label)</synopsis>
+          <synopsis>SurfacePlotData (data,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlotData (data,label,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlotData (data,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <synopsis>SurfacePlotData (data,label,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <para>
+		  Plot a surface from data.  The data is an n by 3 matrix whose
+		  rows are the x, y and z coordinates.  The data can also be
+		  simply a vector whose length is a multiple of 3 and so
+		  contains the tripples of x, y, z.  The data should contain at
+		  least 3 points.
+	  </para>
+          <para>
+		  Optionally we can give the label and also optionally the
+		  limits.  If limits are not given, they are computed from
+		  the data, <link linkend="gel-function-SurfacePlotWindow"><function>SurfacePlotWindow</function></link>
+		  is not used, if you want to use it, pass it in explicitly.
+		  If label is not given then empty label is used.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlotData([0,0,0;1,0,1;0,1,1;1,1,3])</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,"My data")</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,-1,1,-1,1,0,10)</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,SurfacePlotWindow)</userinput>
+</screen>
+          </para>
+	  <para>
+		  Here's an example of how to plot in polar coordinates,
+		  in particular how to plot the function
+		  <userinput>-r^2 * theta</userinput>:
+          <screen><prompt>genius&gt;</prompt> <userinput>d:=null; for r=0 to 1 by 0.1 do for theta=0 to 2*pi by pi/5 do d=[d;[r*cos(theta),r*sin(theta),-r^2*theta]];</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(d)</userinput>
+</screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotDataGrid">
+         <term>SurfacePlotDataGrid</term>
+         <listitem>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2])</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2],label)</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2,z1,z2],label)</synopsis>
+          <para>
+		  Plot a surface from regular rectangular data.
+		  The data is given in a n by m matrix where the rows are the
+		  x coordinate and the columns are the y coordinate.
+		  The x coordinate is divided into equal n-1 subintervals
+		  and y coordinate is divided into equal m-1 subintervals.
+		  The limits <varname>x1</varname> and <varname>x2</varname>
+		  give the interval on the x-axis that we use, and 
+		  the limits <varname>y1</varname> and <varname>y2</varname>
+		  give the interval on the y-axis that we use.
+		  If the limits <varname>z1</varname> and <varname>z2</varname>
+		  are not given they are computed from the data (to be
+		  the extreme values from the data).
+	  </para>
+          <para>
+		  Optionally we can give the label, if label is not given then
+		  empty label is used.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid([1,2;3,4],[0,1,0,1])</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid(data,[-1,1,-1,1],"My data")</userinput>
+<prompt>genius&gt;</prompt> <userinput>d:=null; for i=1 to 20 do for j=1 to 10 d@(i,j) = (0.1*i-1)^2-(0.1*j)^2;</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid(d,[-1,1,0,1],"half a saddle")</userinput>
+</screen>
+          </para>
          </listitem>
         </varlistentry>
 
@@ -5631,7 +5970,7 @@ do (
     <para>Následuje větší příklad, který v podstatě předefinovává interní funkci <function>ref</function>, aby vypočítávala odstupňovaný kanonický tvar matice. Funkce <function>ref</function> je vestavěná a mnohem rychlejší, ale tento příklad má ilustrovat některé komplexnější vlastnosti jazyka GEL. <programlisting><![CDATA[# Calculate the row-echelon form of a matrix
 function MyOwnREF(m) = (
   if not IsMatrix(m) or not IsValueOnly(m) then
-    (error("ref: argument not a value only matrix");bailout);
+    (error("MyOwnREF: argument not a value only matrix");bailout);
   s := min(rows(m), columns(m));
   i := 1;
   d := 1;
@@ -5804,7 +6143,12 @@ function MyOwnREF(m) = (
 	    <function>OutputStyle</function>
       </term> 
 	  <listitem>
-	<para>Řetězec, který může nabývat hodnot <literal>„normal“</literal>, <literal>„latex“</literal>, <literal>„mathml“</literal> nebo <literal>„troff“</literal> a bude ovlivňovat, jak se mají vypisovat matice (a samozřejmě i další věci), což je důležité pro vkládání do dokumentů. Styl Normal je výchozí styl výpisu <application>matematického nástroje Genius</application> čitelný pro člověka. Ostatní styly jsou pro sazbu v aplikacích LaTeX, MathML (XML) nebo Troff.</para>
+	<para>A string, can be <literal>"normal"</literal>,
+<literal>"latex"</literal>, <literal>"mathml"</literal> or
+<literal>"troff"</literal> and it will affect how matrices (and perhaps other
+stuff) is printed, useful for pasting into documents.  Normal style is the
+default human readable printing style of <application>Genius Mathematics Tool</application>.  The other styles are for
+typsetting in LaTeX, MathML (XML), or in Troff.</para>
 	  </listitem>
 	</varlistentry>
       </variablelist> 

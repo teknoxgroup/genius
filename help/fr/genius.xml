@@ -2,8 +2,8 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY app "<application>Genius Mathematics Tool</application>">
 <!ENTITY appname "Genius">
-<!ENTITY appversion "1.0.15">
-<!ENTITY date "March 2012">
+<!ENTITY appversion "1.0.16">
+<!ENTITY date "December 2012">
 <!ENTITY legal SYSTEM "legal.xml">
 <!ENTITY manrevision "0.2">
 <!ENTITY lt "&#60;">
@@ -152,13 +152,13 @@
     <revhistory>
       <revision> 
 		<revnumber>0.2</revnumber> 
-		<date>March 2012</date> 
+		<date>December 2012</date> 
 		<revdescription> 
 	  		<para role="author">Jiri (George) Lebl <email>jirka@5z.com</email></para>
 		</revdescription> 
       </revision> 
     </revhistory>
-    <releaseinfo>This manual describes version 1.0.15 of Genius.
+    <releaseinfo>This manual describes version 1.0.16 of Genius.
     </releaseinfo> 
     <legalnotice> 
       <title>Votre avis</title> 
@@ -218,9 +218,6 @@
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/genius_window.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/genius_window.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
 	      <phrase>Affiche <application>Outil de maths Genius</application> la fenêtre principale. Contient la barre de titre, la barre de menus, la barre d'outils et la zone de travail. La barre de menu contient <guilabel>Fichier</guilabel>, <guilabel>Édition</guilabel>, <guilabel>Calculatrice</guilabel>, <guilabel>Paramètres</guilabel> et <guilabel>Aide</guilabel>.</phrase> 
@@ -312,9 +309,6 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
             <imageobject>
               <imagedata fileref="figures/line_plot.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Affiche la fenêtre pour tracer des graphiques.</phrase> 
             </textobject> 
@@ -330,9 +324,6 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/line_plot_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/line_plot_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>Le graphe produit.</phrase> 
@@ -357,9 +348,6 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
             <imageobject>
               <imagedata fileref="figures/parametric.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Onglet pour tracer paramétrique dans la fenêtre <guilabel>Création de graphiques</guilabel>.</phrase> 
             </textobject> 
@@ -367,7 +355,15 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
         </screenshot> 
       </figure>
 
-      <para>Un exemple de tracé paramétrique est montré en <xref linkend="paramplot-fig"/>. Des opérations, similaires à celles qui peuvent être réalisées sur les tracés de lignes, peuvent être réalisées sur des graphiques de ce type. Pour réaliser des graphiques en ligne de commande, consultez la documentation des fonctions <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> ou <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link>.</para>
+      <para>
+	An example of a parametric plot is given in
+	<xref linkend="paramplot2-fig"/>.
+	Similar operations can be
+	done on such graphs as can be done on the other line plots.
+	For plotting using the command line see the documentation of the
+        <link linkend="gel-function-LinePlotParametric"><function>LinePlotParametric</function></link> or
+        <link linkend="gel-function-LinePlotCParametric"><function>LinePlotCParametric</function></link> function.
+      </para>
 
       <figure id="paramplot2-fig"> 
         <title>Courbe paramétrique</title> 
@@ -375,9 +371,6 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
           <mediaobject> 
             <imageobject>
               <imagedata fileref="figures/parametric_graph.png" format="PNG" scale="50" scalefit="1"/> 
-            </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/parametric_graph.eps" format="EPS" scale="50" scalefit="1"/> 
             </imageobject>
             <textobject> 
               <phrase>Courbe paramétrique produite</phrase> 
@@ -421,9 +414,6 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
             <imageobject>
               <imagedata fileref="figures/surface_graph.png" format="PNG" scale="50" scalefit="1"/> 
             </imageobject>
-            <imageobject>
-              <imagedata fileref="figures/surface_graph.eps" format="EPS" scale="50" scalefit="1"/> 
-            </imageobject>
             <textobject> 
               <phrase>Module de la fonction cosinus complex.</phrase> 
             </textobject> 
@@ -439,7 +429,15 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
   <chapter id="genius-gel"> 
     <title>Fondamentaux GEL</title> 
 
-	<para>GEL signifie Genius Extension Language (langage d'extension de Genius). C'est le langage que vous devez utiliser pour écrire des programmes dans Genius. Un programme en GEL est simplement une expression qui renvoie un nombre. L'<application>Outil de maths Genius</application> peut par conséquent être utilisé comme une simple calculatrice ou comme un puissant outil de recherche théorique. La syntaxe a été pensée pour permettre un apprentissage rapide, en particulier pour utiliser Genius comme une calculatrice.</para>
+	<para>
+	  GEL stands for Genius Extension Language.    It is the language you use
+	  to write programs in Genius. A program in GEL is simply an
+	  expression that evaluates to a number.
+	  <application>Genius Mathematics Tool</application> can be used as a simple calculator, or as a
+	  powerful theoretical research tool.  The syntax is meant to
+	  have as shallow of a learning curve as possible, especially for use
+	  as a calculator.
+	</para>
 
     <sect1 id="genius-gel-values">
       <title>Types de données</title>
@@ -466,10 +464,13 @@ L'<application>Outil de maths Genius</application> garde la trace du répertoire
 77e5
 </programlisting> Lorsque Genius affiche un flottant, il ajoute toujours <computeroutput>.0</computeroutput> même si le nombre est entier. C'est pour rappeler que les nombres à virgule flottante sont considérés comme des quantités imprécises. Lorsqu'un nombre est écrit en utilisant la notation scientifique, c'est toujours un flottant et, par conséquent, Genius n'affiche pas le <computeroutput>.0</computeroutput>.</para>
 
-        <para>Le dernier type de nombres GEL est celui des nombres complexes. Vous pouvez saisir un nombre complexe sous sa forme cartésienne, ou sous sa forme exponentielle. La partie imaginaire se termine par un <literal>i</literal>. Voici des exemples de saisies de nombres complexes : <programlisting>1+2i
+        <para>
+The final type of number in gel is the complex numbers. You can enter a complex number as a sum of real and imaginary parts. To add an imaginary part, append an <literal>i</literal>.  Here are examples of entering complex numbers:
+<programlisting>1+2i
 8.01i
 77*e^(1.3i)
-</programlisting></para>
+</programlisting>
+        </para>
 
         <important>
           <para>Lorsque vous saisissez des nombres imaginaires, il doit y avoir un nombre devant le <literal>i</literal>. Si vous utilisez <literal>i</literal> tout seul, Genius l'interprète comme une référence à la variable <varname>i</varname>. Si vous avez besoin de faire référence à <literal>i</literal> tout seul, utilisez <literal>1i</literal> à la place.</para>
@@ -722,7 +723,12 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a+b</synopsis></term>
          <listitem>
-           <para>Addition. Ajoute deux nombres, matrices, fonctions ou chaînes de caractères. Si vous ajoutez une chaîne à quelque chose, le résultat ne peut être qu'une chaîne.</para>
+           <para>
+             Addition.  Adds two numbers, matrices, functions or strings.  If
+	     you add a string to anything the result will just be a string.  If one is
+	     a square matrix and the other a number, then the number is multiplied by
+	     the identity matrix.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -754,7 +760,11 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a/b</synopsis></term>
          <listitem>
-           <para>Division.</para>
+           <para>
+		   Division.  When <varname>a</varname> and <varname>b</varname> are just numbers
+		   this is the normal division.  When they are matrices, then this is
+		   equivalent to <userinput>a*b^-1</userinput>.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -762,7 +772,10 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a./b</synopsis></term>
          <listitem>
-           <para>Division élément par élément.</para>
+           <para>
+		   Element by element division.  Same as <userinput>a/b</userinput> for
+		   numbers, but operarates element by element on matrices.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -826,7 +839,11 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a==b</synopsis></term>
          <listitem>
-           <para>Opérateur égalité (renvoie <constant>true</constant> ou <constant>false</constant>).</para>
+           <para>
+	     Equality operator.
+	     Returns <constant>true</constant> or <constant>false</constant>
+	     depending on <varname>a</varname> and <varname>b</varname> being equal or not.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -850,7 +867,14 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a&lt;=b</synopsis></term>
          <listitem>
-           <para>Opérateur inférieur ou égal, renvoie <constant>true</constant> si <varname>a</varname> est inférieur ou égal à <varname>b</varname> sinon renvoie <constant>false</constant>.</para>
+           <para>
+             Less than or equal operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     less than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt;= b &lt;= c</userinput> (can
+	     also be combined with the less than operator).
+           </para>
          </listitem>
         </varlistentry>
 
@@ -858,7 +882,43 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a&gt;=b</synopsis></term>
          <listitem>
-           <para>Opérateur supérieur ou égal, renvoie <constant>true</constant> si <varname>a</varname> est supérieur ou égal à <varname>b</varname> sinon renvoie <constant>false</constant>.</para>
+           <para>
+             Greater than or equal operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     greater than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt;= b &gt;= c</userinput>
+	     (can also be combine with the greater than operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term><synopsis>a&lt;b</synopsis></term>
+         <listitem>
+           <para>
+             Less than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     less than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &lt; b &lt; c</userinput>
+	     (can also be combine with the less than or equal to operator).
+           </para>
+         </listitem>
+        </varlistentry>
+
+
+        <varlistentry>
+         <term><synopsis>a&gt;b</synopsis></term>
+         <listitem>
+           <para>
+             Greater than operator,
+	     returns <constant>true</constant> if <varname>a</varname> is
+	     greater than or equal to 
+	     <varname>b</varname> else returns <constant>false</constant>.
+	     These can be chained as in <userinput>a &gt; b &gt; c</userinput>
+	     (can also be combine with the greater than or equal to operator).
+           </para>
          </listitem>
         </varlistentry>
 
@@ -874,7 +934,12 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a and b</synopsis></term>
          <listitem>
-           <para>Et logique (and).</para>
+           <para>
+		   Logical and.  Returns true if both
+		   <varname>a</varname> and <varname>b</varname> are true,
+		   else returns false.  If given numbers, nonzero numbers
+		   are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -882,7 +947,13 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a or b</synopsis></term>
          <listitem>
-           <para>Ou logique (or).</para>
+           <para>
+             Logical or.
+	     Returns true if both
+	     <varname>a</varname> or <varname>b</varname> are true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -890,7 +961,13 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>a xor b</synopsis></term>
          <listitem>
-           <para>Ou exclusif logique (xor).</para>
+           <para>
+             Logical xor.
+	     Returns true exactly one of
+	     <varname>a</varname> or <varname>b</varname> is true,
+	     else returns false.  If given numbers, nonzero numbers
+	     are treated as true.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -898,7 +975,9 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>not a</synopsis></term>
          <listitem>
-           <para>Non logique (not).</para>
+           <para>
+		   Logical not.  Returns the logical negation of <varname>a</varname>
+           </para>
          </listitem>
         </varlistentry>
 
@@ -922,7 +1001,10 @@ genius&gt; 2*2 mod 7
         <varlistentry>
          <term><synopsis>*a</synopsis></term>
          <listitem>
-           <para>Déréférencement de variable (pour accéder à une variable référencée). Consultez <xref linkend="genius-gel-references"/>.</para>
+           <para>
+             Variable dereferencing (to access a referenced variable).
+	     See <xref linkend="genius-gel-references"/>.
+           </para>
          </listitem>
         </varlistentry>
 
@@ -1297,7 +1379,18 @@ g(5)
   r
 )
 </programlisting> renvoie une fonction qui, lorsqu'elle est appelée, ajoute 5 à ses arguments. La copie locale de <varname>k</varname> a été créée lorsque la fonction a été définie.</para>
-	<para>Lorsque vous désirez que la fonction n'ait pas de dictionnaire privé alors mettez des crochets carrés vides après la liste d'arguments. Alors aucun dictionnaire privé n'est créé. Ce méchanisme est utile pour améliorer l'efficacité des fonctions qui n'ont pas besoin de dictionnaire privé, ou encore si vous voulez que la fonction utilise les variables dans leur état au moment où elle est appelée. Par exemple, supposons que vous vouliez que la fonction renvoyée par <function>f</function> recherche la valeur de <varname>k</varname> dans le niveau supérieur bien qu'il y ait une variable locale portant le même nom pendant la définition. Le code suivant <programlisting>function f() = (
+	<para>
+	  When you want the function to not have any private dictionary
+	  then put empty square brackets after the argument list.  Then
+	  no private dictionary will be created at all.  Doing this is
+	  good to increase efficiency when a private dictionary is not
+	  needed or when you want the function to lookup all variables
+	  as it sees them when called.  For example suppose you want
+	  the function returned from <function>f</function> to see
+	  the value of <varname>k</varname> from the toplevel despite
+	  there being a local variable of the same name during definition.
+	  So the code
+<programlisting>function f() = (
   k := 5;
   function r(x) [] = (x+k);
   r
@@ -1305,7 +1398,11 @@ g(5)
 k := 10;
 g = f();
 g(10)
-</programlisting> renvoie 20 et non pas 15, ce qui se produirait si une variable <varname>k</varname> contenant une valeur 5 était ajoutée dans le dictionnaire privé.</para>
+</programlisting>
+	  will return 20 and not 15, which would happen if
+	  <varname>k</varname> with a value of 5 was added to the private
+	  dictionary.
+	</para>
     </sect1>
 
     <sect1 id="genius-gel-true-local-variables">
@@ -1990,6 +2087,16 @@ f(2)
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-LinePlotDrawAxisLabels">
+         <term>LinePlotDrawAxisLabels</term>
+         <listitem>
+          <synopsis>LinePlotDrawAxisLabels = true</synopsis>
+          <para>Tells genius to draw the axis labels for <link linkend="genius-gel-function-list-plotting">line plotting
+	  functions</link> such as <link linkend="gel-function-LinePlot"><function>LinePlot</function></link>.
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-LinePlotVariableNames">
          <term>LinePlotVariableNames</term>
          <listitem>
@@ -2120,6 +2227,16 @@ f(2)
          <listitem>
           <synopsis>SumProductTolerance = nombre</synopsis>
           <para>Tolérance pour les fonctions <function>InfiniteSum</function> et <function>InfiniteProduct</function>.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotDrawLegends">
+         <term>SurfacePlotDrawLegends</term>
+         <listitem>
+          <synopsis>SurfacePlotDrawLegends = true</synopsis>
+          <para>Tells genius to draw the legends for <link linkend="genius-gel-function-list-plotting">surface plotting
+	  functions</link> such as <link linkend="gel-function-SurfacePlot"><function>SurfacePlot</function></link>.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2906,7 +3023,13 @@ f(2)
          <term>FermatFactorization</term>
          <listitem>
           <synopsis>FermatFactorization (n,tentatives)</synopsis>
-          <para>Essaie la factorisation de Fermat de <varname>n</varname> sous la forme <userinput>(t-s)*(t+s)</userinput>, si c'est possible, renvoie <varname>t</varname> et <varname>s</varname> sous la forme d'un vecteur sinon renvoie <constant>null</constant>. L'argument <varname>tentatives</varname> indique le nombre d'essais avant d'abandonner.</para>
+          <para>
+	    Attempt Fermat factorization of <varname>n</varname> into
+	    <userinput>(t-s)*(t+s)</userinput>, returns <varname>t</varname>
+	    and <varname>s</varname> as a vector if possible, <constant>null</constant> otherwise.
+	    <varname>tries</varname> specifies the number of tries before
+	    giving up.
+	  </para>
           <para>C'est une assez bonne factorisation si votre nombre est le produit de deux facteurs très proches l'un de l'autre.</para>
           <para>Consultez <ulink url="http://fr.wikipedia.org/wiki/M%C3%A9thode_de_factorisation_de_Fermat">Wikipedia</ulink> pour plus d'informations.</para>
          </listitem>
@@ -3023,7 +3146,8 @@ f(2)
          <term>IsPseudoprime</term>
          <listitem>
           <synopsis>IsPseudoprime (n,b)</synopsis>
-          <para>Teste si <varname>n</varname> est un nombre pseudopremier en base <varname>b</varname> mais pas un nombre premier c'est-à-dire si <userinput>b^(n-1) == 1 mod n</userinput>. Cela appelle la fonction <function>PseudoprimeTest</function></para>
+          <para>If <varname>n</varname> is a pseudoprime base <varname>b</varname> but not a prime,
+that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calls the <function>PseudoprimeTest</function></para>
          </listitem>
         </varlistentry>
 
@@ -3302,7 +3426,12 @@ f(2)
          <term>CountZeroColumns</term>
          <listitem>
           <synopsis>CountZeroColumns (M)</synopsis>
-          <para>Compte le nombre de colonnes nulles d'une matrice. Par exemple, après avoir réduit une matrice suivant les colonnes, vous pouvez utiliser cette fonction pour obtenir la dimension du noyau. Consultez <link linkend="gel-function-cref"><function>cref</function></link> et <link linkend="gel-function-Nullity"><function>Nullity</function></link>.</para>
+          <para>
+	   Count the number of zero columns in a matrix.  For example
+	   once your column reduce a matrix you can use this to find
+	   the nullity.  See <link linkend="gel-function-cref"><function>cref</function></link>
+	   and <link linkend="gel-function-Nullity"><function>Nullity</function></link>.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -3455,7 +3584,7 @@ f(2)
          <term>IsUpperTriangular</term>
          <listitem>
           <synopsis>IsUpperTriangular (M)</synopsis>
-          <para>Indique si une matrice est triangulaire supérieure, c'est-à-dire que toutes les valeurs en dessous de la diagonale sont nulles.</para>
+          <para>Is a matrix upper triangular?  That is, a matrix is upper triangular if all the entries below the diagonal are zero.</para>
          </listitem>
         </varlistentry>
 
@@ -3496,7 +3625,10 @@ f(2)
          <listitem>
           <synopsis>MakeDiagonal (v,param...)</synopsis>
           <para>Alias : <function>diag</function></para>
-          <para>Construit une matrice diagonale à partir d'un vecteur.</para>
+	  <para>Make diagonal matrix from a vector.  Alternatively you can pass
+		  in the values to put on the diagonal as arguments.  So
+		  <userinput>MakeDiagonal([1,2,3])</userinput> is the same as
+		  <userinput>MakeDiagonal(1,2,3)</userinput>.</para>
           <para>Consultez <ulink url="http://fr.wikipedia.org/wiki/Matrice_diagonale">Wikipedia</ulink> ou <ulink url="http://planetmath.org/encyclopedia/DiagonalMatrix.html">Planetmath</ulink> pour plus d'informations.</para>
          </listitem>
         </varlistentry>
@@ -3561,7 +3693,7 @@ f(2)
          <term>RowSumSquares</term>
          <listitem>
           <synopsis>RowSumSquares (m)</synopsis>
-          <para>Calcule la somme des carrés pour chaque ligne d'une matrice.</para>
+          <para>Calculate sum of squares of each row in a matrix and return a vertical vector with the results.</para>
          </listitem>
         </varlistentry>
 
@@ -3578,7 +3710,12 @@ quelquechose(r)</userinput>.</para>
          <term>SetMatrixSize</term>
          <listitem>
           <synopsis>SetMatrixSize (M,lignes,colonnes)</synopsis>
-          <para>Fabrique une nouvelle matrice de la taille spécifiée à partir de l'ancienne. C'est-à-dire crée une nouvelle matrice dans laquelle est recopiée l'ancienne. Les entrées qui ne rentrent pas sont retirées et l'espace supplémentaire est complété par des zéros. Si <varname>lignes</varname> ou <varname>colonnes</varname> valent zéro alors <constant>null</constant> est renvoyé.</para>
+          <para>Make new matrix of given size from old one.  That is, a new
+	  matrix will be returned to which the old one is copied.  Entries that
+	  don't fit are clipped and extra space is filled with zeros.
+	  If <varname>rows</varname> or <varname>columns</varname> are zero
+	  then <constant>null</constant> is returned.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -3911,7 +4048,7 @@ quelquechose(r)</userinput>.</para>
          <term>IsInvertible</term>
          <listitem>
           <synopsis>IsInvertible (n)</synopsis>
-          <para>Indique si une matrice (ou un nombre) est inversible (une matrice entière est inversible si et seulement si elle est inversible sur les entiers).</para>
+          <para>Is a matrix (or number) invertible (Integer matrix is invertible if and only if it is invertible over the integers).</para>
          </listitem>
         </varlistentry>
 
@@ -4112,7 +4249,7 @@ quelquechose(r)</userinput>.</para>
          <term>RosserMatrix</term>
          <listitem>
           <synopsis>RosserMatrix ()</synopsis>
-          <para>Matrice de Rosser, un problème classique de test de valeurs propres symétriques.</para>
+          <para>Returns the Rosser matrix, which is a classic symmetric eigenvalue test problem.</para>
          </listitem>
         </varlistentry>
 
@@ -4324,7 +4461,7 @@ quelquechose(r)</userinput>.</para>
          <term>Catalan</term>
          <listitem>
           <synopsis>Catalan (n)</synopsis>
-          <para>Renvoie le <varname>n</varname>-ième nombre catalan.</para>
+          <para>Get <varname>n</varname>th Catalan number.</para>
           <para>Consultez <ulink url="http://planetmath.org/encyclopedia/CatalanNumbers.html">Planetmath</ulink> pour plus d'informations.</para>
          </listitem>
         </varlistentry>
@@ -4405,7 +4542,7 @@ quelquechose(r)</userinput>.</para>
          <listitem>
           <synopsis>HarmonicNumber (n,r)</synopsis>
           <para>Alias : <function>HarmonicH</function></para>
-          <para>Nombre harmonique, le <varname>n</varname>-ième nombre harmonique d'ordre <varname>r</varname>.</para>
+          <para>Harmonic Number, the <varname>n</varname>th harmonic number of order <varname>r</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -4421,7 +4558,7 @@ quelquechose(r)</userinput>.</para>
          <term>LinearRecursiveSequence</term>
          <listitem>
           <synopsis>LinearRecursiveSequence (valeurs_ensemencement,règle_de_combinaison,n)</synopsis>
-          <para>Calcule la relation de récurrence linéaire en utilisant l'algorithme de Galois.</para>
+          <para>Compute linear recursive sequence using Galois stepping.</para>
          </listitem>
         </varlistentry>
 
@@ -4512,7 +4649,7 @@ do (
          <term>Triangular</term>
          <listitem>
           <synopsis>Triangular (nième)</synopsis>
-          <para>Calcule le <varname>n</varname>-ième nombre triangulaire.</para>
+          <para>Calculate the <varname>n</varname>th triangular number.</para>
           <para>Consultez <ulink url="http://planetmath.org/encyclopedia/TriangularNumbers.html">Planetmath</ulink> pour plus d'informations.</para>
          </listitem>
         </varlistentry>
@@ -4826,6 +4963,78 @@ do (
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-BesselJ0">
+         <term>BesselJ0</term>
+         <listitem>
+          <synopsis>BesselJ0 (x)</synopsis>
+          <para>Bessel function of the first kind of order 0.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselJ1">
+         <term>BesselJ1</term>
+         <listitem>
+          <synopsis>BesselJ1 (x)</synopsis>
+          <para>Bessel function of the first kind of order 1.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselJn">
+         <term>BesselJn</term>
+         <listitem>
+          <synopsis>BesselJn (n,x)</synopsis>
+	  <para>Bessel function of the first kind of order <varname>n</varname>.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselY0">
+         <term>BesselY0</term>
+         <listitem>
+          <synopsis>BesselY0 (x)</synopsis>
+          <para>Bessel function of the second kind of order 0.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselY1">
+         <term>BesselY1</term>
+         <listitem>
+          <synopsis>BesselY1 (x)</synopsis>
+          <para>Bessel function of the second kind of order 1.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-BesselYn">
+         <term>BesselYn</term>
+         <listitem>
+          <synopsis>BesselYn (n,x)</synopsis>
+	  <para>Bessel function of the second kind of order <varname>n</varname>.  Only implemented for real numbers.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Bessel_functions">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-DirichletKernel">
          <term>DirichletKernel</term>
          <listitem>
@@ -4838,7 +5047,7 @@ do (
          <term>DiscreteDelta</term>
          <listitem>
           <synopsis>DiscreteDelta (v)</synopsis>
-          <para>Renvoie 1 si et seulement si tous les éléments sont nuls.</para>
+          <para>Returns 1 if and only if all elements are zero.</para>
          </listitem>
         </varlistentry>
 
@@ -4875,7 +5084,7 @@ do (
          <term>KroneckerDelta</term>
          <listitem>
           <synopsis>KroneckerDelta (v)</synopsis>
-          <para>Renvoie 1 si et seulement si tous les éléments sont égaux.</para>
+          <para>Returns 1 if and only if all elements are equal.</para>
          </listitem>
         </varlistentry>
 
@@ -4988,6 +5197,20 @@ do (
          <listitem>
           <synopsis>rad2deg (x)</synopsis>
           <para>Convertit les radians en degrés.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-sinc">
+         <term>sinc</term>
+         <listitem>
+          <synopsis>sinc (x)</synopsis>
+	  <para>Calculates the unnormalized sinc function, that is
+		  <userinput>sin(x)/x</userinput>.
+		  If you want the normalized function call <userinput>sinc(pi*x)</userinput>.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Sinc">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -5470,7 +5693,9 @@ do (
          <term>SymbolicTaylorApproximationFunction</term>
          <listitem>
           <synopsis>SymbolicTaylorApproximationFunction (f,x0,n)</synopsis>
-	  <para>Essaie de construire la fonction approximation de Taylor autour de x0 au nième degré (consultez <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>).</para>
+	  <para>Attempt to construct the Taylor approximation function around x0 to the nth degree.
+	  (See <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)
+          </para>
          </listitem>
         </varlistentry>
       </variablelist>
@@ -5479,6 +5704,34 @@ do (
     <sect1 id="genius-gel-function-list-plotting">
       <title>Tracé de graphiques</title>
       <variablelist>
+        <varlistentry id="gel-function-ExportPlot">
+         <term>ExportPlot</term>
+         <listitem>
+          <synopsis>ExportPlot (file,type)</synopsis>
+          <synopsis>ExportPlot (file)</synopsis>
+          <para>
+		  Export the contents of the plotting window to a file.
+		  The type is a string that specifies the file type to
+		  use, "png", "eps", or "ps".  If the type is not
+		  specified, then it is taken to be the extension, in
+		  which case the extension must be ".png", ".eps", or ".ps".
+	  </para>
+	  <para>
+		  Note that files are overwritten without asking.
+	  </para>
+	  <para>
+		  On successful export, true is returned.  Otherwise
+		  error is printed and exception is raised.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>ExportPlot("file.png")</userinput>
+<prompt>genius&gt;</prompt> <userinput>ExportPlot("/directory/file","eps")</userinput>
+</screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-LinePlot">
          <term>LinePlot</term>
          <listitem>
@@ -5505,7 +5758,13 @@ do (
          <listitem>
           <synopsis>LinePlotDrawLine (x1,y1,x2,y2,...)</synopsis>
           <synopsis>LinePlotDrawLine (v,...)</synopsis>
-          <para>Trace une ligne du point <varname>x1</varname>, <varname>y1</varname> au point <varname>x2</varname>, <varname>y2</varname>. Les points <varname>x1</varname>, <varname>y1</varname>, <varname>x2</varname>, <varname>y2</varname> peuvent être remplacés par une matrice <varname>n</varname> par 2 pour tracer une polyligne.</para>
+          <para>
+	    Draw a line from <varname>x1</varname>,<varname>y1</varname> to
+	    <varname>x2</varname>,<varname>y2</varname>.
+	    <varname>x1</varname>,<varname>y1</varname>,
+	    <varname>x2</varname>,<varname>y2</varname> can be replaced by an
+	    <varname>n</varname> by 2 matrix for a longer polyline.
+          </para>
           <para>Des paramètres supplémentaires peuvent être ajoutés pour spécifier la couleur de la ligne, des flèches et la zone de tracé. Vous pouvez faire cela en ajoutant une chaîne <userinput>"color"</userinput>, <userinput>"thickness"</userinput>, <userinput>"window"</userinput> ou <userinput>"arrow"</userinput> et ensuite, respectivement, la chaîne de couleur (en anglais), l'épaisseur sous la forme d'un entier, la fenêtre sous la forme d'un vecteur à 4 éléments et pour la flèche soit <userinput>"origin"</userinput>, <userinput>"end"</userinput>, <userinput>"both"</userinput> ou <userinput>"none"</userinput>. Pour <userinput>"window"</userinput>, vous pouvez indiquer <userinput>"fit"</userinput> plutôt qu'un vecteur et dans ce cas, l'intervalle x est défini de manière précise et l'intervalle y est défini avec une bordure de cinq pour cent autour de la ligne. Finalement, la légende peut être spécifiée en ajoutant <userinput>"legend"</userinput> et la chaîne contenant la légende.</para>
 	  <para>Exemples : <screen><prompt>genius&gt;</prompt> <userinput>LinePlotDrawLine(0,0,1,1,"color","blue","thickness",3)</userinput>
 <prompt>genius&gt;</prompt> <userinput>LinePlotDrawLine([0,0;1,-1;-1,-1])</userinput>
@@ -5572,11 +5831,90 @@ do (
          <listitem>
           <synopsis>SurfacePlot (fonc)</synopsis>
           <synopsis>SurfacePlot (fonc,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlot (func,[x1,x2,y1,y2,z1,z2])</synopsis>
           <para>Trace une surface, dont la fonction prend comme arguments deux nombres ou bien un nombre complexe. En premier vient la fonction puis en option les limites sous la forme <varname>x1</varname>, <varname>x2</varname>, <varname>y1</varname>, <varname>y2</varname>, <varname>z1</varname>, <varname>z2</varname>. Si les limites ne sont pas indiquées alors les limites actuellement utilisées s'appliquent (consultez <link linkend="gel-function-LinePlotWindow"><function>LinePlotWindow</function></link>). Genius ne peut tracer qu'une seule surface à la fois.</para>
           <para>Exemples : <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlot(|sin|,-1,1,-1,1,0,1.5)</userinput>
 <prompt>genius&gt;</prompt> <userinput>SurfacePlot(`(x,y)=x^2+y,-1,1,-1,1,-2,2)</userinput>
 <prompt>genius&gt;</prompt> <userinput>SurfacePlot(`(z)=|z|^2,-1,1,-1,1,0,2)</userinput>
 </screen></para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotData">
+         <term>SurfacePlotData</term>
+         <listitem>
+          <synopsis>SurfacePlotData (data)</synopsis>
+          <synopsis>SurfacePlotData (data,label)</synopsis>
+          <synopsis>SurfacePlotData (data,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlotData (data,label,x1,x2,y1,y2,z1,z2)</synopsis>
+          <synopsis>SurfacePlotData (data,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <synopsis>SurfacePlotData (data,label,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <para>
+		  Plot a surface from data.  The data is an n by 3 matrix whose
+		  rows are the x, y and z coordinates.  The data can also be
+		  simply a vector whose length is a multiple of 3 and so
+		  contains the tripples of x, y, z.  The data should contain at
+		  least 3 points.
+	  </para>
+          <para>
+		  Optionally we can give the label and also optionally the
+		  limits.  If limits are not given, they are computed from
+		  the data, <link linkend="gel-function-SurfacePlotWindow"><function>SurfacePlotWindow</function></link>
+		  is not used, if you want to use it, pass it in explicitly.
+		  If label is not given then empty label is used.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlotData([0,0,0;1,0,1;0,1,1;1,1,3])</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,"My data")</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,-1,1,-1,1,0,10)</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(data,SurfacePlotWindow)</userinput>
+</screen>
+          </para>
+	  <para>
+		  Here's an example of how to plot in polar coordinates,
+		  in particular how to plot the function
+		  <userinput>-r^2 * theta</userinput>:
+          <screen><prompt>genius&gt;</prompt> <userinput>d:=null; for r=0 to 1 by 0.1 do for theta=0 to 2*pi by pi/5 do d=[d;[r*cos(theta),r*sin(theta),-r^2*theta]];</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotData(d)</userinput>
+</screen>
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-SurfacePlotDataGrid">
+         <term>SurfacePlotDataGrid</term>
+         <listitem>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2])</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2,z1,z2])</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2],label)</synopsis>
+          <synopsis>SurfacePlotDataGrid (data,[x1,x2,y1,y2,z1,z2],label)</synopsis>
+          <para>
+		  Plot a surface from regular rectangular data.
+		  The data is given in a n by m matrix where the rows are the
+		  x coordinate and the columns are the y coordinate.
+		  The x coordinate is divided into equal n-1 subintervals
+		  and y coordinate is divided into equal m-1 subintervals.
+		  The limits <varname>x1</varname> and <varname>x2</varname>
+		  give the interval on the x-axis that we use, and 
+		  the limits <varname>y1</varname> and <varname>y2</varname>
+		  give the interval on the y-axis that we use.
+		  If the limits <varname>z1</varname> and <varname>z2</varname>
+		  are not given they are computed from the data (to be
+		  the extreme values from the data).
+	  </para>
+          <para>
+		  Optionally we can give the label, if label is not given then
+		  empty label is used.
+	  </para>
+          <para>
+	    Examples:
+          <screen><prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid([1,2;3,4],[0,1,0,1])</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid(data,[-1,1,-1,1],"My data")</userinput>
+<prompt>genius&gt;</prompt> <userinput>d:=null; for i=1 to 20 do for j=1 to 10 d@(i,j) = (0.1*i-1)^2-(0.1*j)^2;</userinput>
+<prompt>genius&gt;</prompt> <userinput>SurfacePlotDataGrid(d,[-1,1,0,1],"half a saddle")</userinput>
+</screen>
+          </para>
          </listitem>
         </varlistentry>
 
@@ -5640,7 +5978,7 @@ do (
     <para>Voici un exemple plus conséquent qui redéfinit essentiellement la fonction interne <function>ref</function> pour calculer la matrice échelonnée en lignes d'une matrice. La fonction <function>ref</function> est intégrée et beaucoup plus rapide mais cet exemple démontre certaines des fonctionnalités plus complexes de GEL. <programlisting><![CDATA[# Calculate the row-echelon form of a matrix
 function MyOwnREF(m) = (
   if not IsMatrix(m) or not IsValueOnly(m) then
-    (error("ref: argument not a value only matrix");bailout);
+    (error("MyOwnREF: argument not a value only matrix");bailout);
   s := min(rows(m), columns(m));
   i := 1;
   d := 1;
@@ -5816,7 +6154,12 @@ function MyOwnREF(m) = (
 	    <function>OutputStyle</function>
       </term> 
 	  <listitem>
-	<para>Une chaîne, qui peut être <literal>"normal"</literal>, <literal>"latex"</literal>, <literal>"mathml"</literal> ou <literal>"troff"</literal> et qui modifie la manière dont les matrices (et peut-être d'autres trucs) sont affichées. Cela peut être utile pour copier/coller vers des documents. Le style normal est le style d'affichage par défaut de l'<application>Outil de maths Genius</application>. Les autres styles sont utiles pour saisir en LaTeX, MathML (XML) ou Troff.</para>
+	<para>A string, can be <literal>"normal"</literal>,
+<literal>"latex"</literal>, <literal>"mathml"</literal> or
+<literal>"troff"</literal> and it will affect how matrices (and perhaps other
+stuff) is printed, useful for pasting into documents.  Normal style is the
+default human readable printing style of <application>Genius Mathematics Tool</application>.  The other styles are for
+typsetting in LaTeX, MathML (XML), or in Troff.</para>
 	  </listitem>
 	</varlistentry>
       </variablelist> 

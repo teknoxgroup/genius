@@ -1,11 +1,13 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2012 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _GEL_STRUCTS_H
@@ -239,6 +239,13 @@ struct _GelETreeIdentifier {
 	GelETreeType type;
 	GelETree *next;
 	GelToken *id;
+	gboolean uninitialized;
+	
+	/* gboolean is faster, then a bitfield and we right now
+	   don't gain anything */
+	/*
+	guint uninitialized:1;
+	*/
 };
 
 struct _GelETreeString {
@@ -287,7 +294,7 @@ struct _GelETreeBool {
 struct _GelETreeMatrixRow {
 	GelETreeType type;
 	GelETree *next;
-	gint16 nargs;
+	guint32 nargs;
 	GelETree *args;
 };
 

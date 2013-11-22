@@ -1,7 +1,8 @@
-AC_INIT(src/calc.c)
+AC_INIT([genius], [1.0.16])
+AC_CONFIG_SRCDIR([src/calc.c])
+AM_INIT_AUTOMAKE([dist-xz])
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,1.0.15)
 
 dnl make sure we keep ACLOCAL_FLAGS around for maintainer builds to work
 AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS")
@@ -45,7 +46,7 @@ GETTEXT_PACKAGE=genius
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",[gettext package name])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="ar az ca cs da de dz el en_CA en_GB es eu fr ga gl hi hr it ja ko lv mk ml nb ne nl oc pa pl pt_BR pt ro rw sl sq sr@Latn sr sv zh_CN zh_TW"
+ALL_LINGUAS="ar az ca cs da de dz el en_CA en_GB es eu fr ga gl hi hr id it ja ko lv mk ml nb ne nl oc pa pl pt_BR pt ro ru rw sl sq sr@Latn sr sv zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 
 dnl ===============================================================================
@@ -80,8 +81,8 @@ AC_CHECK_LIB(gmp, __gmpz_init_set,[GMP_LIB=-lgmp], [
 		AC_MSG_ERROR(GMP Library not found))])
 AC_SUBST(GMP_LIB)
 
-AC_CHECK_LIB(mpfr, mpfr_pow_z, [],
-	[AC_MSG_ERROR([New enough MPFR (2.2.0+) not found, see http://www.mpfr.org])],
+AC_CHECK_LIB(mpfr, mpfr_j0, [],
+	[AC_MSG_ERROR([New enough MPFR (2.3.0+) not found, see http://www.mpfr.org])],
 	"$GMP_LIB")
 
 # No schemas yet so ignore this section for now

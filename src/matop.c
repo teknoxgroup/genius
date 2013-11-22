@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2012 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -151,7 +151,7 @@ gel_is_matrix_value_only_rational (GelMatrixW *m)
 			if (n != NULL &&
 			    (n->type != GEL_VALUE_NODE ||
 			     mpw_is_complex (n->val.value) ||
-			     mpw_is_float (n->val.value))) {
+			     mpw_is_real_part_float (n->val.value))) {
 				m->cached_value_only_rational = 1;
 				m->value_only_rational = 0;
 				return FALSE;
@@ -222,10 +222,12 @@ gel_matrix_conjugate_transpose (GelMatrixW *m)
 				GEL_GET_NEW_NODE (nn);
 				nn->type = GEL_OPERATOR_NODE;
 				nn->op.oper = GEL_E_DIRECTCALL;
+				nn->op.nargs = 2;
 
 				GEL_GET_NEW_NODE (nn->op.args);
 				nn->op.args->type = GEL_IDENTIFIER_NODE;
 				nn->op.args->id.id = d_intern ("conj");
+				nn->op.args->id.uninitialized = FALSE;
 
 				nn->op.args->any.next = n;
 				n->any.next = NULL;

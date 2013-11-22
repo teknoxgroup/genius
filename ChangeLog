@@ -1,3 +1,203 @@
+Mon Dec 17 13:52:35 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.16
+
+Mon Dec 17 13:45:21 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c: when forloop (sum/prod/for) is with floats then check
+	  for overrun, and if within 2^-20 times the step size, then still
+	  execute the last body (assume things were because of roundoff
+	  error), this makes things like for n=0 to 1 by 0.1 actually work
+	  as expected.
+
+	* src/mpwrap.[ch], src/eval.c, src/funclib.c, src/matop.c: minor
+	  optimization in make_float and new macro to check real part for
+	  being floating point
+
+	* src/geniustests.txt, src/testfourier.gel: update testsuite
+
+Tue Dec 11 00:10:02 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, src/Makefile.am: exorcise last vestiges of the
+	  linpack inclusion fiasco, and update to new automake initialization
+	  format, and also create xz archives on dist
+
+Mon Dec 10 20:58:42 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: add ability to fit dependent axis automatically
+	  for surface plots.  When z is not specified by x and y limits are
+	  specified for surface plot functions, z is figured out
+
+Mon Dec 10 16:20:53 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: when number of digits of labels is too much
+	  use the scientific notation.  Avoids ugly huge numbers.
+	  Also make the graph slightly bigger (700x500) and in lineplot mode
+	  make the margins bigger so that we don't lose any digits on axes
+	  when zooming out or in.  Also fixup labels for gradient.  Gradient
+	  is now done only for the range of the function not the whole range
+	  that makes it more useful.
+
+	* gtkextra/gtkplot.c, gtkextra/gtkplot3d.c, gtkextra/gtkplotsurface.c:
+	  minor cleanup and fix crash when labels too big.  Also fix gradient
+	  label style settings, and zero out data we just freed.
+
+Fri Dec 07 21:36:50 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, src/gnome-genius.c: kill our own overwrite dialog
+	  since gtk does it already.  Also when no last dir, set current
+	  directory in the file chooser, because the current default 
+	  behaviour is godawfully annoying.  I can always click on "Recent",
+	  but getting to "current working directory" can be quite a chore.
+
+Fri Dec 07 17:21:26 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, help/C/gel-function-list.xml: add ExportPlot
+	  function
+
+Fri Dec 07 00:27:33 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml, help/C/gel-function-list.xml: add
+	  doc for new functions.  Also add details in bits of the docs,
+	  they really still need lots of love.
+
+Thu Dec 06 12:03:12 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add SurfacePlotDrawGrid to draw data directly from
+	  grid to avoid having to make up a data matrix
+
+	* src/graphing.c, gtkextra/gtkplotcanvas.c: Fix flicker during
+	  surface animations by properly freezing the display and also
+	  letting the painting happen at the right time.
+
+Tue Dec 04 23:31:30 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: some cleanup with respect to fitting dependent
+	  axis on surfaces.  Also fix fitting dependent axis for surfaces
+	  plotted with SurfacePlotData
+
+Tue Dec 04 19:50:40 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, gtkextra/gtkplotdt.c:  Add SurfacePlotData which
+	  plots 3d graphs from data, so that we can plot all sorts of
+	  surfaces.  Also LinePlotDrawAxisLabels was not added as parameter
+	  by mistake, so add it
+
+Thu Nov 29 23:02:13 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add SurfacePlotDrawLegends parameter, also
+	  add it to the UI.  Fix LinePlotDrawLabels, and also make sure
+	  LinePlotDrawLegends redraws the plot canvas if changed and
+	  plot canvas is active.
+
+Tue Nov 27 12:59:21 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: Require MPFR 2.3.0
+
+	* src/funclib.c: add Bessel functions
+	  (BesselJ0, BesselJ1, BesselJn, BesselY0, BesselY1, BesselYn)
+
+Tue Nov 27 10:05:50 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* atlapack/ atblas/: remove, this was just a pain and I don't have
+	  time to make it work as is.  We'll try to link to lapack if
+	  available or maybe even make it a requirement.  The fortran version
+	  seems available on most distros so it should not be a problem.
+
+Fri Jul 13 07:15:05 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/genius.c: avoid a small delay on history, it seems no longer
+	  necessary.  Thanks to Ingo Ruhnke.
+
+Sat Jun 23 13:21:05 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel: update where gimps is up to
+
+Thu May 31 11:54:40 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, help/C/gel-function-list.xml: Add
+	  LineplotDrawAxisLabels parameter and corresponding checkbox on the
+	  plotting window to allow not drawing axis labels, useful for
+	  doing tiny scaled down diagrams.
+
+Sat Apr 28 16:58:20 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* Makefile.am, configure.in, atlapack, atblas: add LAPACK/BLAS, but
+	  so far we don't use them.  We'll probably want to cull the parts
+	  we don't use otherwise it just takes forever to compile
+
+Sun Apr 22 23:52:34 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c: avoid linked lists on expanding just one row,
+	  we can do that directly faster.  Improves speed of things
+	  that concatenate things like [a,b,c].  For example sorting.
+
+	* src/geniustests.txt: add some tests
+
+Sun Apr 22 17:53:07 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/structs.h, src/eval.c: MatrixRow tree node is also
+	  used in expanding matrices, not just entering, so
+	  gint16 was just not enough for width.  So can now
+	  handle wider matrices in expansion.
+
+Wed Apr 11 16:56:15 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/symbolic.c: fix derivatives of Im and Re to be the z
+	  derivatives.
+
+	* src/funclib.c, src/symbolic.c, help/C/gel-function-list.xml:
+	  add the sinc function and its derivative.
+
+Mon Apr 09 21:12:40 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matop.c: forgotten nargs setting led to a crash when
+	  adding fake conj.
+	
+	* src/compil.c, src/matop.c: correctly set uninitialized flag
+	  for identifiers.
+
+	* src/eval.[ch]: avoid some uninitialized compilation warnings.
+
+Mon Apr 09 20:44:03 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c, src/structs.h: Store state of "uninitialized"
+	  with identifier nodes so that we don't double warn of uninitialized
+	  identifiers with something like "x+5"
+
+Thu Mar 29 10:35:45 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c, src/eval.c, src/funclib.c, lib/*/*.gel: fix some
+	  spelling and capitalization
+
+	* help/C/gel-function-list.xml: fix spelling
+
+	* combinatorics/recursive_sequences.gel: Fix LinearRecursiveSequence,
+	  and also allow it to take matrix argument
+
+	* src/geniustests.txt: add a few tests
+
+	* help/C/*.xml: Fixes from Luc Pionchon that I totally forgot about
+	  for 1.0.15
+
+Wed Mar 28 17:08:55 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: fix possible uninitialized use when reading 
+	  the compiled library (though it's code that never gets hit
+	  unless the installed library gets corrupted)
+
+	* NEWS: fix typos
+
+Wed Mar 28 15:57:41 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: when running help and things are not documented and not
+	  defined, don't output three lines saying so, just the one error will
+	  do.
+
+Tue Mar 27 22:56:49 2012  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.15
+
 Thu Mar 22 11:25:49 2012  Jiri (George) Lebl <jirka@5z.com>
 
 	* src/funclib.c: remove some redundant code, load the exp for
@@ -26,14 +226,14 @@ Tue Mar 20 11:39:45 2012  Jiri (George) Lebl <jirka@5z.com>
 	  handler.
 
 	* lib/number_theory/primes.gel: update where GIMPS has gotten in
-	  doublechecking
+	  double checking
 
 	* po/POTFILES.in: remove glade-helper.c
 
 Sun Dec 25 10:28:09 2011  Jiri (George) Lebl <jirka@5z.com>
 
 	* lib/number_theory/primes.gel: update where GIMPS has gotten in
-	  doublechecking
+	  double checking
 
 Wed Dec 07 01:40:42 2011  Jiri (George) Lebl <jirka@5z.com>
 
@@ -73,7 +273,7 @@ Fri Jul 29 09:03:53 2011  Jiri (George) Lebl <jirka@5z.com>
 
 	* */Makefile.am: use WARN_CFLAGS
 
-	* src/ve-miscui.c, src/ve-misc.h, src/matrixw.[ch], src/graphing.c,
+	* ve/ve-miscui.c, ve/ve-misc.h, src/matrixw.[ch], src/graphing.c,
 	  src/gnome-genius.c, src/genius-readline-helper.c, src/funclib.c:
 	  Fix warnings and fix a crasher bug in the process
 
@@ -2416,7 +2616,7 @@ Tue Jan 04 10:57:18 2005  George Lebl <jirka@5z.com>
 	  library, DUH!
 
 	* src/genius.c: include term.h AFTER everything since that happens to
-	  redefine the word 'tab' for it's own very evil purposes on some
+	  redefine the word 'tab' for its own very evil purposes on some
 	  systems (some ncurses version or some such)
 
 Thu Dec 23 11:03:27 2004  George Lebl <jirka@5z.com>
@@ -2581,7 +2781,7 @@ Thu Sep 16 18:22:28 2004  George Lebl <jirka@5z.com>
 
 Thu Sep 16 17:54:27 2004  George Lebl <jirka@5z.com>
 
-	* lib/functions/elementary.gel: optimize erf a bit and fix it's
+	* lib/functions/elementary.gel: optimize erf a bit and fix its
 	  comment
 
 	* configure.in, Makefile.am, src/Makefile.am, mpfr/*:  Include a

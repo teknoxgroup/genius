@@ -178,9 +178,18 @@ static double deftinc = 0.01;
 
 static gboolean lineplot_draw_legends = TRUE;
 static gboolean lineplot_draw_legends_cb = TRUE;
+static gboolean lineplot_draw_labels = TRUE;
+static gboolean lineplot_draw_labels_cb = TRUE;
+/* static gboolean lineplot_fit_dependent_axis_cb = TRUE; */
 static gboolean vectorfield_normalize_arrow_length = FALSE;
 static gboolean vectorfield_normalize_arrow_length_cb = FALSE;
 static gboolean vectorfield_normalize_arrow_length_parameter = FALSE;
+static gboolean surfaceplot_draw_legends = TRUE;
+static gboolean surfaceplot_draw_legends_cb = TRUE;
+static gboolean surfaceplot_fit_dependent_axis_cb = TRUE;
+
+static GtkWidget* surfaceplot_dep_axis_buttons = NULL;
+/* static GtkWidget* lineplot_dep_axis_buttons = NULL; */
 
 /* Replotting info */
 static GelEFunc *plot_func[MAXFUNC] = { NULL };
@@ -272,12 +281,20 @@ static double reset_surfacey2 = 10;
 static double reset_surfacez1 = -10;
 static double reset_surfacez2 = 10;
 
+/* surface data */
+static double *surface_data_x = NULL;
+static double *surface_data_y = NULL;
+static double *surface_data_z = NULL;
+static int surface_data_len = 0;
+
 
 /* used for both */
 static double plot_maxy = - G_MAXDOUBLE/2;
 static double plot_miny = G_MAXDOUBLE/2;
 static double plot_maxx = - G_MAXDOUBLE/2;
 static double plot_minx = G_MAXDOUBLE/2;
+static double plot_maxz = - G_MAXDOUBLE/2;
+static double plot_minz = G_MAXDOUBLE/2;
 
 static GelCtx *plot_ctx = NULL;
 static GelETree *plot_arg = NULL;
@@ -294,7 +311,7 @@ static void plot_functions (gboolean do_window_present,
 			    gboolean from_gui);
 
 /* surfaces */
-static void plot_surface_functions (gboolean do_window_present);
+static void plot_surface_functions (gboolean do_window_present, gboolean fit_function);
 
 /* replot the slope/vector fields after zoom or other axis changing event */
 static void replot_fields (void);
@@ -316,13 +333,14 @@ create_range_spinboxes (const char *title, GtkWidget **titlew,
 static void set_lineplot_labels (void);
 static void set_surface_labels (void);
 
-#define WIDTH 640
-#define HEIGHT 480
+#define WIDTH 700
+#define HEIGHT 500
 #define ASPECT ((double)HEIGHT/(double)WIDTH)
 
 #define PROPORTION 0.85
 #define PROPORTION3D 0.80
-#define PROPORTION_OFFSET 0.075
+#define PROPORTION_OFFSETX 0.1
+#define PROPORTION_OFFSETY 0.075
 #define PROPORTION3D_OFFSET 0.1
 
 #include "funclibhelper.cP"
@@ -367,6 +385,23 @@ is_identifier (const char *e)
 			return FALSE;
 	}
 	return TRUE;
+}
+
+static char *
+FIXME_removeuscore (char *s)
+{
+	char *p;
+	s = g_strdup (s);
+
+	p = strchr (s, '_');
+	if (p != NULL) {
+		do {
+			*p = *(p+1);
+			p++;
+		} while (*p != '\0');
+	}
+
+	return s;
 }
 
 
@@ -1144,6 +1179,11 @@ do_export_cb (int export_type)
 	if (last_export_dir != NULL) {
 		gtk_file_chooser_set_current_folder
 			(GTK_FILE_CHOOSER (fs), last_export_dir);
+	} else {
+		char *s = g_get_current_dir ();
+		gtk_file_chooser_set_current_folder
+			(GTK_FILE_CHOOSER (fs), s);
+		g_free (s);
 	}
 
 	gtk_widget_show (fs);
@@ -1275,11 +1315,11 @@ plot_zoomfit_cb (void)
 		genius_setup.info_box = TRUE;
 		genius_setup.error_box = TRUE;
 
-		size = plot_maxy - plot_miny;
-		if (size <= 0)
-			size = 1.0;
-
 		if (plot_mode == MODE_LINEPLOT) {
+			size = plot_maxy - plot_miny;
+			if (size <= 0)
+				size = 1.0;
+
 			ploty1 = plot_miny - size * 0.05;
 			ploty2 = plot_maxy + size * 0.05;
 
@@ -1295,6 +1335,9 @@ plot_zoomfit_cb (void)
 
 		} else if (plot_mode == MODE_LINEPLOT_PARAMETRIC) {
 			double sizex;
+			size = plot_maxy - plot_miny;
+			if (size <= 0)
+				size = 1.0;
 			sizex = plot_maxx - plot_minx;
 			if (sizex <= 0)
 				sizex = 1.0;
@@ -1326,9 +1369,12 @@ plot_zoomfit_cb (void)
 				ploty2 = (G_MAXDOUBLE/2);
 
 		} else if (plot_mode == MODE_SURFACE) {
-			surfacez1 = plot_miny - size * 0.05;
-			surfacez2 = plot_maxy + size * 0.05;
-
+			size = plot_maxz - plot_minz;
+			if (size <= 0)
+				size = 1.0;
+			surfacez1 = plot_minz - size * 0.05;
+			surfacez2 = plot_maxz + size * 0.05;
+			
 			/* sanity */
 			if (surfacez2 <= surfacez1)
 				surfacez2 = surfacez1 + 0.1;
@@ -1549,22 +1595,22 @@ line_plot_move_about (void)
 		/* move plot out of the way if we are in parametric mode and
 		 * there is a legend */
 		gtk_plot_move (GTK_PLOT (line_plot),
-			       PROPORTION_OFFSET,
-			       PROPORTION_OFFSET);
+			       PROPORTION_OFFSETX,
+			       PROPORTION_OFFSETY);
 		gtk_plot_resize (GTK_PLOT (line_plot),
-				 1.0-2*PROPORTION_OFFSET,
-				 1.0-2*PROPORTION_OFFSET-0.05);
+				 1.0-2*PROPORTION_OFFSETX,
+				 1.0-2*PROPORTION_OFFSETY-0.05);
 
 		gtk_plot_legends_move (GTK_PLOT (line_plot),
 				       0.0,
 				       1.07);
 	} else {
 		gtk_plot_move (GTK_PLOT (line_plot),
-			       PROPORTION_OFFSET,
-			       PROPORTION_OFFSET);
+			       PROPORTION_OFFSETX,
+			       PROPORTION_OFFSETY);
 		gtk_plot_resize (GTK_PLOT (line_plot),
-				 1.0-2*PROPORTION_OFFSET,
-				 1.0-2*PROPORTION_OFFSET);
+				 1.0-2*PROPORTION_OFFSETX,
+				 1.0-2*PROPORTION_OFFSETY);
 		gtk_plot_legends_move (GTK_PLOT (line_plot), 0.80, 0.05);
 	}
 }
@@ -1584,10 +1630,10 @@ add_line_plot (void)
 	plot_child = gtk_plot_canvas_plot_new (GTK_PLOT (line_plot));
 	gtk_plot_canvas_put_child (GTK_PLOT_CANVAS (plot_canvas),
 				   plot_child,
-				   PROPORTION_OFFSET,
-				   PROPORTION_OFFSET,
-				   1.0-PROPORTION_OFFSET,
-				   1.0-PROPORTION_OFFSET);
+				   PROPORTION_OFFSETX,
+				   PROPORTION_OFFSETY,
+				   1.0-PROPORTION_OFFSETX,
+				   1.0-PROPORTION_OFFSETY);
 
 	top = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_TOP);
 	right = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_RIGHT);
@@ -1611,6 +1657,24 @@ add_line_plot (void)
 
 	line_plot_move_about ();
 }
+
+static void
+surface_plot_move_about (void)
+{
+	if (surface_plot == NULL)
+		return;
+
+	if (surfaceplot_draw_legends) {
+		gtk_plot_move (GTK_PLOT (surface_plot),
+			       0.0,
+			       PROPORTION3D_OFFSET);
+	} else {
+		gtk_plot_move (GTK_PLOT (surface_plot),
+			       PROPORTION3D_OFFSET,
+			       PROPORTION3D_OFFSET);
+	}
+}
+
 
 static void
 add_surface_plot (void)
@@ -1658,6 +1722,8 @@ add_surface_plot (void)
 	gtk_plot_set_legends_border (GTK_PLOT (surface_plot),
 				     GTK_PLOT_BORDER_LINE, 3);
 	gtk_plot_legends_move (GTK_PLOT (surface_plot), 0.93, 0.05);
+
+	surface_plot_move_about ();
 }
 
 static void
@@ -2080,7 +2146,8 @@ clear_graph (void)
 }
 
 static void
-get_ticks (double start, double end, double *tick, int *prec)
+get_ticks (double start, double end, double *tick, int *prec,
+	   int *style)
 {
 	int incs;
 	double len = end-start;
@@ -2119,9 +2186,17 @@ get_ticks (double start, double end, double *tick, int *prec)
 		}
 	}
 
-	if (tickprec + extra_prec <= 0) {
+	if (tickprec + extra_prec <= -6) {
+		*prec = 1;
+		*style = GTK_PLOT_LABEL_EXP;
+	} else if (tickprec + extra_prec <= 0) {
+		*style = GTK_PLOT_LABEL_FLOAT;
 		*prec = 0;
+	} else if (tickprec + extra_prec >= 6) {
+		*prec = 1;
+		*style = GTK_PLOT_LABEL_EXP;
 	} else {
+		*style = GTK_PLOT_LABEL_FLOAT;
 		*prec = tickprec + extra_prec;
 	}
 }
@@ -2129,13 +2204,13 @@ get_ticks (double start, double end, double *tick, int *prec)
 static void
 plot_setup_axis (void)
 {
-	int xprec, yprec;
+	int xprec, yprec, xstyle, ystyle;
 	double xtick, ytick;
-	GtkPlotAxis *x, *y;
+	GtkPlotAxis *axis;
 	GdkColor gray;
 
-	get_ticks (plotx1, plotx2, &xtick, &xprec);
-	get_ticks (ploty1, ploty2, &ytick, &yprec);
+	get_ticks (plotx1, plotx2, &xtick, &xprec, &xstyle);
+	get_ticks (ploty1, ploty2, &ytick, &yprec, &ystyle);
 
 	gtk_plot_freeze (GTK_PLOT (line_plot));
 
@@ -2176,25 +2251,37 @@ plot_setup_axis (void)
 					     &gray);
 
 
-	x = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_TOP);
-	gtk_plot_axis_set_labels_style (x,
-					GTK_PLOT_LABEL_FLOAT,
+	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_TOP);
+	gtk_plot_axis_set_labels_style (axis,
+					xstyle /* style */,
 					xprec /* precision */);
+	gtk_plot_axis_show_labels (axis, lineplot_draw_labels ?
+				      GTK_PLOT_LABEL_OUT :
+				      GTK_PLOT_LABEL_NONE);
 
-	x = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_BOTTOM);
-	gtk_plot_axis_set_labels_style (x,
-					GTK_PLOT_LABEL_FLOAT,
+	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_BOTTOM);
+	gtk_plot_axis_set_labels_style (axis,
+					xstyle /* style */,
 					xprec /* precision */);
+	gtk_plot_axis_show_labels (axis, lineplot_draw_labels ?
+				      GTK_PLOT_LABEL_OUT :
+				      GTK_PLOT_LABEL_NONE);
 
-	y = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_LEFT);
-	gtk_plot_axis_set_labels_style (y,
-					GTK_PLOT_LABEL_FLOAT,
+	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_LEFT);
+	gtk_plot_axis_set_labels_style (axis,
+					ystyle /* style */,
 					yprec /* precision */);
+	gtk_plot_axis_show_labels (axis, lineplot_draw_labels ?
+				      GTK_PLOT_LABEL_OUT :
+				      GTK_PLOT_LABEL_NONE);
 
-	y = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_RIGHT);
-	gtk_plot_axis_set_labels_style (y,
-					GTK_PLOT_LABEL_FLOAT,
+	axis = gtk_plot_get_axis (GTK_PLOT (line_plot), GTK_PLOT_AXIS_RIGHT);
+	gtk_plot_axis_set_labels_style (axis,
+					ystyle /* style */,
 					yprec /* precision */);
+	gtk_plot_axis_show_labels (axis, lineplot_draw_labels ?
+				      GTK_PLOT_LABEL_OUT :
+				      GTK_PLOT_LABEL_NONE);
 
 
 	/* FIXME: implement logarithmic scale
@@ -2209,12 +2296,13 @@ static void
 surface_setup_axis (void)
 {
 	int xprec, yprec, zprec;
+	int xstyle, ystyle, zstyle;
 	double xtick, ytick, ztick;
 	GtkPlotAxis *x, *y, *z;
 
-	get_ticks (surfacex1, surfacex2, &xtick, &xprec);
-	get_ticks (surfacey1, surfacey2, &ytick, &yprec);
-	get_ticks (surfacez1, surfacez2, &ztick, &zprec);
+	get_ticks (surfacex1, surfacex2, &xtick, &xprec, &xstyle);
+	get_ticks (surfacey1, surfacey2, &ytick, &yprec, &ystyle);
+	get_ticks (surfacez1, surfacez2, &ztick, &zprec, &zstyle);
 
 	x = gtk_plot3d_get_axis (GTK_PLOT3D (surface_plot), GTK_PLOT_AXIS_X);
 	y = gtk_plot3d_get_axis (GTK_PLOT3D (surface_plot), GTK_PLOT_AXIS_Y);
@@ -2232,13 +2320,13 @@ surface_setup_axis (void)
 	gtk_plot_axis_set_ticks (z, ztick, 1);
 
 	gtk_plot_axis_set_labels_style (x,
-					GTK_PLOT_LABEL_FLOAT,
+					xstyle,
 					xprec /* precision */);
 	gtk_plot_axis_set_labels_style (y,
-					GTK_PLOT_LABEL_FLOAT,
+					ystyle,
 					yprec /* precision */);
 	gtk_plot_axis_set_labels_style (z,
-					GTK_PLOT_LABEL_FLOAT,
+					zstyle,
 					zprec /* precision */);
 
 	gtk_plot_axis_thaw (x);
@@ -2250,14 +2338,43 @@ surface_setup_axis (void)
 static void
 surface_setup_steps (void)
 {
+	gtk_plot3d_set_xrange (GTK_PLOT3D (surface_plot), surfacex1, surfacex2);
+	gtk_plot3d_set_yrange (GTK_PLOT3D (surface_plot), surfacey1, surfacey2);
 	gtk_plot_surface_set_xstep (GTK_PLOT_SURFACE (surface_data), (surfacex2-surfacex1)/30);
 	gtk_plot_surface_set_ystep (GTK_PLOT_SURFACE (surface_data), (surfacey2-surfacey1)/30);
+}
+
+static void
+surface_setup_gradient (void)
+{
+	double min, max, absminmax;
+
+	min = MAX(surfacez1, plot_minz);
+	max = MIN(surfacez2, plot_maxz);
 
 	gtk_plot_data_set_gradient (surface_data,
-				    surfacez1,
-				    surfacez2,
+				    min,
+				    max,
 				    10 /* nlevels */,
 				    0 /* nsublevels */);
+	absminmax = MAX(fabs(min),fabs(max));
+	if (absminmax < 0.0001 || absminmax > 1000000) {
+		gtk_plot_data_gradient_set_style (surface_data,
+						  GTK_PLOT_LABEL_EXP,
+						  3);
+	} else {
+		int powten = floor (log10(absminmax));
+		int prec = 0;
+		if (-powten+2 > 0) {
+			prec = -powten+2;
+		} else {
+			prec = 0;
+		}
+		gtk_plot_data_gradient_set_style (surface_data,
+						  GTK_PLOT_LABEL_FLOAT,
+						  prec);
+	}
+
 }
 
 static void
@@ -2268,6 +2385,8 @@ plot_axis (void)
 
 	plot_maxy = - G_MAXDOUBLE/2;
 	plot_miny = G_MAXDOUBLE/2;
+	plot_maxz = - G_MAXDOUBLE/2;
+	plot_minz = G_MAXDOUBLE/2;
 	plot_maxx = - G_MAXDOUBLE/2;
 	plot_minx = G_MAXDOUBLE/2;
 
@@ -2279,6 +2398,8 @@ plot_axis (void)
 	} else if (plot_mode == MODE_SURFACE) {
 		surface_setup_axis ();
 		surface_setup_steps ();
+		gtk_plot_surface_build_mesh (GTK_PLOT_SURFACE (surface_data));
+		surface_setup_gradient ();
 		/* FIXME: this doesn't work (crashes) must fix in GtkExtra, then
 		   we can always just autoscale stuff
 		   gtk_plot3d_autoscale (GTK_PLOT3D (surface_plot));
@@ -2700,10 +2821,10 @@ surface_func_data (GtkPlot *plot, GtkPlotData *data, double x, double y, gboolea
 		if (error != NULL)
 			*error = TRUE;
 	} else {
-		if G_UNLIKELY (z > plot_maxy)
-			plot_maxy = z;
-		if G_UNLIKELY (z < plot_miny)
-			plot_miny = z;
+		if G_UNLIKELY (z > plot_maxz)
+			plot_maxz = z;
+		if G_UNLIKELY (z < plot_minz)
+			plot_minz = z;
 	}
 
 	size = surfacez1 - surfacez2;
@@ -3985,6 +4106,9 @@ plot_functions (gboolean do_window_present,
 		gtk_plot_canvas_thaw (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+
+		if (gel_evalnode_hook != NULL)
+			(*gel_evalnode_hook)();
 	}
 
 	plot_in_progress --;
@@ -3992,24 +4116,25 @@ plot_functions (gboolean do_window_present,
 }
 
 static void
-plot_surface_functions (gboolean do_window_present)
+plot_surface_functions (gboolean do_window_present, gboolean fit_function)
 {
 	init_var_names ();
 
 	ensure_window (do_window_present);
 
+	if (plot_canvas != NULL /* sanity */)
+		gtk_plot_canvas_freeze (GTK_PLOT_CANVAS (plot_canvas));
+
 	clear_graph ();
 
 	add_surface_plot ();
-
-	if (plot_canvas != NULL /* sanity */)
-		gtk_plot_canvas_freeze (GTK_PLOT_CANVAS (plot_canvas));
 
 	GTK_PLOT_CANVAS_UNSET_FLAGS (GTK_PLOT_CANVAS (plot_canvas),
 				     GTK_PLOT_CANVAS_CAN_SELECT);
 
 	plot_in_progress ++;
 	plot_window_setup ();
+
 
 	/* sanity */
 	if (surfacex2 == surfacex1)
@@ -4019,10 +4144,11 @@ plot_surface_functions (gboolean do_window_present)
 	if (surfacez2 == surfacez1)
 		surfacez2 = surfacez1 + MINPLOT;
 
-	plot_maxy = - G_MAXDOUBLE/2;
-	plot_miny = G_MAXDOUBLE/2;
-
-	surface_setup_axis ();
+	/* only if plotting a function do we need to reset the min/max */
+	if (surface_func != NULL) {
+		plot_maxz = - G_MAXDOUBLE/2;
+		plot_minz = G_MAXDOUBLE/2;
+	}
 
 	gtk_plot3d_reset_angles (GTK_PLOT3D (surface_plot));
 	gtk_plot3d_rotate_x (GTK_PLOT3D (surface_plot), 60.0);
@@ -4033,7 +4159,6 @@ plot_surface_functions (gboolean do_window_present)
 	if (gel_evalnode_hook != NULL)
 		(*gel_evalnode_hook)();
 
-
 	if (surface_func != NULL) {
 		char *label;
 
@@ -4042,7 +4167,13 @@ plot_surface_functions (gboolean do_window_present)
 		gtk_plot_surface_use_amplitud (GTK_PLOT_SURFACE (surface_data), FALSE);
 		gtk_plot_surface_use_height_gradient (GTK_PLOT_SURFACE (surface_data), TRUE);
 		gtk_plot_surface_set_mesh_visible (GTK_PLOT_SURFACE (surface_data), TRUE);
-		gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), TRUE);
+		if (surfaceplot_draw_legends) {
+			gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), TRUE);
+			gtk_plot_data_show_legend (GTK_PLOT_DATA (surface_data));
+		} else {
+			gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), FALSE);
+			gtk_plot_data_hide_legend (GTK_PLOT_DATA (surface_data));
+		}
 		gtk_plot_data_move_gradient (GTK_PLOT_DATA (surface_data),
 					     0.93, 0.15);
 		gtk_plot_axis_hide_title (GTK_PLOT_DATA (surface_data)->gradient);
@@ -4052,22 +4183,99 @@ plot_surface_functions (gboolean do_window_present)
 
 		surface_setup_steps ();
 
+		gtk_plot_surface_build_mesh (GTK_PLOT_SURFACE (surface_data));
+		/* plot_minz and plot_maxz are set in build_mesh
+		 * calling the function */
+
+		if (fit_function) {
+			double size = plot_maxz - plot_minz;
+			if (size <= 0)
+				size = 1.0;
+			surfacez1 = plot_minz - size * 0.05;
+			surfacez2 = plot_maxz + size * 0.05;
+			
+			/* sanity */
+			if (surfacez2 <= surfacez1)
+				surfacez2 = surfacez1 + 0.1;
+
+			/* sanity */
+			if (surfacez1 < -(G_MAXDOUBLE/2))
+				surfacez1 = -(G_MAXDOUBLE/2);
+			if (surfacez2 > (G_MAXDOUBLE/2))
+				surfacez2 = (G_MAXDOUBLE/2);
+		}
+
+		surface_setup_gradient ();
+
 		gtk_widget_show (GTK_WIDGET (surface_data));
 
 		label = label_func (-1, surface_func, /* FIXME: correct variable */ "...", surface_func_name);
 		gtk_plot_data_set_legend (surface_data, label);
 		g_free (label);
+	} else if (surface_data_x != NULL &&
+		   surface_data_y != NULL &&
+		   surface_data_z != NULL) {
+
+		surface_data = GTK_PLOT_DATA (gtk_plot_surface_new ());
+		gtk_plot_surface_use_amplitud (GTK_PLOT_SURFACE (surface_data), FALSE);
+		gtk_plot_surface_use_height_gradient (GTK_PLOT_SURFACE (surface_data), TRUE);
+		gtk_plot_surface_set_mesh_visible (GTK_PLOT_SURFACE (surface_data), TRUE);
+		if (surfaceplot_draw_legends) {
+			gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), TRUE);
+			gtk_plot_data_show_legend (GTK_PLOT_DATA (surface_data));
+		} else {
+			gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), FALSE);
+			gtk_plot_data_hide_legend (GTK_PLOT_DATA (surface_data));
+		}
+		gtk_plot_data_move_gradient (GTK_PLOT_DATA (surface_data),
+					     0.93, 0.15);
+		gtk_plot_axis_hide_title (GTK_PLOT_DATA (surface_data)->gradient);
+
+		gtk_plot_data_set_x (GTK_PLOT_DATA (surface_data), surface_data_x);
+		gtk_plot_data_set_y (GTK_PLOT_DATA (surface_data), surface_data_y);
+		gtk_plot_data_set_z (GTK_PLOT_DATA (surface_data), surface_data_z);
+		gtk_plot_data_set_numpoints (GTK_PLOT_DATA (surface_data), surface_data_len);
+		gtk_plot_surface_build_mesh (GTK_PLOT_SURFACE (surface_data));
+
+		gtk_plot_surface_recalc_nodes (GTK_PLOT_SURFACE (surface_data));
+
+
+		gtk_plot_add_data (GTK_PLOT (surface_plot),
+				   surface_data);
+
+		surface_setup_gradient ();
+
+		gtk_widget_show (GTK_WIDGET (surface_data));
+
+		if (surface_func_name)
+			gtk_plot_data_set_legend (surface_data, surface_func_name);
+		else
+			gtk_plot_data_set_legend (surface_data, "");
 	}
+
+	surface_setup_axis ();
 
 	/* FIXME: this doesn't work (crashes) must fix in GtkExtra
 	gtk_plot3d_autoscale (GTK_PLOT3D (surface_plot));
 	*/
 
 	/* could be whacked by closing the window or some such */
+	if (surface_plot != NULL) {
+		if (surfaceplot_draw_legends)
+			gtk_plot_show_legends (GTK_PLOT (surface_plot));
+		else
+			gtk_plot_hide_legends (GTK_PLOT (surface_plot));
+	}
+
+
+	/* could be whacked by closing the window or some such */
 	if (plot_canvas != NULL) {
 		gtk_plot_canvas_thaw (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
 		gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+
+		if (gel_evalnode_hook != NULL)
+			(*gel_evalnode_hook)();
 	}
 
 	plot_in_progress --;
@@ -4990,6 +5198,15 @@ create_lineplot_box (void)
 			  G_CALLBACK (optioncb),
 			  (gpointer)&lineplot_draw_legends_cb);
 
+	/* draw axis labels? */
+	w = gtk_check_button_new_with_mnemonic (_("Draw axis labels"));
+	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
+				      lineplot_draw_labels_cb);
+	g_signal_connect (G_OBJECT (w), "toggled",
+			  G_CALLBACK (optioncb),
+			  (gpointer)&lineplot_draw_labels_cb);
+
 	/* change varnames */
 	b = gtk_button_new_with_label (_("Change variable names..."));
 	gtk_box_pack_end (GTK_BOX (hbox), b, FALSE, FALSE, 0);
@@ -5035,11 +5252,24 @@ create_lineplot_box (void)
 	return mainbox;
 }
 
+/*option callback*/
+static void
+surface_fit_cb_cb (GtkWidget * widget)
+{
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+		surfaceplot_fit_dependent_axis_cb = TRUE;
+		gtk_widget_set_sensitive (surfaceplot_dep_axis_buttons, FALSE);
+	} else {
+		surfaceplot_fit_dependent_axis_cb = FALSE;
+		gtk_widget_set_sensitive (surfaceplot_dep_axis_buttons, TRUE);
+	}
+}
+
 static GtkWidget *
 create_surface_box (void)
 {
 	GtkWidget *mainbox, *frame;
-	GtkWidget *hbox, *box, *b;
+	GtkWidget *hbox, *box, *b, *w;
 
 	init_var_names ();
 
@@ -5069,10 +5299,19 @@ create_surface_box (void)
 	surface_entry_status = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (b), surface_entry_status, FALSE, FALSE, 0);
 
-
-	/* change varnames */
 	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
 	gtk_box_pack_start (GTK_BOX (mainbox), hbox, FALSE, FALSE, 0);
+
+	/* draw legend? */
+	w = gtk_check_button_new_with_mnemonic (_("_Draw legend"));
+	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
+				      surfaceplot_draw_legends_cb);
+	g_signal_connect (G_OBJECT (w), "toggled",
+			  G_CALLBACK (optioncb),
+			  (gpointer)&surfaceplot_draw_legends_cb);
+
+	/* change varnames */
 
 	b = gtk_button_new_with_label (_("Change variable names..."));
 	gtk_box_pack_end (GTK_BOX (hbox), b, FALSE, FALSE, 0);
@@ -5123,6 +5362,16 @@ create_surface_box (void)
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
 	gtk_box_pack_start (GTK_BOX(box), b, FALSE, FALSE, 0);
+	surfaceplot_dep_axis_buttons = b;
+
+	/* fit dependent axis? */
+	w = gtk_check_button_new_with_label (FIXME_removeuscore(_("_Fit dependent axis")));
+	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
+				      surfaceplot_fit_dependent_axis_cb);
+	g_signal_connect (G_OBJECT (w), "toggled",
+			  G_CALLBACK (surface_fit_cb_cb), NULL);
+	surface_fit_cb_cb (w);
 
 	/* set labels correclty */
 	set_surface_labels ();
@@ -5364,6 +5613,8 @@ surface_from_dialog (void)
 		goto whack_copied_funcs;
 	}
 
+	surfaceplot_draw_legends = surfaceplot_draw_legends_cb;
+
 	x1 = surf_spinx1;
 	x2 = surf_spinx2;
 	y1 = surf_spiny1;
@@ -5422,13 +5673,33 @@ surface_from_dialog (void)
 
 	surface_func = func;
 	func = NULL;
+	
+	/* don't plot from data */
+	if (surface_data_x != NULL) {
+		g_free (surface_data_x);
+		surface_data_x = NULL;
+	}
+	if (surface_data_y != NULL) {
+		g_free (surface_data_y);
+		surface_data_y = NULL;
+	}
+	if (surface_data_z != NULL) {
+		g_free (surface_data_z);
+		surface_data_z = NULL;
+	}
 
 	/* setup name when the functions don't have their own name */
 	if (surface_func->id == NULL)
 		surface_func_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (surface_entry)));
 
 	plot_mode = MODE_SURFACE;
-	plot_surface_functions (TRUE /* do_window_present */);
+	plot_surface_functions (TRUE /* do_window_present */,
+				surfaceplot_fit_dependent_axis_cb /*fit*/);
+
+	if (surfaceplot_fit_dependent_axis_cb) {
+		reset_surfacez1 = surfacez1;
+		reset_surfacez2 = surfacez2;
+	}
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -5952,6 +6223,7 @@ plot_from_dialog (void)
 	int function_page = gtk_notebook_get_current_page (GTK_NOTEBOOK (function_notebook));
 
 	lineplot_draw_legends = lineplot_draw_legends_cb;
+	lineplot_draw_labels = lineplot_draw_labels_cb;
 
 	if (function_page == 0)
 		plot_from_dialog_lineplot ();
@@ -6028,6 +6300,7 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	double x1, x2, y1, y2, z1, z2;
 	int i;
 	GelEFunc *func = NULL;
+	gboolean fitz = FALSE;
 
 	if G_UNLIKELY (plot_in_progress != 0) {
 		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
@@ -6062,8 +6335,15 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	if (a[i] != NULL) {
 		if (a[i]->type == GEL_MATRIX_NODE) {
-			if ( ! get_limits_from_matrix_surf (a[i], &x1, &x2, &y1, &y2, &z1, &z2))
-				goto whack_copied_funcs;
+			if (gel_matrixw_elements (a[i]->mat.matrix) == 6) {
+				if ( ! get_limits_from_matrix_surf (a[i], &x1, &x2, &y1, &y2, &z1, &z2))
+					goto whack_copied_funcs;
+				fitz = FALSE;
+			} else {
+				if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
+					goto whack_copied_funcs;
+				fitz = TRUE;
+			}
 			i++;
 		} else {
 			GET_DOUBLE(x1, i, "SurfacePlot");
@@ -6077,9 +6357,11 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 					if (a[i] != NULL) {
 						GET_DOUBLE(y2, i, "SurfacePlot");
 						i++;
+						fitz = TRUE;
 						if (a[i] != NULL) {
 							GET_DOUBLE(z1, i, "SurfacePlot");
 							i++;
+							fitz = FALSE;
 							if (a[i] != NULL) {
 								GET_DOUBLE(z2, i, "SurfacePlot");
 								i++;
@@ -6138,6 +6420,20 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	surface_func = func;
 	func = NULL;
 
+	/* don't plot from data */
+	if (surface_data_x != NULL) {
+		g_free (surface_data_x);
+		surface_data_x = NULL;
+	}
+	if (surface_data_y != NULL) {
+		g_free (surface_data_y);
+		surface_data_y = NULL;
+	}
+	if (surface_data_z != NULL) {
+		g_free (surface_data_z);
+		surface_data_z = NULL;
+	}
+
 	reset_surfacex1 = surfacex1 = x1;
 	reset_surfacex2 = surfacex2 = x2;
 	reset_surfacey1 = surfacey1 = y1;
@@ -6146,7 +6442,13 @@ SurfacePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	reset_surfacez2 = surfacez2 = z2;
 
 	plot_mode = MODE_SURFACE;
-	plot_surface_functions (FALSE /* do_window_present */);
+	plot_surface_functions (FALSE /* do_window_present */,
+				fitz /* fit */);
+
+	if (fitz) {
+		reset_surfacez1 = surfacez1;
+		reset_surfacez2 = surfacez2;
+	}
 
 	if (gel_interrupted)
 		return NULL;
@@ -7383,6 +7685,539 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 	return gel_makenum_null ();
 }
 
+static gboolean
+get_surface_data (GelETree *a, double **x, double **y, double **z, int *len,
+		  double *minx, double *maxx,
+		  double *miny, double *maxy,
+		  double *minz, double *maxz)
+{
+	int i;
+	GelMatrixW *m;
+	gboolean nominmax = TRUE;
+#define UPDATE_MINMAX \
+	if (minx != NULL) { \
+		if (xx > *maxx || nominmax) *maxx = xx; \
+		if (xx < *minx || nominmax) *minx = xx; \
+		if (yy > *maxy || nominmax) *maxy = yy; \
+		if (yy < *miny || nominmax) *miny = yy; \
+		if (zz > *maxz || nominmax) *maxz = zz; \
+		if (zz < *minz || nominmax) *minz = zz; \
+		nominmax = FALSE; \
+	}
+
+	g_return_val_if_fail (a->type == GEL_MATRIX_NODE, FALSE);
+
+	m = a->mat.matrix;
+
+	if G_UNLIKELY ( ! gel_is_matrix_value_only_real (m)) {
+		gel_errorout (_("%s: Surface should be given as a real, n by 3 matrix "
+				"with columns for x, y, z, where n>=3"),
+			      "SurfacePlotData");
+		return FALSE;
+	}
+
+	if (gel_matrixw_width (m) == 3 &&
+	    gel_matrixw_height (m) >= 3) {
+		*len = gel_matrixw_height (m);
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+		*z = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			double xx, yy, zz;
+			GelETree *t = gel_matrixw_index (m, 0, i);
+			(*x)[i] = xx = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 1, i);
+			(*y)[i] = yy = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 2, i);
+			(*z)[i] = zz = mpw_get_double (t->val.value);
+			UPDATE_MINMAX
+		}
+	} else if (gel_matrixw_width (m) == 1 &&
+		   gel_matrixw_height (m) % 3 == 0 &&
+		   gel_matrixw_height (m) >= 9) {
+		*len = gel_matrixw_height (m) / 3;
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+		*z = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			double xx, yy, zz;
+			GelETree *t = gel_matrixw_index (m, 0, 3*i);
+			(*x)[i] = xx = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 0, (3*i) + 1);
+			(*y)[i] = yy = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, 0, (3*i) + 2);
+			(*z)[i] = zz = mpw_get_double (t->val.value);
+			UPDATE_MINMAX
+		}
+	} else if (gel_matrixw_height (m) == 1 &&
+		   gel_matrixw_width (m) % 3 == 0 &&
+		   gel_matrixw_width (m) >= 9) {
+		*len = gel_matrixw_width (m) / 3;
+
+		*x = g_new (double, *len);
+		*y = g_new (double, *len);
+		*z = g_new (double, *len);
+
+		for (i = 0; i < *len; i++) {
+			double xx, yy, zz;
+			GelETree *t = gel_matrixw_index (m, 3*i, 0);
+			(*x)[i] = xx = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, (3*i) + 1, 0);
+			(*y)[i] = yy = mpw_get_double (t->val.value);
+			t = gel_matrixw_index (m, (3*i) + 2, 0);
+			(*z)[i] = zz = mpw_get_double (t->val.value);
+			UPDATE_MINMAX
+		}
+	} else {
+		gel_errorout (_("%s: Surface should be given as a real, n by 3 matrix "
+				"with columns for x, y, z, where n>=3"),
+			      "SurfacePlotData");
+		return FALSE;
+	}
+
+	return TRUE;
+#undef UPDATE_MINMAX
+}
+
+static GelETree *
+SurfacePlotData_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	double x1, x2, y1, y2, z1, z2;
+	double *x,*y,*z;
+	char *name = NULL;
+	int len;
+	int i;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "SurfacePlotData", "SurfacePlotData");
+		return NULL;
+	}
+
+	i = 0;
+
+	if (a[i] != NULL && a[i]->type != GEL_MATRIX_NODE) {
+		gel_errorout (_("%s: argument not a matrix of data"), "SurfacePlotData");
+		return NULL;
+	}
+
+	if ( ! get_surface_data (a[i], &x, &y, &z, &len,
+				 &x1, &x2, &y1, &y2, &z1, &z2)) {
+		return NULL;
+	}
+
+	/* sanity checks */
+	if (x1 == x2) {
+		x1=x1-1;
+		x2=x2+1;
+	}
+	if (y1 == y2) {
+		y1=y1-1;
+		y2=y2+1;
+	}
+	if (z1 == z2) {
+		z1=z1-1;
+		z2=z2+1;
+	}
+
+	i++;
+
+	if (a[i] != NULL && a[i]->type == GEL_STRING_NODE) {
+		name = a[i]->str.str;
+		i++;
+	}
+
+	/* Defaults to min/max of the data */
+
+	if (a[i] != NULL) {
+		if (a[i]->type == GEL_MATRIX_NODE) {
+			if (gel_matrixw_elements (a[i]->mat.matrix) == 6) {
+				if ( ! get_limits_from_matrix_surf (a[i], &x1, &x2, &y1, &y2, &z1, &z2))
+					goto whack_copied_data;
+			} else {
+				if ( ! get_limits_from_matrix (a[i], &x1, &x2, &y1, &y2))
+					goto whack_copied_data;
+			}
+
+			i++;
+		} else {
+			GET_DOUBLE(x1, i, "SurfacePlotData");
+			i++;
+			if (a[i] != NULL) {
+				GET_DOUBLE(x2, i, "SurfacePlotData");
+				i++;
+				if (a[i] != NULL) {
+					GET_DOUBLE(y1, i, "SurfacePlotData");
+					i++;
+					if (a[i] != NULL) {
+						GET_DOUBLE(y2, i, "SurfacePlotData");
+						i++;
+						if (a[i] != NULL) {
+							GET_DOUBLE(z1, i, "SurfacePlotData");
+							i++;
+							if (a[i] != NULL) {
+								GET_DOUBLE(z2, i, "SurfacePlotData");
+								i++;
+							}
+						}
+					}
+				}
+			}
+			/* FIXME: what about errors */
+			if G_UNLIKELY (gel_error_num != 0) {
+				gel_error_num = 0;
+				goto whack_copied_data;
+			}
+		}
+	}
+
+	if (x1 > x2) {
+		double s = x1;
+		x1 = x2;
+		x2 = s;
+	}
+
+	if (y1 > y2) {
+		double s = y1;
+		y1 = y2;
+		y2 = s;
+	}
+
+	if (z1 > z2) {
+		double s = z1;
+		z1 = z2;
+		z2 = s;
+	}
+
+	if (x1 == x2) {
+		gel_errorout (_("%s: invalid X range"), "SurfacePlotData");
+		goto whack_copied_data;
+	}
+
+	if (y1 == y2) {
+		gel_errorout (_("%s: invalid Y range"), "SurfacePlotData");
+		goto whack_copied_data;
+	}
+
+	if (z1 == z2) {
+		gel_errorout (_("%s: invalid Z range"), "SurfacePlotData");
+		goto whack_copied_data;
+	}
+
+	/* name could also come after */
+	if (a[i] != NULL && a[i]->type == GEL_STRING_NODE) {
+		name = a[i]->str.str;
+		i++;
+	}
+
+	if (surface_func_name != NULL)
+		g_free (surface_func_name);
+	if (name != NULL)
+		surface_func_name = g_strdup (name);
+	else
+		surface_func_name = NULL;
+
+	surface_func = NULL;
+	surface_data_x = x;
+	x = NULL;
+	surface_data_y = y;
+	y = NULL;
+	surface_data_z = z;
+	z = NULL;
+	surface_data_len = len;
+
+	reset_surfacex1 = surfacex1 = x1;
+	reset_surfacex2 = surfacex2 = x2;
+	reset_surfacey1 = surfacey1 = y1;
+	reset_surfacey2 = surfacey2 = y2;
+	reset_surfacez1 = surfacez1 = z1;
+	reset_surfacez2 = surfacez2 = z2;
+
+	plot_minz = z1;
+	plot_maxz = z2;
+
+	plot_mode = MODE_SURFACE;
+	plot_surface_functions (FALSE /* do_window_present */,
+				FALSE /* fit */);
+
+	if (gel_interrupted)
+		return NULL;
+	else
+		return gel_makenum_null ();
+
+whack_copied_data:
+	if (x != NULL)
+		g_free (x);
+	if (y != NULL)
+		g_free (y);
+	if (z != NULL)
+		g_free (z);
+
+	return NULL;
+}
+
+static gboolean
+get_surface_data_grid (GelETree *a,
+		       double **x, double **y, double **z, int *len,
+		       double minx, double maxx,
+		       double miny, double maxy,
+		       gboolean setz,
+		       double *minz, double *maxz)
+{
+	int i, j, k;
+	GelMatrixW *m;
+	gboolean nominmax = TRUE;
+	int w, h;
+
+#define UPDATE_MINMAX \
+	if (setz) { \
+		if (zz > *maxz || nominmax) *maxz = zz; \
+		if (zz < *minz || nominmax) *minz = zz; \
+		nominmax = FALSE; \
+	}
+
+	g_return_val_if_fail (a->type == GEL_MATRIX_NODE, FALSE);
+
+	m = a->mat.matrix;
+
+	if G_UNLIKELY ( ! gel_is_matrix_value_only_real (m)) {
+		gel_errorout (_("%s: Surface grid data should be given as a real matrix "),
+			      "SurfacePlotDataGrid");
+		return FALSE;
+	}
+
+	w = gel_matrixw_width (m);
+	h = gel_matrixw_height (m);
+	*len = w * h;
+
+	*x = g_new (double, *len);
+	*y = g_new (double, *len);
+	*z = g_new (double, *len);
+
+	k = 0;
+	for (i = 0; i < w; i++) {
+		for (j = 0; j < h; j++) {
+			double zz;
+			GelETree *t = gel_matrixw_index (m, i, j);
+			(*z)[k] = zz = mpw_get_double (t->val.value);
+			(*x)[k] = minx+((double)j)*(maxx-minx)/((double)(h-1));
+			(*y)[k] = miny+((double)i)*(maxy-miny)/((double)(w-1));
+			k++;
+			UPDATE_MINMAX
+		}
+	}
+
+	return TRUE;
+#undef UPDATE_MINMAX
+}
+
+static GelETree *
+SurfacePlotDataGrid_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	double x1, x2, y1, y2, z1, z2;
+	double *x,*y,*z;
+	char *name = NULL;
+	int len;
+	gboolean setz = FALSE;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "SurfacePlotDataGrid", "SurfacePlotDataGrid");
+		return NULL;
+	}
+
+	if (a[1]->type != GEL_MATRIX_NODE) {
+		gel_errorout (_("%s: first argument not a matrix of data"), "SurfacePlotDataGrid");
+		return NULL;
+	}
+
+	if (a[1]->type != GEL_MATRIX_NODE &&
+	    (gel_matrixw_elements (a[1]->mat.matrix) != 6 ||
+	     gel_matrixw_elements (a[1]->mat.matrix) != 4)) {
+		gel_errorout (_("%s: second argument not a 4 or 6 element vector of limits"), "SurfacePlotDataGrid");
+		return NULL;
+	}
+
+	if (gel_matrixw_elements (a[1]->mat.matrix) == 6) {
+		if ( ! get_limits_from_matrix_surf (a[1], &x1, &x2, &y1, &y2, &z1, &z2))
+			return NULL;
+		setz = FALSE;
+	} else {
+		if ( ! get_limits_from_matrix (a[1], &x1, &x2, &y1, &y2))
+			return NULL;
+		setz = TRUE;
+	}
+
+	if (a[2] != NULL && a[2]->type == GEL_STRING_NODE) {
+		name = a[2]->str.str;
+	} else if (a[2] != NULL && a[3] != NULL) {
+		gel_errorout (_("%s: too many arguments or last argument not a string label"), "SurfacePlotDataGrid");
+		return NULL;
+	}
+
+	if ( ! get_surface_data_grid (a[0], &x, &y, &z, &len, x1, x2, y1, y2, setz, &z1, &z2)) {
+		return NULL;
+	}
+
+	/* sanity */
+	if (z1 == z2) {
+		z1=z1-1;
+		z2=z2+1;
+	}
+
+	if (surface_func_name != NULL)
+		g_free (surface_func_name);
+	if (name != NULL)
+		surface_func_name = g_strdup (name);
+	else
+		surface_func_name = NULL;
+
+	surface_func = NULL;
+	surface_data_x = x;
+	x = NULL;
+	surface_data_y = y;
+	y = NULL;
+	surface_data_z = z;
+	z = NULL;
+	surface_data_len = len;
+
+	reset_surfacex1 = surfacex1 = x1;
+	reset_surfacex2 = surfacex2 = x2;
+	reset_surfacey1 = surfacey1 = y1;
+	reset_surfacey2 = surfacey2 = y2;
+	reset_surfacez1 = surfacez1 = z1;
+	reset_surfacez2 = surfacez2 = z2;
+
+	plot_minz = z1;
+	plot_maxz = z2;
+
+	plot_mode = MODE_SURFACE;
+	plot_surface_functions (FALSE /* do_window_present */,
+				FALSE /* fit */);
+
+	if (gel_interrupted)
+		return NULL;
+	else
+		return gel_makenum_null ();
+
+	return NULL;
+}
+
+static GelETree *
+ExportPlot_op (GelCtx *ctx, GelETree * * a, int *exception)
+{
+	char *file;
+	char *type;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "ExportPlot", "ExportPlot");
+		return NULL;
+	}
+
+	if (a[0]->type != GEL_STRING_NODE ||
+	    ve_string_empty(a[0]->str.str)) {
+		gel_errorout (_("%s: first argument not a nonempty string"), "ExportPlot");
+		return NULL;
+	}
+	file = a[0]->str.str;
+
+	if (a[1] == NULL) {
+		char *dot = strrchr (file, '.');
+		if (dot == NULL) {
+			gel_errorout (_("%s: type not specified and filename has no extension"), "ExportPlot");
+			return NULL;
+		}
+		type = dot+1;
+	}
+
+	if (a[1] != NULL) {
+		if (a[1]->type != GEL_STRING_NODE ||
+		    ve_string_empty(a[1]->str.str)) {
+			gel_errorout (_("%s: second argument not a nonempty string"), "ExportPlot");
+			return NULL;
+		}
+		type = a[1]->str.str;
+	}
+
+	if (a[1] != NULL && a[2] != NULL) {
+		gel_errorout (_("%s: too many arguments"), "ExportPlot");
+		return NULL;
+	}
+
+	if (plot_canvas == NULL) {
+		gel_errorout (_("%s: plot canvas not active, cannot export"), "ExportPlot");
+		return NULL;
+	}
+
+	if (strcasecmp (type, "png") == 0) {
+		GdkPixbuf *pix;
+
+		/* sanity */
+		if (GTK_PLOT_CANVAS (plot_canvas)->pixmap == NULL) {
+			gel_errorout (_("%s: export failed"), "ExportPlot");
+			return NULL;
+		}
+
+		pix = gdk_pixbuf_get_from_drawable
+			(NULL /* dest */,
+			 GTK_PLOT_CANVAS (plot_canvas)->pixmap,
+			 NULL /* cmap */,
+			 0 /* src x */, 0 /* src y */,
+			 0 /* dest x */, 0 /* dest y */,
+			 GTK_PLOT_CANVAS (plot_canvas)->pixmap_width,
+			 GTK_PLOT_CANVAS (plot_canvas)->pixmap_height);
+
+		if (pix == NULL ||
+		    ! gdk_pixbuf_save (pix, file, "png", NULL /* error */, NULL)) {
+			if (pix != NULL)
+				g_object_unref (G_OBJECT (pix));
+			gel_errorout (_("%s: export failed"), "ExportPlot");
+			return NULL;
+		}
+
+		g_object_unref (G_OBJECT (pix));
+	} else if (strcasecmp (type, "eps") == 0 ||
+		   strcasecmp (type, "ps") == 0) {
+		gboolean eps = (strcasecmp (type, "eps") == 0);
+
+		plot_in_progress ++;
+		plot_window_setup ();
+
+		if ( ! gtk_plot_canvas_export_ps_with_size
+			(GTK_PLOT_CANVAS (plot_canvas),
+			 file,
+			 GTK_PLOT_PORTRAIT,
+			 eps /* epsflag */,
+			 GTK_PLOT_PSPOINTS,
+			 400, ASPECT * 400)) {
+			plot_in_progress --;
+			plot_window_setup ();
+			gel_errorout (_("%s: export failed"), "ExportPlot");
+			return NULL;
+		}
+
+		/* need this for some reason */
+		if (plot_canvas != NULL) {
+			gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+		}
+
+		plot_in_progress --;
+		plot_window_setup ();
+	} else {
+		gel_errorout (_("%s: unknown file type, can be \"png\", \"eps\", or \"ps\"."), "ExportPlot");
+		return NULL;
+	}
+
+	return gel_makenum_bool (TRUE);
+}
+
+
+
 static GelETree *
 set_LinePlotWindow (GelETree * a)
 {
@@ -7726,7 +8561,7 @@ set_LinePlotDrawLegends (GelETree * a)
 			      "set_LinePlotDrawLegends", "set_LinePlotDrawLegends");
 		return NULL;
 	}
-	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_LinePlotDrawLegend"))
+	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_LinePlotDrawLegends"))
 		return NULL;
 	if (a->type == GEL_VALUE_NODE)
 		lineplot_draw_legends
@@ -7741,6 +8576,11 @@ set_LinePlotDrawLegends (GelETree * a)
 			gtk_plot_hide_legends (GTK_PLOT (line_plot));
 
 		line_plot_move_about ();
+
+		if (plot_canvas != NULL) {
+			gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+			gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+		}
 	}
 
 	return gel_makenum_bool (lineplot_draw_legends);
@@ -7749,6 +8589,87 @@ static GelETree *
 get_LinePlotDrawLegends (void)
 {
 	return gel_makenum_bool (lineplot_draw_legends);
+}
+
+static GelETree *
+set_SurfacePlotDrawLegends (GelETree * a)
+{
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_SurfacePlotDrawLegends", "set_SurfacePlotDrawLegends");
+		return NULL;
+	}
+	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_LinePlotDrawLegends"))
+		return NULL;
+	if (a->type == GEL_VALUE_NODE)
+		surfaceplot_draw_legends
+			= ! mpw_zero_p (a->val.value);
+	else /* a->type == GEL_BOOL_NODE */
+		surfaceplot_draw_legends = a->bool_.bool_;
+
+	if (surface_plot != NULL) {
+		if (surface_data != NULL) {
+			if (surfaceplot_draw_legends) {
+				gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), TRUE);
+				gtk_plot_data_show_legend (GTK_PLOT_DATA (surface_data));
+			} else {
+				gtk_plot_data_gradient_set_visible (GTK_PLOT_DATA (surface_data), FALSE);
+				gtk_plot_data_hide_legend (GTK_PLOT_DATA (surface_data));
+			}
+		}
+
+		if (surfaceplot_draw_legends)
+			gtk_plot_show_legends (GTK_PLOT (surface_plot));
+		else
+			gtk_plot_hide_legends (GTK_PLOT (surface_plot));
+
+		surface_plot_move_about ();
+
+		if (plot_canvas != NULL) {
+			gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+			gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+		}
+	}
+
+	return gel_makenum_bool (surfaceplot_draw_legends);
+}
+static GelETree *
+get_SurfacePlotDrawLegends (void)
+{
+	return gel_makenum_bool (surfaceplot_draw_legends);
+}
+
+static GelETree *
+set_LinePlotDrawAxisLabels (GelETree * a)
+{
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_LinePlotDrawAxisLabels", "set_LinePlotDrawAxisLabels");
+		return NULL;
+	}
+	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_LinePlotDrawAxisLabels"))
+		return NULL;
+	if (a->type == GEL_VALUE_NODE)
+		lineplot_draw_labels
+			= ! mpw_zero_p (a->val.value);
+	else /* a->type == GEL_BOOL_NODE */
+		lineplot_draw_labels = a->bool_.bool_;
+
+	if (line_plot != NULL) {
+		plot_setup_axis ();
+
+		if (plot_canvas != NULL) {
+			gtk_plot_canvas_paint (GTK_PLOT_CANVAS (plot_canvas));
+			gtk_widget_queue_draw (GTK_WIDGET (plot_canvas));
+		}
+	}
+
+	return gel_makenum_bool (lineplot_draw_labels);
+}
+static GelETree *
+get_LinePlotDrawAxisLabels (void)
+{
+	return gel_makenum_bool (lineplot_draw_labels);
 }
 
 void
@@ -7775,8 +8696,13 @@ gel_add_graph_functions (void)
 
 	VFUNC (SurfacePlot, 2, "func,args", "plotting", N_("Plot a surface function which takes either two arguments or a complex number.  First comes the function then optionally limits as x1,x2,y1,y2,z1,z2"));
 
+	VFUNC (SurfacePlotData, 2, "data,args", "plotting", N_("Plot surface data given as n by 3 matrix (n>=3) of data with each row being x,y,z.  Optionally can pass a label string and limits.  If no limits passed, limits computed from data."));
+	VFUNC (SurfacePlotDataGrid, 3, "data,limits,label", "plotting", N_("Plot surface data given as a matrix (where rows are the x coordinate and columns are the y coordinate), the limits are given as [x1,x2,y1,y2] or optionally [x1,x2,y1,y2,z1,z2], and optionally a string for the label."));
+
 	FUNC (LinePlotClear, 0, "", "plotting", N_("Show the line plot window and clear out functions"));
 	VFUNC (LinePlotDrawLine, 2, "x1,y1,x2,y2,args", "plotting", N_("Draw a line from x1,y1 to x2,y2.  x1,y1,x2,y2 can be replaced by a n by 2 matrix for a longer line"));
+
+	VFUNC (ExportPlot, 2, "filename,type", "plotting", N_("Export the current contents of the plot canvas to a file.  The file type is given by the string type, which can be \"png\", \"eps\", or \"ps\"."));
 
 	PARAMETER (SlopefieldTicks, N_("Number of slopefield ticks as a vector [vertical,horizontal]."));
 	PARAMETER (VectorfieldTicks, N_("Number of vectorfield ticks as a vector [vertical,horizontal]."));
@@ -7785,6 +8711,9 @@ gel_add_graph_functions (void)
 
 	PARAMETER (VectorfieldNormalized, N_("Normalize vectorfields if true.  That is, only show direction and not magnitude."));
 	PARAMETER (LinePlotDrawLegends, N_("If to draw legends or not on line plots."));
+	PARAMETER (LinePlotDrawAxisLabels, N_("If to draw axis labels on line plots."));
+
+	PARAMETER (SurfacePlotDrawLegends, N_("If to draw legends or not on surface plots."));
 
 	PARAMETER (LinePlotWindow, N_("Line plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"));
 	PARAMETER (SurfacePlotWindow, N_("Surface plotting window (limits) as a 6-vector of the form [x1,x2,y1,y2,z1,z2]"));

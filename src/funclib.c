@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2011 Jiri (George) Lebl
+ * Copyright (C) 1997-2012 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -45,6 +45,7 @@ static GelEFunc *_internal_exp_function = NULL;
 
 static GelEFunc *conj_function = NULL;
 static GelEFunc *sin_function = NULL;
+static GelEFunc *sinc_function = NULL;
 static GelEFunc *cos_function = NULL;
 static GelEFunc *sinh_function = NULL;
 static GelEFunc *cosh_function = NULL;
@@ -67,6 +68,12 @@ static GelEFunc *Im_function = NULL;
 /*static GelEFunc *ErrorFunction_function = NULL;*/
 static GelEFunc *RiemannZeta_function = NULL;
 static GelEFunc *GammaFunction_function = NULL;
+static GelEFunc *BesselJ0_function = NULL;
+static GelEFunc *BesselJ1_function = NULL;
+static GelEFunc *BesselY0_function = NULL;
+static GelEFunc *BesselY1_function = NULL;
+/*static GelEFunc *BesselJn_function = NULL;
+static GelEFunc *BesselYn_function = NULL;*/
 static GelEFunc *pi_function = NULL;
 static GelEFunc *e_function = NULL;
 static GelEFunc *GoldenRatio_function = NULL;
@@ -819,7 +826,7 @@ gel_apply_func_to_matrixen (GelCtx *ctx,
 	
 	if G_UNLIKELY (m2 && (gel_matrixw_width(m1) != gel_matrixw_width(m2) ||
 			      gel_matrixw_height(m1) != gel_matrixw_height(m2))) {
-		gel_errorout (_("Cannot apply function to two differently sized matrixes"));
+		gel_errorout (_("Cannot apply function to two differently sized matrices"));
 		return NULL;
 	}
 
@@ -1172,6 +1179,34 @@ sin_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	return gel_makenum_use(fr);
 }
 
+/*sinc function*/
+static GelETree *
+sinc_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpw_t fr;
+
+	if (a[0]->type == GEL_FUNCTION_NODE ||
+	    a[0]->type == GEL_IDENTIFIER_NODE) {
+		return gel_function_from_function (sinc_function, a[0]);
+	}
+
+	if(a[0]->type==GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix(ctx,a[0],sinc_op,"sinc", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "sinc"))
+		return NULL;
+
+	if (mpw_zero_p (a[0]->val.value))
+		return gel_makenum_ui(1);
+
+	mpw_init(fr);
+
+	mpw_sin(fr,a[0]->val.value);
+	mpw_div(fr,fr,a[0]->val.value);
+
+	return gel_makenum_use(fr);
+}
+
 /*sinh function*/
 static GelETree *
 sinh_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
@@ -1509,6 +1544,253 @@ GammaFunction_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	return gel_makenum (retw);
 }
 
+static GelETree *
+BesselJ0_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+
+	if (a[0]->type == GEL_FUNCTION_NODE ||
+	    a[0]->type == GEL_IDENTIFIER_NODE) {
+		return gel_function_from_function (BesselJ0_function, a[0]);
+	}
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselJ0_op, "BesselJ0", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "BesselJ0"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselJ0");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[0]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_j0 (ret, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
+static GelETree *
+BesselJ1_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+
+	if (a[0]->type == GEL_FUNCTION_NODE ||
+	    a[0]->type == GEL_IDENTIFIER_NODE) {
+		return gel_function_from_function (BesselJ1_function, a[0]);
+	}
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselJ1_op, "BesselJ1", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "BesselJ1"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselJ1");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[0]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_j1 (ret, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
+/* FIXME: implement over matrices / functions */
+static GelETree *
+BesselJn_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+	long n;
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselJn_op, "BesselJn", exception);
+
+	if G_UNLIKELY ( ! check_argument_integer (a, 0, "BesselJn"))
+		return NULL;
+	n = mpw_get_long(a[0]->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return NULL;
+	}
+
+	if G_UNLIKELY ( ! check_argument_number (a, 1, "BesselJn"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[1]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselJn");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[1]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_jn (ret, n, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
+static GelETree *
+BesselY0_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+
+	if (a[0]->type == GEL_FUNCTION_NODE ||
+	    a[0]->type == GEL_IDENTIFIER_NODE) {
+		return gel_function_from_function (BesselY0_function, a[0]);
+	}
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselY0_op, "BesselY0", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "BesselY0"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselY0");
+		return NULL;
+	}
+	if G_UNLIKELY (mpw_sgn (a[0]->val.value) <= 0) {
+		gel_errorout (_("%s: Bessel functions of second kind not defined for nonpositive real numbers"),
+			      "BesselY0");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[0]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_y0 (ret, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
+static GelETree *
+BesselY1_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+
+	if (a[0]->type == GEL_FUNCTION_NODE ||
+	    a[0]->type == GEL_IDENTIFIER_NODE) {
+		return gel_function_from_function (BesselY1_function, a[0]);
+	}
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselY1_op, "BesselY1", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "BesselY1"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselY1");
+		return NULL;
+	}
+	if G_UNLIKELY (mpw_sgn (a[0]->val.value) <= 0) {
+		gel_errorout (_("%s: Bessel functions of second kind not defined for nonpositive real numbers"),
+			      "BesselY1");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[0]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_y1 (ret, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
+/* FIXME: implement over matrices / functions */
+static GelETree *
+BesselYn_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+	long n;
+
+	if (a[0]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], BesselYn_op, "BesselYn", exception);
+
+	if G_UNLIKELY ( ! check_argument_integer (a, 0, "BesselYn"))
+		return NULL;
+	n = mpw_get_long(a[0]->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return NULL;
+	}
+
+	if G_UNLIKELY ( ! check_argument_number (a, 1, "BesselYn"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[1]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "BesselYn");
+		return NULL;
+	}
+	if G_UNLIKELY (mpw_sgn (a[1]->val.value) <= 0) {
+		gel_errorout (_("%s: Bessel functions of second kind not defined for nonpositive real numbers"),
+			      "BesselYn");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[1]->val.value, tmp);
+
+	mpfr_init (ret);
+	mpfr_yn (ret, n, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
+
 
 static GelETree *
 IsNull_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
@@ -1724,7 +2006,7 @@ IsFloat_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if(a[0]->type!=GEL_VALUE_NODE ||
 	   mpw_is_complex(a[0]->val.value))
 		return gel_makenum_bool (0);
-	else if(mpw_is_float(a[0]->val.value))
+	else if(mpw_is_real_part_float(a[0]->val.value))
 		return gel_makenum_bool (1);
 	else
 		return gel_makenum_bool (0);
@@ -6404,6 +6686,10 @@ gel_funclib_addall(void)
 	atan_function = f;
 	ALIAS (arctan, 1, atan);
 
+	FUNC (sinc, 1, "x", "functions", N_("Calculates the sinc function, that is sin(x)/x"));
+	f->no_mod_all_args = 1;
+	sinc_function = f;
+
 	FUNC (atan2, 2, "y,x", "trigonometry", N_("Calculates the arctan2 function (arctan(y/x) if x>0)"));
 	f->no_mod_all_args = 1;
 	ALIAS (arctan2, 1, atan2);
@@ -6434,6 +6720,24 @@ gel_funclib_addall(void)
 	f->no_mod_all_args = 1;
 	GammaFunction_function = f;
 	ALIAS (Gamma, 1, GammaFunction);
+
+	FUNC (BesselJ0, 1, "x", "functions", N_("The Bessel function of first kind of order 0"));
+	f->no_mod_all_args = 1;
+	BesselJ0_function = f;
+	FUNC (BesselJ1, 1, "x", "functions", N_("The Bessel function of first kind of order 1"));
+	f->no_mod_all_args = 1;
+	BesselJ1_function = f;
+	FUNC (BesselJn, 2, "n,x", "functions", N_("The Bessel function of first kind of order n"));
+	f->no_mod_all_args = 1;
+
+	FUNC (BesselY0, 1, "x", "functions", N_("The Bessel function of second kind of order 0"));
+	f->no_mod_all_args = 1;
+	BesselJ0_function = f;
+	FUNC (BesselY1, 1, "x", "functions", N_("The Bessel function of second kind of order 1"));
+	f->no_mod_all_args = 1;
+	BesselJ1_function = f;
+	FUNC (BesselYn, 2, "n,x", "functions", N_("The Bessel function of second kind of integer order n"));
+	f->no_mod_all_args = 1;
 
 	FUNC (sqrt, 1, "x", "numeric", N_("The square root"));
 	f->propagate_mod = 1;
@@ -6484,13 +6788,13 @@ gel_funclib_addall(void)
 	VALIAS (LCM, 2, lcm);
 	FUNC (IsPerfectSquare, 1, "n", "number_theory", N_("Check a number for being a perfect square"));
 	FUNC (IsPerfectPower, 1, "n", "number_theory", N_("Check a number for being any perfect power (a^b)"));
-	FUNC (Prime, 1, "n", "number_theory", N_("Return the n'th prime (up to a limit)"));
+	FUNC (Prime, 1, "n", "number_theory", N_("Return the nth prime (up to a limit)"));
 	ALIAS (prime, 1, Prime);
 	FUNC (IsEven, 1, "n", "number_theory", N_("Tests if an integer is even"));
 	FUNC (IsOdd, 1, "n", "number_theory", N_("Tests if an integer is odd"));
 
 	FUNC (NextPrime, 1, "n", "number_theory", N_("Returns the least prime greater than n (if n is positive)"));
-	FUNC (LucasNumber, 1, "n", "number_theory", N_("Returns the n'th Lucas number"));
+	FUNC (LucasNumber, 1, "n", "number_theory", N_("Returns the nth Lucas number"));
 	FUNC (ModInvert, 2, "n,m", "number_theory", N_("Returns inverse of n mod m"));
 	FUNC (Divides, 2, "m,n", "number_theory", N_("Checks divisibility (if m divides n)"));
 	FUNC (ExactDivision, 2, "n,d", "number_theory", N_("Return n/d but only if d divides n else returns garbage (this is faster than writing n/d)"));

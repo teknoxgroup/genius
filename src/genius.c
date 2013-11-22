@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2010 Jiri (George) Lebl
+ * Copyright (C) 1997-2012 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -318,13 +318,6 @@ interrupt (int sig)
 	if (use_readline)
 		rl_stuff_char ('\n');
 	signal (SIGINT, interrupt);
-}
-
-static int
-nop (void)
-{
-	usleep(10000);
-	return 0;
 }
 
 static const char *
@@ -651,8 +644,6 @@ main(int argc, char *argv[])
 
 	gel_printout_infos ();
 	
-	rl_event_hook = nop;
-
 	if (exec != NULL) {
 		line_len_cache = -1;
 		gel_evalexp (exec, NULL, gel_main_out, NULL, FALSE, NULL);

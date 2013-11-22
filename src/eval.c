@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2011 Jiri (George) Lebl
+ * Copyright (C) 1997-2012 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -124,6 +124,17 @@ ge_remove_stack_array(GelCtx *ctx)
 		(pointer) = NULL;					\
 	}								\
 }
+#define GE_POP_STACKNF(thectx,pointer) { \
+	if((thectx)->topstack != (gpointer *)(thectx)->stack ||		\
+	   ge_remove_stack_array(ctx)) {				\
+		-- (thectx)->topstack;					\
+		*((thectx)->topstack) = NULL;	 			\
+		(pointer) = *(-- (thectx)->topstack);			\
+		*((thectx)->topstack) = NULL;	 			\
+	} else {							\
+		(pointer) = NULL;					\
+	}								\
+}
 #else /* MEM_DEBUG_FRIENDLY */
 #define GE_POP_STACK(thectx,pointer,flag) { \
 	if G_LIKELY ((thectx)->topstack != (gpointer *)(thectx)->stack ||	\
@@ -132,6 +143,15 @@ ge_remove_stack_array(GelCtx *ctx)
 		(pointer) = *(-- (thectx)->topstack);			\
 	} else {							\
 		(flag) = GE_EMPTY_STACK;				\
+		(pointer) = NULL;					\
+	}								\
+}
+#define GE_POP_STACKNF(thectx,pointer) { \
+	if G_LIKELY ((thectx)->topstack != (gpointer *)(thectx)->stack ||	\
+	   ge_remove_stack_array(ctx)) {				\
+		-- (thectx)->topstack;					\
+		(pointer) = *(-- (thectx)->topstack);			\
+	} else {							\
 		(pointer) = NULL;					\
 	}								\
 }
@@ -338,6 +358,7 @@ gel_makenum_identifier (GelToken *id)
 	GEL_GET_NEW_NODE (n);
 	n->type = GEL_IDENTIFIER_NODE;
 	n->id.id = id; 
+	n->id.uninitialized = FALSE;
 	n->any.next = NULL;
 
 	return n;
@@ -704,6 +725,7 @@ copynode_to(GelETree *empty, GelETree *o)
 		empty->type = GEL_IDENTIFIER_NODE;
 		empty->any.next = o->any.next;
 		empty->id.id = o->id.id;
+		empty->id.uninitialized = o->id.uninitialized;
 		break;
 	case GEL_STRING_NODE:
 		empty->type = GEL_STRING_NODE;
@@ -1153,6 +1175,89 @@ mat_need_expand (GelMatrixW *m)
 	return FALSE;
 }
 
+/* we know we are a row matrix */
+static void
+quick_wide_expand (GelETree *n)
+{
+	GelMatrix *m;
+	int h, w, i, j;
+	GelMatrixW *nm = n->mat.matrix;
+
+	h = 0;
+	w = 0;
+	for (i = 0; i < gel_matrixw_width (nm); i++) {
+		GelETree *et = gel_matrixw_get_index (nm, i, 0);
+		if (et == NULL) {
+			if (h <= 0)
+				h = 1;
+			w++;
+		} else if (et->type == GEL_MATRIX_NODE) {
+			if (gel_matrixw_height (et->mat.matrix) > h)
+				h = gel_matrixw_height (et->mat.matrix);
+			w += gel_matrixw_width (et->mat.matrix);
+		} else if (et->type != GEL_NULL_NODE) {
+			if (h <= 0)
+				h = 1;
+			w++;
+		}
+	}
+
+	gel_matrixw_make_private (nm, FALSE /* kill_type_caches */);
+
+	m = gel_matrix_new();
+	gel_matrix_set_size(m, w, h, TRUE /* padding */);
+
+	j = 0;
+	for (i = 0; i < gel_matrixw_width (nm); i++) {
+		GelETree *et = gel_matrixw_get_index (nm, i, 0);
+		if (et == NULL) {
+			j++;
+		} else if (et->type == GEL_MATRIX_NODE) {
+			int hh = gel_matrixw_height (et->mat.matrix);
+			int ww = gel_matrixw_width (et->mat.matrix);
+			int ii, jj;
+			GelMatrixW *mm = et->mat.matrix;
+
+			gel_matrixw_make_private (mm,
+						  FALSE /* kill_type_caches */);
+
+			for (ii = 0; ii < ww; ii++) {
+				int jjj;
+				for (jj = 0; jj < hh; jj++) {
+					GelETree *e = 
+						gel_matrixw_get_index (mm, ii, jj);
+					gel_matrix_index (m, j+ii, jj) = e;
+					gel_matrixw_set_index (mm, ii, jj) = NULL;
+				}
+				jjj = 0;
+				for (; jj < h; jj++) {
+					GelETree *e = 
+						gel_matrix_index (m, j+ii, jjj);
+					if (e != NULL)
+						gel_matrix_index (m, j+ii, jj) = gel_copynode (e);
+					if (++jjj >= hh)
+						jjj = 0;
+				}
+			}
+			j += ww;
+		} else if (et->type != GEL_NULL_NODE) {
+			int jj;
+			gel_matrixw_set_index (nm, i, 0) = NULL;
+			gel_matrix_index (m, j, 0) = et;
+			for (jj = 1; jj < h; jj++) {
+				gel_matrix_index (m, j, jj) = gel_copynode (et);
+			}
+			j++;
+		}
+	}
+
+	freetree_full (n, TRUE, FALSE);
+
+	n->type = GEL_MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix (m);
+	n->mat.quoted = FALSE;
+}
+
 /*evaluate a matrix (or try to), it will try to expand the matrix and
   put 0's into the empty, undefined, spots. For example, a matrix such
   as if b = [8,7]; a = [1,2:3,b]  should expand to, [1,2,2:3,8,7] */
@@ -1201,6 +1306,11 @@ gel_expandmatrix (GelETree *n)
 		/* never should be reached */
 	}
 
+	if (h == 1) {
+		quick_wide_expand (n);
+		return;
+	}
+
 	gel_matrixw_make_private (nm, FALSE /* kill_type_caches */);
 
 	m = gel_matrix_new();
@@ -1209,9 +1319,9 @@ gel_expandmatrix (GelETree *n)
 	cols = gel_matrixw_width (nm);
 
 	for (i = 0, k = 0; i < h; i++) {
-		int w;
-		w = expand_row (m, nm, k, i, &need_colwise);
-		k += w;
+		int kk;
+		kk = expand_row (m, nm, k, i, &need_colwise);
+		k += kk;
 	}
 
 	if (k == 0) {
@@ -1448,7 +1558,7 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 	   b->type == GEL_MATRIX_NODE) {
 		if G_UNLIKELY (!gel_is_matrix_value_or_bool_only(a->mat.matrix) ||
 			       !gel_is_matrix_value_or_bool_only(b->mat.matrix)) {
-			gel_errorout (_("Cannot compare non value or bool only matrixes"));
+			gel_errorout (_("Cannot compare non value or bool only matrices"));
 			*error = TRUE;
 			return 0;
 		}
@@ -1505,7 +1615,7 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 			GelETree *t = gel_matrixw_index(m,0,0);
 			if G_UNLIKELY (t->type != GEL_VALUE_NODE &&
 				       t->type != GEL_BOOL_NODE) {
-				gel_errorout (_("Cannot compare non value or bool only matrixes"));
+				gel_errorout (_("Cannot compare non value or bool only matrices"));
 				*error = TRUE;
 				return 0;
 			}
@@ -1520,7 +1630,7 @@ eqmatrix(GelETree *a, GelETree *b, int *error)
 			GelETree *t = gel_matrixw_index(m,0,0);
 			if G_UNLIKELY (t->type != GEL_VALUE_NODE &&
 				       t->type != GEL_BOOL_NODE) {
-				gel_errorout (_("Cannot compare non value or bool only matrixes"));
+				gel_errorout (_("Cannot compare non value or bool only matrices"));
 				*error = TRUE;
 				return 0;
 			}
@@ -1924,9 +2034,9 @@ pure_matrix_eltbyelt_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 		    n->op.oper == GEL_E_ELTPLUS ||
 		    n->op.oper == GEL_E_MINUS ||
 		    n->op.oper == GEL_E_ELTMINUS)
-			gel_errorout (_("Can't add/subtract two matricies of different sizes"));
+			gel_errorout (_("Can't add/subtract two matrices of different sizes"));
 		else
-			gel_errorout (_("Can't do element by element operations on two matricies of different sizes"));
+			gel_errorout (_("Can't do element by element operations on two matrices of different sizes"));
 		return TRUE;
 	}
 	l->mat.quoted = l->mat.quoted || r->mat.quoted;
@@ -1992,7 +2102,7 @@ pure_matrix_mul_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	m1 = l->mat.matrix;
 	m2 = r->mat.matrix;
 	if G_UNLIKELY ((gel_matrixw_width(m1) != gel_matrixw_height(m2))) {
-		gel_errorout (_("Can't multiply matricies of wrong sizes"));
+		gel_errorout (_("Can't multiply matrices of wrong sizes"));
 		return TRUE;
 	}
 	m = gel_matrixw_new();
@@ -3352,6 +3462,7 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 		
 		GEL_GET_NEW_NODE(i);
 		i->type = GEL_IDENTIFIER_NODE;
+		i->id.uninitialized = FALSE;
 		if(f->id) {
 			i->id.id = f->id;
 		} else {
@@ -3425,23 +3536,28 @@ iter_variableop(GelCtx *ctx, GelETree *n)
 	f = d_lookup_global(n->id.id);
 	if G_UNLIKELY (f == NULL) {
 		char *similar;
-		if (strcmp (n->id.id->token, "i") == 0) {
-			gel_errorout (_("Variable 'i' used uninitialized.  "
-					"Perhaps you meant to write '1i' for "
-					"the imaginary number (square root of "
-					"-1)."));
-		} else if ((similar = gel_similar_possible_ids (n->id.id->token))
-			       != NULL) {
-			gel_errorout (_("Variable '%s' used uninitialized, "
-					"perhaps you meant %s."),
-				      n->id.id->token,
-				      similar);
+		if ( ! n->id.uninitialized) {
+			if (strcmp (n->id.id->token, "i") == 0) {
+				gel_errorout (_("Variable 'i' used uninitialized.  "
+						"Perhaps you meant to write '1i' for "
+						"the imaginary number (square root of "
+						"-1)."));
+			} else if ((similar = gel_similar_possible_ids (n->id.id->token))
+				       != NULL) {
+				gel_errorout (_("Variable '%s' used uninitialized, "
+						"perhaps you meant %s."),
+					      n->id.id->token,
+					      similar);
 
-			g_free (similar);
-		} else {
-			gel_errorout (_("Variable '%s' used uninitialized"),
-				      n->id.id->token);
+				g_free (similar);
+			} else {
+				gel_errorout (_("Variable '%s' used uninitialized"),
+					      n->id.id->token);
+			}
 		}
+		/* save that we have determined that this was
+		 * uninitialized */
+		n->id.uninitialized = TRUE;
 		return TRUE;
 	} else {
 		return iter_do_var(ctx,n,f);
@@ -3459,17 +3575,22 @@ iter_derefvarop(GelCtx *ctx, GelETree *n)
 	f = d_lookup_global(l->id.id);
 	if G_UNLIKELY (f == NULL) {
 		char *similar = gel_similar_possible_ids (l->id.id->token);
-		if (similar != NULL) {
-			gel_errorout (_("Variable '%s' used uninitialized, "
-					"perhaps you meant %s."),
-				      l->id.id->token,
-				      similar);
+		if ( ! l->id.uninitialized) {
+			if (similar != NULL) {
+				gel_errorout (_("Variable '%s' used uninitialized, "
+						"perhaps you meant %s."),
+					      l->id.id->token,
+					      similar);
 
-			g_free (similar);
-		} else {
-			gel_errorout (_("Variable '%s' used uninitialized"),
-				      l->id.id->token);
+				g_free (similar);
+			} else {
+				gel_errorout (_("Variable '%s' used uninitialized"),
+					      l->id.id->token);
+			}
 		}
+		/* save that we have determined that this was
+		 * uninitialized */
+		l->id.uninitialized = TRUE;
 	} else if G_UNLIKELY (f->nargs != 0) {
 		gel_errorout (_("Call of '%s' with the wrong number of arguments!\n"
 				"(should be %d)"), f->id ? f->id->token : "anonymous", f->nargs);
@@ -3607,7 +3728,7 @@ evalcomp(GelETree *n)
 				}
 				break;
 			default:
-				gel_errorout (_("Cannot compare matrixes"));
+				gel_errorout (_("Cannot compare matrices"));
 				gel_error_num = GEL_NO_ERROR;
 				return;
 			}
@@ -3978,12 +4099,47 @@ iter_pop_stack(GelCtx *ctx)
 		case GE_FOR:
 			{
 				GelEvalFor *evf = data;
-				if(evf->by)
-					mpw_add(evf->x,evf->x,evf->by);
+				gboolean done = FALSE;
+				if (evf->by)
+					mpw_add (evf->x, evf->x, evf->by);
 				else
-					mpw_add_ui(evf->x,evf->x,1);
-				/*if done*/
-				if(mpw_cmp(evf->x,evf->to) == -evf->init_cmp) {
+					mpw_add_ui (evf->x, evf->x, 1);
+				/* we know we aren't dealing with complexes */
+				if (mpw_is_real_part_float (evf->x)) {
+					int thecmp = mpw_cmp (evf->x, evf->to);
+					if (mpw_cmp (evf->x, evf->to) == -evf->init_cmp) {
+						/* maybe we just missed it, let's look back within 2^-20 of the by and see */
+						mpw_t tmp;
+						if (evf->by != NULL) {
+							mpfr_ptr f;
+							/* by is definitely mpfr */
+							mpw_init_set (tmp, evf->by);
+							f = mpw_peek_real_mpf (tmp);
+							mpfr_mul_2si (f, f, -20, GMP_RNDN);
+						} else {
+							mpw_init (tmp);
+							mpw_set_d (tmp, 1.0/1048576.0 /* 2^-20 */);
+						}
+
+						mpw_sub (tmp, evf->x, tmp);
+
+						done = (mpw_cmp(tmp,evf->to) == -evf->init_cmp);
+
+						/* don't use x, but use the to, x might be too far */
+						if ( ! done) {
+							mpw_set (evf->x, evf->to);
+						}
+
+						mpw_clear (tmp);
+					} else {
+						done = FALSE;
+					}
+				} else {
+					/*if done*/
+					done = (mpw_cmp(evf->x,evf->to) == -evf->init_cmp);
+				}
+
+				if (done) {
 					GelETree *res;
 					GE_POP_STACK(ctx,data,flag);
 					g_assert ((flag & GE_MASK) == GE_POST);
@@ -4434,10 +4590,9 @@ iter_push_matrix(GelCtx *ctx, GelETree *n, GelMatrixW *m)
 		}
 	}
 	if (pushed) {
-		int flag;
 		ctx->post = FALSE;
 		/* will pop the last thing which was t in PRE mode */
-		GE_POP_STACK (ctx, ctx->current, flag);
+		GE_POP_STACKNF (ctx, ctx->current);
 		ctx->whackarg = FALSE;
 	} else {
 		/*if we haven't pushed ourselves,
@@ -4454,7 +4609,8 @@ get_func_from (GelETree *l, gboolean silent)
 	if(l->type == GEL_IDENTIFIER_NODE) {
 		f = d_lookup_global(l->id.id);
 		if (f == NULL) {
-			if G_UNLIKELY ( ! silent) {
+			if G_UNLIKELY ( ! silent &&
+				        ! l->id.uninitialized) {
 				char * similar =
 					gel_similar_possible_ids (l->id.id->token);
 				if (similar != NULL) {
@@ -4468,6 +4624,9 @@ get_func_from (GelETree *l, gboolean silent)
 					gel_errorout (_("Function '%s' used uninitialized"),
 						      l->id.id->token);
 				}
+				/* save that we have determined that this was
+				 * uninitialized */
+				l->id.uninitialized = TRUE;
 			}
 			return NULL;
 		}
@@ -4479,12 +4638,16 @@ get_func_from (GelETree *l, gboolean silent)
 		GEL_GET_L(l,ll);
 		f = d_lookup_global(ll->id.id);
 		if (f == NULL) {
-			if G_UNLIKELY ( ! silent) {
+			if G_UNLIKELY ( ! silent &&
+					! ll->id.uninitialized) {
 				gel_errorout (_("Variable '%s' used uninitialized"),
 					      ll->id.id->token);
+				/* save that we have determined that this was
+				 * uninitialized */
+				ll->id.uninitialized = TRUE;
 			}
 			return NULL;
-		} else if(f->type != GEL_REFERENCE_FUNC) {
+		} else if (f->type != GEL_REFERENCE_FUNC) {
 			if G_UNLIKELY ( ! silent) {
 				gel_errorout (_("Can't dereference '%s'!"),
 					      ll->id.id->token);
@@ -4733,6 +4896,7 @@ iter_funccallop(GelCtx *ctx, GelETree *n, gboolean *repushed)
 		GEL_GET_NEW_NODE(id);
 		id->type = GEL_IDENTIFIER_NODE;
 		id->id.id = f->id; /*this WILL have an id*/
+		id->id.uninitialized = FALSE;
 		id->any.next = NULL;
 
 		freetree_full(n,TRUE,FALSE);
@@ -4861,8 +5025,8 @@ iter_forloop (GelCtx *ctx, GelETree *n, gboolean *repushed)
 	
 	init_cmp = mpw_cmp(from->val.value,to->val.value);
 	
-	/*if no iterations*/
 	if(!by) {
+		/*if no iterations*/
 		if(init_cmp>0) {
 			d_addfunc(d_makevfunc(ident->id.id,gel_copynode(from)));
 			freetree_full(n,TRUE,FALSE);
@@ -4878,10 +5042,17 @@ iter_forloop (GelCtx *ctx, GelETree *n, gboolean *repushed)
 		} else if(init_cmp==0) {
 			init_cmp = -1;
 		}
+		if (mpw_is_real_part_float (from->val.value) ||
+		    mpw_is_real_part_float (to->val.value)) {
+			/* ensure all float */
+			mpw_make_float (to->val.value);
+			mpw_make_float (from->val.value);
+		}
 		evf = evf_new(type, from->val.value,to->val.value,NULL,init_cmp,
 			      gel_copynode(body),body,ident->id.id);
 	} else {
 		int sgn = mpw_sgn(by->val.value);
+		/*if no iterations*/
 		if((sgn>0 && init_cmp>0) || (sgn<0 && init_cmp<0)) {
 			d_addfunc(d_makevfunc(ident->id.id,gel_copynode(from)));
 			freetree_full(n,TRUE,FALSE);
@@ -4897,6 +5068,14 @@ iter_forloop (GelCtx *ctx, GelETree *n, gboolean *repushed)
 		}
 		if(init_cmp == 0)
 			init_cmp = -sgn;
+		if (mpw_is_real_part_float (from->val.value) ||
+		    mpw_is_real_part_float (to->val.value) ||
+		    mpw_is_real_part_float (by->val.value)) {
+			/* ensure all float */
+			mpw_make_float (to->val.value);
+			mpw_make_float (from->val.value);
+			mpw_make_float (by->val.value);
+		}
 		evf = evf_new(type, from->val.value,to->val.value,by->val.value,
 			      init_cmp,gel_copynode(body),body,ident->id.id);
 	}
@@ -5523,8 +5702,8 @@ iter_equalsop(GelETree *n)
 		}
 	} else if(l->op.oper == GEL_E_GET_ELEMENT) {
 		GelMatrixW *mat;
-		GelETree *m, *index1, *index2;
-		GEL_GET_LRR (l, m, index1, index2);
+		GelETree *index1, *index2;
+		GEL_GET_XRR (l, index1, index2);
 
 		if (index1->type == GEL_VALUE_NODE &&
 		    index2->type == GEL_VALUE_NODE) {
@@ -5587,8 +5766,8 @@ iter_equalsop(GelETree *n)
 		}
 	} else if(l->op.oper == GEL_E_GET_VELEMENT) {
 		GelMatrixW *mat;
-		GelETree *m, *index;
-		GEL_GET_LR (l, m, index);
+		GelETree *index;
+		GEL_GET_XR (l, index);
 
 		if (index->type == GEL_VALUE_NODE) {
 			int i;
@@ -5631,8 +5810,8 @@ iter_equalsop(GelETree *n)
 		}
 	} else /*l->data.oper == GEL_E_GET_COL_REGION GEL_E_GET_ROW_REGION*/ {
 		GelMatrixW *mat;
-		GelETree *m, *index;
-		GEL_GET_LR (l, m, index);
+		GelETree *index;
+		GEL_GET_XR (l, index);
 
 		if (index->type == GEL_VALUE_NODE ||
 		    index->type == GEL_MATRIX_NODE) {
@@ -5814,8 +5993,8 @@ iter_incrementop (GelETree *n)
 		}
 	} else if(l->op.oper == GEL_E_GET_ELEMENT) {
 		GelMatrixW *mat;
-		GelETree *m, *index1, *index2;
-		GEL_GET_LRR (l, m, index1, index2);
+		GelETree *index1, *index2;
+		GEL_GET_XRR (l, index1, index2);
 
 		if (index1->type == GEL_VALUE_NODE &&
 		    index2->type == GEL_VALUE_NODE) {
@@ -5862,8 +6041,8 @@ iter_incrementop (GelETree *n)
 		}
 	} else if(l->op.oper == GEL_E_GET_VELEMENT) {
 		GelMatrixW *mat;
-		GelETree *m, *index;
-		GEL_GET_LR (l, m, index);
+		GelETree *index;
+		GEL_GET_XR (l, index);
 
 		if (index->type == GEL_VALUE_NODE) {
 			int i;
@@ -5899,8 +6078,8 @@ iter_incrementop (GelETree *n)
 		}
 	} else /*l->data.oper == GEL_E_GET_COL_REGION GEL_E_GET_ROW_REGION*/ {
 		GelMatrixW *mat;
-		GelETree *m, *index;
-		GEL_GET_LR (l, m, index);
+		GelETree *index;
+		GEL_GET_XR (l, index);
 
 		if (index->type == GEL_VALUE_NODE ||
 		    index->type == GEL_MATRIX_NODE) {
@@ -5978,8 +6157,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 			rf->data.user = tmp;
 		} else if(r->op.oper == GEL_E_GET_ELEMENT) {
 			GelMatrixW *mat;
-			GelETree *m, *index1, *index2;
-			GEL_GET_LRR (r, m, index1, index2);
+			GelETree *index1, *index2;
+			GEL_GET_XRR (r, index1, index2);
 
 			if (index1->type == GEL_VALUE_NODE &&
 			    index2->type == GEL_VALUE_NODE) {
@@ -6013,8 +6192,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 			}
 		} else if(r->op.oper == GEL_E_GET_VELEMENT) {
 			GelMatrixW *mat;
-			GelETree *m, *index;
-			GEL_GET_LR (r, m, index);
+			GelETree *index;
+			GEL_GET_XR (r, index);
 
 			if (index->type == GEL_VALUE_NODE) {
 				int i, x, y;
@@ -6063,8 +6242,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 		return;
 
 	if (l->op.oper == GEL_E_GET_ELEMENT) {
-		GelETree *m, *index1, *index2;
-		GEL_GET_LRR (l, m, index1, index2);
+		GelETree *index1, *index2;
+		GEL_GET_XRR (l, index1, index2);
 
 		if (index1->type == GEL_VALUE_NODE &&
 		    index2->type == GEL_VALUE_NODE) {
@@ -6079,8 +6258,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 			return;
 		}
 	} else if (l->op.oper == GEL_E_GET_VELEMENT) {
-		GelETree *m, *index;
-		GEL_GET_LR (l, m, index);
+		GelETree *index;
+		GEL_GET_XR (l, index);
 
 		if (index->type == GEL_VALUE_NODE) {
 			int i;
@@ -6097,8 +6276,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 	}
 
 	if (r->op.oper == GEL_E_GET_ELEMENT) {
-		GelETree *m, *index1, *index2;
-		GEL_GET_LRR (r, m, index1, index2);
+		GelETree *index1, *index2;
+		GEL_GET_XRR (r, index1, index2);
 
 		if (index1->type == GEL_VALUE_NODE &&
 		    index2->type == GEL_VALUE_NODE) {
@@ -6113,8 +6292,8 @@ do_swapwithop (GelETree *l, GelETree *r)
 			return;
 		}
 	} else if(r->op.oper == GEL_E_GET_VELEMENT) {
-		GelETree *m, *index;
-		GEL_GET_LR (r, m, index);
+		GelETree *index;
+		GEL_GET_XR (r, index);
 
 		if (index->type == GEL_VALUE_NODE) {
 			int i;
@@ -6174,9 +6353,9 @@ iter_swapwithop(GelETree *n)
 static void
 iter_parameterop (GelETree *n)
 {
-	GelETree *l,*r,*rr;
+	GelETree *r,*rr;
 
-	GEL_GET_LRR (n, l, r, rr);
+	GEL_GET_XRR (n, r, rr);
 
 	/* FIXME: l should be the set func */
 	
@@ -6204,14 +6383,14 @@ iter_parameterop (GelETree *n)
 static inline void
 iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
 {
-	GelETree *l,*ident;
+	GelETree *l;
 
 	GEL_GET_L(n,l);
 	
 	if (l->op.oper == GEL_E_GET_ELEMENT) {
 		GelETree *ll,*rr;
 		
-		GEL_GET_LRR(l,ident,ll,rr);
+		GEL_GET_XRR(l,ll,rr);
 
 		GE_PUSH_STACK(ctx,n->op.args->any.next,GE_PRE);
 		GE_PUSH_STACK(ctx,rr,GE_PRE);
@@ -6223,7 +6402,7 @@ iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
 		  l->op.oper == GEL_E_GET_ROW_REGION) {
 		GelETree *ll;
 		
-		GEL_GET_LR(l,ident,ll);
+		GEL_GET_XR(l,ll);
 
 		GE_PUSH_STACK(ctx,n->op.args->any.next,GE_PRE);
 		ctx->post = FALSE;
@@ -6239,12 +6418,10 @@ iter_push_indexes_and_arg(GelCtx *ctx, GelETree *n)
 static inline void
 iter_do_push_index (GelCtx *ctx, GelETree *l)
 {
-	GelETree *ident;
-
 	if (l->op.oper == GEL_E_GET_ELEMENT) {
 		GelETree *ll,*rr;
 		
-		GEL_GET_LRR(l,ident,ll,rr);
+		GEL_GET_XRR(l,ll,rr);
 
 		GE_PUSH_STACK(ctx,rr,GE_PRE);
 		GE_PUSH_STACK(ctx,ll,GE_PRE);
@@ -6253,7 +6430,7 @@ iter_do_push_index (GelCtx *ctx, GelETree *l)
 		  l->op.oper == GEL_E_GET_ROW_REGION) {
 		GelETree *ll;
 		
-		GEL_GET_LR(l,ident,ll);
+		GEL_GET_XR(l,ll);
 		GE_PUSH_STACK(ctx,ll,GE_PRE);
 	}
 }
@@ -6291,7 +6468,7 @@ iter_get_velement (GelETree *n)
 	GEL_GET_LR (n, m, index);
 
 	if G_UNLIKELY (m->type != GEL_MATRIX_NODE) {
-		gel_errorout (_("Index works only on matricies"));
+		gel_errorout (_("Index works only on matrices"));
 		return;
 	}
 
@@ -6336,7 +6513,7 @@ iter_get_element (GelETree *n)
 	GEL_GET_LRR (n, m, index1, index2);
 
 	if G_UNLIKELY (m->type != GEL_MATRIX_NODE) {
-		gel_errorout (_("Index works only on matricies"));
+		gel_errorout (_("Index works only on matrices"));
 		return;
 	} else if G_UNLIKELY (index1->type != GEL_NULL_NODE &&
 			      index1->type != GEL_MATRIX_NODE &&
@@ -6427,7 +6604,7 @@ iter_get_region (GelETree *n, gboolean col)
 	GEL_GET_LR (n, m, index);
 
 	if G_UNLIKELY (m->type != GEL_MATRIX_NODE) {
-		gel_errorout (_("Index works only on matricies"));
+		gel_errorout (_("Index works only on matrices"));
 		return;
 	} else if G_LIKELY (index->type == GEL_VALUE_NODE ||
 			    index->type == GEL_MATRIX_NODE) {
@@ -8086,7 +8263,7 @@ op_precalc_1 (GelETree *n,
 	if (l->type != GEL_VALUE_NODE ||
 	    (respect_type &&
 	     (mpw_is_complex (l->val.value) ||
-	      mpw_is_float (l->val.value))))
+	      mpw_is_real_part_float (l->val.value))))
 		return;
 	mpw_init(res);
 	(*func)(res,l->val.value);
@@ -8112,8 +8289,8 @@ op_precalc_2 (GelETree *n,
 	    (respect_type &&
 	     (mpw_is_complex (l->val.value) ||
 	      mpw_is_complex (r->val.value) ||
-	      mpw_is_float (l->val.value) ||
-	      mpw_is_float (r->val.value))))
+	      mpw_is_real_part_float (l->val.value) ||
+	      mpw_is_real_part_float (r->val.value))))
 		return;
 	mpw_init(res);
 	(*func)(res,l->val.value,r->val.value);
