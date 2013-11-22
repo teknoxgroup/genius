@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2010 Jiri (George) Lebl
+ * Copyright (C) 1997-2011 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -626,8 +626,8 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, sizex, sizey, FALSE /* padding */);
-		for (i = 0; i < sizex; i++) {
-			for (j = 0; j < sizey; j++) {
+		for (j = 0; j < sizey; j++) {
+			for (i = 0; i < sizex; i++) {
 				mpw_t fr; 
 				mpw_init (fr);
 				mpw_rand (fr);
@@ -739,8 +739,8 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, sizex, sizey, FALSE /* padding */);
-		for (i = 0; i < sizex; i++) {
-			for (j = 0; j < sizey; j++) {
+		for (j = 0; j < sizey; j++) {
+			for (i = 0; i < sizex; i++) {
 				mpw_t fr;
 				mpw_init (fr);
 				mpw_randint (fr, a[0]->val.value);
@@ -2283,6 +2283,37 @@ Jacobi_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	}
 
 	return gel_makenum_use(tmp);
+}
+
+static GelETree *
+IntegerQuotient_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpz_ptr num1, num2;
+	mpz_t quo;
+	mpw_t numw;
+
+	if (a[0]->type == GEL_MATRIX_NODE ||
+	    a[1]->type == GEL_MATRIX_NODE)
+		return gel_apply_func_to_matrixen (ctx, a[0], a[1], IntegerQuotient_op, "IntegerQuotient", exception);
+
+	if G_UNLIKELY ( ! check_argument_integer (a, 0, "IntegerQuotient") ||
+			! check_argument_integer (a, 1, "IntegerQuotient"))
+		return NULL;
+
+	num1 = mpw_peek_real_mpz (a[0]->val.value);
+	num2 = mpw_peek_real_mpz (a[1]->val.value);
+
+	if (mpz_sgn (num2) == 0) {
+		gel_errorout (_("Division by zero!"));
+
+		return NULL;
+	}
+
+	mpz_init (quo);
+	mpz_fdiv_q (quo, num1, num2);
+	mpw_init (numw);
+	mpw_set_mpz_use (numw, quo);
+	return gel_makenum_use (numw);
 }
 
 /*kronecker function*/
@@ -5098,11 +5129,12 @@ etree_out_of_int_vector (int *vec, int len)
 	return n;
 }
 
+#if 0
 static GelETree *
-etree_out_of_etree_list (GSList *list, int len)
+etree_out_of_etree_list (GList *list, int len)
 {
 	GelMatrix *mm;
-	GSList *li;
+	GList *li;
 	int i;
 	GelETree *n;
 
@@ -5122,6 +5154,7 @@ etree_out_of_etree_list (GSList *list, int len)
 
 	return n;
 }
+#endif
 
 static gboolean
 comb_get_next_combination (int *vec, int len, int n)
@@ -5210,14 +5243,45 @@ perm_switch_all_above (int *perm, char *arrow, int pos, int n)
 	}
 }
 
+int
+nPr (unsigned int n, unsigned int k)
+{
+	/* assume k+1 <= n */
+	guint64 m = 1;
+	guint s = n-k+1;
+	while (s <= n) {
+		m *= (guint64)s;
+		if (m > G_MAXINT32) return -1;
+		s += 1;
+	}
+	return (int)m;
+}
+
+int
+nCr (unsigned int n, unsigned int k)
+{
+	mpz_t ret;
+	int r;
+	mpz_init (ret);
+
+	mpz_bin_uiui (ret, n, k);
+	if (mpz_fits_sint_p (ret)) {
+		r = mpz_get_si (ret);
+	} else {
+		r = -1;
+	}
+	mpz_clear (ret);
+	return r;
+}
+
 static GelETree *
 Combinations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	long k, n;
 	int *comb;
 	int i;
-	GSList *list;
 	int len;
+	GelMatrix *mm;
 	GelETree *r;
 
 	if G_UNLIKELY ( ! check_argument_integer (a, 0, "Combinations") ||
@@ -5241,25 +5305,32 @@ Combinations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return NULL;
 	}
 
-	list = NULL;
-	len = 0;
+	len = nCr (n, k);
+	if (len < 0) {
+		gel_errorout (_("%s: value out of range"),
+			      "Combinations");
+		return NULL;
+	}
 
 	comb = g_new (int, k);
 	for (i = 0; i < k; i++)
 		comb[i] = i+1;
 
+	mm = gel_matrix_new ();
+	gel_matrix_set_size (mm, len, 1, FALSE /* padding */);
+
+	GEL_GET_NEW_NODE (r);
+	r->type = GEL_MATRIX_NODE;
+	r->mat.matrix = gel_matrixw_new_with_matrix (mm);
+	r->mat.quoted = FALSE;
+
+	i = 0;
 	do {
-		list = g_slist_prepend (list, etree_out_of_int_vector (comb, k));
-		len++;
+		gel_matrix_index (mm, i, 0) = etree_out_of_int_vector (comb, k);
+		i++;
 	} while (comb_get_next_combination (comb, k, n));
 
 	g_free (comb);
-
-	list = g_slist_reverse (list);
-
-	r = etree_out_of_etree_list (list, len);
-
-	g_slist_free (list);
 
 	return r;
 }
@@ -5268,12 +5339,13 @@ static GelETree *
 Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *r;
-	GSList *list;
+	GQueue queue = G_QUEUE_INIT;
 	long k, n, len;
 	int *comb;
 	int *perm;
 	char *arrow;
-	int i;
+	int i, j;
+	GelMatrix *mm;
 
 	if G_UNLIKELY ( ! check_argument_integer (a, 0, "Permutations") ||
 			! check_argument_integer (a, 1, "Permutations"))
@@ -5296,6 +5368,13 @@ Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return NULL;
 	}
 
+	len = nPr (n, k);
+	if (len < 0) {
+		gel_errorout (_("%s: value out of range"),
+			      "Permutations");
+		return NULL;
+	}
+
 	arrow = g_new (char, k);
 	perm = g_new (int, k);
 	comb = g_new (int, k);
@@ -5303,9 +5382,15 @@ Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	for (i = 0; i < k; i++)
 		comb[i] = i+1;
 
-	list = NULL;
-	len = 0;
+	mm = gel_matrix_new ();
+	gel_matrix_set_size (mm, len, 1, FALSE /* padding */);
 
+	GEL_GET_NEW_NODE (r);
+	r->type = GEL_MATRIX_NODE;
+	r->mat.matrix = gel_matrixw_new_with_matrix (mm);
+	r->mat.quoted = FALSE;
+
+	j = 0;
 	do {
 		for (i = 0; i < k; i++)
 			perm[i] = comb[i];
@@ -5314,8 +5399,9 @@ Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		for (;;) {
 			int m;
 
-			list = g_slist_prepend (list, etree_out_of_int_vector (perm, k));
-			len++;
+			gel_matrix_index (mm, j, 0) =
+				etree_out_of_int_vector (perm, k);
+			j++;
 
 			m = perm_get_highest_mobile (perm, arrow, k);
 			if (m == -1)
@@ -5328,12 +5414,6 @@ Permutations_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	g_free (comb);
 	g_free (perm);
 	g_free (arrow);
-
-	list = g_slist_reverse (list);
-
-	r = etree_out_of_etree_list (list, len);
-
-	g_slist_free (list);
 
 	return r;
 }
@@ -6236,9 +6316,9 @@ gel_funclib_addall(void)
 
 	FUNC (Identity, 1, "x", "basic", N_("Identity function, returns its argument"));
 
-	VFUNC (rand, 1, "size", "numeric", N_("Generate random float"));
+	VFUNC (rand, 1, "size", "numeric", N_("Generate random float between 0 and 1, or if size given generate vector or matrix of random floats"));
 	f->no_mod_all_args = 1;
-	VFUNC (randint, 2, "max,size", "numeric", N_("Generate random integer"));
+	VFUNC (randint, 2, "max,size", "numeric", N_("Generate random integer between 0 and max-1 inclusive, or if size given generate vector or matrix of random integers"));
 	f->no_mod_all_args = 1;
 
 	PARAMETER (FloatPrecision, N_("Floating point precision"));
@@ -6396,6 +6476,8 @@ gel_funclib_addall(void)
 	VFUNC (min, 2, "a,args", "numeric", N_("Returns the minimum of arguments or matrix"));
 	VALIAS (Min, 2, min);
 	VALIAS (Minimum, 2, min);
+
+	FUNC (IntegerQuotient, 2, "a,b", "numeric", N_("Division w/o remainder, equivalent to floor(a/b)"));
 
 	FUNC (Jacobi, 2, "a,b", "number_theory", N_("Calculate the Jacobi symbol (a/b) (b should be odd)"));
 	ALIAS (JacobiSymbol, 2, Jacobi);

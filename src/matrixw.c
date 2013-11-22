@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2011 Jiri (George) Lebl
  *
  * Author: George Lebl
  *
@@ -25,6 +25,7 @@
 #include <string.h>
 #include "structs.h"
 #include "eval.h"
+#include "calc.h"
 #include "matrix.h"
 
 /*implement the inline functions*/
@@ -74,8 +75,8 @@ internal_matrix_free (GelMatrix *m)
 #ifdef MATRIX_DEBUG
 		/*debug*/printf ("ACTUALLY FREE\n");
 #endif
-		for (i = 0; i < m->width; i++) {
-			for (j = 0; j < m->height; j++) {
+		for (j = 0; j < m->height; j++) {
+			for (i = 0; i < m->width; i++) {
 				GelETree *t = gel_matrix_index (m, i, j);
 				if (t != NULL)
 					gel_freetree (t);
@@ -291,8 +292,8 @@ make_us_a_copy (GelMatrixW *m, int neww, int newh)
 	gel_matrix_set_size (m->m, neww, newh, TRUE /* padding */);
 	w = MIN (neww, m->regw);
 	h = MIN (newh, m->regh);
-	for (i = 0; i < w; i++) {
-		for(j = 0; j < h; j++) {
+	for(j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
 			int mi = m->regx ? m->regx[i] : i;
 			int mj = m->regy ? m->regy[j] : j;
 			GelETree *t = gel_matrix_index (old, mi, mj);
@@ -333,8 +334,8 @@ copy_with_region (GelMatrixW *m, int *regx, int *regy, int w, int h)
 	gel_matrix_set_size (m->m, w, h, TRUE /* padding */);
 	cw = MIN (w, m->regw);
 	ch = MIN (h, m->regh);
-	for (i = 0; i < cw; i++) {
-		for(j = 0; j < ch; j++) {
+	for(j = 0; j < ch; j++) {
+		for (i = 0; i < cw; i++) {
 			int mi = m->regx ? m->regx[regx[i]] : regx[i];
 			int mj = m->regy ? m->regy[regy[j]] : regy[j];
 			GelETree *t = gel_matrix_index (old, mi, mj);
@@ -372,8 +373,8 @@ copy_internal_region (GelMatrixW *m, int w, int h)
 	gel_matrix_set_size (m->m, w, h, TRUE /* padding */);
 	cw = MIN (w, m->regw);
 	ch = MIN (h, m->regh);
-	for (i = 0; i < cw; i++) {
-		for(j = 0; j < ch; j++) {
+	for (j = 0; j < ch; j++) {
+		for (i = 0; i < cw; i++) {
 			int mi = m->regx ? m->regx[i] : i;
 			int mj = m->regy ? m->regy[j] : j;
 			GelETree *t = gel_matrix_index (old, mi, mj);
@@ -427,8 +428,8 @@ ensure_at_least_size (GelMatrixW *m, int w, int h)
 		gel_matrix_set_size (m->m, w, h, TRUE /* padding */);
 		nw = MIN (w, m->regw);
 		nh = MIN (h, m->regh);
-		for (i = 0; i < nw; i++) {
-			for (j = 0; j < nh; j++) {
+		for (j = 0; j < nh; j++) {
+			for (i = 0; i < nw; i++) {
 				int mi = m->regx ? m->regx[i] : i;
 				int mj = m->regy ? m->regy[j] : j;
 				GelETree *t = gel_matrix_index (old, mi, mj);
@@ -438,8 +439,8 @@ ensure_at_least_size (GelMatrixW *m, int w, int h)
 				}
 			}
 		}
-		for (i = 0; i < old->width; i++) {
-			for (j = 0; j < old->height; j++) {
+		for (j = 0; j < old->height; j++) {
+			for (i = 0; i < old->width; i++) {
 				GelETree *t = gel_matrix_index (old,i,j);
 				if (t != NULL)
 					gel_freetree (t);
@@ -499,8 +500,8 @@ gel_matrixw_set_size (GelMatrixW *m, int nwidth, int nheight)
 				internal_matrix_free (old);
 				return;
 			}
-			for (i = width; i < m->regw; i++) {
-				for (j = 0; j < m->regh; j++) {
+			for (j = 0; j < m->regh; j++) {
+				for (i = width; i < m->regw; i++) {
 					int mi = m->regx ? m->regx[i] : i;
 					int mj = m->regy ? m->regy[j] : j;
 					if (gel_matrix_index (m->m, mi, mj) != NULL) {
@@ -509,8 +510,8 @@ gel_matrixw_set_size (GelMatrixW *m, int nwidth, int nheight)
 					}
 				}
 			}
-			for (i = 0; i < width; i++) {
-				for (j = height; j < m->regh; j++) {
+			for (j = height; j < m->regh; j++) {
+				for (i = 0; i < width; i++) {
 					int mi = m->regx ? m->regx[i] : i;
 					int mj = m->regy ? m->regy[j] : j;
 					if (gel_matrix_index (m->m, mi, mj) != NULL) {
@@ -586,6 +587,44 @@ gel_matrixw_set_element (GelMatrixW *m, int x, int y, gpointer data)
 	gel_matrixw_set_index (m, x, y) = data;
 }
 
+/*increment element*/
+int
+gel_matrixw_incr_element (GelMatrixW *m, int x, int y, mpw_ptr by)
+{
+	GelETree *t;
+
+	g_return_if_fail (m != NULL);
+	g_return_if_fail (x >= 0);
+	g_return_if_fail (y >= 0);
+#ifdef MATRIX_DEBUG
+	/*debug*/printf ("%s\n", G_GNUC_PRETTY_FUNCTION);
+#endif
+
+	if (m->tr)
+		internal_make_private (m, MAX(m->regh, y+1), MAX(m->regw, x+1),
+				       TRUE /* kill_type_caches */);
+	else
+		internal_make_private (m, MAX(m->regw, x+1), MAX(m->regh, y+1),
+				       TRUE /* kill_type_caches */);
+	gel_matrixw_set_at_least_size (m, x+1, y+1);
+	t = gel_matrixw_get_index (m, x, y);
+	if (t == NULL) {
+		if (by == NULL)
+			gel_matrixw_set_index (m, x, y) = gel_makenum_ui (1);
+		else
+			gel_matrixw_set_index (m, x, y) = gel_makenum (by);
+	} else if (t->type == GEL_VALUE_NODE) {
+		if (by == NULL)
+			mpw_add_ui (t->val.value, t->val.value, 1);
+		else
+			mpw_add (t->val.value, t->val.value, by);
+	} else {
+		gel_errorout (_("Trying to increment a nonvalue"));
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /*set vector element*/
 void
 gel_matrixw_set_velement (GelMatrixW *m, int i, gpointer data)
@@ -622,6 +661,97 @@ gel_matrixw_set_velement (GelMatrixW *m, int i, gpointer data)
 	if (t != NULL)
 		gel_freetree (t);
 	gel_matrixw_set_index (m, x, y) = data;
+}
+
+/*increment vector element*/
+int
+gel_matrixw_incr_velement (GelMatrixW *m, int i, mpw_ptr by)
+{
+	GelETree *t;
+	int x, y;
+
+	g_return_if_fail (m != NULL);
+	g_return_if_fail (i >= 0);
+
+	if (m->tr) {
+		if (m->regw == 1) {
+			x = 0;
+			y = i;
+		} else {
+			x = i % m->regh;
+			y = i / m->regh;
+		}
+		internal_make_private (m, MAX(m->regh, y+1), MAX(m->regw, x+1),
+				       TRUE /* kill_type_caches */);
+	} else {
+		if (m->regh == 1) {
+			x = i;
+			y = 0;
+		} else {
+			x = i % m->regw;
+			y = i / m->regw;
+		}
+		internal_make_private (m, MAX(m->regw, x+1), MAX(m->regh, y+1),
+				       TRUE /* kill_type_caches */);
+	}
+	gel_matrixw_set_at_least_size (m, x+1, y+1);
+	t = gel_matrixw_get_index (m, x, y);
+	if (t == NULL) {
+		if (by == NULL)
+			gel_matrixw_set_index (m, x, y) = gel_makenum_ui (1);
+		else
+			gel_matrixw_set_index (m, x, y) = gel_makenum (by);
+	} else if (t->type == GEL_VALUE_NODE) {
+		if (by == NULL)
+			mpw_add_ui (t->val.value, t->val.value, 1);
+		else
+			mpw_add (t->val.value, t->val.value, by);
+	} else {
+		gel_errorout (_("Trying to increment a nonvalue"));
+		return FALSE;
+	}
+	return TRUE;
+}
+
+int
+gel_matrixw_incr_region (GelMatrixW *m,
+			 int *destx, int *desty,
+			 int w, int h,
+			 mpw_ptr by)
+{
+	int i, j;
+
+	for (j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
+			gel_matrixw_incr_element (m, destx[i], desty[j], by);
+		}
+	}
+}
+
+int
+gel_matrixw_incr (GelMatrixW *m, mpw_ptr by)
+{
+	int i, j, w, h;
+
+	w = gel_matrixw_width (m);
+	h = gel_matrixw_height (m);
+
+	for (j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
+			gel_matrixw_incr_element (m, i, j, by);
+		}
+	}
+}
+
+int
+gel_matrixw_incr_vregion (GelMatrixW *m,
+			  int *desti, int len, mpw_ptr by)
+{
+	int i;
+
+	for (i = 0; i < len; i++) {
+		gel_matrixw_incr_velement (m, desti[i], by);
+	}
 }
 
 /*make sure it's in range first!*/
@@ -764,8 +894,8 @@ gel_matrixw_set_region(GelMatrixW *m, GelMatrixW *src,
 	/* assume that's what ensure/make_us_a_copy does */
 	g_assert (m->regx == NULL && m->regy == NULL);
 
-	for (i = 0; i < w; i++) {
-		for ( j = 0; j < h; j++) {
+	for (j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
 			int si, sj;
 			GelETree *t = gel_matrix_index (m->m, destx[i], desty[j]);
 			if (m->tr == src->tr) {
@@ -828,8 +958,8 @@ gel_matrixw_set_region_etree (GelMatrixW *m, GelETree *src,
 	/* assume that's what ensure/make_us_a_copy does */
 	g_assert (m->regx == NULL && m->regy == NULL);
 
-	for (i = 0; i < w; i++) {
-		for ( j = 0; j < h; j++) {
+	for (j = 0; j < h; j++) {
+		for (i = 0; i < w; i++) {
 			GelETree *t = gel_matrix_index (m->m, destx[i], desty[j]);
 			gel_matrix_index (m->m, destx[i], desty[j]) = gel_copynode (src);
 			if (t != NULL)

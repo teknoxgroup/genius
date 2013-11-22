@@ -96,13 +96,14 @@ am_genius_OBJECTS = binreloc.$(OBJEXT) calc.$(OBJEXT) eval.$(OBJEXT) \
 genius_OBJECTS = $(am_genius_OBJECTS)
 am__DEPENDENCIES_1 =
 genius_DEPENDENCIES = $(top_builddir)/ve/libvicious.a \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_genius_readline_helper_fifo_OBJECTS = genius_lists.$(OBJEXT) \
 	genius-readline-helper.$(OBJEXT)
 genius_readline_helper_fifo_OBJECTS =  \
 	$(am_genius_readline_helper_fifo_OBJECTS)
 genius_readline_helper_fifo_DEPENDENCIES =  \
-	$(top_builddir)/ve/libvicious.a $(am__DEPENDENCIES_1)
+	$(top_builddir)/ve/libvicious.a $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
 am_gnome_genius_OBJECTS = binreloc.$(OBJEXT) calc.$(OBJEXT) \
 	eval.$(OBJEXT) gnome-genius.$(OBJEXT) util.$(OBJEXT) \
 	dict.$(OBJEXT) funclib.$(OBJEXT) symbolic.$(OBJEXT) \
@@ -116,7 +117,7 @@ gnome_genius_OBJECTS = $(am_gnome_genius_OBJECTS)
 gnome_genius_DEPENDENCIES = $(top_builddir)/ve/libviciousui.a \
 	$(top_builddir)/gtkextra/libgtkextra-genius.a \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -170,6 +171,9 @@ CYGPATH_W = @CYGPATH_W@
 DATADIRNAME = @DATADIRNAME@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DISTCHECK_CONFIGURE_FLAGS = @DISTCHECK_CONFIGURE_FLAGS@
+DLLTOOL = @DLLTOOL@
+DOC_USER_FORMATS = @DOC_USER_FORMATS@
 DSYMUTIL = @DSYMUTIL@
 DUMPBIN = @DUMPBIN@
 ECHO_C = @ECHO_C@
@@ -197,6 +201,7 @@ GREP = @GREP@
 GSV_CFLAGS = @GSV_CFLAGS@
 GSV_LIBS = @GSV_LIBS@
 GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
+HELP_DIR = @HELP_DIR@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -221,6 +226,7 @@ LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
+MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
 MKINSTALLDIRS = @MKINSTALLDIRS@
 MSGFMT = @MSGFMT@
@@ -230,6 +236,7 @@ NM = @NM@
 NMEDIT = @NMEDIT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
+OMF_DIR = @OMF_DIR@
 OTOOL = @OTOOL@
 OTOOL64 = @OTOOL64@
 PACKAGE = @PACKAGE@
@@ -268,6 +275,7 @@ abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
+ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_DUMPBIN = @ac_ct_DUMPBIN@
 am__include = @am__include@
@@ -404,6 +412,7 @@ gnome_genius_LDADD = \
 	@GMP_LIB@				\
 	-lmpfr					\
 	@LEXLIB@				\
+	$(INTLLIBS)				\
 	$(GENIUS_LIBS)				\
 	$(GENIUS_NOGUI_LIBS)			\
 	$(GSV_LIBS)				\
@@ -420,6 +429,7 @@ genius_readline_helper_fifo_LDADD = \
 	$(top_builddir)/ve/libvicious.a		\
 	-lm					\
 	$(GENIUS_NOGUI_LIBS)			\
+	$(INTLLIBS)				\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
@@ -480,6 +490,7 @@ genius_LDADD = \
 	@GMP_LIB@				\
 	-lmpfr					\
 	@LEXLIB@				\
+	$(INTLLIBS)				\
 	$(GENIUS_NOGUI_LIBS)			\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@

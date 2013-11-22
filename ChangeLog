@@ -1,3 +1,110 @@
+Thu Jul 28 12:44:05 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.13
+
+Mon Jul 25 10:38:56 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/Makefile.am: add $(INTLLIBS) to LDADDs.  Thanks to Daniel Macks
+
+Thu Jul 14 23:52:58 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/geniustests.txt: some more tests
+
+Thu Jul 14 23:49:51 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/*/*.gel, src/funclib.c: Implement IntegerQuotient internally
+	  for speed and use it instead of floor(a/b)
+
+	* help/C/genius.xml: fix docbook abstract thingie.
+
+	* src/geniustests.txt: some more tests
+
+Thu Jul 14 17:26:00 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c: minor optimizations
+
+Thu Jul 14 16:34:40 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/misc.gel: Optimize SortVector (use quicksort
+	  for longer vectors)
+
+Tue Jul 12 23:16:59 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c, src/structs.h, src/parse.y, src/lexer.l, src/calc.c,
+	  src/matrixw.[ch]: add increment and swapwith operators which
+	  are quicker ways to do these common operations.  swapwith does
+	  not yet work with ranges, something that should be remedied.
+
+	* src/funclib.c: improve inline docs for rand and randint
+
+	* src/geniustests.txt, src/testscope.gel: add tests
+
+	* lib/linear_algebra/misc.gel: add ShuffleVector, fix some other
+	  functions to accept null
+
+	* lib/*/*.gel: use increment and swapwith, remove some unneeded
+	  trailing semicolons
+
+	* help/Makefile.am, help/genius.txt: add the genius.txt back into
+	  the distribution
+
+	* help/C/gel-function-list.xml help/C/genius.xml: document new
+	  features and functions
+
+Tue Jun 28 15:53:40 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/compil.c: use basic ascii for encoding simple strings
+	  use base64 for encoding strings that have nonallowed characters.
+
+	* src/compil.c: fix some very minor memory leaks
+
+	* configure.in: raise version
+
+Tue Jun 28 14:09:30 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, ve/ve-miscui.c: update some deprecated things
+
+	* configure.in: require gtk 2.18 (my current benchmark for
+	  gtk version allowed: it appears in current Scientific Linux)
+
+Tue Jun 28 13:08:19 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: use pid_t properly
+
+Wed Jun 01 20:33:17 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/dict.c, src/eval.c, src/funclib.c, src/matrix.c, src/matrix.h,
+	  src/matrixw.c: order matrix traversals in a more cache friendly way
+
+Tue Mar 29 01:41:20 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: define missing entities
+
+Mon Mar 28 18:17:52 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.h, src/funclib.c, src/matrix.[ch],
+	  src/genius-readline-helper.c, ve/ve-config.c, src/graphing.c:
+	  Bunch of optimizations.  Use GQueues where useful, drop use of
+	  g_ptr_array for matrices which saves a tiny bit of overhead and
+	  will allow graceful handling of out of memory problems rather than
+	  just crashing.  Optimize Combinations/Permutations quite a bit.
+
+	* src/geniustests.txt: add some tests.
+
+Wed Feb 16 21:12:34 2011  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: try gnome-help if gtk_open_uri don't work (am
+	  using xfce and for whatever reason it doesn't).  Also fix the
+	  formatting on error/warning dialogs
+
+Tue Nov 23 13:47:15 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* **/*.png: optimize and quantize pngs a bit further
+
+Mon Nov 22 15:57:18 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.12
+
 Sun Nov 07 11:48:14 2010  Jiri (George) Lebl <jirka@5z.com>
 
 	* configure.in, NEWS: I will be releasing 1.0.12 shortly

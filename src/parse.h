@@ -79,30 +79,33 @@
      NEXTROW = 296,
      EQUALS = 297,
      DEFEQUALS = 298,
-     TRANSPOSE = 299,
-     ELTELTDIV = 300,
-     ELTELTMUL = 301,
-     ELTELTPLUS = 302,
-     ELTELTMINUS = 303,
-     ELTELTEXP = 304,
-     ELTELTMOD = 305,
-     DOUBLEFACT = 306,
-     EQ_CMP = 307,
-     NE_CMP = 308,
-     CMP_CMP = 309,
-     LT_CMP = 310,
-     GT_CMP = 311,
-     LE_CMP = 312,
-     GE_CMP = 313,
-     LOGICAL_XOR = 314,
-     LOGICAL_OR = 315,
-     LOGICAL_AND = 316,
-     LOGICAL_NOT = 317,
-     LOWER_THAN_ELSE = 318,
-     MOD = 319,
-     ELTELTBACKDIV = 320,
-     UPLUS = 321,
-     UMINUS = 322
+     SWAPWITH = 299,
+     TRANSPOSE = 300,
+     ELTELTDIV = 301,
+     ELTELTMUL = 302,
+     ELTELTPLUS = 303,
+     ELTELTMINUS = 304,
+     ELTELTEXP = 305,
+     ELTELTMOD = 306,
+     DOUBLEFACT = 307,
+     EQ_CMP = 308,
+     NE_CMP = 309,
+     CMP_CMP = 310,
+     LT_CMP = 311,
+     GT_CMP = 312,
+     LE_CMP = 313,
+     GE_CMP = 314,
+     LOGICAL_XOR = 315,
+     LOGICAL_OR = 316,
+     LOGICAL_AND = 317,
+     LOGICAL_NOT = 318,
+     INCREMENT = 319,
+     LOWER_THAN_ELSE = 320,
+     LOWER_THAN_INCREMENT = 321,
+     MOD = 322,
+     ELTELTBACKDIV = 323,
+     UPLUS = 324,
+     UMINUS = 325
    };
 #endif
 /* Tokens.  */
@@ -147,30 +150,33 @@
 #define NEXTROW 296
 #define EQUALS 297
 #define DEFEQUALS 298
-#define TRANSPOSE 299
-#define ELTELTDIV 300
-#define ELTELTMUL 301
-#define ELTELTPLUS 302
-#define ELTELTMINUS 303
-#define ELTELTEXP 304
-#define ELTELTMOD 305
-#define DOUBLEFACT 306
-#define EQ_CMP 307
-#define NE_CMP 308
-#define CMP_CMP 309
-#define LT_CMP 310
-#define GT_CMP 311
-#define LE_CMP 312
-#define GE_CMP 313
-#define LOGICAL_XOR 314
-#define LOGICAL_OR 315
-#define LOGICAL_AND 316
-#define LOGICAL_NOT 317
-#define LOWER_THAN_ELSE 318
-#define MOD 319
-#define ELTELTBACKDIV 320
-#define UPLUS 321
-#define UMINUS 322
+#define SWAPWITH 299
+#define TRANSPOSE 300
+#define ELTELTDIV 301
+#define ELTELTMUL 302
+#define ELTELTPLUS 303
+#define ELTELTMINUS 304
+#define ELTELTEXP 305
+#define ELTELTMOD 306
+#define DOUBLEFACT 307
+#define EQ_CMP 308
+#define NE_CMP 309
+#define CMP_CMP 310
+#define LT_CMP 311
+#define GT_CMP 312
+#define LE_CMP 313
+#define GE_CMP 314
+#define LOGICAL_XOR 315
+#define LOGICAL_OR 316
+#define LOGICAL_AND 317
+#define LOGICAL_NOT 318
+#define INCREMENT 319
+#define LOWER_THAN_ELSE 320
+#define LOWER_THAN_INCREMENT 321
+#define MOD 322
+#define ELTELTBACKDIV 323
+#define UPLUS 324
+#define UMINUS 325
 
 
 
@@ -188,7 +194,7 @@ typedef union YYSTYPE
 
 
 /* Line 1685 of yacc.c  */
-#line 192 "y.tab.h"
+#line 198 "y.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
