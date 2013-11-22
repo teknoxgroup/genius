@@ -1,11 +1,13 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2007 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _DICT_H_
@@ -97,12 +97,17 @@ void d_replacefunc (GelEFunc *old, GelEFunc *_new);
 
 /*push a new dictionary onto the context stack*/
 gboolean d_addcontext(void);
+gboolean d_addcontext_named (GelToken *name);
 
 /*gimme the last dictinary and pop the context stack*/
 void d_popcontext(void);
 
 /*gimme the current dictinary*/
-GSList * d_getcontext(void);
+GSList * d_getcontext (void);
+
+/* this is a list of lists of the context stack */
+GSList * d_get_all_contexts (void);
+GSList * d_get_context_names (void);
 
 /*gimme the current global dictinary*/
 GSList * d_getcontext_global (void);

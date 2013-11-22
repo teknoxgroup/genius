@@ -1,11 +1,13 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2002 George Lebl
+ * Copyright (C) 1997-2007 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "config.h"
 
@@ -33,13 +33,14 @@
 /* #define MEM_DEBUG_FRIENDLY 1 */
 
 /*the context stack structure*/
-typedef struct _context_t {
+typedef struct _GelDictContext {
 	GSList *stack;
 	GSList *subststack;
+	GSList *stackname;
 	int top;
-} context_t;
+} GelDictContext;
 
-static context_t context={NULL,NULL,-1};
+static GelDictContext context = {NULL, NULL, NULL, -1};
 
 static GHashTable *dictionary;
 
@@ -313,6 +314,7 @@ d_initcontext(void)
 	/*add an empty dictionary*/
 	context.stack = g_slist_prepend (NULL,NULL);
 	context.subststack = g_slist_prepend (NULL,NULL);
+	context.stackname = g_slist_prepend (NULL,NULL);
 
 	dictionary = g_hash_table_new (g_str_hash, g_str_equal);
 
@@ -555,7 +557,9 @@ d_freefunc (GelEFunc *n)
 	GSList *li;
 	if(!n)
 		return;
+	/*
 	g_assert(!n->id || g_slist_find(n->id->refs,n)==NULL);
+	*/
 
 	if (n->on_subst_list) {
 		whack_from_lists (n);
@@ -663,6 +667,17 @@ d_addcontext(void)
 {
 	context.stack = g_slist_prepend (context.stack, NULL);
 	context.subststack = g_slist_prepend (context.subststack, NULL);
+	context.stackname = g_slist_prepend (context.stackname, NULL);
+	context.top++;
+	return TRUE;
+}
+
+gboolean
+d_addcontext_named (GelToken *name)
+{
+	context.stack = g_slist_prepend (context.stack, NULL);
+	context.subststack = g_slist_prepend (context.subststack, NULL);
+	context.stackname = g_slist_prepend (context.stackname, name);
 	context.top++;
 	return TRUE;
 }
@@ -705,6 +720,7 @@ d_popcontext(void)
 
 		context.stack = g_slist_delete_link (context.stack, context.stack);
 		context.subststack = g_slist_delete_link (context.subststack, context.subststack);
+		context.stackname = g_slist_delete_link (context.stackname, context.stackname);
 
 		/* substitute lower variables unless we are on the toplevel */
 		if (substlast != NULL && context.top > 0) {
@@ -726,6 +742,24 @@ d_getcontext (void)
 		return NULL;
 	else
 		return context.stack->data;
+}
+
+GSList *
+d_get_all_contexts (void)
+{
+	if (context.top == -1)
+		return NULL;
+	else
+		return context.stack;
+}
+
+GSList *
+d_get_context_names (void)
+{
+	if (context.top == -1)
+		return NULL;
+	else
+		return context.stackname;
 }
 
 /*gimme the current global dictinary*/

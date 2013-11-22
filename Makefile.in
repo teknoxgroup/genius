@@ -94,6 +94,8 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINRELOC_CFLAGS = @BINRELOC_CFLAGS@
+BINRELOC_LIBS = @BINRELOC_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
@@ -133,6 +135,8 @@ GMSGFMT = @GMSGFMT@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GREP = @GREP@
+GSV_CFLAGS = @GSV_CFLAGS@
+GSV_LIBS = @GSV_LIBS@
 GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -145,14 +149,12 @@ INTLTOOL_CAVES_RULE = @INTLTOOL_CAVES_RULE@
 INTLTOOL_DESKTOP_RULE = @INTLTOOL_DESKTOP_RULE@
 INTLTOOL_DIRECTORY_RULE = @INTLTOOL_DIRECTORY_RULE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_ICONV = @INTLTOOL_ICONV@
 INTLTOOL_KBD_RULE = @INTLTOOL_KBD_RULE@
 INTLTOOL_KEYS_RULE = @INTLTOOL_KEYS_RULE@
 INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_MSGFMT = @INTLTOOL_MSGFMT@
-INTLTOOL_MSGMERGE = @INTLTOOL_MSGMERGE@
 INTLTOOL_OAF_RULE = @INTLTOOL_OAF_RULE@
 INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_POLICY_RULE = @INTLTOOL_POLICY_RULE@
 INTLTOOL_PONG_RULE = @INTLTOOL_PONG_RULE@
 INTLTOOL_PROP_RULE = @INTLTOOL_PROP_RULE@
 INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
@@ -164,7 +166,6 @@ INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
-INTLTOOL_XGETTEXT = @INTLTOOL_XGETTEXT@
 INTLTOOL_XML_NOMERGE_RULE = @INTLTOOL_XML_NOMERGE_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
@@ -199,6 +200,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
 SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -279,13 +281,15 @@ EXTRA_DIST = \
 	genius.applications \
 	intltool-extract.in	\
 	intltool-merge.in	\
-	intltool-update.in
+	intltool-update.in	\
+	INSTALL.MacOSX
 
 DISTCLEANFILES = \
 	intltool-extract	\
 	intltool-merge		\
 	intltool-update
 
+DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper --disable-update-mimedb
 
 # This doesn't add the graphing functions
 #genius-function-list.txt: src/genius
@@ -777,9 +781,11 @@ ps-am:
 
 uninstall-am: uninstall-appregDATA uninstall-mimeinfoDATA \
 	uninstall-packagesDATA
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) uninstall-hook
 
 .MAKE: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) install-am \
-	install-data-am install-strip
+	install-data-am install-strip uninstall-am
 
 .PHONY: $(RECURSIVE_CLEAN_TARGETS) $(RECURSIVE_TARGETS) CTAGS GTAGS \
 	all all-am am--refresh check check-am clean clean-generic \
@@ -797,12 +803,15 @@ uninstall-am: uninstall-appregDATA uninstall-mimeinfoDATA \
 	installdirs installdirs-am maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-am uninstall-appregDATA \
+	uninstall uninstall-am uninstall-appregDATA uninstall-hook \
 	uninstall-mimeinfoDATA uninstall-packagesDATA
 
 
 install-data-hook: 
-	-update-mime-database "$(DESTDIR)${datadir}/mime"
+@ENABLE_UPDATE_MIMEDB_TRUE@	-update-mime-database "$(DESTDIR)${datadir}/mime"
+
+uninstall-hook:
+@ENABLE_UPDATE_MIMEDB_TRUE@	-update-mime-database "$(DESTDIR)${datadir}/mime"
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

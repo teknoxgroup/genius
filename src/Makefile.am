@@ -13,8 +13,7 @@ INCLUDES = \
 	-DG_LOG_DOMAIN=\"Genius\"				\
 	-DDATADIR=\""$(datadir)"\"				\
 	-DLIBEXECDIR=\""$(libexecdir)"\"			\
-	-DICONDIR=\""$(datadir)/pixmaps/genius"\"		\
-	-DLIBRARY_DIR=\""$(datadir)/genius/"\"			\
+	-DBUILDDIR=\""$(abs_top_builddir)"\"			\
 	-I$(srcdir)						\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/ve					\
@@ -23,8 +22,10 @@ INCLUDES = \
 	-I$(top_builddir)/ve					\
 	-I$(top_builddir)/gtkextra				\
 	-I$(includedir)						\
+	$(BINRELOC_CFLAGS)					\
 	$(GMP_INCLUDEDIR)					\
 	$(GENIUS_CFLAGS)					\
+	$(GSV_CFLAGS)						\
 	$(EXTRA_WARNING_CFLAGS)
 
 bin_PROGRAMS = @GNOME_GENIUS@ genius
@@ -35,6 +36,8 @@ EXTRA_PROGRAMS = gnome-genius genius-readline-helper-fifo
 
 
 gnome_genius_SOURCES = 	\
+	binreloc.c	\
+	binreloc.h	\
 	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
@@ -94,6 +97,7 @@ gnome_genius_LDADD = \
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
+	$(GSV_LIBS)				\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
@@ -111,6 +115,8 @@ genius_readline_helper_fifo_LDADD = \
 
 
 genius_SOURCES = 	\
+	binreloc.c	\
+	binreloc.h	\
 	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
@@ -210,6 +216,7 @@ EXTRA_DIST = \
 	geniustest.pl \
 	geniustests.txt \
 	longtest.gel \
+	nullspacetest.gel \
 	gnome-genius.desktop.in \
 	$(Desktop_in_files) \
 	$(Desktop_DATA) \

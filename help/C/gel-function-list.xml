@@ -21,7 +21,8 @@ To get help on a specific function from the console type:
          <term>load</term>
          <listitem>
           <synopsis>load "file.gel"</synopsis>
-          <para>Load a file into the interpretor.</para>
+          <para>Load a file into the interpretor.  The file will execute
+as if it were typed onto the command line.</para>
          </listitem>
         </varlistentry>
 
@@ -29,7 +30,7 @@ To get help on a specific function from the console type:
          <term>cd</term>
          <listitem>
           <synopsis>cd /directory/name</synopsis>
-          <para>Change working directory.</para>
+          <para>Change working directory to <filename>/directory/name</filename>.</para>
          </listitem>
         </varlistentry>
 
@@ -37,7 +38,7 @@ To get help on a specific function from the console type:
          <term>pwd</term>
          <listitem>
           <synopsis>pwd</synopsis>
-          <para>Change working directory.</para>
+          <para>Print the current working directory.</para>
          </listitem>
         </varlistentry>
 
@@ -53,7 +54,8 @@ To get help on a specific function from the console type:
          <term>plugin</term>
          <listitem>
           <synopsis>plugin plugin_name</synopsis>
-          <para>Load a plugin.</para>
+          <para>Load a plugin.  Plugin of that name must be installed on the system
+in the proper directory.</para>
          </listitem>
         </varlistentry>
       </variablelist>
@@ -66,7 +68,7 @@ To get help on a specific function from the console type:
          <term>Compose</term>
          <listitem>
           <synopsis>Compose (f,g)</synopsis>
-          <para>Compose two functions and return a function that is the composition of f and g.</para>
+          <para>Compose two functions and return a function that is the composition of <function>f</function> and <function>g</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -74,8 +76,9 @@ To get help on a specific function from the console type:
          <term>ComposePower</term>
          <listitem>
           <synopsis>ComposePower (f,n,x)</synopsis>
-          <para>Compose a function with itself n times, passing x as argument, and returning x if n == 0.
-		Examples:
+          <para>Compose and execute a function with itself <varname>n</varname> times, passing <varname>x</varname> as argument.   Returning <varname>x</varname> if
+<varname>n</varname> equals 0.
+		Example:
           <screen><prompt>genius></prompt> <userinput>function f(x) = x^2 ;</userinput>
 <prompt>genius></prompt> <userinput>ComposePower (f,3,7)</userinput>
 = 5764801
@@ -90,7 +93,10 @@ To get help on a specific function from the console type:
          <term>GetCurrentModulo</term>
          <listitem>
           <synopsis>GetCurrentModulo</synopsis>
-          <para>Get current modulo from the context outside the function</para>
+          <para>Get current modulo from the context outside the function.  That is, if outside of
+the function was executed in modulo (using <literal>mod</literal>) then this returns what
+this modulo was.  Normally the body of the function called is not executed in modular arithmetic,
+and this builtin function makes it possible to make GEL functions aware of modular arithmetic.</para>
          </listitem>
         </varlistentry>
 
@@ -98,7 +104,7 @@ To get help on a specific function from the console type:
          <term>Identity</term>
          <listitem>
           <synopsis>Identity (x)</synopsis>
-          <para>Identity function, returns its argument</para>
+          <para>Identity function, returns its argument.</para>
          </listitem>
         </varlistentry>
 
@@ -107,11 +113,11 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>IntegerFromBoolean (bval)</synopsis>
 	  <para>
-	    Make integer (0 for <literal>false</literal> or 1 for
-	    <literal>true</literal>) from a boolean value.
+	    Make integer (0 for <constant>false</constant> or 1 for
+	    <constant>true</constant>) from a boolean value.
 	    <varname>bval</varname> can also be a number in which case a
-	    non-zero value will be interpreted as <literal>true</literal> and
-	    zero will be interpretted as <literal>false</literal>.
+	    non-zero value will be interpreted as <constant>true</constant> and
+	    zero will be interpretted as <constant>false</constant>.
 	  </para>
          </listitem>
         </varlistentry>
@@ -120,7 +126,7 @@ To get help on a specific function from the console type:
          <term>IsBoolean</term>
          <listitem>
           <synopsis>IsBoolean (arg)</synopsis>
-          <para>Check if argument is a boolean (and not a number)</para>
+          <para>Check if argument is a boolean (and not a number).</para>
          </listitem>
         </varlistentry>
 
@@ -128,7 +134,7 @@ To get help on a specific function from the console type:
          <term>IsFunction</term>
          <listitem>
           <synopsis>IsFunction (arg)</synopsis>
-          <para>Check if argument is a function</para>
+          <para>Check if argument is a function.</para>
          </listitem>
         </varlistentry>
 
@@ -136,7 +142,7 @@ To get help on a specific function from the console type:
          <term>IsFunctionOrIdentifier</term>
          <listitem>
           <synopsis>IsFunctionOrIdentifier (arg)</synopsis>
-          <para>Check if argument is a function or identifier</para>
+          <para>Check if argument is a function or an identifier.</para>
          </listitem>
         </varlistentry>
 
@@ -144,7 +150,8 @@ To get help on a specific function from the console type:
          <term>IsFunctionRef</term>
          <listitem>
           <synopsis>IsFunctionRef (arg)</synopsis>
-          <para>Check if argument is a function reference</para>
+          <para>Check if argument is a function reference.  This includes variable
+references.</para>
          </listitem>
         </varlistentry>
 
@@ -152,7 +159,9 @@ To get help on a specific function from the console type:
          <term>IsMatrix</term>
          <listitem>
           <synopsis>IsMatrix (arg)</synopsis>
-          <para>Check if argument is a matrix</para>
+          <para>Check if argument is a matrix.  Even though <constant>null</constant> is
+sometimes considered an empty matrix, the function <function>IsMatrix</function> does
+not consider <constant>null</constant> a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -160,7 +169,7 @@ To get help on a specific function from the console type:
          <term>IsNull</term>
          <listitem>
           <synopsis>IsNull (arg)</synopsis>
-          <para>Check if argument is a null</para>
+          <para>Check if argument is a null.</para>
          </listitem>
         </varlistentry>
 
@@ -168,7 +177,7 @@ To get help on a specific function from the console type:
          <term>IsString</term>
          <listitem>
           <synopsis>IsString (arg)</synopsis>
-          <para>Check if argument is a text string</para>
+          <para>Check if argument is a text string.</para>
          </listitem>
         </varlistentry>
 
@@ -176,7 +185,7 @@ To get help on a specific function from the console type:
          <term>IsValue</term>
          <listitem>
           <synopsis>IsValue (arg)</synopsis>
-          <para>Check if argument is a number</para>
+          <para>Check if argument is a number.</para>
          </listitem>
         </varlistentry>
 
@@ -184,7 +193,11 @@ To get help on a specific function from the console type:
          <term>SetFunctionFlags</term>
          <listitem>
           <synopsis>SetFunctionFlags (id,flags...)</synopsis>
-          <para>Set flags for a function, currently "PropagateMod" and "NoModuloArguments"</para>
+          <para>Set flags for a function, currently <literal>"PropagateMod"</literal> and <literal>"NoModuloArguments"</literal>.
+If <literal>"PropagateMod"</literal> is set, then the body of the function is evaluated in modular arithmetic when the function
+is called inside a block that was evaluated using modular arithmetic (using <literal>mod</literal>).  If
+<literal>"NoModuloArguments"</literal>, then the arguments of the function are never evaluated using modular arithmetic.
+ </para>
          </listitem>
         </varlistentry>
 
@@ -192,7 +205,7 @@ To get help on a specific function from the console type:
          <term>SetHelp</term>
          <listitem>
           <synopsis>SetHelp (id,category,desc)</synopsis>
-          <para>Set the category and help description line for a function</para>
+          <para>Set the category and help description line for a function.</para>
          </listitem>
         </varlistentry>
 
@@ -200,7 +213,7 @@ To get help on a specific function from the console type:
          <term>SetHelpAlias</term>
          <listitem>
           <synopsis>SetHelpAlias (id,alias)</synopsis>
-          <para>Sets up a help alias</para>
+          <para>Sets up a help alias.</para>
          </listitem>
         </varlistentry>
 
@@ -208,7 +221,7 @@ To get help on a specific function from the console type:
          <term>chdir</term>
          <listitem>
           <synopsis>chdir (dir)</synopsis>
-          <para>Changes current directory</para>
+          <para>Changes current directory, same as the <command>cd</command>.</para>
          </listitem>
         </varlistentry>
 
@@ -216,7 +229,7 @@ To get help on a specific function from the console type:
          <term>display</term>
          <listitem>
           <synopsis>display (str,expr)</synopsis>
-          <para>Display a string and an expression</para>
+          <para>Display a string and an expression with a colon to separate them.</para>
          </listitem>
         </varlistentry>
 
@@ -224,7 +237,7 @@ To get help on a specific function from the console type:
          <term>error</term>
          <listitem>
           <synopsis>error (str)</synopsis>
-          <para>Prints a string to the error stream</para>
+          <para>Prints a string to the error stream (onto the console).</para>
          </listitem>
         </varlistentry>
 
@@ -233,7 +246,7 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>exit</synopsis>
           <para>Aliases: <function>quit</function></para>
-          <para>Exits the program</para>
+          <para>Exits the program.</para>
          </listitem>
         </varlistentry>
 
@@ -242,7 +255,7 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>false</synopsis>
           <para>Aliases: <function>False</function> <function>FALSE</function></para>
-          <para>The false boolean value</para>
+          <para>The false boolean value.</para>
          </listitem>
         </varlistentry>
 
@@ -250,7 +263,7 @@ To get help on a specific function from the console type:
          <term>manual</term>
          <listitem>
           <synopsis>manual</synopsis>
-          <para>Displays the user manual</para>
+          <para>Displays the user manual.</para>
          </listitem>
         </varlistentry>
 
@@ -258,7 +271,8 @@ To get help on a specific function from the console type:
          <term>print</term>
          <listitem>
           <synopsis>print (str)</synopsis>
-          <para>Prints an expression</para>
+          <para>Prints an expression and then print a newline.  The argument <varname>str</varname> can be any expression.  It is
+made into a string before being printed.</para>
          </listitem>
         </varlistentry>
 
@@ -266,7 +280,8 @@ To get help on a specific function from the console type:
          <term>printn</term>
          <listitem>
           <synopsis>printn (str)</synopsis>
-          <para>Prints an expression without a trailing newline</para>
+          <para>Prints an expression without a trailing newline.  The argument <varname>str</varname> can be any expression.  It is
+made into a string before being printed.</para>
          </listitem>
         </varlistentry>
 
@@ -274,7 +289,8 @@ To get help on a specific function from the console type:
          <term>protect</term>
          <listitem>
           <synopsis>protect (id)</synopsis>
-          <para>Protect a variable from being modified</para>
+          <para>Protect a variable from being modified.  This is used on the internal GEL functions to
+avoid them being accidentally overridden.</para>
          </listitem>
         </varlistentry>
 
@@ -305,7 +321,7 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>true</synopsis>
           <para>Aliases: <function>True</function> <function>TRUE</function></para>
-          <para>The true boolean value</para>
+          <para>The true boolean value.</para>
          </listitem>
         </varlistentry>
 
@@ -313,7 +329,7 @@ To get help on a specific function from the console type:
          <term>unprotect</term>
          <listitem>
           <synopsis>unprotect (id)</synopsis>
-          <para>Unprotect a variable from being modified</para>
+          <para>Unprotect a variable from being modified.</para>
          </listitem>
         </varlistentry>
 
@@ -325,11 +341,20 @@ To get help on a specific function from the console type:
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-version">
+         <term>version</term>
+         <listitem>
+          <synopsis>version</synopsis>
+          <para>Returns the version of Genius as a horizontal 3-vector with
+	  major version first, then minor version and finally patchlevel.</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-warranty">
          <term>warranty</term>
          <listitem>
           <synopsis>warranty</synopsis>
-          <para>Gives the warranty information</para>
+          <para>Gives the warranty information.</para>
          </listitem>
         </varlistentry>
       </variablelist>
@@ -343,7 +368,7 @@ To get help on a specific function from the console type:
          <term>ChopTolerance</term>
          <listitem>
           <synopsis>ChopTolerance = number</synopsis>
-          <para>Tolerance of the Chop function</para>
+          <para>Tolerance of the <function>Chop</function> function.</para>
          </listitem>
         </varlistentry>
 
@@ -351,7 +376,7 @@ To get help on a specific function from the console type:
          <term>ContinuousNumberOfTries</term>
          <listitem>
           <synopsis>ContinuousNumberOfTries = number</synopsis>
-          <para>How many iterations to try to find the limit for continuity and limits</para>
+          <para>How many iterations to try to find the limit for continuity and limits.</para>
          </listitem>
         </varlistentry>
 
@@ -359,7 +384,7 @@ To get help on a specific function from the console type:
          <term>ContinuousSFS</term>
          <listitem>
           <synopsis>ContinuousSFS = number</synopsis>
-          <para>How many successive steps to be within tolerance for calculation of continuity</para>
+          <para>How many successive steps to be within tolerance for calculation of continuity.</para>
          </listitem>
         </varlistentry>
 
@@ -367,7 +392,7 @@ To get help on a specific function from the console type:
          <term>ContinuousTolerance</term>
          <listitem>
           <synopsis>ContinuousTolerance = number</synopsis>
-          <para>Tolerance for continuity of functions and for calculating the limit</para>
+          <para>Tolerance for continuity of functions and for calculating the limit.</para>
          </listitem>
         </varlistentry>
 
@@ -375,7 +400,7 @@ To get help on a specific function from the console type:
          <term>DerivativeNumberOfTries</term>
          <listitem>
           <synopsis>DerivativeNumberOfTries = number</synopsis>
-          <para>How many iterations to try to find the limit for derivative</para>
+          <para>How many iterations to try to find the limit for derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -383,7 +408,7 @@ To get help on a specific function from the console type:
          <term>DerivativeSFS</term>
          <listitem>
           <synopsis>DerivativeSFS = number</synopsis>
-          <para>How many successive steps to be within tolerance for calculation of derivative</para>
+          <para>How many successive steps to be within tolerance for calculation of derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -391,7 +416,7 @@ To get help on a specific function from the console type:
          <term>DerivativeTolerance</term>
          <listitem>
           <synopsis>DerivativeTolerance = number</synopsis>
-          <para>Tolerance for calculating the derivatives of functions</para>
+          <para>Tolerance for calculating the derivatives of functions.</para>
          </listitem>
         </varlistentry>
 
@@ -399,7 +424,7 @@ To get help on a specific function from the console type:
          <term>ErrorFunctionTolerance</term>
          <listitem>
           <synopsis>ErrorFunctionTolerance = number</synopsis>
-          <para>Tolerance of the ErrorFunction</para>
+          <para>Tolerance of the <function>ErrorFunction</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -407,7 +432,7 @@ To get help on a specific function from the console type:
          <term>FloatPrecision</term>
          <listitem>
           <synopsis>FloatPrecision = number</synopsis>
-          <para>Floating point precision</para>
+          <para>Floating point precision.</para>
          </listitem>
         </varlistentry>
 
@@ -415,7 +440,7 @@ To get help on a specific function from the console type:
          <term>FullExpressions</term>
          <listitem>
           <synopsis>FullExpressions = boolean</synopsis>
-          <para>Print full expressions, even if more than a line</para>
+          <para>Print full expressions, even if more than a line.</para>
          </listitem>
         </varlistentry>
 
@@ -423,7 +448,7 @@ To get help on a specific function from the console type:
          <term>GaussDistributionTolerance</term>
          <listitem>
           <synopsis>GaussDistributionTolerance = number</synopsis>
-          <para>Tolerance of the GaussDistribution function</para>
+          <para>Tolerance of the <function>GaussDistribution</function> function.</para>
          </listitem>
         </varlistentry>
 
@@ -431,7 +456,7 @@ To get help on a specific function from the console type:
          <term>IntegerOutputBase</term>
          <listitem>
           <synopsis>IntegerOutputBase = number</synopsis>
-          <para>Integer output base</para>
+          <para>Integer output base.</para>
          </listitem>
         </varlistentry>
 
@@ -439,7 +464,7 @@ To get help on a specific function from the console type:
          <term>IsPrimeMillerRabinReps</term>
          <listitem>
           <synopsis>IsPrimeMillerRabinReps = number</synopsis>
-          <para>Number of extra Miller-Rabin tests to run on a number before declaring it a prime in IsPrime</para>
+          <para>Number of extra Miller-Rabin tests to run on a number before declaring it a prime in <function>IsPrime</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -447,7 +472,7 @@ To get help on a specific function from the console type:
          <term>LinePlotWindow</term>
          <listitem>
           <synopsis>LinePlotWindow = [x1,x2,y1,y2]</synopsis>
-          <para>Sets the limits for line plotting (See <link linkend="gel-function-LinePlot">LinePlot</link>).</para>
+          <para>Sets the limits for line plotting (See <link linkend="gel-function-LinePlot"><function>LinePlot</function></link>).</para>
          </listitem>
         </varlistentry>
 
@@ -455,7 +480,7 @@ To get help on a specific function from the console type:
          <term>MaxDigits</term>
          <listitem>
           <synopsis>MaxDigits = number</synopsis>
-          <para>Maximum digits to display</para>
+          <para>Maximum digits to display.</para>
          </listitem>
         </varlistentry>
 
@@ -463,7 +488,7 @@ To get help on a specific function from the console type:
          <term>MaxErrors</term>
          <listitem>
           <synopsis>MaxErrors = number</synopsis>
-          <para>Maximum errors to display</para>
+          <para>Maximum errors to display.</para>
          </listitem>
         </varlistentry>
 
@@ -471,7 +496,7 @@ To get help on a specific function from the console type:
          <term>MixedFractions</term>
          <listitem>
           <synopsis>MixedFractions = boolean</synopsis>
-          <para>If true, mixed fractions are printed</para>
+          <para>If true, mixed fractions are printed.</para>
          </listitem>
         </varlistentry>
 
@@ -479,7 +504,7 @@ To get help on a specific function from the console type:
          <term>NumericalIntegralFunction</term>
          <listitem>
           <synopsis>NumericalIntegralFunction = function</synopsis>
-          <para>The function used for numerical integration in NumericalIntegral</para>
+          <para>The function used for numerical integration in <function>NumericalIntegral</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -487,7 +512,42 @@ To get help on a specific function from the console type:
          <term>NumericalIntegralSteps</term>
          <listitem>
           <synopsis>NumericalIntegralSteps = number</synopsis>
-          <para>Steps to perform in NumericalIntegral</para>
+          <para>Steps to perform in <function>NumericalIntegral</function>.</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-OutputChopExponent">
+         <term>OutputChopExponent</term>
+         <listitem>
+          <synopsis>OutputChopExponent = number</synopsis>
+	  <para>When another number in the object being printed (a matrix or a
+value) is greater than
+10<superscript>-OutputChopWhenExponent</superscript>, and
+the number being printed is less than 
+10<superscript>-OutputChopExponent</superscript>, then
+display <computeroutput>0.0</computeroutput> instead of the number.
+</para>
+<para>
+Output is never chopped if <function>OutputChopExponent</function> is zero.
+It must be a nonnegative integer.
+</para>
+<para>
+If you want output always chopped according to
+<function>OutputChopExponent</function>, then set
+<function>OutputChopWhenExponent</function>, to something
+greater than or equal to
+<function>OutputChopExponent</function>.
+</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-OutputChopWhenExponent">
+         <term>OutputChopWhenExponent</term>
+         <listitem>
+          <synopsis>OutputChopWhenExponent = number</synopsis>
+	  <para>When to chop output.  See
+          <link linkend="gel-function-OutputChopExponent"><function>OutputChopExponent</function></link>.
+</para>
          </listitem>
         </varlistentry>
 
@@ -496,7 +556,7 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>OutputStyle = string</synopsis>
           <para>
-	    Output style, this can be normal, latex, mathml or troff.
+	    Output style, this can be <literal>normal</literal>, <literal>latex</literal>, <literal>mathml</literal> or <literal>troff</literal>.
 	  </para>
 	  <para>
 	    This affects mostly how matrices and fractions are printed out and
@@ -512,7 +572,7 @@ To get help on a specific function from the console type:
          <term>ResultsAsFloats</term>
          <listitem>
           <synopsis>ResultsAsFloats = boolean</synopsis>
-          <para>Convert all results to floats before printing</para>
+          <para>Convert all results to floats before printing.</para>
          </listitem>
         </varlistentry>
 
@@ -520,7 +580,7 @@ To get help on a specific function from the console type:
          <term>ScientificNotation</term>
          <listitem>
           <synopsis>ScientificNotation = boolean</synopsis>
-          <para>Use scientific notation</para>
+          <para>Use scientific notation.</para>
          </listitem>
         </varlistentry>
 
@@ -528,7 +588,7 @@ To get help on a specific function from the console type:
          <term>SumProductNumberOfTries</term>
          <listitem>
           <synopsis>SumProductNumberOfTries = number</synopsis>
-          <para>How many iterations to try for InfiniteSum and InfiniteProduct</para>
+          <para>How many iterations to try for <function>InfiniteSum</function> and <function>InfiniteProduct</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -536,7 +596,7 @@ To get help on a specific function from the console type:
          <term>SumProductSFS</term>
          <listitem>
           <synopsis>SumProductSFS = number</synopsis>
-          <para>How many successive steps to be within tolerance for InfiniteSum and InfiniteProduct</para>
+          <para>How many successive steps to be within tolerance for <function>InfiniteSum</function> and <function>InfiniteProduct</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -544,7 +604,7 @@ To get help on a specific function from the console type:
          <term>SumProductTolerance</term>
          <listitem>
           <synopsis>SumProductTolerance = number</synopsis>
-          <para>Tolerance for InfiniteSum and InfiniteProduct</para>
+          <para>Tolerance for <function>InfiniteSum</function> and <function>InfiniteProduct</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -552,7 +612,7 @@ To get help on a specific function from the console type:
          <term>SurfacePlotWindow</term>
          <listitem>
           <synopsis>SurfacePlotWindow = [x1,x2,y1,y2,z1,z2]</synopsis>
-          <para>Sets the limits for surface plotting (See <link linkend="gel-function-SurfacePlot">SurfacePlot</link>).</para>
+          <para>Sets the limits for surface plotting (See <link linkend="gel-function-SurfacePlot"><function>SurfacePlot</function></link>).</para>
          </listitem>
         </varlistentry>
 
@@ -567,7 +627,7 @@ To get help on a specific function from the console type:
          <listitem>
           <synopsis>CatalanConstant</synopsis>
           <para>
-	    Catalan's Constant, approximately 0.915...  It is defined to be the series where terms are <userinput>(-1^k)/((2*k+1)^2)</userinput>, where k ranges from 0 to infinity.
+	    Catalan's Constant, approximately 0.915...  It is defined to be the series where terms are <userinput>(-1^k)/((2*k+1)^2)</userinput>, where <varname>k</varname> ranges from 0 to infinity.
 	  </para>
           <para>
 	    See
@@ -597,7 +657,7 @@ To get help on a specific function from the console type:
          <term>GoldenRatio</term>
          <listitem>
           <synopsis>GoldenRatio</synopsis>
-          <para>The Golden Ratio</para>
+          <para>The Golden Ratio.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/GoldenRatio.html">Planetmath</ulink> or
@@ -610,7 +670,7 @@ To get help on a specific function from the console type:
          <term>Gravity</term>
          <listitem>
           <synopsis>Gravity</synopsis>
-          <para>Free fall acceleration</para>
+          <para>Free fall acceleration.</para>
          </listitem>
         </varlistentry>
 
@@ -621,7 +681,7 @@ To get help on a specific function from the console type:
           <para>
 	    The base of the natural logarithm.  <userinput>e^x</userinput>
 	    is the exponential function
-	    <link linkend='gel-function-exp'>exp</link>.  This is the
+	    <link linkend="gel-function-exp"><function>exp</function></link>.  This is the
 	    number approximately 2.71828182846...
 	  </para>
           <para>
@@ -638,7 +698,7 @@ To get help on a specific function from the console type:
           <synopsis>pi</synopsis>
           <para>
 	    The number pi, that is the ratio of a circle's circumference
-	    to it's diameter.  This is approximately 3.14159265359...
+	    to its diameter.  This is approximately 3.14159265359...
 	  </para>
           <para>
 	    See
@@ -661,14 +721,15 @@ To get help on a specific function from the console type:
           <para>Aliases: <function>abs</function></para>
           <para>
 	    Absolute value of a number and if <varname>x</varname> is
-	    a complex value the modulus of <varname>x</varname>.
+	    a complex value the modulus of <varname>x</varname>.  I.e. this
+	    the distance of <varname>x</varname> to the origin.
 	  </para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/AbsoluteValue.html">Planetmath (absolute value)</ulink>,
 	    <ulink url="http://planetmath.org/encyclopedia/ModulusOfComplexNumber.html">Planetmath (modulus)</ulink>,
 	    <ulink url="http://mathworld.wolfram.com/AbsoluteValue.html">Mathworld (absolute value)</ulink> or
-	    <ulink url="http://mathworld.wolfram.com/AbsoluteValue.html">Mathworld (complex modulus)</ulink>
+	    <ulink url="http://mathworld.wolfram.com/ComplexModulus.html">Mathworld (complex modulus)</ulink>
 for more information.
 	  </para>
          </listitem>
@@ -678,7 +739,7 @@ for more information.
          <term>Chop</term>
          <listitem>
           <synopsis>Chop (x)</synopsis>
-          <para>Replace very small number with zero</para>
+          <para>Replace very small number with zero.</para>
          </listitem>
         </varlistentry>
 
@@ -687,7 +748,7 @@ for more information.
          <listitem>
           <synopsis>ComplexConjugate (M)</synopsis>
           <para>Aliases: <function>conj</function> <function>Conj</function></para>
-          <para>Calculates the conjugate</para>
+          <para>Calculates the conjugate.</para>
          </listitem>
         </varlistentry>
 
@@ -695,7 +756,7 @@ for more information.
          <term>Denominator</term>
          <listitem>
           <synopsis>Denominator (x)</synopsis>
-          <para>Get the denominator of a rational number</para>
+          <para>Get the denominator of a rational number.</para>
          </listitem>
         </varlistentry>
 
@@ -703,7 +764,7 @@ for more information.
          <term>FractionalPart</term>
          <listitem>
           <synopsis>FractionalPart (x)</synopsis>
-          <para>Return the fractional part of a number</para>
+          <para>Return the fractional part of a number.</para>
          </listitem>
         </varlistentry>
 
@@ -712,7 +773,7 @@ for more information.
          <listitem>
           <synopsis>Im (z)</synopsis>
           <para>Aliases: <function>ImaginaryPart</function></para>
-          <para>Get the imaginary part of a complex number</para>
+          <para>Get the imaginary part of a complex number.</para>
          </listitem>
         </varlistentry>
 
@@ -720,7 +781,7 @@ for more information.
          <term>IntegerQuotient</term>
          <listitem>
           <synopsis>IntegerQuotient (m,n)</synopsis>
-          <para>Division w/o remainder</para>
+          <para>Division without remainder.</para>
          </listitem>
         </varlistentry>
 
@@ -728,7 +789,7 @@ for more information.
          <term>IsComplex</term>
          <listitem>
           <synopsis>IsComplex (num)</synopsis>
-          <para>Check if argument is a complex (non-real) number</para>
+          <para>Check if argument is a complex (non-real) number.</para>
          </listitem>
         </varlistentry>
 
@@ -736,7 +797,7 @@ for more information.
          <term>IsComplexRational</term>
          <listitem>
           <synopsis>IsComplexRational (num)</synopsis>
-          <para>Check if argument is a possibly complex rational number</para>
+          <para>Check if argument is a possibly complex rational number.</para>
          </listitem>
         </varlistentry>
 
@@ -744,7 +805,7 @@ for more information.
          <term>IsFloat</term>
          <listitem>
           <synopsis>IsFloat (num)</synopsis>
-          <para>Check if argument is a floating point number (non-complex)</para>
+          <para>Check if argument is a floating point number (non-complex).</para>
          </listitem>
         </varlistentry>
 
@@ -753,15 +814,7 @@ for more information.
          <listitem>
           <synopsis>IsGaussInteger (num)</synopsis>
           <para>Aliases: <function>IsComplexInteger</function></para>
-          <para>Check if argument is a possibly complex integer</para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry id="gel-function-IsGaussianInteger">
-         <term>IsGaussianInteger</term>
-         <listitem>
-          <synopsis>IsGaussianInteger (z)</synopsis>
-          <para>Check if argument is a gaussian integer</para>
+          <para>Check if argument is a possibly complex integer.</para>
          </listitem>
         </varlistentry>
 
@@ -769,7 +822,7 @@ for more information.
          <term>IsInteger</term>
          <listitem>
           <synopsis>IsInteger (num)</synopsis>
-          <para>Check if argument is an integer (non-complex)</para>
+          <para>Check if argument is an integer (non-complex).</para>
          </listitem>
         </varlistentry>
 
@@ -795,7 +848,7 @@ we accept the convention that 0 is not a natural number.</para>
          <term>IsRational</term>
          <listitem>
           <synopsis>IsRational (num)</synopsis>
-          <para>Check if argument is a rational number (non-complex)</para>
+          <para>Check if argument is a rational number (non-complex).</para>
          </listitem>
         </varlistentry>
 
@@ -803,7 +856,7 @@ we accept the convention that 0 is not a natural number.</para>
          <term>IsReal</term>
          <listitem>
           <synopsis>IsReal (num)</synopsis>
-          <para>Check if argument is a real number</para>
+          <para>Check if argument is a real number.</para>
          </listitem>
         </varlistentry>
 
@@ -811,7 +864,7 @@ we accept the convention that 0 is not a natural number.</para>
          <term>Numerator</term>
          <listitem>
           <synopsis>Numerator (x)</synopsis>
-          <para>Get the numerator of a rational number</para>
+          <para>Get the numerator of a rational number.</para>
          </listitem>
         </varlistentry>
 
@@ -820,7 +873,7 @@ we accept the convention that 0 is not a natural number.</para>
          <listitem>
           <synopsis>Re (z)</synopsis>
           <para>Aliases: <function>RealPart</function></para>
-          <para>Get the real part of a complex number</para>
+          <para>Get the real part of a complex number.</para>
          </listitem>
         </varlistentry>
 
@@ -843,7 +896,7 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>ceil (x)</synopsis>
           <para>Aliases: <function>Ceiling</function></para>
-          <para>Get the lowest integer more than or equal to n</para>
+          <para>Get the lowest integer more than or equal to n.</para>
          </listitem>
         </varlistentry>
 
@@ -854,7 +907,7 @@ value then <function>Sign</function> returns the direction or 0.
           <para>
 	    The exponential function.  This is the function
 	    <userinput>e^x</userinput> where <varname>e</varname>
-	    is the <link linkend='gel-function-e'>base of the natural
+	    is the <link linkend="gel-function-e">base of the natural
 	    logarithm</link>.
 	  </para>
           <para>
@@ -878,7 +931,7 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>floor (x)</synopsis>
           <para>Aliases: <function>Floor</function></para>
-          <para>Get the highest integer less than or equal to n</para>
+          <para>Get the highest integer less than or equal to <varname>n</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -902,7 +955,7 @@ value then <function>Sign</function> returns the direction or 0.
          <term>log10</term>
          <listitem>
           <synopsis>log10 (x)</synopsis>
-          <para>Logarithm of x base 10</para>
+          <para>Logarithm of <varname>x</varname> base 10.</para>
          </listitem>
         </varlistentry>
 
@@ -911,7 +964,7 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>log2 (x)</synopsis>
           <para>Aliases: <function>lg</function></para>
-          <para>Logarithm of x base 2</para>
+          <para>Logarithm of <varname>x</varname> base 2.</para>
          </listitem>
         </varlistentry>
 
@@ -920,7 +973,7 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>max (a,args...)</synopsis>
           <para>Aliases: <function>Max</function> <function>Maximum</function></para>
-          <para>Returns the maximum of arguments or matrix</para>
+          <para>Returns the maximum of arguments or matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -929,7 +982,7 @@ value then <function>Sign</function> returns the direction or 0.
          <listitem>
           <synopsis>min (a,args...)</synopsis>
           <para>Aliases: <function>Min</function> <function>Minimum</function></para>
-          <para>Returns the minimum of arguments or matrix</para>
+          <para>Returns the minimum of arguments or matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -969,7 +1022,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>round (x)</synopsis>
           <para>Aliases: <function>Round</function></para>
-          <para>Round a number</para>
+          <para>Round a number.</para>
          </listitem>
         </varlistentry>
 
@@ -978,7 +1031,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>sqrt (x)</synopsis>
           <para>Aliases: <function>SquareRoot</function></para>
-          <para>The square root.  When operating modulo some integer will return either a <literal>null</literal> or a vector of the square roots.  Examples:
+          <para>The square root.  When operating modulo some integer will return either a <constant>null</constant> or a vector of the square roots.  Examples:
           <screen><prompt>genius></prompt> <userinput>sqrt(2)</userinput>
 = 1.41421356237
 <prompt>genius></prompt> <userinput>sqrt(-1)</userinput>
@@ -1002,7 +1055,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>trunc (x)</synopsis>
           <para>Aliases: <function>Truncate</function> <function>IntegerPart</function></para>
-          <para>Truncate number to an integer (return the integer part)</para>
+          <para>Truncate number to an integer (return the integer part).</para>
          </listitem>
         </varlistentry>
 
@@ -1017,7 +1070,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acos (x)</synopsis>
           <para>Aliases: <function>arccos</function></para>
-          <para>The arccos (inverse cos) function</para>
+          <para>The arccos (inverse cos) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1026,7 +1079,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acosh (x)</synopsis>
           <para>Aliases: <function>arccosh</function></para>
-          <para>The arccosh (inverse cosh) function</para>
+          <para>The arccosh (inverse cosh) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1035,7 +1088,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acot (x)</synopsis>
           <para>Aliases: <function>arccot</function></para>
-          <para>The arccot (inverse cot) function</para>
+          <para>The arccot (inverse cot) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1044,7 +1097,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acoth (x)</synopsis>
           <para>Aliases: <function>arccoth</function></para>
-          <para>The arccoth (inverse coth) function</para>
+          <para>The arccoth (inverse coth) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1053,7 +1106,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acsc (x)</synopsis>
           <para>Aliases: <function>arccsc</function></para>
-          <para>The inverse cosecant function</para>
+          <para>The inverse cosecant function.</para>
          </listitem>
         </varlistentry>
 
@@ -1062,7 +1115,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>acsch (x)</synopsis>
           <para>Aliases: <function>arccsch</function></para>
-          <para>The inverse hyperbolic cosecant function</para>
+          <para>The inverse hyperbolic cosecant function.</para>
          </listitem>
         </varlistentry>
 
@@ -1071,7 +1124,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asec (x)</synopsis>
           <para>Aliases: <function>arcsec</function></para>
-          <para>The inverse secant function</para>
+          <para>The inverse secant function.</para>
          </listitem>
         </varlistentry>
 
@@ -1080,7 +1133,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asech (x)</synopsis>
           <para>Aliases: <function>arcsech</function></para>
-          <para>The inverse hyperbolic secant function</para>
+          <para>The inverse hyperbolic secant function.</para>
          </listitem>
         </varlistentry>
 
@@ -1089,7 +1142,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asin (x)</synopsis>
           <para>Aliases: <function>arcsin</function></para>
-          <para>The arcsin (inverse sin) function</para>
+          <para>The arcsin (inverse sin) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1098,7 +1151,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>asinh (x)</synopsis>
           <para>Aliases: <function>arcsinh</function></para>
-          <para>The arcsinh (inverse sinh) function</para>
+          <para>The arcsinh (inverse sinh) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1120,7 +1173,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>atanh (x)</synopsis>
           <para>Aliases: <function>arctanh</function></para>
-          <para>The arctanh (inverse tanh) function</para>
+          <para>The arctanh (inverse tanh) function.</para>
          </listitem>
         </varlistentry>
 
@@ -1160,7 +1213,7 @@ number is specified) of the given size returned.  For example
          <term>cosh</term>
          <listitem>
           <synopsis>cosh (x)</synopsis>
-          <para>Calculates the hyperbolic cosine function</para>
+          <para>Calculates the hyperbolic cosine function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1172,7 +1225,7 @@ number is specified) of the given size returned.  For example
          <term>cot</term>
          <listitem>
           <synopsis>cot (x)</synopsis>
-          <para>The cotangent function</para>
+          <para>The cotangent function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DefinitionsInTrigonometry.html">Planetmath</ulink> for more information.
@@ -1184,7 +1237,7 @@ number is specified) of the given size returned.  For example
          <term>coth</term>
          <listitem>
           <synopsis>coth (x)</synopsis>
-          <para>The hyperbolic cotangent function</para>
+          <para>The hyperbolic cotangent function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1196,7 +1249,7 @@ number is specified) of the given size returned.  For example
          <term>csc</term>
          <listitem>
           <synopsis>csc (x)</synopsis>
-          <para>The cosecant function</para>
+          <para>The cosecant function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DefinitionsInTrigonometry.html">Planetmath</ulink> for more information.
@@ -1208,7 +1261,7 @@ number is specified) of the given size returned.  For example
          <term>csch</term>
          <listitem>
           <synopsis>csch (x)</synopsis>
-          <para>The hyperbolic cosecant function</para>
+          <para>The hyperbolic cosecant function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1220,7 +1273,7 @@ number is specified) of the given size returned.  For example
          <term>sec</term>
          <listitem>
           <synopsis>sec (x)</synopsis>
-          <para>The secant function</para>
+          <para>The secant function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DefinitionsInTrigonometry.html">Planetmath</ulink> for more information.
@@ -1232,7 +1285,7 @@ number is specified) of the given size returned.  For example
          <term>sech</term>
          <listitem>
           <synopsis>sech (x)</synopsis>
-          <para>The hyperbolic secant function</para>
+          <para>The hyperbolic secant function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1256,7 +1309,7 @@ number is specified) of the given size returned.  For example
          <term>sinh</term>
          <listitem>
           <synopsis>sinh (x)</synopsis>
-          <para>Calculates the hyperbolic sine function</para>
+          <para>Calculates the hyperbolic sine function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1268,7 +1321,7 @@ number is specified) of the given size returned.  For example
          <term>tan</term>
          <listitem>
           <synopsis>tan (x)</synopsis>
-          <para>Calculates the tan function</para>
+          <para>Calculates the tan function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DefinitionsInTrigonometry.html">Planetmath</ulink> for more information.
@@ -1280,7 +1333,7 @@ number is specified) of the given size returned.  For example
          <term>tanh</term>
          <listitem>
           <synopsis>tanh (x)</synopsis>
-          <para>The hyperbolic tangent function</para>
+          <para>The hyperbolic tangent function.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/HyperbolicFunctions.html">Planetmath</ulink> for more information.
@@ -1299,7 +1352,8 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>AreRelativelyPrime (a,b)</synopsis>
           <para>
-	    Are the real integers <varname>a</varname> and <varname>b</varname> relatively prime?  Returns true or false.
+	    Are the real integers <varname>a</varname> and <varname>b</varname> relatively prime?
+	    Returns <constant>true</constant> or <constant>false</constant>.
 	  </para>
           <para>
 	    See
@@ -1313,7 +1367,7 @@ number is specified) of the given size returned.  For example
          <term>BernoulliNumber</term>
          <listitem>
           <synopsis>BernoulliNumber (n)</synopsis>
-          <para>Return the <varname>n</varname>th Bernoulli number</para>
+          <para>Return the <varname>n</varname>th Bernoulli number.</para>
          </listitem>
         </varlistentry>
 
@@ -1348,7 +1402,7 @@ number is specified) of the given size returned.  For example
          <term>ConvertFromBase</term>
          <listitem>
           <synopsis>ConvertFromBase (v,b)</synopsis>
-          <para>Convert a vector of values indicating powers of b to a number</para>
+          <para>Convert a vector of values indicating powers of b to a number.</para>
          </listitem>
         </varlistentry>
 
@@ -1356,7 +1410,7 @@ number is specified) of the given size returned.  For example
          <term>ConvertToBase</term>
          <listitem>
           <synopsis>ConvertToBase (n,b)</synopsis>
-          <para>Convert a number to a vector of powers for elements in base b</para>
+          <para>Convert a number to a vector of powers for elements in base <varname>b</varname>.</para>
          </listitem>
         </varlistentry>
 
@@ -1364,7 +1418,9 @@ number is specified) of the given size returned.  For example
          <term>DiscreteLog</term>
          <listitem>
           <synopsis>DiscreteLog (n,b,q)</synopsis>
-          <para>Find discrete log of n base b in F_q where q is a prime using the Silver-Pohlig-Hellman algoritm</para>
+          <para>Find discrete log of <varname>n</varname> base <varname>b</varname> in
+	    F<subscript>q</subscript>, the finite field of order <varname>q</varname>, where <varname>q</varname>
+	    is a prime, using the Silver-Pohlig-Hellman algoritm.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DiscreteLogarithm.html">Planetmath</ulink> or
@@ -1377,7 +1433,7 @@ number is specified) of the given size returned.  For example
          <term>Divides</term>
          <listitem>
           <synopsis>Divides (m,n)</synopsis>
-          <para>Checks divisibility (if m divides n)</para>
+          <para>Checks divisibility (if <varname>m</varname> divides <varname>n</varname>).</para>
          </listitem>
         </varlistentry>
 
@@ -1470,7 +1526,8 @@ number is specified) of the given size returned.  For example
          <term>FindPrimitiveElementMod</term>
          <listitem>
           <synopsis>FindPrimitiveElementMod (q)</synopsis>
-          <para>Find the first primitive element in F_q (q must be a prime)</para>
+          <para>Find the first primitive element in F<subscript>q</subscript>, the finite
+group of order <varname>q</varname>.  Of course <varname>q</varname> must be a prime.</para>
          </listitem>
         </varlistentry>
 
@@ -1478,7 +1535,8 @@ number is specified) of the given size returned.  For example
          <term>FindRandomPrimitiveElementMod</term>
          <listitem>
           <synopsis>FindRandomPrimitiveElementMod (q)</synopsis>
-          <para>Find a random primitive element in F_q (q must be a prime)</para>
+          <para>Find a random primitive element in F<subscript>q</subscript>, the finite
+group of order <varname>q</varname> (q must be a prime).</para>
          </listitem>
         </varlistentry>
 
@@ -1486,7 +1544,11 @@ number is specified) of the given size returned.  For example
          <term>IndexCalculus</term>
          <listitem>
           <synopsis>IndexCalculus (n,b,q,S)</synopsis>
-          <para>Compute discrete log base b of n in F_q (q a prime) using the factor base S.  S should be a column of primes possibly with second column precalculated by IndexCalculusPrecalculation.</para>
+          <para>Compute discrete log base <varname>b</varname> of n in F<subscript>q</subscript>, the finite
+group of order <varname>q</varname> (<varname>q</varname> a prime), using the
+factor base <varname>S</varname>.  <varname>S</varname> should be a column of
+primes possibly with second column precalculated by
+<function>IndexCalculusPrecalculation</function>.</para>
          </listitem>
         </varlistentry>
 
@@ -1494,7 +1556,12 @@ number is specified) of the given size returned.  For example
          <term>IndexCalculusPrecalculation</term>
          <listitem>
           <synopsis>IndexCalculusPrecalculation (b,q,S)</synopsis>
-          <para>Run the precalculation step of IndexCalculus for logarithms base b in F_q (q a prime) for the factor base S (where S is a column vector of primes).  The logs will be precalculated and returned in the second column.</para>
+	  <para>Run the precalculation step of
+<function>IndexCalculus</function> for logarithms base <varname>b</varname> in
+F<subscript>q</subscript>, the finite group of order <varname>q</varname>
+(<varname>q</varname> a prime), for the factor base <varname>S</varname> (where
+<varname>S</varname> is a column vector of primes).  The logs will be
+precalculated and returned in the second column.</para>
          </listitem>
         </varlistentry>
 
@@ -1524,7 +1591,7 @@ number is specified) of the given size returned.  For example
          <term>IsOdd</term>
          <listitem>
           <synopsis>IsOdd (n)</synopsis>
-          <para>Tests if an integer is odd</para>
+          <para>Tests if an integer is odd.</para>
          </listitem>
         </varlistentry>
 
@@ -1532,7 +1599,7 @@ number is specified) of the given size returned.  For example
          <term>IsPerfectPower</term>
          <listitem>
           <synopsis>IsPerfectPower (n)</synopsis>
-          <para>Check a number for being any perfect power (a^b)</para>
+          <para>Check an integer is any perfect power, a<superscript>b</superscript>.</para>
          </listitem>
         </varlistentry>
 
@@ -1541,9 +1608,9 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>IsPerfectSquare (n)</synopsis>
           <para>
-	    Check a number for being a perfect square.  The number must
+	    Check an integer for being a perfect square of an integer.  The number must
 	    be a real integer.  Negative integers are of course never perfect
-	    squares.
+	    squares of real integers.
 	  </para>
          </listitem>
         </varlistentry>
@@ -1553,7 +1620,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>IsPrime (n)</synopsis>
           <para>
-	    Tests primality of integers, for numbers less than 25*10^9 the
+	    Tests primality of integers, for numbers less than 2.5e10 the
 	    answer is deterministic (if Riemann hypothesis is true).  For
 	    numbers larger, the probability of a false positive
 	    depends on
@@ -1583,7 +1650,8 @@ number is specified) of the given size returned.  For example
          <term>IsPrimitiveMod</term>
          <listitem>
           <synopsis>IsPrimitiveMod (g,q)</synopsis>
-          <para>Check if g is primitive in F_q, where q is a prime.  If q is not prime results are bogus.</para>
+          <para>Check if <varname>g</varname> is primitive in F<subscript>q</subscript>, the finite
+group of order <varname>q</varname>, where <varname>q</varname> is a prime.  If <varname>q</varname> is not prime results are bogus.</para>
          </listitem>
         </varlistentry>
 
@@ -1591,7 +1659,10 @@ number is specified) of the given size returned.  For example
          <term>IsPrimitiveModWithPrimeFactors</term>
          <listitem>
           <synopsis>IsPrimitiveModWithPrimeFactors (g,q,f)</synopsis>
-          <para>Check if g is primitive in F_q, where q is a prime and f is a vector of prime factors of q-1.  If q is not prime results are bogus.</para>
+          <para>Check if <varname>g</varname> is primitive in F<subscript>q</subscript>, the finite
+group of order <varname>q</varname>, where <varname>q</varname> is a prime and
+<varname>f</varname> is a vector of prime factors of <varname>q</varname>-1.
+If <varname>q</varname> is not prime results are bogus.</para>
          </listitem>
         </varlistentry>
 
@@ -1599,7 +1670,8 @@ number is specified) of the given size returned.  For example
          <term>IsPseudoprime</term>
          <listitem>
           <synopsis>IsPseudoprime (n,b)</synopsis>
-          <para>If n is a pseudoprime base b but not a prime, that is if b^(n-1) == 1 mod n</para>
+          <para>If <varname>n</varname> is a pseudoprime base <varname>b</varname> but not a prime,
+that is if <userinput>b^(n-1) == 1 mod n</userinput>.  This calles the <function>PseudoprimeTest</function></para>
          </listitem>
         </varlistentry>
 
@@ -1607,7 +1679,7 @@ number is specified) of the given size returned.  For example
          <term>IsStrongPseudoprime</term>
          <listitem>
           <synopsis>IsStrongPseudoprime (n,b)</synopsis>
-          <para>Test if n is a strong pseudoprime to base b but not a prime</para>
+          <para>Test if <varname>n</varname> is a strong pseudoprime to base <varname>b</varname> but not a prime.</para>
          </listitem>
         </varlistentry>
 
@@ -1616,7 +1688,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>Jacobi (a,b)</synopsis>
           <para>Aliases: <function>JacobiSymbol</function></para>
-          <para>Calculate the Jacobi symbol (a/b) (b should be odd)</para>
+          <para>Calculate the Jacobi symbol (a/b) (b should be odd).</para>
          </listitem>
         </varlistentry>
 
@@ -1625,7 +1697,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>JacobiKronecker (a,b)</synopsis>
           <para>Aliases: <function>JacobiKroneckerSymbol</function></para>
-          <para>Calculate the Jacobi symbol (a/b) with the Kronecker extension (a/2)=(2/a) when a odd, or (a/2)=0 when a even</para>
+          <para>Calculate the Jacobi symbol (a/b) with the Kronecker extension (a/2)=(2/a) when a odd, or (a/2)=0 when a even.</para>
          </listitem>
         </varlistentry>
 
@@ -1633,7 +1705,7 @@ number is specified) of the given size returned.  For example
          <term>LeastAbsoluteResidue</term>
          <listitem>
           <synopsis>LeastAbsoluteResidue (a,n)</synopsis>
-          <para>Return the residue of a mod n with the least absolute value (in the interval -n/2 to n/2)</para>
+          <para>Return the residue of <varname>a</varname> mod <varname>n</varname> with the least absolute value (in the interval -n/2 to n/2).</para>
          </listitem>
         </varlistentry>
 
@@ -1655,7 +1727,7 @@ number is specified) of the given size returned.  For example
          <term>LucasLehmer</term>
          <listitem>
           <synopsis>LucasLehmer (p)</synopsis>
-          <para>Test if Mp is a Mersenne prime using the Lucas-Lehmer test</para>
+          <para>Test if 2<superscript>p</superscript>-1 is a Mersenne prime using the Lucas-Lehmer test.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/LucasLhemer.html">Planetmath</ulink> or
@@ -1668,7 +1740,7 @@ number is specified) of the given size returned.  For example
          <term>LucasNumber</term>
          <listitem>
           <synopsis>LucasNumber (n)</synopsis>
-          <para>Returns the n'th Lucas number</para>
+          <para>Returns the <varname>n</varname>th Lucas number.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/LucasNumbers.html">Planetmath</ulink> or
@@ -1681,7 +1753,7 @@ number is specified) of the given size returned.  For example
          <term>MaximalPrimePowerFactors</term>
          <listitem>
           <synopsis>MaximalPrimePowerFactors (n)</synopsis>
-          <para>Return all maximal prime power factors of a number</para>
+          <para>Return all maximal prime power factors of a number.</para>
          </listitem>
         </varlistentry>
 
@@ -1727,7 +1799,7 @@ number is specified) of the given size returned.  For example
          <term>ModInvert</term>
          <listitem>
           <synopsis>ModInvert (n,m)</synopsis>
-          <para>Returns inverse of n mod m</para>
+          <para>Returns inverse of n mod m.</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/ModularInverse.html">Mathworld</ulink> for more information.
@@ -1763,7 +1835,7 @@ number is specified) of the given size returned.  For example
 	    previous prime you can use <userinput>-NextPrime(-n)</userinput>.
 	  </para>
           <para>
-	    This uses the GMP's <function>mpz_nextprime</function> which in
+	    This function uses the GMP's <function>mpz_nextprime</function> which in
 	    turn uses the probabilistic Miller-Rabin test
 	    (See also <link linkend="gel-function-MillerRabinTest">MillerRabinTest</link>).
 	    The probability
@@ -1782,7 +1854,7 @@ number is specified) of the given size returned.  For example
          <term>PadicValuation</term>
          <listitem>
           <synopsis>PadicValuation (n,p)</synopsis>
-          <para>Returns the padic valuation (number of trailing zeros in base p).</para>
+          <para>Returns the padic valuation (number of trailing zeros in base <varname>p</varname>).</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/PAdicValuation.html">Planetmath</ulink> for more information.
@@ -1807,7 +1879,7 @@ number is specified) of the given size returned.  For example
          <listitem>
           <synopsis>Prime (n)</synopsis>
           <para>Aliases: <function>prime</function></para>
-          <para>Return the n'th prime (up to a limit)</para>
+          <para>Return the <varname>n</varname>th prime (up to a limit).</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/PrimeNumber.html">Planetmath</ulink> or
@@ -1859,7 +1931,7 @@ number is specified) of the given size returned.  For example
          <term>SilverPohligHellmanWithFactorization</term>
          <listitem>
           <synopsis>SilverPohligHellmanWithFactorization (n,b,q,f)</synopsis>
-          <para>Find discrete log of n base b in F_q where q is a prime using the Silver-Pohlig-Hellman algoritm, given f being the factorization of q-1</para>
+          <para>Find discrete log of <varname>n</varname> base <varname>b</varname> in F<subscript>q</subscript>, the finite group of order <varname>q</varname>, where <varname>q</varname> is a prime using the Silver-Pohlig-Hellman algoritm, given <varname>f</varname> being the factorization of <varname>q</varname>-1.</para>
          </listitem>
         </varlistentry>
 
@@ -1937,7 +2009,7 @@ number is specified) of the given size returned.  For example
          <term>ApplyOverMatrix</term>
          <listitem>
           <synopsis>ApplyOverMatrix (a,func)</synopsis>
-          <para>Apply a function over all entries of a matrix and return a matrix of the results</para>
+          <para>Apply a function over all entries of a matrix and return a matrix of the results.</para>
          </listitem>
         </varlistentry>
 
@@ -1945,7 +2017,7 @@ number is specified) of the given size returned.  For example
          <term>ApplyOverMatrix2</term>
          <listitem>
           <synopsis>ApplyOverMatrix2 (a,b,func)</synopsis>
-          <para>Apply a function over all entries of 2 matrices (or 1 value and 1 matrix) and return a matrix of the results</para>
+          <para>Apply a function over all entries of 2 matrices (or 1 value and 1 matrix) and return a matrix of the results.</para>
          </listitem>
         </varlistentry>
 
@@ -1953,7 +2025,7 @@ number is specified) of the given size returned.  For example
          <term>ColumnsOf</term>
          <listitem>
           <synopsis>ColumnsOf (M)</synopsis>
-          <para>Gets the columns of a matrix as a horizontal vector</para>
+          <para>Gets the columns of a matrix as a horizontal vector.</para>
          </listitem>
         </varlistentry>
 
@@ -1961,7 +2033,7 @@ number is specified) of the given size returned.  For example
          <term>ComplementSubmatrix</term>
          <listitem>
           <synopsis>ComplementSubmatrix (m,r,c)</synopsis>
-          <para>Remove column(s) and row(s) from a matrix</para>
+          <para>Remove column(s) and row(s) from a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -1969,7 +2041,7 @@ number is specified) of the given size returned.  For example
          <term>CompoundMatrix</term>
          <listitem>
           <synopsis>CompoundMatrix (k,A)</synopsis>
-          <para>Calculate the kth compund matrix of A</para>
+          <para>Calculate the kth compund matrix of A.</para>
          </listitem>
         </varlistentry>
 
@@ -1980,8 +2052,8 @@ number is specified) of the given size returned.  For example
           <para>
 	   Count the number of zero columns in a matrix.  For example
 	   Once you column reduce a matrix you can use this to find
-	   the nullity.  See <link linkend="gel-function-cref">cref</link>
-	   and <link linkend="gel-function-Nullity">Nullity</link>.
+	   the nullity.  See <link linkend="gel-function-cref"><function>cref</function></link>
+	   and <link linkend="gel-function-Nullity"><function>Nullity</function></link>.
           </para>
          </listitem>
         </varlistentry>
@@ -1990,7 +2062,7 @@ number is specified) of the given size returned.  For example
          <term>DeleteColumn</term>
          <listitem>
           <synopsis>DeleteColumn (M,col)</synopsis>
-          <para>Delete a column of a matrix</para>
+          <para>Delete a column of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -1998,7 +2070,7 @@ number is specified) of the given size returned.  For example
          <term>DeleteRow</term>
          <listitem>
           <synopsis>DeleteRow (M,row)</synopsis>
-          <para>Delete a row of a matrix</para>
+          <para>Delete a row of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2066,7 +2138,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IndexComplement</term>
          <listitem>
           <synopsis>IndexComplement (vec,msize)</synopsis>
-          <para>Return the index complement of a vector of indexes</para>
+          <para>Return the index complement of a vector of indexes.</para>
          </listitem>
         </varlistentry>
 
@@ -2074,7 +2146,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsDiagonal</term>
          <listitem>
           <synopsis>IsDiagonal (M)</synopsis>
-          <para>Is a matrix diagonal</para>
+          <para>Is a matrix diagonal.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DiagonalMatrix.html">Planetmath</ulink> for more information.
@@ -2082,11 +2154,23 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          </listitem>
         </varlistentry>
 
+        <varlistentry id="gel-function-IsIdentity">
+         <term>IsIdentity</term>
+         <listitem>
+          <synopsis>IsIdentity (x)</synopsis>
+          <para>Check if a matrix is the identity matrix.  Automatically returns <varname>false</varname>
+	    if the matrix is not square.  Also works on numbers, in which
+	    case it is equivalent to <userinput>x==1</userinput>.  When <varname>x</varname> is
+	    <literal>null</literal> (we could think of that as a 0 by 0 matrix),
+	    no error is generated and <varname>false</varname> is returned.</para>
+         </listitem>
+        </varlistentry>
+
         <varlistentry id="gel-function-IsLowerTriangular">
          <term>IsLowerTriangular</term>
          <listitem>
           <synopsis>IsLowerTriangular (M)</synopsis>
-          <para>Is a matrix lower triangular</para>
+          <para>Is a matrix lower triangular.  That is, are all the entries below the diagonal zero.</para>
          </listitem>
         </varlistentry>
 
@@ -2094,7 +2178,33 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsMatrixInteger</term>
          <listitem>
           <synopsis>IsMatrixInteger (M)</synopsis>
-          <para>Check if a matrix is an integer (non-complex) matrix</para>
+          <para>Check if a matrix is a matrix of an integers (non-complex).</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsMatrixNonnegative">
+         <term>IsMatrixNonnegative</term>
+         <listitem>
+          <synopsis>IsMatrixNonnegative (M)</synopsis>
+          <para>Check if a matrix is nonnegative, that is if each element is nonnegative.
+	  Do not confuse positive matrices with positive semi-definite matrices.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Positive_matrix">Wikipedia</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsMatrixPositive">
+         <term>IsMatrixPositive</term>
+         <listitem>
+          <synopsis>IsMatrixPositive (M)</synopsis>
+          <para>Check if a matrix is positive, that is if each element is positive.  In particular,
+	    no element is 0.  Do not confuse positive matrices with positive definite matrices.</para>
+          <para>
+	    See
+	    <ulink url="http://en.wikipedia.org/wiki/Positive_matrix">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -2102,7 +2212,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsMatrixRational</term>
          <listitem>
           <synopsis>IsMatrixRational (M)</synopsis>
-          <para>Check if a matrix is a rational (non-complex) matrix</para>
+          <para>Check if a matrix is a matrix of rational (non-complex) numbers.</para>
          </listitem>
         </varlistentry>
 
@@ -2110,7 +2220,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsMatrixReal</term>
          <listitem>
           <synopsis>IsMatrixReal (M)</synopsis>
-          <para>Check if a matrix is a real (non-complex) matrix</para>
+          <para>Check if a matrix is a matrix of real (non-complex) numbers.</para>
          </listitem>
         </varlistentry>
 
@@ -2129,7 +2239,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsUpperTriangular</term>
          <listitem>
           <synopsis>IsUpperTriangular (M)</synopsis>
-          <para>Is a matrix upper triangular</para>
+          <para>Is a matrix upper triangular.  That is, are all the entries above the diagonal zero.</para>
          </listitem>
         </varlistentry>
 
@@ -2137,7 +2247,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>IsValueOnly</term>
          <listitem>
           <synopsis>IsValueOnly (M)</synopsis>
-          <para>Check if a matrix is a matrix of numbers</para>
+          <para>Check if a matrix is a matrix of numbers only.</para>
          </listitem>
         </varlistentry>
 
@@ -2148,8 +2258,21 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
           <para>
 	    Is argument a horizontal or a vertical vector.  Genius does
 	    not distinguish between a matrix and a vector and a vector
-	    is just a 1 by n or n by 1 matrix.
+	    is just a 1 by <varname>n</varname> or <varname>n</varname> by 1 matrix.
 	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsZero">
+         <term>IsZero</term>
+         <listitem>
+          <synopsis>IsZero (x)</synopsis>
+          <para>Check if a matrix is composed of all zeros.  Also works on numbers, in which
+	    case it is equivalent to <userinput>x==0</userinput>.  When <varname>x</varname> is
+	    <literal>null</literal> (we could think of that as a 0 by 0 matrix),
+	    no error is generated and <varname>true</varname> is returned as the condition is
+	    vacuous.
+	    </para>
          </listitem>
         </varlistentry>
 
@@ -2157,7 +2280,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>LowerTriangular</term>
          <listitem>
           <synopsis>LowerTriangular (M)</synopsis>
-          <para>Zero out entries above the diagonal</para>
+          <para>Returns a copy of the matrix <varname>M</varname> with all the entries above the diagonal set to zero.</para>
          </listitem>
         </varlistentry>
 
@@ -2166,7 +2289,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <listitem>
           <synopsis>MakeDiagonal (v,arg...)</synopsis>
           <para>Aliases: <function>diag</function></para>
-          <para>Make diagonal matrix from a vector</para>
+          <para>Make diagonal matrix from a vector.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/DiagonalMatrix.html">Planetmath</ulink> for more information.
@@ -2219,7 +2342,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>OuterProduct</term>
          <listitem>
           <synopsis>OuterProduct (u,v)</synopsis>
-          <para>Get the outer product of two vectors</para>
+          <para>Get the outer product of two vectors.</para>
          </listitem>
         </varlistentry>
 
@@ -2227,7 +2350,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>ReverseVector</term>
          <listitem>
           <synopsis>ReverseVector (v)</synopsis>
-          <para>Reverse elements in a vector</para>
+          <para>Reverse elements in a vector.</para>
          </listitem>
         </varlistentry>
 
@@ -2235,7 +2358,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>RowSum</term>
          <listitem>
           <synopsis>RowSum (m)</synopsis>
-          <para>Calculate sum of each row in a matrix</para>
+          <para>Calculate sum of each row in a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2243,7 +2366,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>RowSumSquares</term>
          <listitem>
           <synopsis>RowSumSquares (m)</synopsis>
-          <para>Calculate sum of squares of each row in a matrix</para>
+          <para>Calculate sum of squares of each row in a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2251,7 +2374,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>RowsOf</term>
          <listitem>
           <synopsis>RowsOf (M)</synopsis>
-          <para>Gets the rows of a matrix as a vertical vector</para>
+          <para>Gets the rows of a matrix as a vertical vector.</para>
          </listitem>
         </varlistentry>
 
@@ -2294,7 +2417,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>Submatrix</term>
          <listitem>
           <synopsis>Submatrix (m,r,c)</synopsis>
-          <para>Return column(s) and row(s) from a matrix</para>
+          <para>Return column(s) and row(s) from a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2302,7 +2425,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>SwapRows</term>
          <listitem>
           <synopsis>SwapRows (m,row1,row2)</synopsis>
-          <para>Swap two rows in a matrix</para>
+          <para>Swap two rows in a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2310,7 +2433,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>UpperTriangular</term>
          <listitem>
           <synopsis>UpperTriangular (M)</synopsis>
-          <para>Zero out entries below the diagonal</para>
+          <para>Returns a copy of the matrix <varname>M</varname> with all the entries below the diagonal set to zero.</para>
          </listitem>
         </varlistentry>
 
@@ -2318,7 +2441,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>columns</term>
          <listitem>
           <synopsis>columns (M)</synopsis>
-          <para>Get the number of columns of a matrix</para>
+          <para>Get the number of columns of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2326,7 +2449,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>elements</term>
          <listitem>
           <synopsis>elements (M)</synopsis>
-          <para>Get the number of elements of a matrix</para>
+          <para>Get the number of elements of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2334,7 +2457,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>ones</term>
          <listitem>
           <synopsis>ones (rows,columns...)</synopsis>
-          <para>Make an matrix of all ones (or a row vector)</para>
+          <para>Make an matrix of all ones (or a row vector if only one argument is given).</para>
          </listitem>
         </varlistentry>
 
@@ -2342,7 +2465,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>rows</term>
          <listitem>
           <synopsis>rows (M)</synopsis>
-          <para>Get the number of rows of a matrix</para>
+          <para>Get the number of rows of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2350,7 +2473,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>zeros</term>
          <listitem>
           <synopsis>zeros (rows,columns...)</synopsis>
-          <para>Make an matrix of all zeros (or a row vector)</para>
+          <para>Make an matrix of all zeros (or a row vector if only one argument is given).</para>
          </listitem>
         </varlistentry>
 
@@ -2364,7 +2487,8 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>AuxilliaryUnitMatrix</term>
          <listitem>
           <synopsis>AuxilliaryUnitMatrix (n)</synopsis>
-          <para>Get the auxilliary unit matrix of size n</para>
+          <para>Get the auxilliary unit matrix of size <varname>n</varname>.  This is a square matrix matrix with that is all zero except the
+superdiagonal being all ones.  It is the Jordan block matrix of one zero eigenvalue.</para>
          </listitem>
         </varlistentry>
 
@@ -2372,7 +2496,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>BilinearForm</term>
          <listitem>
           <synopsis>BilinearForm (v,A,w)</synopsis>
-          <para>Evaluate (v,w) with respect to the bilinear form given by the matrix A</para>
+          <para>Evaluate (v,w) with respect to the bilinear form given by the matrix A.</para>
          </listitem>
         </varlistentry>
 
@@ -2380,7 +2504,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>BilinearFormFunction</term>
          <listitem>
           <synopsis>BilinearFormFunction (A)</synopsis>
-          <para>Return a function that evaluates two vectors with respect to the bilinear form given by A</para>
+          <para>Return a function that evaluates two vectors with respect to the bilinear form given by A.</para>
          </listitem>
         </varlistentry>
 
@@ -2389,7 +2513,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <listitem>
           <synopsis>CharacteristicPolynomial (M)</synopsis>
           <para>Aliases: <function>CharPoly</function></para>
-          <para>Get the characteristic polynomial as a vector</para>
+          <para>Get the characteristic polynomial as a vector.</para>
          </listitem>
         </varlistentry>
 
@@ -2397,7 +2521,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>CharacteristicPolynomialFunction</term>
          <listitem>
           <synopsis>CharacteristicPolynomialFunction (M)</synopsis>
-          <para>Get the characteristic polynomial as a function</para>
+          <para>Get the characteristic polynomial as a function.</para>
          </listitem>
         </varlistentry>
 
@@ -2405,7 +2529,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>ColumnSpace</term>
          <listitem>
           <synopsis>ColumnSpace (M)</synopsis>
-          <para>Get a basis matrix for the columnspace of a matrix</para>
+          <para>Get a basis matrix for the columnspace of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2421,7 +2545,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>CompanionMatrix</term>
          <listitem>
           <synopsis>CompanionMatrix (p)</synopsis>
-          <para>Companion matrix of a polynomial (as vector)</para>
+          <para>Companion matrix of a polynomial (as vector).</para>
          </listitem>
         </varlistentry>
 
@@ -2443,7 +2567,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <listitem>
           <synopsis>Convolution (a,b)</synopsis>
           <para>Aliases: <function>convol</function></para>
-          <para>Calculate convolution of two horizontal vectors</para>
+          <para>Calculate convolution of two horizontal vectors.</para>
          </listitem>
         </varlistentry>
 
@@ -2451,7 +2575,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>ConvolutionVector</term>
          <listitem>
           <synopsis>ConvolutionVector (a,b)</synopsis>
-          <para>Calculate convolution of two horizontal vectors</para>
+          <para>Calculate convolution of two horizontal vectors.</para>
          </listitem>
         </varlistentry>
 
@@ -2459,7 +2583,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>CrossProduct</term>
          <listitem>
           <synopsis>CrossProduct (v,w)</synopsis>
-          <para>CrossProduct of two vectors in R^3</para>
+          <para>CrossProduct of two vectors in R<superscript>3</superscript>.</para>
          </listitem>
         </varlistentry>
 
@@ -2467,7 +2591,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>DeterminantalDivisorsInteger</term>
          <listitem>
           <synopsis>DeterminantalDivisorsInteger (M)</synopsis>
-          <para>Get the determinantal divisors of an integer matrix (not its characteristic)</para>
+          <para>Get the determinantal divisors of an integer matrix (not its characteristic).</para>
          </listitem>
         </varlistentry>
 
@@ -2475,7 +2599,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>DirectSum</term>
          <listitem>
           <synopsis>DirectSum (M,N...)</synopsis>
-          <para>Direct sum of matrices</para>
+          <para>Direct sum of matrices.</para>
          </listitem>
         </varlistentry>
 
@@ -2483,7 +2607,7 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <term>DirectSumMatrixVector</term>
          <listitem>
           <synopsis>DirectSumMatrixVector (v)</synopsis>
-          <para>Direct sum of a vector of matrices</para>
+          <para>Direct sum of a vector of matrices.</para>
          </listitem>
         </varlistentry>
 
@@ -2526,7 +2650,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>HankelMatrix</term>
          <listitem>
           <synopsis>HankelMatrix (c,r)</synopsis>
-          <para>Hankel matrix</para>
+          <para>Hankel matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2546,7 +2670,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>Image</term>
          <listitem>
           <synopsis>Image (T)</synopsis>
-          <para>Get the image (columnspace) of a linear transform</para>
+          <para>Get the image (columnspace) of a linear transform.</para>
          </listitem>
         </varlistentry>
 
@@ -2562,7 +2686,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>InvariantFactorsInteger</term>
          <listitem>
           <synopsis>InvariantFactorsInteger (M)</synopsis>
-          <para>Get the invariant factors of a square integer matrix (not its characteristic)</para>
+          <para>Get the invariant factors of a square integer matrix (not its characteristic).</para>
          </listitem>
         </varlistentry>
 
@@ -2594,7 +2718,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>IsInSubspace</term>
          <listitem>
           <synopsis>IsInSubspace (v,W)</synopsis>
-          <para>Test if a vector is in a subspace</para>
+          <para>Test if a vector is in a subspace.</para>
          </listitem>
         </varlistentry>
 
@@ -2602,7 +2726,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>IsInvertible</term>
          <listitem>
           <synopsis>IsInvertible (n)</synopsis>
-          <para>Is a matrix (or number) invertible (Integer matrix is invertible iff it's invertible over the integers)</para>
+          <para>Is a matrix (or number) invertible (Integer matrix is invertible iff it's invertible over the integers).</para>
          </listitem>
         </varlistentry>
 
@@ -2610,7 +2734,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>IsInvertibleField</term>
          <listitem>
           <synopsis>IsInvertibleField (n)</synopsis>
-          <para>Is a matrix (or number) invertible over a field</para>
+          <para>Is a matrix (or number) invertible over a field.</para>
          </listitem>
         </varlistentry>
 
@@ -2790,7 +2914,7 @@ determinant.
          <term>NonPivotColumns</term>
          <listitem>
           <synopsis>NonPivotColumns (M)</synopsis>
-          <para>Return the columns that are not the pivot columns of a matrix</para>
+          <para>Return the columns that are not the pivot columns of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2799,7 +2923,7 @@ determinant.
          <listitem>
           <synopsis>Norm (v,p...)</synopsis>
           <para>Aliases: <function>norm</function></para>
-          <para>Get the p Norm (or 2 Norm if no p is supplied) of a vector</para>
+          <para>Get the p Norm (or 2 Norm if no p is supplied) of a vector.</para>
          </listitem>
         </varlistentry>
 
@@ -2835,7 +2959,7 @@ determinant.
          <term>OrthogonalComplement</term>
          <listitem>
           <synopsis>OrthogonalComplement (M)</synopsis>
-          <para>Get the orthogonal complement of the columnspace</para>
+          <para>Get the orthogonal complement of the columnspace.</para>
          </listitem>
         </varlistentry>
 
@@ -2936,7 +3060,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>RosserMatrix</term>
          <listitem>
           <synopsis>RosserMatrix ()</synopsis>
-          <para>Rosser matrix, a classic symmetric eigenvalue test problem</para>
+          <para>Rosser matrix, a classic symmetric eigenvalue test problem.</para>
          </listitem>
         </varlistentry>
 
@@ -2945,7 +3069,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <listitem>
           <synopsis>Rotation2D (angle)</synopsis>
           <para>Aliases: <function>RotationMatrix</function></para>
-          <para>Rotation around origin in R^2</para>
+          <para>Rotation around origin in R<superscript>2</superscript>.</para>
          </listitem>
         </varlistentry>
 
@@ -2953,7 +3077,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>Rotation3DX</term>
          <listitem>
           <synopsis>Rotation3DX (angle)</synopsis>
-          <para>Rotation around origin in R^3 about the x-axis</para>
+          <para>Rotation around origin in R<superscript>3</superscript> about the x-axis.</para>
          </listitem>
         </varlistentry>
 
@@ -2961,7 +3085,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>Rotation3DY</term>
          <listitem>
           <synopsis>Rotation3DY (angle)</synopsis>
-          <para>Rotation around origin in R^3 about the y-axis</para>
+          <para>Rotation around origin in R<superscript>3</superscript> about the y-axis.</para>
          </listitem>
         </varlistentry>
 
@@ -2969,7 +3093,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>Rotation3DZ</term>
          <listitem>
           <synopsis>Rotation3DZ (angle)</synopsis>
-          <para>Rotation around origin in R^3 about the z-axis</para>
+          <para>Rotation around origin in R<superscript>3</superscript> about the z-axis.</para>
          </listitem>
         </varlistentry>
 
@@ -2977,7 +3101,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>RowSpace</term>
          <listitem>
           <synopsis>RowSpace (M)</synopsis>
-          <para>Get a basis matrix for the rowspace of a matrix</para>
+          <para>Get a basis matrix for the rowspace of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -2985,7 +3109,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>SesquilinearForm</term>
          <listitem>
           <synopsis>SesquilinearForm (v,A,w)</synopsis>
-          <para>Evaluate (v,w) with respect to the sesquilinear form given by the matrix A</para>
+          <para>Evaluate (v,w) with respect to the sesquilinear form given by the matrix A.</para>
          </listitem>
         </varlistentry>
 
@@ -2993,7 +3117,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>SesquilinearFormFunction</term>
          <listitem>
           <synopsis>SesquilinearFormFunction (A)</synopsis>
-          <para>Return a function that evaluates two vectors with respect to the sesquilinear form given by A</para>
+          <para>Return a function that evaluates two vectors with respect to the sesquilinear form given by A.</para>
          </listitem>
         </varlistentry>
 
@@ -3001,7 +3125,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>SmithNormalFormField</term>
          <listitem>
           <synopsis>SmithNormalFormField (A)</synopsis>
-          <para>Smith Normal Form for fields (will end up with 1's on the diagonal)</para>
+          <para>Smith Normal Form for fields (will end up with 1's on the diagonal).</para>
          </listitem>
         </varlistentry>
 
@@ -3009,7 +3133,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>SmithNormalFormInteger</term>
          <listitem>
           <synopsis>SmithNormalFormInteger (M)</synopsis>
-          <para>Smith Normal Form for square integer matrices (not its characteristic)</para>
+          <para>Smith Normal Form for square integer matrices (not its characteristic).</para>
          </listitem>
         </varlistentry>
 
@@ -3041,7 +3165,7 @@ Hermitian matrix (if the first element is real of course).</para>
          <listitem>
           <synopsis>Trace (m)</synopsis>
           <para>Aliases: <function>trace</function></para>
-          <para>Calculate the trace of a matrix</para>
+          <para>Calculate the trace of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -3063,7 +3187,7 @@ Hermitian matrix (if the first element is real of course).</para>
          <listitem>
           <synopsis>VandermondeMatrix (v)</synopsis>
           <para>Aliases: <function>vander</function></para>
-          <para>Return the Vandermonde matrix</para>
+          <para>Return the Vandermonde matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -3083,7 +3207,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>VectorSpaceDirectSum</term>
          <listitem>
           <synopsis>VectorSpaceDirectSum (M,N)</synopsis>
-          <para>The direct sum of the vector spaces M and N</para>
+          <para>The direct sum of the vector spaces M and N.</para>
          </listitem>
         </varlistentry>
 
@@ -3091,7 +3215,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>VectorSubspaceIntersection</term>
          <listitem>
           <synopsis>VectorSubspaceIntersection (M,N)</synopsis>
-          <para>Intersection of the subspaces given by M and N</para>
+          <para>Intersection of the subspaces given by M and N.</para>
          </listitem>
         </varlistentry>
 
@@ -3099,7 +3223,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>VectorSubspaceSum</term>
          <listitem>
           <synopsis>VectorSubspaceSum (M,N)</synopsis>
-          <para>The sum of the vector spaces M and N, that is {w | w=m+n, m in M, n in N}</para>
+          <para>The sum of the vector spaces M and N, that is {w | w=m+n, m in M, n in N}.</para>
          </listitem>
         </varlistentry>
 
@@ -3108,7 +3232,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <listitem>
           <synopsis>adj (m)</synopsis>
           <para>Aliases: <function>Adjugate</function></para>
-          <para>Get the classical adjoint (adjugate) of a matrix</para>
+          <para>Get the classical adjoint (adjugate) of a matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -3117,7 +3241,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <listitem>
           <synopsis>cref (M)</synopsis>
           <para>Aliases: <function>CREF</function> <function>ColumnReducedEchelonForm</function></para>
-          <para>Compute the Column Reduced Echelon Form</para>
+          <para>Compute the Column Reduced Echelon Form.</para>
          </listitem>
         </varlistentry>
 
@@ -3266,7 +3390,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>GaloisMatrix</term>
          <listitem>
           <synopsis>GaloisMatrix (combining_rule)</synopsis>
-          <para>Galois matrix given a linear combining rule (a_1*x_+...+a_n*x_n=x_(n+1))</para>
+          <para>Galois matrix given a linear combining rule (a_1*x_+...+a_n*x_n=x_(n+1)).</para>
          </listitem>
         </varlistentry>
 
@@ -3301,7 +3425,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>Hofstadter</term>
          <listitem>
           <synopsis>Hofstadter (n)</synopsis>
-          <para>Hofstadter's function q(n) defined by q(1)=1, q(2)=1, q(n)=q(n-q(n-1))+q(n-q(n-2))</para>
+          <para>Hofstadter's function q(n) defined by q(1)=1, q(2)=1, q(n)=q(n-q(n-1))+q(n-q(n-2)).</para>
          </listitem>
         </varlistentry>
 
@@ -3309,7 +3433,7 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>LinearRecursiveSequence</term>
          <listitem>
           <synopsis>LinearRecursiveSequence (seed_values,combining_rule,n)</synopsis>
-          <para>Compute linear recursive sequence using galois stepping</para>
+          <para>Compute linear recursive sequence using galois stepping.</para>
          </listitem>
         </varlistentry>
 
@@ -3317,7 +3441,28 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          <term>Multinomial</term>
          <listitem>
           <synopsis>Multinomial (v,arg...)</synopsis>
-          <para>Calculate multinomial coefficients</para>
+          <para>Calculate multinomial coefficients.  Takes a vector of
+	    <varname>k</varname>
+	    nonnegative integers and computes the multinomial coefficient.
+	    This corresponds to the coefficient in the homogeneous polynomial
+	    in <varname>k</varname> variables with the corresponding powers.
+	  </para>
+	  <para>
+	    The formula for <userinput>Multinomial(a,b,c)</userinput>
+	    can be written as:
+<programlisting>(a+b+c)! / (a!b!c!)
+</programlisting>
+	    In other words, if we would have only two elements, then
+<userinput>Multinomial(a,b)</userinput> is the same thing as
+<userinput>Binomial(a+b,a)</userinput> or
+<userinput>Binomial(a+b,b)</userinput>.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/MultinomialTheorem.html">Planetmath</ulink>,
+	    <ulink url="http://mathworld.wolfram.com/MultinomialCoefficient.html">Mathworld</ulink>, or
+	    <ulink url="http://en.wikipedia.org/wiki/Multinomial_theorem">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -3366,7 +3511,12 @@ do (
          <term>Permutations</term>
          <listitem>
           <synopsis>Permutations (k,n)</synopsis>
-          <para>Get all permutations of k numbers from 1 to n as a vector of vectors</para>
+          <para>Get all permutations of <varname>k</varname> numbers from 1 to <varname>n</varname> as a vector of vectors.</para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/Permutation.html">Mathworld</ulink> or
+	    <ulink url="http://en.wikipedia.org/wiki/Permutation">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -3375,7 +3525,7 @@ do (
          <listitem>
           <synopsis>RisingFactorial (n,k)</synopsis>
           <para>Aliases: <function>Pochhammer</function></para>
-          <para>(Pochhammer) Rising factorial: (n)_k = n(n+1)...(n+(k-1))</para>
+          <para>(Pochhammer) Rising factorial: (n)_k = n(n+1)...(n+(k-1)).</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/RisingFactorial.html">Planetmath</ulink> for more information.
@@ -3415,7 +3565,7 @@ do (
          <term>Subfactorial</term>
          <listitem>
           <synopsis>Subfactorial (n)</synopsis>
-          <para>Subfactorial: n! times sum_{k=1}^n (-1)^k/k!</para>
+          <para>Subfactorial: n! times sum_{k=1}^n (-1)^k/k!.</para>
          </listitem>
         </varlistentry>
 
@@ -3449,7 +3599,13 @@ do (
          <term>nPr</term>
          <listitem>
           <synopsis>nPr (n,r)</synopsis>
-          <para>Calculate permutations</para>
+          <para>Calculate the number of permutations of size
+	   <varname>r</varname>of numbers from 1 to <varname>n</varname>.</para>
+          <para>
+	    See
+	    <ulink url="http://mathworld.wolfram.com/Permutation.html">Mathworld</ulink> or
+	    <ulink url="http://en.wikipedia.org/wiki/Permutation">Wikipedia</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -3495,7 +3651,7 @@ do (
          <term>InfiniteProduct</term>
          <listitem>
           <synopsis>InfiniteProduct (func,start,inc)</synopsis>
-          <para>Try to calculate an infinite product for a single parameter function</para>
+          <para>Try to calculate an infinite product for a single parameter function.</para>
          </listitem>
         </varlistentry>
 
@@ -3503,7 +3659,7 @@ do (
          <term>InfiniteProduct2</term>
          <listitem>
           <synopsis>InfiniteProduct2 (func,arg,start,inc)</synopsis>
-          <para>Try to calculate an infinite product for a double parameter function with func(arg,n)</para>
+          <para>Try to calculate an infinite product for a double parameter function with func(arg,n).</para>
          </listitem>
         </varlistentry>
 
@@ -3511,7 +3667,7 @@ do (
          <term>InfiniteSum</term>
          <listitem>
           <synopsis>InfiniteSum (func,start,inc)</synopsis>
-          <para>Try to calculate an infinite sum for a single parameter function</para>
+          <para>Try to calculate an infinite sum for a single parameter function.</para>
          </listitem>
         </varlistentry>
 
@@ -3519,7 +3675,7 @@ do (
          <term>InfiniteSum2</term>
          <listitem>
           <synopsis>InfiniteSum2 (func,arg,start,inc)</synopsis>
-          <para>Try to calculate an infinite sum for a double parameter function with func(arg,n)</para>
+          <para>Try to calculate an infinite sum for a double parameter function with func(arg,n).</para>
          </listitem>
         </varlistentry>
 
@@ -3527,7 +3683,7 @@ do (
          <term>IsContinuous</term>
          <listitem>
           <synopsis>IsContinuous (f,x0)</synopsis>
-          <para>Try and see if a real-valued function is continuous at x0 by calculating the limit there</para>
+          <para>Try and see if a real-valued function is continuous at x0 by calculating the limit there.</para>
          </listitem>
         </varlistentry>
 
@@ -3535,7 +3691,7 @@ do (
          <term>IsDifferentiable</term>
          <listitem>
           <synopsis>IsDifferentiable (f,x0)</synopsis>
-          <para>Test for differentiability by approximating the left and right limits and comparing</para>
+          <para>Test for differentiability by approximating the left and right limits and comparing.</para>
          </listitem>
         </varlistentry>
 
@@ -3543,7 +3699,7 @@ do (
          <term>LeftLimit</term>
          <listitem>
           <synopsis>LeftLimit (f,x0)</synopsis>
-          <para>Calculate the left limit of a real-valued function at x0</para>
+          <para>Calculate the left limit of a real-valued function at x0.</para>
          </listitem>
         </varlistentry>
 
@@ -3559,7 +3715,7 @@ do (
          <term>MidpointRule</term>
          <listitem>
           <synopsis>MidpointRule (f,a,b,n)</synopsis>
-          <para>Integration by midpoint rule</para>
+          <para>Integration by midpoint rule.</para>
          </listitem>
         </varlistentry>
 
@@ -3568,7 +3724,7 @@ do (
          <listitem>
           <synopsis>NumericalDerivative (f,x0)</synopsis>
           <para>Aliases: <function>NDerivative</function></para>
-          <para>Attempt to calculate numerical derivative</para>
+          <para>Attempt to calculate numerical derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -3576,7 +3732,7 @@ do (
          <term>NumericalIntegral</term>
          <listitem>
           <synopsis>NumericalIntegral (f,a,b)</synopsis>
-          <para>Integration by rule set in NumericalIntegralFunction of f from a to b using NumericalIntegralSteps steps</para>
+          <para>Integration by rule set in NumericalIntegralFunction of f from a to b using NumericalIntegralSteps steps.</para>
          </listitem>
         </varlistentry>
 
@@ -3584,7 +3740,7 @@ do (
          <term>NumericalLeftDerivative</term>
          <listitem>
           <synopsis>NumericalLeftDerivative (f,x0)</synopsis>
-          <para>Attempt to calculate numerical left derivative</para>
+          <para>Attempt to calculate numerical left derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -3592,7 +3748,7 @@ do (
          <term>NumericalLimitAtInfinity</term>
          <listitem>
           <synopsis>NumericalLimitAtInfinity (_f,step_fun,tolerance,successive_for_success,N)</synopsis>
-          <para>Attempt to calculate the limit of f(step_fun(i)) as i goes from 1 to N</para>
+          <para>Attempt to calculate the limit of f(step_fun(i)) as i goes from 1 to N.</para>
          </listitem>
         </varlistentry>
 
@@ -3600,7 +3756,7 @@ do (
          <term>NumericalRightDerivative</term>
          <listitem>
           <synopsis>NumericalRightDerivative (f,x0)</synopsis>
-          <para>Attempt to calculate numerical right derivative</para>
+          <para>Attempt to calculate numerical right derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -3608,7 +3764,7 @@ do (
          <term>OneSidedFivePointFormula</term>
          <listitem>
           <synopsis>OneSidedFivePointFormula (f,x0,h)</synopsis>
-          <para>Compute one-sided derivative using five point formula</para>
+          <para>Compute one-sided derivative using five point formula.</para>
          </listitem>
         </varlistentry>
 
@@ -3616,7 +3772,7 @@ do (
          <term>OneSidedThreePointFormula</term>
          <listitem>
           <synopsis>OneSidedThreePointFormula (f,x0,h)</synopsis>
-          <para>Compute one-sided derivative using three-point formula</para>
+          <para>Compute one-sided derivative using three-point formula.</para>
          </listitem>
         </varlistentry>
 
@@ -3624,7 +3780,7 @@ do (
          <term>RightLimit</term>
          <listitem>
           <synopsis>RightLimit (f,x0)</synopsis>
-          <para>Calculate the right limit of a real-valued function at x0</para>
+          <para>Calculate the right limit of a real-valued function at x0.</para>
          </listitem>
         </varlistentry>
 
@@ -3632,7 +3788,7 @@ do (
          <term>TwoSidedFivePointFormula</term>
          <listitem>
           <synopsis>TwoSidedFivePointFormula (f,x0,h)</synopsis>
-          <para>Compute two-sided derivative using five-point formula</para>
+          <para>Compute two-sided derivative using five-point formula.</para>
          </listitem>
         </varlistentry>
 
@@ -3640,7 +3796,7 @@ do (
          <term>TwoSidedThreePointFormula</term>
          <listitem>
           <synopsis>TwoSidedThreePointFormula (f,x0,h)</synopsis>
-          <para>Compute two-sided derivative using three-point formula</para>
+          <para>Compute two-sided derivative using three-point formula.</para>
          </listitem>
         </varlistentry>
 
@@ -3655,7 +3811,7 @@ do (
          <listitem>
           <synopsis>Argument (z)</synopsis>
           <para>Aliases: <function>Arg</function> <function>arg</function></para>
-          <para>argument (angle) of complex number</para>
+          <para>argument (angle) of complex number.</para>
          </listitem>
         </varlistentry>
 
@@ -3663,7 +3819,7 @@ do (
          <term>DirichletKernel</term>
          <listitem>
           <synopsis>DirichletKernel (n,t)</synopsis>
-          <para>Dirichlet kernel of order n</para>
+          <para>Dirichlet kernel of order n.</para>
          </listitem>
         </varlistentry>
 
@@ -3671,7 +3827,7 @@ do (
          <term>DiscreteDelta</term>
          <listitem>
           <synopsis>DiscreteDelta (v)</synopsis>
-          <para>Returns 1 iff all elements are zero</para>
+          <para>Returns 1 iff all elements are zero.</para>
          </listitem>
         </varlistentry>
 
@@ -3680,7 +3836,7 @@ do (
          <listitem>
           <synopsis>ErrorFunction (x)</synopsis>
           <para>Aliases: <function>erf</function></para>
-          <para>The error function, 2/sqrt(pi) * int_0^x e^(-t^2) dt</para>
+          <para>The error function, 2/sqrt(pi) * int_0^x e^(-t^2) dt.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/ErrorFunction.html">Planetmath</ulink> for more information.
@@ -3718,7 +3874,7 @@ do (
          <term>KroneckerDelta</term>
          <listitem>
           <synopsis>KroneckerDelta (v)</synopsis>
-          <para>Returns 1 iff all elements are equal</para>
+          <para>Returns 1 iff all elements are equal.</para>
          </listitem>
         </varlistentry>
 
@@ -3726,7 +3882,7 @@ do (
          <term>MinimizeFunction</term>
          <listitem>
           <synopsis>MinimizeFunction (func,x,incr)</synopsis>
-          <para>Find the first value where f(x)=0</para>
+          <para>Find the first value where f(x)=0.</para>
          </listitem>
         </varlistentry>
 
@@ -3734,7 +3890,7 @@ do (
          <term>MoebiusDiskMapping</term>
          <listitem>
           <synopsis>MoebiusDiskMapping (a,z)</synopsis>
-          <para>Moebius mapping of the disk to itself mapping a to 0</para>
+          <para>Moebius mapping of the disk to itself mapping a to 0.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/MobiusTransformation.html">Planetmath</ulink> for more information.
@@ -3746,7 +3902,7 @@ do (
          <term>MoebiusMapping</term>
          <listitem>
           <synopsis>MoebiusMapping (z,z2,z3,z4)</synopsis>
-          <para>Moebius mapping using the cross ratio taking z2,z3,z4 to 1,0, and infinity respectively</para>
+          <para>Moebius mapping using the cross ratio taking z2,z3,z4 to 1,0, and infinity respectively.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/MobiusTransformation.html">Planetmath</ulink> for more information.
@@ -3758,7 +3914,7 @@ do (
          <term>MoebiusMappingInftyToInfty</term>
          <listitem>
           <synopsis>MoebiusMappingInftyToInfty (z,z2,z3)</synopsis>
-          <para>Moebius mapping using the cross ratio taking infinity to infinity and z2,z3 to 1 and 0 respectively</para>
+          <para>Moebius mapping using the cross ratio taking infinity to infinity and z2,z3 to 1 and 0 respectively.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/MobiusTransformation.html">Planetmath</ulink> for more information.
@@ -3770,7 +3926,7 @@ do (
          <term>MoebiusMappingInftyToOne</term>
          <listitem>
           <synopsis>MoebiusMappingInftyToOne (z,z3,z4)</synopsis>
-          <para>Moebius mapping using the cross ratio taking infinity to 1 and z3,z4 to 0 and infinity respectively</para>
+          <para>Moebius mapping using the cross ratio taking infinity to 1 and z3,z4 to 0 and infinity respectively.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/MobiusTransformation.html">Planetmath</ulink> for more information.
@@ -3782,7 +3938,7 @@ do (
          <term>MoebiusMappingInftyToZero</term>
          <listitem>
           <synopsis>MoebiusMappingInftyToZero (z,z2,z4)</synopsis>
-          <para>Moebius mapping using the cross ratio taking infinity to 0 and z2,z4 to 1 and infinity respectively</para>
+          <para>Moebius mapping using the cross ratio taking infinity to 0 and z2,z4 to 1 and infinity respectively.</para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/MobiusTransformation.html">Planetmath</ulink> for more information.
@@ -3794,7 +3950,7 @@ do (
          <term>PoissonKernel</term>
          <listitem>
           <synopsis>PoissonKernel (r,sigma)</synopsis>
-          <para>Poisson kernel on D(0,1) (not normalized to 1, that is integral of this is 2pi)</para>
+          <para>Poisson kernel on D(0,1) (not normalized to 1, that is integral of this is 2pi).</para>
          </listitem>
         </varlistentry>
 
@@ -3802,7 +3958,7 @@ do (
          <term>PoissonKernelRadius</term>
          <listitem>
           <synopsis>PoissonKernelRadius (r,sigma)</synopsis>
-          <para>Poisson kernel on D(0,R) (not normalized to 1)</para>
+          <para>Poisson kernel on D(0,R) (not normalized to 1).</para>
          </listitem>
         </varlistentry>
 
@@ -3842,7 +3998,7 @@ do (
          <term>deg2rad</term>
          <listitem>
           <synopsis>deg2rad (x)</synopsis>
-          <para>Convert degrees to radians</para>
+          <para>Convert degrees to radians.</para>
          </listitem>
         </varlistentry>
 
@@ -3850,7 +4006,7 @@ do (
          <term>rad2deg</term>
          <listitem>
           <synopsis>rad2deg (x)</synopsis>
-          <para>Convert radians to degrees</para>
+          <para>Convert radians to degrees.</para>
          </listitem>
         </varlistentry>
 
@@ -3904,7 +4060,7 @@ do (
          <term>FindRootBisection</term>
          <listitem>
           <synopsis>FindRootBisection (f,a,b,TOL,N)</synopsis>
-          <para>Find root of a function using the bisection method</para>
+          <para>Find root of a function using the bisection method.</para>
          </listitem>
         </varlistentry>
 
@@ -3912,7 +4068,7 @@ do (
          <term>FindRootFalsePosition</term>
          <listitem>
           <synopsis>FindRootFalsePosition (f,a,b,TOL,N)</synopsis>
-          <para>Find root of a function using the method of false position</para>
+          <para>Find root of a function using the method of false position.</para>
          </listitem>
         </varlistentry>
 
@@ -3920,7 +4076,7 @@ do (
          <term>FindRootMullersMethod</term>
          <listitem>
           <synopsis>FindRootMullersMethod (f,x1,x2,x3,TOL,N)</synopsis>
-          <para>Find root of a function using the Muller's method</para>
+          <para>Find root of a function using the Muller's method.</para>
          </listitem>
         </varlistentry>
 
@@ -3928,7 +4084,7 @@ do (
          <term>FindRootSecant</term>
          <listitem>
           <synopsis>FindRootSecant (f,a,b,TOL,N)</synopsis>
-          <para>Find root of a function using the secant method</para>
+          <para>Find root of a function using the secant method.</para>
          </listitem>
         </varlistentry>
 
@@ -4024,7 +4180,7 @@ do (
          <listitem>
           <synopsis>Average (m)</synopsis>
           <para>Aliases: <function>average</function> <function>Mean</function> <function>mean</function></para>
-          <para>Calculate average of an entire matrix</para>
+          <para>Calculate average of an entire matrix.</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/ArithmeticMean.html">Mathworld</ulink> for more information.
@@ -4036,7 +4192,7 @@ do (
          <term>GaussDistribution</term>
          <listitem>
           <synopsis>GaussDistribution (x,sigma)</synopsis>
-          <para>Integral of the GaussFunction from 0 to x (area under the normal curve)</para>
+          <para>Integral of the GaussFunction from 0 to x (area under the normal curve).</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/NormalDistribution.html">Mathworld</ulink> for more information.
@@ -4048,7 +4204,7 @@ do (
          <term>GaussFunction</term>
          <listitem>
           <synopsis>GaussFunction (x,sigma)</synopsis>
-          <para>The normalized Gauss distribution function (the normal curve)</para>
+          <para>The normalized Gauss distribution function (the normal curve).</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/NormalDistribution.html">Mathworld</ulink> for more information.
@@ -4062,7 +4218,7 @@ do (
          <listitem>
           <synopsis>Median (m)</synopsis>
           <para>Aliases: <function>median</function></para>
-          <para>Calculate median of an entire matrix</para>
+          <para>Calculate median of an entire matrix.</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/StatisticalMedian.html">Mathworld</ulink> for more information.
@@ -4075,7 +4231,7 @@ do (
          <listitem>
           <synopsis>PopulationStandardDeviation (m)</synopsis>
           <para>Aliases: <function>stdevp</function></para>
-          <para>Calculate the population standard deviation of a whole matrix</para>
+          <para>Calculate the population standard deviation of a whole matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -4084,7 +4240,7 @@ do (
          <listitem>
           <synopsis>RowAverage (m)</synopsis>
           <para>Aliases: <function>RowMean</function></para>
-          <para>Calculate average of each row in a matrix</para>
+          <para>Calculate average of each row in a matrix.</para>
           <para>
 	    See
 	    <ulink url="http://mathworld.wolfram.com/ArithmeticMean.html">Mathworld</ulink> for more information.
@@ -4110,7 +4266,7 @@ do (
          <listitem>
           <synopsis>RowPopulationStandardDeviation (m)</synopsis>
           <para>Aliases: <function>rowstdevp</function></para>
-          <para>Calculate the population standard deviations of rows of a matrix and return a vertical vector</para>
+          <para>Calculate the population standard deviations of rows of a matrix and return a vertical vector.</para>
          </listitem>
         </varlistentry>
 
@@ -4119,7 +4275,7 @@ do (
          <listitem>
           <synopsis>RowStandardDeviation (m)</synopsis>
           <para>Aliases: <function>rowstdev</function></para>
-          <para>Calculate the standard deviations of rows of a matrix and return a vertical vector</para>
+          <para>Calculate the standard deviations of rows of a matrix and return a vertical vector.</para>
          </listitem>
         </varlistentry>
 
@@ -4128,7 +4284,7 @@ do (
          <listitem>
           <synopsis>StandardDeviation (m)</synopsis>
           <para>Aliases: <function>stdev</function></para>
-          <para>Calculate the standard deviation of a whole matrix</para>
+          <para>Calculate the standard deviation of a whole matrix.</para>
          </listitem>
         </varlistentry>
 
@@ -4142,7 +4298,23 @@ do (
          <term>AddPoly</term>
          <listitem>
           <synopsis>AddPoly (p1,p2)</synopsis>
-          <para>Add two polynomials (vectors)</para>
+          <para>Add two polynomials (vectors).</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-DividePoly">
+         <term>DividePoly</term>
+         <listitem>
+          <synopsis>DividePoly (p,q,&amp;r)</synopsis>
+          <para>Divide two polynomials (as vectors) using long division.
+	   Returns the quotient
+	   of the two polynomials.  The optional argument <varname>r</varname>
+	   is used to return the remainder.  The remainder will have lower
+	   degree than <varname>q</varname>.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/PolynomialLongDivision.html">Planetmath</ulink> for more information.
+	  </para>
          </listitem>
         </varlistentry>
 
@@ -4150,7 +4322,7 @@ do (
          <term>IsPoly</term>
          <listitem>
           <synopsis>IsPoly (p)</synopsis>
-          <para>Check if a vector is usable as a polynomial</para>
+          <para>Check if a vector is usable as a polynomial.</para>
          </listitem>
         </varlistentry>
 
@@ -4158,7 +4330,7 @@ do (
          <term>MultiplyPoly</term>
          <listitem>
           <synopsis>MultiplyPoly (p1,p2)</synopsis>
-          <para>Multiply two polynomials (as vectors)</para>
+          <para>Multiply two polynomials (as vectors).</para>
          </listitem>
         </varlistentry>
 
@@ -4174,7 +4346,7 @@ do (
          <term>Poly2ndDerivative</term>
          <listitem>
           <synopsis>Poly2ndDerivative (p)</synopsis>
-          <para>Take second polynomial (as vector) derivative</para>
+          <para>Take second polynomial (as vector) derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -4182,7 +4354,7 @@ do (
          <term>PolyDerivative</term>
          <listitem>
           <synopsis>PolyDerivative (p)</synopsis>
-          <para>Take polynomial (as vector) derivative</para>
+          <para>Take polynomial (as vector) derivative.</para>
          </listitem>
         </varlistentry>
 
@@ -4190,7 +4362,7 @@ do (
          <term>PolyToFunction</term>
          <listitem>
           <synopsis>PolyToFunction (p)</synopsis>
-          <para>Make function out of a polynomial (as vector)</para>
+          <para>Make function out of a polynomial (as vector).</para>
          </listitem>
         </varlistentry>
 
@@ -4198,7 +4370,7 @@ do (
          <term>PolyToString</term>
          <listitem>
           <synopsis>PolyToString (p,var...)</synopsis>
-          <para>Make string out of a polynomial (as vector)</para>
+          <para>Make string out of a polynomial (as vector).</para>
          </listitem>
         </varlistentry>
 
@@ -4206,7 +4378,7 @@ do (
          <term>SubtractPoly</term>
          <listitem>
           <synopsis>SubtractPoly (p1,p2)</synopsis>
-          <para>Subtract two polynomials (as vectors)</para>
+          <para>Subtract two polynomials (as vectors).</para>
          </listitem>
         </varlistentry>
 
@@ -4214,7 +4386,7 @@ do (
          <term>TrimPoly</term>
          <listitem>
           <synopsis>TrimPoly (p)</synopsis>
-          <para>Trim zeros from a polynomial (as vector)</para>
+          <para>Trim zeros from a polynomial (as vector).</para>
          </listitem>
         </varlistentry>
 
@@ -4228,7 +4400,7 @@ do (
          <term>Intersection</term>
          <listitem>
           <synopsis>Intersection (X,Y)</synopsis>
-          <para>Returns a set theoretic intersection of X and Y (X and Y are vectors pretending to be sets)</para>
+          <para>Returns a set theoretic intersection of X and Y (X and Y are vectors pretending to be sets).</para>
          </listitem>
         </varlistentry>
 
@@ -4236,7 +4408,15 @@ do (
          <term>IsIn</term>
          <listitem>
           <synopsis>IsIn (x,X)</synopsis>
-          <para>Returns true if the element x is in the set X (where X is a vector pretending to be a set)</para>
+          <para>Returns true if the element x is in the set X (where X is a vector pretending to be a set).</para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsSubset">
+         <term>IsSubset</term>
+         <listitem>
+          <synopsis>IsSubset (X, Y)</synopsis>
+          <para>Returns true if X is a subset of Y (X and Y are vectors pretending to be sets).</para>
          </listitem>
         </varlistentry>
 
@@ -4244,7 +4424,7 @@ do (
          <term>MakeSet</term>
          <listitem>
           <synopsis>MakeSet (X)</synopsis>
-          <para>Returns a set where every element of X appears only once</para>
+          <para>Returns a vector where every element of X appears only once.</para>
          </listitem>
         </varlistentry>
 
@@ -4252,7 +4432,7 @@ do (
          <term>SetMinus</term>
          <listitem>
           <synopsis>SetMinus (X,Y)</synopsis>
-          <para>Returns a set theoretic difference X-Y (X and Y are vectors pretending to be sets)</para>
+          <para>Returns a set theoretic difference X-Y (X and Y are vectors pretending to be sets).</para>
          </listitem>
         </varlistentry>
 
@@ -4260,7 +4440,7 @@ do (
          <term>Union</term>
          <listitem>
           <synopsis>Union (X,Y)</synopsis>
-          <para>Returns a set theoretic union of X and Y (X and Y are vectors pretending to be sets)</para>
+          <para>Returns a set theoretic union of X and Y (X and Y are vectors pretending to be sets).</para>
          </listitem>
         </varlistentry>
 
@@ -4274,7 +4454,7 @@ do (
          <term>ASCIIToString</term>
          <listitem>
           <synopsis>ASCIIToString (vec)</synopsis>
-          <para>Convert a vector of ASCII values to a string</para>
+          <para>Convert a vector of ASCII values to a string.</para>
          </listitem>
         </varlistentry>
 
@@ -4282,7 +4462,7 @@ do (
          <term>AlphabetToString</term>
          <listitem>
           <synopsis>AlphabetToString (vec,alphabet)</synopsis>
-          <para>Convert a vector of 0-based alphabet values (positions in the alphabet string) to a string</para>
+          <para>Convert a vector of 0-based alphabet values (positions in the alphabet string) to a string.</para>
          </listitem>
         </varlistentry>
 
@@ -4298,7 +4478,7 @@ do (
          <term>StringToAlphabet</term>
          <listitem>
           <synopsis>StringToAlphabet (str,alphabet)</synopsis>
-          <para>Convert a string to a vector of 0-based alphabet values (positions in the alphabet string), -1's for unknown letters</para>
+          <para>Convert a string to a vector of 0-based alphabet values (positions in the alphabet string), -1's for unknown letters.</para>
          </listitem>
         </varlistentry>
 
@@ -4329,7 +4509,7 @@ do (
          <listitem>
           <synopsis>SymbolicDerivativeTry (f)</synopsis>
           <para>Attempt to symbolically differentiate the function f, where f is a function of one variable, returns null if unsuccessful but is silent.
-	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+	  (See <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)
           </para>
          </listitem>
         </varlistentry>
@@ -4339,7 +4519,7 @@ do (
          <listitem>
           <synopsis>SymbolicNthDerivative (f,n)</synopsis>
           <para>Attempt to symbolically differentiate a function n times.
-	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+	  (See <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)
           </para>
          </listitem>
         </varlistentry>
@@ -4349,7 +4529,7 @@ do (
          <listitem>
           <synopsis>SymbolicNthDerivativeTry (f,n)</synopsis>
 	  <para>Attempt to symbolically differentiate a function n times quietly and return null on failure
-	  (See <link linkend="gel-function-SymbolicNthDerivative">SymbolicNthDerivative</link>)
+	  (See <link linkend="gel-function-SymbolicNthDerivative"><function>SymbolicNthDerivative</function></link>)
           </para>
          </listitem>
         </varlistentry>
@@ -4359,7 +4539,7 @@ do (
          <listitem>
           <synopsis>SymbolicTaylorApproximationFunction (f,x0,n)</synopsis>
 	  <para>Attempt to construct the taylor approximation function around x0 to the nth degree.
-	  (See <link linkend="gel-function-SymbolicDerivative">SymbolicDerivative</link>)
+	  (See <link linkend="gel-function-SymbolicDerivative"><function>SymbolicDerivative</function></link>)
           </para>
          </listitem>
         </varlistentry>
@@ -4381,7 +4561,7 @@ do (
 	    <varname>x1</varname>, <varname>x2</varname>,
 	    <varname>y1</varname>, <varname>y2</varname>.  If limits are not
 	    specified, then the currently set limits apply
-	    (See <link linkend="gel-function-LinePlotWindow">LinePlotWindow</link>)
+	    (See <link linkend="gel-function-LinePlotWindow"><function>LinePlotWindow</function></link>)
           </para>
           <para>
 	    Examples:
@@ -4438,8 +4618,8 @@ do (
           <synopsis>LinePlotParametric (xfunc,yfunc,t1,t2,tinc,x1,x2,y1,y2)</synopsis>
           <para>
 	    Plot a parametric function with a line.  First come the functions
-for x and y then optionally the t limits as t1,t2,tinc, then optionally the
-limits as x1,x2,y1,y2.
+for <varname>x</varname> and <varname>y</varname> then optionally the <varname>t</varname> limits as <userinput>t1,t2,tinc</userinput>, then optionally the
+limits as <userinput>x1,x2,y1,y2</userinput>.
           </para>
          </listitem>
         </varlistentry>
@@ -4452,8 +4632,9 @@ limits as x1,x2,y1,y2.
           <synopsis>LinePlotCParametric (func,t1,t2,tinc,x1,x2,y1,y2)</synopsis>
           <para>
 	    Plot a parametric complex valued function with a line.  First comes
-the function that returns x+iy then optionally the t limits as t1,t2,tinc, then
-optionally the limits as x1,x2,y1,y2.
+the function that returns <computeroutput>x+iy</computeroutput>,
+then optionally the <varname>t</varname> limits as <userinput>t1,t2,tinc</userinput>, then
+optionally the limits as <userinput>x1,x2,y1,y2</userinput>.
           </para>
          </listitem>
         </varlistentry>
@@ -4468,7 +4649,7 @@ optionally the limits as x1,x2,y1,y2.
 	    <varname>y1</varname>, <varname>y2</varname>,
 	    <varname>z1</varname>, <varname>z2</varname>.  If limits are not
 	    specified, then the currently set limits apply
-	    (See <link linkend="gel-function-SurfacePlotWindow">SurfacePlotWindow</link>).
+	    (See <link linkend="gel-function-SurfacePlotWindow"><function>SurfacePlotWindow</function></link>).
 	    Genius can only plot a single surface function at this time.
           </para>
           <para>

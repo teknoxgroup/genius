@@ -50,14 +50,17 @@ am__objects_1 =
 am_libgtkextra_genius_a_OBJECTS = $(am__objects_1) \
 	gtkextra-marshal.$(OBJEXT) gtkextratypebuiltins.$(OBJEXT) \
 	gtkextra.$(OBJEXT) gtkpsfont.$(OBJEXT) gtkplot.$(OBJEXT) \
-	gtkplot3d.$(OBJEXT) gtkplotbar.$(OBJEXT) gtkplotbox.$(OBJEXT) \
+	gtkplot3d.$(OBJEXT) gtkplotarray.$(OBJEXT) \
+	gtkplotbar.$(OBJEXT) gtkplotbox.$(OBJEXT) \
 	gtkplotcandle.$(OBJEXT) gtkplotcanvas.$(OBJEXT) \
+	gtkplotcanvasellipse.$(OBJEXT) gtkplotcanvasline.$(OBJEXT) \
+	gtkplotcanvaspixmap.$(OBJEXT) gtkplotcanvasplot.$(OBJEXT) \
+	gtkplotcanvasrectangle.$(OBJEXT) gtkplotcanvastext.$(OBJEXT) \
 	gtkplotcsurface.$(OBJEXT) gtkplotdata.$(OBJEXT) \
-	gtkplotdt.$(OBJEXT) gtkplotdtriangle.$(OBJEXT) \
-	gtkplotflux.$(OBJEXT) gtkplotgdk.$(OBJEXT) gtkplotpc.$(OBJEXT) \
-	gtkplotpixmap.$(OBJEXT) gtkplotpolar.$(OBJEXT) \
-	gtkplotprint.$(OBJEXT) gtkplotps.$(OBJEXT) \
-	gtkplotsurface.$(OBJEXT)
+	gtkplotdt.$(OBJEXT) gtkplotflux.$(OBJEXT) gtkplotgdk.$(OBJEXT) \
+	gtkplotpc.$(OBJEXT) gtkplotpixmap.$(OBJEXT) \
+	gtkplotpolar.$(OBJEXT) gtkplotprint.$(OBJEXT) \
+	gtkplotps.$(OBJEXT) gtkplotsurface.$(OBJEXT)
 libgtkextra_genius_a_OBJECTS = $(am_libgtkextra_genius_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -95,6 +98,8 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINRELOC_CFLAGS = @BINRELOC_CFLAGS@
+BINRELOC_LIBS = @BINRELOC_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
@@ -134,6 +139,8 @@ GMSGFMT = @GMSGFMT@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GREP = @GREP@
+GSV_CFLAGS = @GSV_CFLAGS@
+GSV_LIBS = @GSV_LIBS@
 GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -146,14 +153,12 @@ INTLTOOL_CAVES_RULE = @INTLTOOL_CAVES_RULE@
 INTLTOOL_DESKTOP_RULE = @INTLTOOL_DESKTOP_RULE@
 INTLTOOL_DIRECTORY_RULE = @INTLTOOL_DIRECTORY_RULE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_ICONV = @INTLTOOL_ICONV@
 INTLTOOL_KBD_RULE = @INTLTOOL_KBD_RULE@
 INTLTOOL_KEYS_RULE = @INTLTOOL_KEYS_RULE@
 INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_MSGFMT = @INTLTOOL_MSGFMT@
-INTLTOOL_MSGMERGE = @INTLTOOL_MSGMERGE@
 INTLTOOL_OAF_RULE = @INTLTOOL_OAF_RULE@
 INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_POLICY_RULE = @INTLTOOL_POLICY_RULE@
 INTLTOOL_PONG_RULE = @INTLTOOL_PONG_RULE@
 INTLTOOL_PROP_RULE = @INTLTOOL_PROP_RULE@
 INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
@@ -165,7 +170,6 @@ INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
-INTLTOOL_XGETTEXT = @INTLTOOL_XGETTEXT@
 INTLTOOL_XML_NOMERGE_RULE = @INTLTOOL_XML_NOMERGE_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
@@ -200,6 +204,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
 SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -302,14 +307,20 @@ public_h_sources = \
 	gtkpsfont.h		\
 	gtkplot.h		\
 	gtkplot3d.h		\
+	gtkplotarray.h		\
 	gtkplotbar.h		\
 	gtkplotbox.h		\
 	gtkplotcandle.h		\
 	gtkplotcanvas.h		\
+	gtkplotcanvasellipse.h	\
+	gtkplotcanvasline.h	\
+	gtkplotcanvaspixmap.h	\
+	gtkplotcanvasplot.h	\
+	gtkplotcanvasrectangle.h	\
+	gtkplotcanvastext.h	\
 	gtkplotcsurface.h	\
 	gtkplotdata.h		\
 	gtkplotdt.h		\
-	gtkplotdtriangle.h	\
 	gtkplotflux.h		\
 	gtkplotgdk.h		\
 	gtkplotpc.h		\
@@ -329,14 +340,20 @@ libgtkextra_genius_a_SOURCES = \
 	gtkpsfont.c		\
 	gtkplot.c		\
 	gtkplot3d.c		\
+	gtkplotarray.c		\
 	gtkplotbar.c		\
 	gtkplotbox.c		\
 	gtkplotcandle.c		\
 	gtkplotcanvas.c		\
+	gtkplotcanvasellipse.c	\
+	gtkplotcanvasline.c	\
+	gtkplotcanvaspixmap.c	\
+	gtkplotcanvasplot.c	\
+	gtkplotcanvasrectangle.c	\
+	gtkplotcanvastext.c	\
 	gtkplotcsurface.c	\
 	gtkplotdata.c		\
 	gtkplotdt.c		\
-	gtkplotdtriangle.c	\
 	gtkplotflux.c		\
 	gtkplotgdk.c		\
 	gtkplotpc.c		\
@@ -398,14 +415,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkextratypebuiltins.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplot.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplot3d.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotarray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotbar.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotbox.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcandle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvas.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvasellipse.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvasline.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvaspixmap.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvasplot.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvasrectangle.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcanvastext.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotcsurface.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotdata.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotdt.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotdtriangle.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotflux.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotgdk.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkplotpc.Po@am__quote@

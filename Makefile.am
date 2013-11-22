@@ -10,7 +10,14 @@ packagesdir = $(datadir)/mime/packages
 packages_DATA = genius.xml
 
 install-data-hook: 
+if ENABLE_UPDATE_MIMEDB
 	-update-mime-database "$(DESTDIR)${datadir}/mime"
+endif
+
+uninstall-hook:
+if ENABLE_UPDATE_MIMEDB
+	-update-mime-database "$(DESTDIR)${datadir}/mime"
+endif
 
 EXTRA_DIST = \
 	genius.spec \
@@ -21,12 +28,15 @@ EXTRA_DIST = \
 	genius.applications \
 	intltool-extract.in	\
 	intltool-merge.in	\
-	intltool-update.in
+	intltool-update.in	\
+	INSTALL.MacOSX
 
 DISTCLEANFILES = \
 	intltool-extract	\
 	intltool-merge		\
 	intltool-update
+
+DISTCHECK_CONFIGURE_FLAGS = --disable-scrollkeeper --disable-update-mimedb
 
 # This doesn't add the graphing functions
 #genius-function-list.txt: src/genius

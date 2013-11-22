@@ -70,14 +70,14 @@ libtestplugin_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 libexecPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS) $(libexec_PROGRAMS)
-am_genius_OBJECTS = calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
-	util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) \
-	symbolic.$(OBJEXT) mpwrap.$(OBJEXT) mpzextra.$(OBJEXT) \
-	matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
-	compil.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) \
-	lexer.$(OBJEXT) plugin.$(OBJEXT) plugread.$(OBJEXT) \
-	parse.$(OBJEXT) genius_lists.$(OBJEXT) utype.$(OBJEXT) \
-	geloutput.$(OBJEXT)
+am_genius_OBJECTS = binreloc.$(OBJEXT) calc.$(OBJEXT) eval.$(OBJEXT) \
+	genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) \
+	funclib.$(OBJEXT) symbolic.$(OBJEXT) mpwrap.$(OBJEXT) \
+	mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) \
+	matop.$(OBJEXT) compil.$(OBJEXT) parseutil.$(OBJEXT) \
+	inter.$(OBJEXT) lexer.$(OBJEXT) plugin.$(OBJEXT) \
+	plugread.$(OBJEXT) parse.$(OBJEXT) genius_lists.$(OBJEXT) \
+	utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_OBJECTS = $(am_genius_OBJECTS)
 am__DEPENDENCIES_1 =
 genius_DEPENDENCIES = $(top_builddir)/ve/libvicious.a \
@@ -88,18 +88,19 @@ genius_readline_helper_fifo_OBJECTS =  \
 	$(am_genius_readline_helper_fifo_OBJECTS)
 genius_readline_helper_fifo_DEPENDENCIES =  \
 	$(top_builddir)/ve/libvicious.a $(am__DEPENDENCIES_1)
-am_gnome_genius_OBJECTS = calc.$(OBJEXT) eval.$(OBJEXT) \
-	gnome-genius.$(OBJEXT) util.$(OBJEXT) dict.$(OBJEXT) \
-	funclib.$(OBJEXT) symbolic.$(OBJEXT) mpwrap.$(OBJEXT) \
-	mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) \
-	matop.$(OBJEXT) compil.$(OBJEXT) lexer.$(OBJEXT) \
-	parseutil.$(OBJEXT) inter.$(OBJEXT) plugin.$(OBJEXT) \
-	plugread.$(OBJEXT) parse.$(OBJEXT) genius_lists.$(OBJEXT) \
-	utype.$(OBJEXT) geloutput.$(OBJEXT) graphing.$(OBJEXT)
+am_gnome_genius_OBJECTS = binreloc.$(OBJEXT) calc.$(OBJEXT) \
+	eval.$(OBJEXT) gnome-genius.$(OBJEXT) util.$(OBJEXT) \
+	dict.$(OBJEXT) funclib.$(OBJEXT) symbolic.$(OBJEXT) \
+	mpwrap.$(OBJEXT) mpzextra.$(OBJEXT) matrix.$(OBJEXT) \
+	matrixw.$(OBJEXT) matop.$(OBJEXT) compil.$(OBJEXT) \
+	lexer.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) \
+	plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
+	genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT) \
+	graphing.$(OBJEXT)
 gnome_genius_OBJECTS = $(am_gnome_genius_OBJECTS)
 gnome_genius_DEPENDENCIES = $(top_builddir)/ve/libviciousui.a \
 	$(top_builddir)/gtkextra/libgtkextra-genius.a \
-	$(am__DEPENDENCIES_1)
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 DEFAULT_INCLUDES = -I. -I$(top_builddir)@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -143,6 +144,8 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINRELOC_CFLAGS = @BINRELOC_CFLAGS@
+BINRELOC_LIBS = @BINRELOC_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
@@ -182,6 +185,8 @@ GMSGFMT = @GMSGFMT@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GREP = @GREP@
+GSV_CFLAGS = @GSV_CFLAGS@
+GSV_LIBS = @GSV_LIBS@
 GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -194,14 +199,12 @@ INTLTOOL_CAVES_RULE = @INTLTOOL_CAVES_RULE@
 INTLTOOL_DESKTOP_RULE = @INTLTOOL_DESKTOP_RULE@
 INTLTOOL_DIRECTORY_RULE = @INTLTOOL_DIRECTORY_RULE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_ICONV = @INTLTOOL_ICONV@
 INTLTOOL_KBD_RULE = @INTLTOOL_KBD_RULE@
 INTLTOOL_KEYS_RULE = @INTLTOOL_KEYS_RULE@
 INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_MSGFMT = @INTLTOOL_MSGFMT@
-INTLTOOL_MSGMERGE = @INTLTOOL_MSGMERGE@
 INTLTOOL_OAF_RULE = @INTLTOOL_OAF_RULE@
 INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_POLICY_RULE = @INTLTOOL_POLICY_RULE@
 INTLTOOL_PONG_RULE = @INTLTOOL_PONG_RULE@
 INTLTOOL_PROP_RULE = @INTLTOOL_PROP_RULE@
 INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
@@ -213,7 +216,6 @@ INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
-INTLTOOL_XGETTEXT = @INTLTOOL_XGETTEXT@
 INTLTOOL_XML_NOMERGE_RULE = @INTLTOOL_XML_NOMERGE_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
@@ -248,6 +250,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
 SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -323,8 +326,7 @@ INCLUDES = \
 	-DG_LOG_DOMAIN=\"Genius\"				\
 	-DDATADIR=\""$(datadir)"\"				\
 	-DLIBEXECDIR=\""$(libexecdir)"\"			\
-	-DICONDIR=\""$(datadir)/pixmaps/genius"\"		\
-	-DLIBRARY_DIR=\""$(datadir)/genius/"\"			\
+	-DBUILDDIR=\""$(abs_top_builddir)"\"			\
 	-I$(srcdir)						\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/ve					\
@@ -333,12 +335,16 @@ INCLUDES = \
 	-I$(top_builddir)/ve					\
 	-I$(top_builddir)/gtkextra				\
 	-I$(includedir)						\
+	$(BINRELOC_CFLAGS)					\
 	$(GMP_INCLUDEDIR)					\
 	$(GENIUS_CFLAGS)					\
+	$(GSV_CFLAGS)						\
 	$(EXTRA_WARNING_CFLAGS)
 
 libexec_PROGRAMS = @GENIUS_READLINE_HELPER_FIFO@
 gnome_genius_SOURCES = \
+	binreloc.c	\
+	binreloc.h	\
 	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
@@ -398,6 +404,7 @@ gnome_genius_LDADD = \
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
+	$(GSV_LIBS)				\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
@@ -415,6 +422,8 @@ genius_readline_helper_fifo_LDADD = \
 	@TERMCAP_LIB@
 
 genius_SOURCES = \
+	binreloc.c	\
+	binreloc.h	\
 	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
@@ -507,6 +516,7 @@ EXTRA_DIST = \
 	geniustest.pl \
 	geniustests.txt \
 	longtest.gel \
+	nullspacetest.gel \
 	gnome-genius.desktop.in \
 	$(Desktop_in_files) \
 	$(Desktop_DATA) \
@@ -650,6 +660,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/binreloc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/calc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/compil.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dict.Po@am__quote@

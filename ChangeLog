@@ -1,3 +1,377 @@
+Fri Nov 16 23:10:29 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/gtkplot.[ch]: add freeze/thaw functions since otherwise
+	  we may hang and eat all memory on recalculating ticks needlessly
+	  when changing both range and ticks.
+
+	* src/graphing.c: use freeze/thaw to avoid hangs and huge memory
+	  leaks.  On parametric plots, squish the graph a little and move
+	  the legend below the plot.
+
+	* NEWS: update
+
+Fri Nov 16 00:50:48 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/calculus/sums_proucts.gel: increase default sum and product
+	  tries to 10000, since 200 was just not cutting it.
+
+Thu Nov 15 23:30:51 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: Much nicer pretty printing of matrices.  Rather
+	  than using tabs, use commas and align elements successive rows.
+	  Both nicer, more readable (when MixedFractions is on) and more
+	  compact way of seeing matrices.  Yay!
+
+	* src/lexer.l: drop the tab support for entering matrices.  Not only
+	  was it stupid, it didn't work on the command line
+
+	* src/funclib.c: fix print, printn and display functions to not follow
+	  the line length limits like normal output
+
+	* src/calc.c: when pretty printing a matrix, only print the leading
+	  newline if we are not in fact on the start of a line
+
+	* configure.in: check for svn rather than cvs to add extra warnings
+
+	* src/gnome-genius.c: make is_uri static to avoid a warning
+
+	* help/C/genius.xml: update the manual
+
+	* NEWS: update
+
+Thu Nov 15 18:39:06 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/Makefile.am: add nullspacetest.gel
+
+Wed Nov 14 20:13:29 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matop.c: fix possible memory corruption in the gauss
+	  routine
+
+	* src/matrixw.c: slight optimization to not copy zeros
+
+	* src/funclib.c, lib/linear_algebra/*.gel: Implement NullSpace
+	  and PivotColumns internally for speed.
+
+	* src/gnome-genius.c: remove some unused vars
+
+	* src/geniustests.txt, src/nullspacetests.txt: add tests for
+	  PivotColumns and NullSpace
+
+Wed Nov 14 04:15:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/*.gel: OrthogonalComplement is with respect
+	  to Hermitian product just like everything else.  Also
+	  handle null as empty matrix/subspace in more places.
+
+Wed Nov 14 03:45:42 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matop.c, src/symbolic.c, src/mpwrap.[ch], src/calc.c,
+	  src/funclib.c, src/eval.c: Significantly improve both
+	  memory usage and speed in matrix multiplication and to some degree
+	  Gaussian elimination in case there are a lot of zero entries.
+
+	* src/geniustests.txt: update
+
+Tue Nov 13 23:48:25 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matrixw.[ch], src/calc.c, src/funclib.c, src/matop.c,
+	  src/symbolic.c, src/compil.c, src/eval.c: Optimized / cleaned up
+	  certain matrix operations a tiny bit.  Consistently traverse
+	  matrices row wise.
+
+	* src/funclib.c, src/eval.c: Fixed and slightly optimized IsIn,
+	  it used to bomb if the first argument was a matrix, and it
+	  used to think that the object "true" is equal to any number,
+	  and further it didn't see a difference between numbers of
+	  different types (float vs. integer).  This fixes also Intersection,
+	  Union, MakeSet and SetMinus.  Also added IsSubset.  Also fixed
+	  symbolic tree comparison for matrices.
+
+	* src/mpwrap.c: When printing out a floating point number, make sure
+	  to append ".0" to the end to distinguish it from an integer
+
+	* src/geniustests.txt:  updated tests, added many new tests.
+
+	* help/C/gel-function-list.xml: updated
+
+	* NEWS: update
+
+Sun Nov 11 03:17:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: translate the author fields in the about box
+	  and set the program name correctly
+
+Sun Nov 11 03:07:04 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: there was a stupid string to translate
+
+Sun Nov 11 00:14:04 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* pixmaps/Makefile.am: add genius-graph.png to EXTRA_DIST
+
+	* src/funclib.c: Implement DividePoly to divide polynomials
+	  using long division.  This was one of those things that
+	  I set aside to do "tommorrow" and it took close to a decade.
+
+	* help/C/gel-function-list.xml: document DividePoly
+
+	* configure.in: require GTK+ 2.4 (not 2.3.5 as previously)
+
+	* NEWS: update
+
+Sat Nov 10 16:58:14 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: migrate to GtkFontButton and add website addy
+	  to about box
+
+Sat Nov 10 16:22:09 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: optionally use GtkAboutDialog if we have GTK
+	2.6 and higher
+
+	* src/gnome-genius.c, src/genius.c, src/Makefile.am: better checking
+	if we are in the development directory and if so, don't init binreloc
+	and use the local lib.cgel
+
+Sat Nov 10 13:51:26 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: fix fit dependent axis zoom for parametric plots
+
+	* src/dict.[ch], src/gnome-genius.c, src/eval.c: Add names to
+	  contexts and print these when showing local variables so that you
+	  can see the "backtrace".  Also the display of vars is slightly
+	  nicer now.
+
+Thu Nov 08 00:51:16 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/genius.c, src/funclib.c, src/plugin.c,
+	  src/lexer.l, src/binreloc.[ch], acinclude.m4, src/Makefile.am:
+	  add and use Binreloc code from autopackage to allow relocatable
+	  executables.  Slightly massaged the code/auto* stuff to make it
+	  work.
+
+Mon Nov 05 01:31:51 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* Makefile.am: add the INSTALL.MacOSX file to EXTRA_DIST
+
+Mon Nov 05 00:15:09 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.[ch], src/mpwrap.[ch], src/funclib.c, src/genius.c,
+	  src/gnome-genius.c, src/structs.h src/geloutput.[ch]:  Implement
+	  OutputChopExponent and OutputChopWhenExponent parameters.  These
+	  will chop small numbers if they appear near large numbers.
+
+	* src/gnome-genius.c: try to use G_DIR_SEPARATOR more just in case
+	  someone will start porting genius
+
+	* help/C/*.xml: update documentation for chopping
+
+	* src/geniustests.txt: add tests for chopping
+
+	* README, NEWS: update
+
+Sun Nov 04 02:37:58 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: unswap x and y.  They are now in correct positive
+	  orientation in gtkextra.
+
+	* src/gnome-genius.c, pixmaps/gnome-graph.png: add a simple "logo"
+	  to the about box
+
+	* NEWS: update
+
+Sat Nov 03 20:51:37 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Use -10 to 10 for all default ranges.  Much better
+	  than PI, that was stupid.  Set minimum plot window to 1e-10 and
+	  enforce it to avoid errors with computing ticks leading to
+	  hanging behaviour.
+
+	* gtkextra/*: copy new files from cvs version of gtk extra except
+	  for gtkpslot which is broken, so keep our old version which works
+
+	* gtkextra/gtkplot3d.[ch]: fix up the axis mess
+
+	* src/graphing.c: use the new gtk extra stuff.  Produces nicer
+	  plots on screen.  Initial patch was by Sebastian Dröge
+	  <slomo@circular-chaos.org>
+
+2007-11-03  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	* configure.in:
+	* src/Makefile.am:
+	* src/gnome-genius.c: (get_source_language_manager), (new_program):
+	Optionally allow to use GtkSourceView2 instead of GtkSourceView1.
+	Version 2 is preffered if available, otherwise version 1 will be used.
+
+2007-11-03  Sebastian Dröge  <slomo@circular-chaos.org>
+
+	* Makefile.am:
+	* configure.in:
+	* help/omf.make:
+	Add --disable-scrollkeeper and --disable-update-mimedb options to
+	configure to skip building the scrollkeeper and mime database on
+	make install. The files generated by this must not be shipped by
+	binary packages and having this options makes it easier to package
+	genius.
+
+Wed Oct 31 10:43:25 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* gtkextra/*: remove gtkplotdtriangle.[ch]: they're not needed and
+	  have a bad license.
+
+Fri Oct 26 02:16:23 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.[ch], src/eval.[ch], src/genius.c, src/gnome-genius.c:
+	  Implement maximum node checking.  If the limit is hit you are
+	  given a chance to interrupt the current program.  Only in the
+	  GNOME version.  Add this to the Properties dialog.
+
+	* src/dict.c: Fix large performance problem on returning from a deep
+	  recursion by not doing a stupid assert
+
+	* help/C/genius.xml: document max_nodes
+
+Thu Oct 25 15:22:16 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/inter.c: fix command line editting.  readline docs are
+	  horrible! (and readline is horrible)
+
+	* src/gnome-genius.c: fix strange printing of locals among globals
+
+Thu Oct 25 13:47:40 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/dict.[ch]: Implement showing of all user
+	  variables even during runtime.  Shows even local variables if some
+	  function is currently being executed.  Allows better debugging
+
+	* src/gnome-genius.c: fix show full answer leak and fix running it
+	  during runtime.
+
+	* configure.in: bump version
+
+	* help/C/genius.xml: update docs a bit, add some more info on the gui
+	  part of genius.
+
+Tue Oct 23 17:14:25 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: positive and nonnegative matrixes obviously can't
+	  have complex entries so return false
+
+Tue Oct 23 16:23:53 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: add IsMatrixPositive and IsMatrixNonnegative
+
+	* help/C/gel-function-list.xml: add docs for the above
+
+Tue Oct 23 16:04:56 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: add "version" function for checking the version
+
+	* help/C/gel-function-list.xml: add doc for version
+
+Tue Oct 23 15:42:03 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c, src/funclibhelper.cP: Add IsZero and IsIdentity for
+	  checking if a matrix is zeros or an identity
+
+	* help/C/gel-function-list.xml: add docs for the above
+
+Tue Oct 23 13:57:03 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: on errors don't print the whole filename for
+	  opened files, just the displayed name
+
+	* src/gnome-genius.c: add Ctrl->R for "Run"
+
+Tue Oct 23 13:33:42 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: slightly optimize
+	  PivotColumns by removing unnecessary separators
+
+	* src/matop.c, src/funclib.c: when computing det be smart about
+	  matrices in rref form.  This way once we make a matrix rref,
+	  we can use det to check if it is singular very quickly.  Also
+	  set the rref flag on identity matrices.
+
+Tue Oct 23 12:28:56 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add "save all unsaved" menu item, fix the save
+	  as dialog, and add confirmation on closing unsaved things.
+
+Tue Oct 23 11:33:56 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/functions/numerical.gel: remove IsGaussianInteger, we already
+	  have IsGaussInteger alias IsComplexInteger
+
+	* help/C/gel-function-list.xml: updates and fixes
+
+Tue Oct 23 10:51:24 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: better logic for figuring out something is a
+	  URI
+
+Mon Oct 22 21:39:42 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: recognize uris on the command line
+	  and handle them correctly
+
+Mon Oct 22 19:38:03 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: whack the old gtk file selection stuff,
+	  I'm tired of fixing bugs in two versions of code.  Consistently
+	  have uri's around as program->name internally.  Fix opening
+	  files without specifying full path on command line.
+
+	* configure.in: require at least gtk+ 2.3.5
+
+Tue Oct 16 11:05:32 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.desktop.in: hmmm, Calculator;Utility; also fits
+	  the bill.  Makes the menu entry appear twice at least in ubuntu.
+	  ... hmmm oh well.  The default menu setup in gnome must be a little
+	  braindead and uses too simple queries.
+
+	* help/C/genius.xml: added Accessories to list of possible submenus
+
+Tue Oct 16 10:53:33 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.desktop.in: change Office to Education as per
+	  the vfolder spec (that's still somewhat wrong, but unfortunately
+	  it is as close to standard behaviour as we get).  Also notice
+	  that the Scientific category was wrong.  "Science" is correct
+	  as per spec.
+
+	* help/C/genius.xml: update the manual for where to find the icon.
+
+Sun Oct 14 10:10:11 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add Adrian E. Feiguin to the authors
+	  list in the about box
+
+Sun Oct 14 09:40:59 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: I finally found the culprit behind some of
+	  the initial GEL implementations of standard library so I added
+	  him, Nils Barth to the authors list.
+
+Sun Oct 14 02:33:43 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/*: update the documentation a bit more.  Make it almost one
+	file only by inlining all the things done as separate entities
+	before, that was a nightmare to edit.  Only the function list
+	and the legal nonsense is left separate.
+
+Sat Oct 13 10:38:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/*.xml: minor fixes
+
+Sat Oct 13 09:42:33 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/gel-variables.xml: add more on scope of variables and
+	  other minor fixes.
+
 Mon Oct 08 01:56:06 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* help/C/*.xml: documentation updates

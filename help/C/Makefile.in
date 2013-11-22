@@ -126,6 +126,8 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BINRELOC_CFLAGS = @BINRELOC_CFLAGS@
+BINRELOC_LIBS = @BINRELOC_LIBS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
@@ -165,6 +167,8 @@ GMSGFMT = @GMSGFMT@
 GNOME_GENIUS = @GNOME_GENIUS@
 GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GREP = @GREP@
+GSV_CFLAGS = @GSV_CFLAGS@
+GSV_LIBS = @GSV_LIBS@
 GTKEXTRA_LIBS = @GTKEXTRA_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -177,14 +181,12 @@ INTLTOOL_CAVES_RULE = @INTLTOOL_CAVES_RULE@
 INTLTOOL_DESKTOP_RULE = @INTLTOOL_DESKTOP_RULE@
 INTLTOOL_DIRECTORY_RULE = @INTLTOOL_DIRECTORY_RULE@
 INTLTOOL_EXTRACT = @INTLTOOL_EXTRACT@
-INTLTOOL_ICONV = @INTLTOOL_ICONV@
 INTLTOOL_KBD_RULE = @INTLTOOL_KBD_RULE@
 INTLTOOL_KEYS_RULE = @INTLTOOL_KEYS_RULE@
 INTLTOOL_MERGE = @INTLTOOL_MERGE@
-INTLTOOL_MSGFMT = @INTLTOOL_MSGFMT@
-INTLTOOL_MSGMERGE = @INTLTOOL_MSGMERGE@
 INTLTOOL_OAF_RULE = @INTLTOOL_OAF_RULE@
 INTLTOOL_PERL = @INTLTOOL_PERL@
+INTLTOOL_POLICY_RULE = @INTLTOOL_POLICY_RULE@
 INTLTOOL_PONG_RULE = @INTLTOOL_PONG_RULE@
 INTLTOOL_PROP_RULE = @INTLTOOL_PROP_RULE@
 INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
@@ -196,7 +198,6 @@ INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
-INTLTOOL_XGETTEXT = @INTLTOOL_XGETTEXT@
 INTLTOOL_XML_NOMERGE_RULE = @INTLTOOL_XML_NOMERGE_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
@@ -231,6 +232,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
 SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
@@ -303,41 +305,8 @@ figdir = figures
 docname = genius
 lang = C
 omffile = genius-C.omf
-entities = about.xml \
-           examples.xml \
-           gel-absolute-value-modulus.xml \
-           gel-comparison-operators.xml \
-           gel-conditionals.xml \
-           gel-error-handling.xml \
-           gel-function-list.xml \
-           gel-functions.xml \
-           gel-loading-programs.xml \
-           gel-loops.xml \
-           gel-lvalues.xml \
-           gel-matrix-support.xml \
-           gel-matrix-transpose.xml \
-           gel-matrix-linalg.xml \
-           gel-modular-evaluation.xml \
-           gel-operator-list.xml \
-           gel-polynomials.xml \
-           gel-plotting.xml \
-           gel-previous-result.xml \
-           gel-references.xml \
-           gel-returning.xml \
-           gel-separator.xml \
-           gel-startup-procedure.xml \
-           gel-sums-products.xml \
-           gel-values.xml \
-           gel-variables.xml \
-           legal.xml \
-           prefs-display.xml \
-           prefs-precision.xml \
-           prefs-terminal.xml \
-           starting-to-start.xml \
-           starting-when-start.xml \
-           usage-create-program.xml \
-           usage-open-program.xml \
-           usage-workarea.xml
+entities = gel-function-list.xml \
+           legal.xml
 
 
 # **********  You should not have to edit below this line  **********
@@ -561,30 +530,30 @@ uninstall-am: uninstall-local uninstall-manualDATA
 omf: omf_timestamp
 
 omf_timestamp: $(omffile)
-	-for file in $(omffile); do \
-	  scrollkeeper-preinstall $(docdir)/$(docname).xml $(srcdir)/$$file $$file.out; \
-	done; \
-	touch omf_timestamp
+@ENABLE_SK_TRUE@	-for file in $(omffile); do \
+@ENABLE_SK_TRUE@	  scrollkeeper-preinstall $(docdir)/$(docname).xml $(srcdir)/$$file $$file.out; \
+@ENABLE_SK_TRUE@	done; \
+@ENABLE_SK_TRUE@	touch omf_timestamp
 
 install-data-hook-omf:
-	$(mkinstalldirs) $(DESTDIR)$(omf_dest_dir)
-	for file in $(omffile); do \
-		$(INSTALL_DATA) $$file.out $(DESTDIR)$(omf_dest_dir)/$$file; \
-	done
-	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir) -o $(DESTDIR)$(omf_dest_dir)
+@ENABLE_SK_TRUE@	$(mkinstalldirs) $(DESTDIR)$(omf_dest_dir)
+@ENABLE_SK_TRUE@	for file in $(omffile); do \
+@ENABLE_SK_TRUE@		$(INSTALL_DATA) $$file.out $(DESTDIR)$(omf_dest_dir)/$$file; \
+@ENABLE_SK_TRUE@	done
+@ENABLE_SK_TRUE@	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir) -o $(DESTDIR)$(omf_dest_dir)
 
 uninstall-local-omf:
-	-for file in $(srcdir)/*.omf; do \
-		basefile=`basename $$file`; \
-		rm -f $(DESTDIR)$(omf_dest_dir)/$$basefile; \
-	done
-	-rmdir $(DESTDIR)$(omf_dest_dir)
-	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir)
+@ENABLE_SK_TRUE@	-for file in $(srcdir)/*.omf; do \
+@ENABLE_SK_TRUE@		basefile=`basename $$file`; \
+@ENABLE_SK_TRUE@		rm -f $(DESTDIR)$(omf_dest_dir)/$$basefile; \
+@ENABLE_SK_TRUE@	done
+@ENABLE_SK_TRUE@	-rmdir $(DESTDIR)$(omf_dest_dir)
+@ENABLE_SK_TRUE@	-scrollkeeper-update -p $(DESTDIR)$(scrollkeeper_localstate_dir)
 
 clean-local-omf:
-	-for file in $(omffile); do \
-		rm -f $$file.out; \
-	done
+@ENABLE_SK_TRUE@	-for file in $(omffile); do \
+@ENABLE_SK_TRUE@		rm -f $$file.out; \
+@ENABLE_SK_TRUE@	done
 
 all: omf
 

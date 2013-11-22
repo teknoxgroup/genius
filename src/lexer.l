@@ -1,11 +1,13 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2003 George Lebl
+ * Copyright (C) 1997-2007 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 %{
 #include "config.h"
@@ -32,6 +32,7 @@
 #include "calc.h"
 #include "parse.h"
 #include "util.h"
+#include "binreloc.h"
 
 int lex_fd[2];
 int first_tok = STARTTOK;
@@ -135,11 +136,17 @@ gel_lexer_close(FILE *fp)
 ^[ 	]*load[ 	]+<([^>]|\\>)*>[ 	]*$ {
 			char *s;
 			char *end;
+			char *dir;
 			if(gel_parsestack || parenth_depth) {REJECT;}
 			s=strchr(yytext,'<')+1; /*find the beginning*/
 			end=strrchr(yytext,'>'); /*find the end*/
 			s = unescape_string(s,end,NULL);
-			yylval.id = g_strconcat(LIBRARY_DIR,"/",s,NULL);
+			dir = gbr_find_data_dir (DATADIR);
+			yylval.id = g_build_filename (dir,
+						      "genius",
+						      s,
+						      NULL);
+			g_free (dir);
 			g_free(s);
 			DO_RET;
 			return LOADFILE;
@@ -442,15 +449,6 @@ null		{ DO_RET; return '.'; }
 			}
 		}
 		
-^[\t ][\t ]*	;
-
-[\t ]*,[\t ]*	{ return ','; }
-
-[\t][\t ]*	{
-			if(matrix_entry)
-				return ',';
-		}
-
 [ \t\r]+	; /*ignore whitespace*/
 
 \.\+		{ DO_RET; return ELTELTPLUS; }
@@ -498,3 +496,17 @@ void fake_fake_fake (void) {
 }
 #endif
 #endif
+
+/* Dropping support for tabs as separators in matrix entry as of 1.0.1
+   if we want to readd it, just add the following after "ignore whitespace"
+   line above
+^[\t ][\t ]*	;
+
+[\t ]*,[\t ]*	{ return ','; }
+
+[\t][\t ]*	{
+			if(matrix_entry)
+				return ',';
+		}
+		*/
+

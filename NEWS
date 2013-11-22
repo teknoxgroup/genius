@@ -1,4 +1,59 @@
-Changes to 1.0
+Changes to 1.0.1
+
+Syntax and semantical changes are marked with CHANGE:
+
+* GNOME version can now show listing of all user defined global and local
+  variables (can display this even while the engine is running, including
+  a "backtrace" to aid debugging)
+* GNOME version can now check if too much memory is being used and allows
+  the user to interrupt the program rather than eat all available memory
+  causing the computer to grind to a halt.
+* When printing floating point numbers always make sure it is obvious that
+  these are floating point by appending .0 when they would look like integers.
+* Matrix printing is much nicer now, and possible to copy and paste back in
+* Add IsMatrixPositive, IsMatrixNonnegative, version, IsZero, IsIdentity,
+  DividePoly, IsSubset
+* PivotColumns and NullSpace are built in for greater speed.
+* CHANGE: Drop the support for tab as a matrix separator, it didn't
+  work properly, especialy not on the command line
+* CHANGE: Remove IsGaussianInteger, we already have IsGaussInteger alias
+  IsComplexInteger
+* CHANGE: OrthogonalComplement is with respect to the Hermitian product
+* CHANGE: display, printn and print don't follow FullExpressions=false
+* The .desktop file now has different Categories setup so will likely appear
+  in "Education" or "Accessories" menu rather than "Office"
+* Chop small numbers when they appear near other larger numbers.  New
+  parameters OutputChopExponent and OutputChopWhenExponent
+* Fix set theory functions by essentially fixing IsIn.  Also fully document
+  the behaviour of the set theory functions.
+* Update the plotting widgetry from GtkExtra for prettier graphs
+  (Sebastian Dröge, me)
+* Add "Save all unsaved" menu item
+* Add Ctrl->R for "Run"
+* Default graphing limits are -10 to 10 for all axis (no more pi as default)
+* Require at least GKT+ 2.4 for the GUI.
+* Optionally compile with GtkSourceview2 and drop back to
+  GtkSourceview1 if unavailable (Sebastian Dröge)
+* Fit dependent axis works for parametric plots
+* Legend more readable for parametric plots
+* Fix loading of files and URIs from the command line
+* Errors don't print the full file URI for opened program names
+* Confirm closing unsaved programs
+* Lots of documentation updates
+* Use Binreloc 2.0 so that the package is relocatable
+* Slight optimizations
+* Handle null in more linear algebra function as an empty matrix/subspace
+* Fix command line editting
+* Fix showing full answer in the gui.
+* Fix hangs in the graphing code by enforcing a minimum plot window size
+* Consistently traverse matrices row-wise everywhere
+* Remove unused file with nonfree license
+* Add --disable-scrollkeeper and --disable-update-mimedb to configure
+  (Sebastian Dröge)
+* Update the about box
+* Updated translations (Jorge Gonzales, et moi)
+
+Changes to 1.0.0
 
 * Killed the internal MPFR.  This lib is quite ubiquitous nowdays
   and it's not worth it maintaining our own out of date copy

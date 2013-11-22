@@ -193,9 +193,9 @@ substitute_x_y_z_w (GelETree *expr,
 		int mw, mh;
 		mw = gel_matrixw_width (expr->mat.matrix);
 		mh = gel_matrixw_height (expr->mat.matrix);
-		for (i = 0; i < mw; i++) {
-			for(j = 0; j < mh; j++) {
-				GelETree *t = gel_matrixw_set_index
+		for(j = 0; j < mh; j++) {
+			for (i = 0; i < mw; i++) {
+				GelETree *t = gel_matrixw_get_index
 					(expr->mat.matrix, i, j);
 				if (t != NULL)
 					substitute_x_y_z_w (t,
@@ -312,7 +312,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 			if (expr->op.args->any.next->type == VALUE_NODE) {
 				GelETree *ymo = NULL;
 				mpw_t val;
-				if (mpw_eql_ui (expr->op.args->any.next->val.value, 0)) {
+				if (mpw_zero_p (expr->op.args->any.next->val.value)) {
 					gel_freetree (nn);
 					return gel_makenum_ui (0);
 				}
@@ -321,7 +321,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 					    expr->op.args->any.next->val.value, 1);
 				if (nn->type == VALUE_NODE &&
 				    mpw_eql_ui (nn->val.value, 1)) {
-					if (mpw_eql_ui (val, 0)) {
+					if (mpw_zero_p (val)) {
 						n = gel_makenum_ui (1);
 					} else if (mpw_eql_ui (val, 1)) {
 						n = copynode (PARSE ("2*x"));
@@ -332,7 +332,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 					gel_freetree (nn);
 					nn = NULL;
 				} else {
-					if (mpw_eql_ui (val, 0)) {
+					if (mpw_zero_p (val)) {
 						n = gel_makenum_ui (1);
 					} else if (mpw_eql_ui (val, 1)) {
 						n = PARSE ("(2*x)*dx");
@@ -498,7 +498,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 		}
 		/* FIXME: is this better idea then is_constant? */
 		if (nn->type == VALUE_NODE &&
-		    mpw_eql_ui (nn->val.value, 0)) {
+		    mpw_zero_p (nn->val.value)) {
 			gel_freetree (nn);
 			nn = NULL;
 			n = PARSE ("(-x*dy)/(y^2)");
@@ -573,7 +573,7 @@ differentiate_oper (GelETree *expr, GelToken *xtok)
 			gel_freetree (nnn);
 			return nn;
 		} else if (nnn->type == VALUE_NODE &&
-			   mpw_eql_ui (nnn->val.value, 0)) {
+			   mpw_zero_p (nnn->val.value)) {
 			gel_freetree (nnn);
 			gel_freetree (nn);
 			return gel_makenum_ui (0);

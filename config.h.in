@@ -1,5 +1,8 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
+/* Include pthread support for binary relocation? */
+#undef BR_PTHREAD
+
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
 
@@ -24,6 +27,9 @@
 /* have gtksourceview */
 #undef HAVE_GTKSOURCEVIEW
 
+/* have gtksourceview2 */
+#undef HAVE_GTKSOURCEVIEW2
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -32,6 +38,9 @@
 
 /* Define to 1 if you have the `mpfr' library (-lmpfr). */
 #undef HAVE_LIBMPFR
+
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
 
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H

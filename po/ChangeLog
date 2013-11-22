@@ -1,3 +1,23 @@
+2007-11-13  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+        * es.po: Updated Spanish translation.
+
+Sun Nov 11 03:57:50 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* POTFILES.in, POTFILES.skip: move src/parse.c to skip
+
+Sun Nov 11 03:49:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* POTFILES.in: update
+
+Sun Nov 11 03:16:35 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update
+
+2007-11-02  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+        * es.po: Updated Spanish translation.
+
 Sun Oct 07 12:38:34 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* cs.po: update, only 4 untranslated messages

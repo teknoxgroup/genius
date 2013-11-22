@@ -12,25 +12,7 @@ protect ("Conjugate Transpose")
 
 #FIXME: We'll need more sophisticated tools for Tensors
 
-# Pivot Columns
-# Given a matrix in rref form, the columns which have a leading 1
-# in some row are the pivot columns.
-# (also returns in which row they occur)
-SetHelp ("PivotColumns", "linear_algebra", "Return pivot columns of a matrix, that is columns which have a leading 1 in rref form, also returns the row where they occur")
-function PivotColumns(M) =
-  (
-    N=rref(M);
-    col_dim_N=columns(N);
-    pivot_columns=.;
-    for loop=1 to min(rows(N),col_dim_N) do
-     (
-       for inner_loop=loop to col_dim_N do
-         if N@(loop,inner_loop) != 0 then
-          (pivot_columns=[pivot_columns,[inner_loop;loop]];break;);
-     );
-   pivot_columns
-  )
-protect ("PivotColumns")
+# PivotColumns is now built-in for speed
 
 # Non-pivot columns
 SetHelp ("NonPivotColumns", "linear_algebra", "Return the columns that are not the pivot columns of a matrix")
@@ -83,7 +65,8 @@ protect ("ColumnReducedEchelonForm")
 SetHelp ("StripZeroRows", "matrix", "Removes any all-zero rows of M")
 function StripZeroRows (M) =
 (
-  if not IsMatrix (M) then
+  if IsNull (M) then return null
+  else if not IsMatrix (M) then
     (error("StripZeroColumns: argument not a matrix");bailout);
   StripZeroColumns (M.').'
 )
@@ -175,7 +158,8 @@ protect ("DirectSum");
 SetHelp ("IsInvertible", "linear_algebra", "Is a matrix (or number) invertible (Integer matrix is invertible iff it's invertible over the integers)")
 function IsInvertible(n) =
 (
- if (IsInteger(n)) then return (|n|==1)     # Only invertible integers are 1, -1
+  if IsNull (n) then return false
+ else if (IsInteger(n)) then return (|n|==1)     # Only invertible integers are 1, -1
  else if (IsValue(n)) then return (n!=0)    # Elements of fields (Q,R,C) are invertible iff != 0
  else if (IsMatrix(n)) then (if IsMatrixSquare(n) then return (IsInvertible(det(n))) else return false);
                                              # Matrices are invertible iff they are square and their
@@ -187,7 +171,8 @@ protect ("IsInvertible")
 SetHelp ("IsInvertibleField", "linear_algebra", "Is a matrix (or number) invertible over a field")
 function IsInvertibleField(n) =
 (
- if (IsValue(n)) then return (n!=0)    # Elements of fields (Q,R,C) are invertible iff != 0
+  if IsNull (n) then return false
+ else if (IsValue(n)) then return (n!=0)    # Elements of fields (Q,R,C) are invertible iff != 0
  else if (IsMatrix(n)) then (if IsMatrixSquare(n) then return (IsInvertible(det(n))) else return true);
                                              # Matrices are invertible iff they are square and their
                                              #  determinant is a unit

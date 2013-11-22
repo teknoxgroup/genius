@@ -47,6 +47,8 @@
 
 #include "genius-i18n.h"
 
+#include "binreloc.h"
+
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -73,7 +75,11 @@ calcstate_t curstate={
 	FALSE,
 	5,
 	TRUE,
-	10
+	10,
+	0, /* output_style */
+	0, /* max_nodes */ /* FIXME: implement here just like in gnome-genius */
+	20, /* chop */
+	5 /* chop_when */
 	};
 	
 extern int parenth_depth;
@@ -81,6 +87,8 @@ extern int parenth_depth;
 extern int interrupted;
 
 static int use_readline = TRUE;
+
+static gboolean genius_in_dev_dir = FALSE;
 
 static int errors_printed = 0;
 static long total_errors_printed = 0;
@@ -202,6 +210,20 @@ main(int argc, char *argv[])
 
 	genius_is_gui = FALSE;
 
+	/* kind of a hack to find out if we are being run from the
+	 * directory we were built in */
+	file = g_get_current_dir ();
+	if (file != NULL &&
+	    strcmp (file, BUILDDIR "/src") == 0 &&
+	    access ("genius.c", F_OK) == 0 &&
+	    access ("../lib/lib.cgel", F_OK) == 0) {
+		genius_in_dev_dir = TRUE;
+	} else {
+		genius_in_dev_dir = FALSE;
+		gbr_init (NULL);
+	}
+	g_free (file);
+
 	/* Hmmm, everything in UTF-8? */
 	bindtextdomain (GETTEXT_PACKAGE, GNOMELOCALEDIR);
 	bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
@@ -289,6 +311,18 @@ main(int argc, char *argv[])
 			val = 10;
 			sscanf (argv[++i],"%d",&val);
 			curstate.integer_output_base = val;
+		} else if(sscanf(argv[i],"--chop=%d",&val)==1) {
+			curstate.integer_output_base = val;
+		} else if (strcmp (argv[i], "--chop")==0 && i+1 < argc) {
+			val = 20;
+			sscanf (argv[++i],"%d",&val);
+			curstate.chop = val;
+		} else if(sscanf(argv[i],"--chopwhen=%d",&val)==1) {
+			curstate.integer_output_base = val;
+		} else if (strcmp (argv[i], "--chopwhen")==0 && i+1 < argc) {
+			val = 10;
+			sscanf (argv[++i],"%d",&val);
+			curstate.chop_when = val;
 		} else if(strcmp(argv[i],"--readline")==0)
 			use_readline = TRUE;
 		else if(strcmp(argv[i],"--noreadline")==0)
@@ -333,6 +367,8 @@ main(int argc, char *argv[])
 				   "\t--maxerrors=num   \tMaximum errors to display (0=no limit) [5]\n"
 				   "\t--[no]mixed       \tPrint fractions in mixed format\n"
 				   "\t--intoutbase=num  \tBase to use to print out integers [10]\n"
+				   "\t--chop=num        \tChop small numbers less than 10^-num [20]\n"
+				   "\t--chopwhen=num    \tBut only when other numbers 10^-num or more [5]\n"
 				   "\t--[no]readline    \tUse readline if it is available [ON]\n"
 				   "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
 				   "\t--[no]gettext     \tDump help/error strings in fake .c file to\n"
@@ -408,14 +444,21 @@ main(int argc, char *argv[])
 		/*
 		 * Read main library
 		 */
-		if (access ("../lib/lib.cgel", F_OK) == 0) {
+		if (genius_in_dev_dir) {
 			/*try the library file in the current/../lib directory*/
 			gel_load_compiled_file (NULL, "../lib/lib.cgel", FALSE);
 		} else {
+			char *datadir = gbr_find_data_dir (DATADIR);
+			char *file = g_build_filename (datadir,
+						       "genius",
+						       "gel",
+						       "lib.cgel",
+						       NULL);
 			gel_load_compiled_file (NULL,
-						LIBRARY_DIR G_DIR_SEPARATOR_S
-						"gel" G_DIR_SEPARATOR_S "lib.cgel",
+						file,
 						FALSE);
+			g_free (file);
+			g_free (datadir);
 		}
 
 		/*
@@ -480,6 +523,7 @@ main(int argc, char *argv[])
 	if (exec != NULL) {
 		line_len_cache = -1;
 		gel_evalexp (exec, NULL, main_out, NULL, FALSE, NULL);
+		gel_test_max_nodes_again ();
 		line_len_cache = -1;
 		goto after_exec;
 	}
@@ -493,6 +537,7 @@ main(int argc, char *argv[])
 				e = get_p_expression();
 				line_len_cache = -1;
 				if(e) gel_evalexp_parsed(e,main_out,"= ",TRUE);
+				gel_test_max_nodes_again ();
 				line_len_cache = -1;
 			} else {
 				line_len_cache = -1;
@@ -535,6 +580,7 @@ main(int argc, char *argv[])
 	}
 
 after_exec:
+	gel_test_max_nodes_again ();
 
 	gel_printout_infos ();
 	
