@@ -729,7 +729,16 @@ MoebiusMu(1)							1
 MoebiusMu(4)							0
 MoebiusMu(2*3)							1
 RungeKutta (`(x,y) = 2*x+3,0,0,8,10)				88.0
+v=RungeKuttaFull (`(x,y) = 2*x+3,0,0,8,10);v@(11,2)		88.0
+v=RungeKuttaFull (`(x,y) = 2*x+3,0,0,8,10);v@(11,1)		8.0
+v=RungeKuttaFull (`(x,y) = 2*x+3,0,0,8,10);v@(1,2)		0.0
+v=RungeKuttaFull (`(x,y) = 2*x+3,0,0,8,10);v@(1,1)		0.0
 EulersMethod (`(x,y) = 2*x+3,0,0,8,100)				87.36
+v=EulersMethodFull (`(x,y) = 2*x+3,0,0,8,100);v@(101,2)		87.36
+v=EulersMethodFull (`(x,y) = 2*x+3,0,0,8,100);v@(101,1)		8.0
+v=EulersMethodFull (`(x,y) = 2*x+3,0,0,8,100);v@(1,2)		0.0
+v=EulersMethodFull (`(x,y) = 2*x+3,0,0,8,100);v@(1,1)		0.0
+EulersMethodFull (`(x,y) = y+1,0,0,2,2)				[0.0,0.0;1.0,1.0;2.0,3.0]
 SymbolicDerivative(sin)						(`(x)=cos(x))
 SymbolicDerivative(cos)						(`(x)=(-sin(x)))
 SymbolicDerivative(`(x)=10*x^3+x^2+88*x+100)			(`(x)=(88+((30*(x^2))+(2*x))))
@@ -973,12 +982,44 @@ func=1;start=2;inc=3;round(100*InfiniteSum(`(n)=inc-func-start+2^(-n),1,1))	100
 [0,I(2);0]							[0,1,0;0,0,1;0,0,0]
 [0,I(2);null;1,2,3]						[0,1,0,0;0,0,1,0;1,2,2,3]
 [0,I(2);null;0,0,0]						[0,1,0,0;0,0,1,0;0,0,0,0]
-AuxilliaryUnitMatrix(3)						[0,1,0;0,0,1;0,0,0]
-AuxilliaryUnitMatrix(4)						[0,1,0,0;0,0,1,0;0,0,0,1;0,0,0,0]
+AuxiliaryUnitMatrix(3)						[0,1,0;0,0,1;0,0,0]
+AuxiliaryUnitMatrix(4)						[0,1,0,0;0,0,1,0;0,0,0,1;0,0,0,0]
 J(4,2)								[2,1,0,0;0,2,1,0;0,0,2,1;0,0,0,2]
-J(10,0)==AuxilliaryUnitMatrix (10)				true
+J(10,0)==AuxiliaryUnitMatrix (10)				true
 [1,2,3;4,5;6]							[1,2,3;4,5,0;6,0,0]
 a=[1,2,3;4,5,6;7,8,9];[a,10;11,12]				[1,2,3,10;4,5,6,10;7,8,9,10;11,11,11,12]
+null==1								false
+null==[1,2,3]							false
+1==null								false
+[1,2,3]==null							false
+null==null							true
+null!=1								true
+null!=[1,2,3]							true
+1!=null								true
+[1,2,3]!=null							true
+null!=null							false
+RowsOf(null)+1							((null)+1)
+ColumnsOf(null)+1						((null)+1)
+IsValueOnly([0,1;2,4])						true
+IsValueOnly([0,1;"k",4])					false
+IsValueOnly(null)						true
+IsMatrixRational(null)						true
+IsMatrixRational([1,2;3/4,5])					true
+IsMatrixRational([1,2;3/4,5.1])					false
+IsMatrixInteger(null)						true
+IsMatrixInteger([1,2;4,5])					true
+IsMatrixInteger([1,2;3/4,5])					false
+IsMatrixInteger([1,2;3/4,5.1])					false
+IsMatrixReal(null)						true
+IsMatrixReal([1,2;4,5])						true
+IsMatrixReal([1,2;3/4,5.1])					true
+IsMatrixReal([1,2;3/4,5.1+1i])					false
+IsMatrixSquare(null)						true
+IsMatrixSquare([1])						true
+IsMatrixSquare([1,2;3,4])					true
+IsMatrixSquare([1,2,3,4])					false
+SetMatrixSize(null,2,3)						[0,0,0;0,0,0]
+ExpandMatrix(null)+1						((null)+1)
 load "nullspacetest.gel"					true
 load "longtest.gel"						true
 load "testprec.gel"						true

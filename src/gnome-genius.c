@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2010 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -25,7 +25,6 @@
 #include <gdk/gdkkeysyms.h>
 #include <gtk/gtk.h>
 #include <vte/vte.h>
-#include <libgnomevfs/gnome-vfs.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -68,9 +67,7 @@
 #endif
 #endif
 
-#include <libgnomevfs/gnome-vfs-uri.h>
-#include <libgnomevfs/gnome-vfs-ops.h>
-#include <libgnomevfs/gnome-vfs-utils.h>
+#include <gio/gio.h>
 
 #include "gnome-genius.h"
 
@@ -307,6 +304,7 @@ static GtkActionEntry entries[] = {
     N_("_Quit"), "<control>Q",
     N_("Quit"),
     G_CALLBACK (quitapp) },
+#ifdef HAVE_GTKSOURCEVIEW
   { "Undo", GTK_STOCK_UNDO,
     N_("_Undo"), "<control>Z",
     N_("Undo the last action"),
@@ -315,6 +313,7 @@ static GtkActionEntry entries[] = {
     N_("_Redo"), "<shift><control>Z",
     N_("Redo the undone action"),
     G_CALLBACK (redo_callback) },
+#endif
   { "Cut", GTK_STOCK_CUT,
     N_("Cu_t"), "<control>X",
     N_("Cut the selection"),
@@ -670,16 +669,16 @@ void
 genius_setup_window_cursor (GtkWidget *win, GdkCursorType type)
 {
 	GdkCursor *cursor = gdk_cursor_new (type);
-	if (win != NULL && win->window != NULL)
-		gdk_window_set_cursor (win->window, cursor);
+	if (win != NULL && gtk_widget_get_window (win) != NULL)
+		gdk_window_set_cursor (gtk_widget_get_window (win), cursor);
 	gdk_cursor_unref (cursor);
 }
 
 void
 genius_unsetup_window_cursor (GtkWidget *win)
 {
-	if (win != NULL && win->window != NULL)
-		gdk_window_set_cursor (win->window, NULL);
+	if (win != NULL && gtk_widget_get_window (win) != NULL)
+		gdk_window_set_cursor (gtk_widget_get_window (win), NULL);
 }
 
 
@@ -697,17 +696,17 @@ count_char (const char *s, char c)
 static gboolean
 uri_exists (const gchar* text_uri)
 {
-	GnomeVFSURI *uri;
+	GFile *uri;
 	gboolean res;
 		
 	g_return_val_if_fail (text_uri != NULL, FALSE);
 	
-	uri = gnome_vfs_uri_new (text_uri);
+	uri = g_file_new_for_uri (text_uri);
 	g_return_val_if_fail (uri != NULL, FALSE);
 
-	res = gnome_vfs_uri_exists (uri);
+	res = g_file_query_exists (uri, NULL);
 
-	gnome_vfs_uri_unref (uri);
+	g_object_unref (uri);
 
 	return res;
 }
@@ -735,6 +734,51 @@ dialog_entry_activate (GtkWidget *e, gpointer data)
 	gtk_dialog_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
 }
 
+int
+gel_ask_buttons (const char *query, GSList *buttons)
+{
+	GtkWidget *d;
+	GtkWidget *box;
+	GSList *li;
+	int i;
+	int ret;
+
+	d = gtk_dialog_new_with_buttons
+		(_("Genius"),
+		 GTK_WINDOW (genius_window) /* parent */,
+		 0 /* flags */,
+		 NULL);
+
+	i = 1;
+	for (li = buttons; li != NULL; li = li->next) {
+		gtk_dialog_add_button (GTK_DIALOG (d),
+				       ve_sure_string (li->data),
+				       i);
+		i++;
+	}
+
+	box = gtk_vbox_new (FALSE, GENIUS_PAD);
+	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
+			    box,
+			    TRUE, TRUE, 0);
+
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (d), FALSE);
+	gtk_box_pack_start (GTK_BOX (box),
+			    gtk_label_new (ve_sure_string(query)),
+			    FALSE, FALSE, 0);
+
+	gtk_widget_show_all (d);
+	ret = ve_dialog_run_nonmodal (GTK_DIALOG (d));
+	gtk_widget_destroy (d);
+
+	if (ret < 0)
+		return -1;
+	else
+		return ret;
+}
+
 char *
 gel_ask_string (const char *query, const char *def)
 {
@@ -756,7 +800,7 @@ gel_ask_string (const char *query, const char *def)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
 			    box,
 			    TRUE, TRUE, 0);
 
@@ -817,7 +861,7 @@ help_on_function (GtkWidget *menuitem, gpointer data)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
 			    box,
 			    TRUE, TRUE, 0);
 
@@ -931,7 +975,7 @@ geniusbox (gboolean error,
 		gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
 						GTK_POLICY_AUTOMATIC,
 						GTK_POLICY_AUTOMATIC);
-		gtk_box_pack_start (GTK_BOX (GTK_DIALOG (mb)->vbox),
+		gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (mb))),
 				    sw,
 				    TRUE, TRUE, 0);
 
@@ -1159,7 +1203,7 @@ show_user_vars (GtkWidget *menu_item, gpointer data)
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
 					GTK_POLICY_AUTOMATIC,
 					GTK_POLICY_AUTOMATIC);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (var_box)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (var_box))),
 			    sw,
 			    TRUE, TRUE, 0);
 
@@ -1370,7 +1414,7 @@ run_monitor (const char *var)
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
 					GTK_POLICY_AUTOMATIC,
 					GTK_POLICY_AUTOMATIC);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
 			    sw,
 			    TRUE, TRUE, 0);
 
@@ -1400,7 +1444,7 @@ run_monitor (const char *var)
 
 	md->updatecb = gtk_check_button_new_with_label
 		(_("Update continuously"));
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
 			    md->updatecb,
 			    FALSE, FALSE, 0);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (md->updatecb), TRUE);
@@ -1441,7 +1485,7 @@ monitor_user_var (GtkWidget *menu_item, gpointer data)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (d))),
 			    box,
 			    TRUE, TRUE, 0);
 
@@ -1637,9 +1681,6 @@ gel_printout_infos (void)
 static void
 actually_open_help (const char *id)
 {
-/* breaks binary back compatibility */
-#if 0
-/*#if GTK_CHECK_VERSION(2,14,0) */
 	GError *error = NULL;
 	char *str;
 
@@ -1660,67 +1701,6 @@ actually_open_help (const char *id)
 		g_free (str);
 		g_error_free (error);
 	}
-/*#else*/
-#endif
-	char *xdgopen;
-	char *uri;
-	char *file = NULL;
-	const char * const* langs;
-	int i;
-
-	langs = g_get_language_names ();
-
-	for (i = 0; langs[i] != NULL; i++) {
-		file = g_build_filename (genius_datadir,
-					 "gnome",
-					 "help",
-					 "genius",
-					 langs[i],
-					 "genius.xml",
-					 NULL);
-		if (access (file, R_OK) == 0) {
-			break;
-		}
-		g_free (file);
-		file = NULL;
-	}
-
-	if (file == NULL) {
-		genius_display_error (NULL /* parent */,
-				      _("Genius manual not found.  Perhaps the installation is not correct."));
-		return;
-	}
-
-	uri = g_strdup_printf ("ghelp://%s%s%s",
-			       file,
-			       /* FIXME: 1: not non-unix safe I guess */
-			       id ? "?" : "",
-			       id ? id : "");
-	g_free (file);
-
-	xdgopen = g_find_program_in_path ("xdg-open");
-	if G_LIKELY (xdgopen != NULL) {
-		char *argv[3];
-
-		argv[0] = xdgopen;
-		argv[1] = uri;
-		argv[2] = NULL;
-		g_spawn_async (NULL /* wd */,
-			       argv,
-			       NULL /* envp */,
-			       0 /* flags */,
-			       NULL /* child_setup */,
-			       NULL /* user_data */,
-			       NULL /* child_pid */,
-			       NULL /* error */);
-	} else {
-		genius_display_error (NULL /* parent */,
-				      _("Command 'xdg-open' is not found.  Cannot open help."));
-	}
-
-	g_free (xdgopen);
-	g_free (uri);
-/*#endif*/
 }
 
 void
@@ -1848,11 +1828,11 @@ aboutcb(GtkWidget * widget, gpointer data)
 	       "    You should have received a copy of the GNU General Public License\n"
 	       "    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n"),
 		    VERSION,
-		    GENIUS_COPYRIGHT_STRING);
+		    _(GENIUS_COPYRIGHT_STRING));
 	gtk_show_about_dialog (GTK_WINDOW (genius_window),
 			      "program-name", _("Genius Mathematical Tool"), 
 			      "version", VERSION,
-			      "copyright", GENIUS_COPYRIGHT_STRING,
+			      "copyright", _(GENIUS_COPYRIGHT_STRING),
 			      "comments",
 			      _("The Gnome calculator style edition of "
 				"the Genius Mathematical Tool."),
@@ -1941,16 +1921,14 @@ genius_display_error (GtkWidget *parent, const char *err)
 	if (parent == NULL)
 		parent = genius_window;
 
-	w = gtk_message_dialog_new (parent ?
-				      GTK_WINDOW (parent) :
-				      NULL /* parent */,
-				    GTK_DIALOG_MODAL /* flags */,
-				    GTK_MESSAGE_ERROR,
-				    GTK_BUTTONS_CLOSE,
-				    "%s",
-				    err);
-	gtk_label_set_use_markup
-		(GTK_LABEL (GTK_MESSAGE_DIALOG (w)->label), TRUE);
+	w = gtk_message_dialog_new_with_markup (parent ?
+						GTK_WINDOW (parent) :
+						NULL /* parent */,
+						GTK_DIALOG_MODAL /* flags */,
+						GTK_MESSAGE_ERROR,
+						GTK_BUTTONS_CLOSE,
+						"%s",
+						err);
 
 	g_signal_connect (G_OBJECT (w), "destroy",
 			  G_CALLBACK (gtk_widget_destroyed),
@@ -1971,14 +1949,12 @@ display_warning (GtkWidget *parent, const char *warn)
 	if (parent == NULL)
 		parent = genius_window;
 
-	w = gtk_message_dialog_new (GTK_WINDOW (parent) /* parent */,
-				    GTK_DIALOG_MODAL /* flags */,
-				    GTK_MESSAGE_WARNING,
-				    GTK_BUTTONS_CLOSE,
-				    "%s",
-				    warn);
-	gtk_label_set_use_markup
-		(GTK_LABEL (GTK_MESSAGE_DIALOG (w)->label), TRUE);
+	w = gtk_message_dialog_new_with_markup (GTK_WINDOW (parent) /* parent */,
+						GTK_DIALOG_MODAL /* flags */,
+						GTK_MESSAGE_WARNING,
+						GTK_BUTTONS_CLOSE,
+						"%s",
+						warn);
 
 	g_signal_connect (G_OBJECT (w), "destroy",
 			  G_CALLBACK (gtk_widget_destroyed),
@@ -2000,14 +1976,12 @@ genius_ask_question (GtkWidget *parent, const char *question)
 	if (parent == NULL)
 		parent = genius_window;
 
-	req = gtk_message_dialog_new (GTK_WINDOW (parent) /* parent */,
-				      GTK_DIALOG_MODAL /* flags */,
-				      GTK_MESSAGE_QUESTION,
-				      GTK_BUTTONS_YES_NO,
-				      "%s",
-				      question);
-	gtk_label_set_use_markup
-		(GTK_LABEL (GTK_MESSAGE_DIALOG (req)->label), TRUE);
+	req = gtk_message_dialog_new_with_markup (GTK_WINDOW (parent) /* parent */,
+						  GTK_DIALOG_MODAL /* flags */,
+						  GTK_MESSAGE_QUESTION,
+						  GTK_BUTTONS_YES_NO,
+						  "%s",
+						  question);
 
 	g_signal_connect (G_OBJECT (req), "destroy",
 			  G_CALLBACK (gtk_widget_destroyed),
@@ -2083,19 +2057,19 @@ quitapp (GtkWidget * widget, gpointer data)
 
 /*exact answer callback*/
 static void
-intspincb(GtkAdjustment *adj, int *data)
+intspincb (GtkAdjustment *adj, int *data)
 {
-	*data=adj->value;
+	*data = gtk_adjustment_get_value (adj);
 }
 
 /*option callback*/
 static void
-optioncb(GtkWidget * widget, int *data)
+optioncb (GtkWidget * widget, int *data)
 {
-	if(GTK_TOGGLE_BUTTON(widget)->active)
-		*data=TRUE;
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
+		*data = TRUE;
 	else
-		*data=FALSE;
+		*data = FALSE;
 }
 
 static void
@@ -2146,18 +2120,11 @@ setup_response (GtkWidget *widget, gint resp, gpointer data)
 			   default_console_font :
 			   genius_setup.font);
 		setup_term_color ();
-		/* breaks binary back compatibility */
-/*#if VTE_CHECK_VERSION(0,17,1)
 		vte_terminal_set_cursor_blink_mode
 			(VTE_TERMINAL (term),
 			 genius_setup.blinking_cursor ?
 			 VTE_CURSOR_BLINK_SYSTEM :
 			 VTE_CURSOR_BLINK_OFF);
-#else*/
-		vte_terminal_set_cursor_blinks
-			(VTE_TERMINAL (term),
-			genius_setup.blinking_cursor);
-/*#endif */
 
 
 		if (resp == GTK_RESPONSE_OK ||
@@ -2204,7 +2171,7 @@ setup_calc(GtkWidget *widget, gpointer data)
 	gtk_dialog_set_has_separator (GTK_DIALOG (setupdialog), FALSE);
 
 	notebook = gtk_notebook_new ();
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (setupdialog)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (setupdialog))),
 			    notebook, TRUE, TRUE, 0);
 	
 	mainbox = gtk_vbox_new(FALSE, GENIUS_PAD);
@@ -3044,7 +3011,7 @@ build_program_menu (void)
 		prog_menu_items = g_list_remove_link (prog_menu_items, prog_menu_items);
 	}
 
-	menu = GTK_MENU_ITEM (gtk_ui_manager_get_widget (genius_ui, "/MenuBar/ProgramsMenu"))->submenu;
+	menu = gtk_menu_item_get_submenu (GTK_MENU_ITEM (gtk_ui_manager_get_widget (genius_ui, "/MenuBar/ProgramsMenu")));
 
 	for (i = 1; i < n; i++) {
 		GtkWidget *item;
@@ -3088,77 +3055,70 @@ changed_cb (GtkTextBuffer *buffer, GtkWidget *tab_widget)
 }
 
 static gboolean
-save_contents_vfs (const char *file, const char *str, int size)
+save_contents_vfs (const char *filename, const char *str, int size)
 {
-	GnomeVFSHandle *handle;
-	GnomeVFSFileSize bytes;
-	GnomeVFSResult result;
+	GFile* file;
+	GFileOutputStream* stream;
+	gssize bytes;
 
-	/* FIXME: we should handle errors better by perhaps moving
-	   to a different name first and erasing only when saving
-	   was all fine */
-
-	/* Be safe about saving files, unlink and create in
-	 * exclusive mode */
-	result = gnome_vfs_unlink (file);
-	/* FIXME: error handling, but not if it's
-	 * the file-doesn't-exist kind of error which is fine */
-	result = gnome_vfs_create (&handle, file,
-				   GNOME_VFS_OPEN_WRITE,
-				   TRUE /* exclusive */,
-				   0644);
-	if (result != GNOME_VFS_OK) {
-		/* FIXME: error handling */
+	file = g_file_new_for_uri (filename);
+	stream = g_file_replace (file, NULL, TRUE, G_FILE_CREATE_NONE, NULL, NULL);
+	
+	if (stream == NULL)
+	{
+		g_object_unref (file);
 		return FALSE;
 	}
 
-	result = gnome_vfs_write (handle, str, size, &bytes);
-	if (result != GNOME_VFS_OK || bytes != size) {
-		gnome_vfs_close (handle);
-		/* FIXME: error handling */
+	g_output_stream_write_all (G_OUTPUT_STREAM (stream), str, size, &bytes, NULL, NULL);
+
+	if (bytes != size)
+	{
+		g_object_unref(stream);
+		g_object_unref(file);
 		return FALSE;
 	}
 
-	/* add traling \n if needed */
 	if (size > 0 && str[size-1] != '\n')
-		gnome_vfs_write (handle, "\n", 1, &bytes);
-	/* FIXME: error handling? */
+		g_output_stream_write (G_OUTPUT_STREAM (stream), "\n", 1, NULL, NULL);
 
-	gnome_vfs_close (handle);
+	g_output_stream_close (G_OUTPUT_STREAM (stream), NULL, NULL);
+	g_object_unref (stream);
+	g_object_unref (file);
 
 	return TRUE;
 }
 
 static char *
-get_contents_vfs (const char *file)
+get_contents_vfs (const char *filename)
 {
-	GnomeVFSHandle *handle;
-	GnomeVFSFileSize bytes;
+	GFile* file;
+	GFileInputStream* stream;
+	gssize bytes;
 	char buffer[4096];
-	GnomeVFSResult result;
 	GString *str;
 
-	/* FIXME: add limit to avoid reading until never */
+	file = g_file_new_for_uri (filename);
+	stream = g_file_read (file, NULL, NULL);
 
-	result = gnome_vfs_open (&handle, file,
-				 GNOME_VFS_OPEN_READ);
-	if (result != GNOME_VFS_OK) {
-		/* FIXME: error handling */
-		return NULL;
+	if (stream == NULL)
+	{
+		g_object_unref (file);
+		return FALSE;
 	}
 
 	str = g_string_new (NULL);
 
-	while (gnome_vfs_read (handle,
-			       buffer,
-			       sizeof (buffer)-1,
-			       &bytes) == GNOME_VFS_OK) {
+	while ((bytes = g_input_stream_read (G_INPUT_STREAM (stream), buffer, sizeof (buffer) -1, NULL, NULL)) > 0)
+	{
 		buffer[bytes] = '\0';
 		g_string_append (str, buffer);
 	}
-
-	gnome_vfs_close (handle);
-
+	
+	g_input_stream_close (G_INPUT_STREAM (stream), NULL, NULL);
+	g_object_unref (stream);
+	g_object_unref (file);
+	
 	return g_string_free (str, FALSE);
 }
 
@@ -3270,15 +3230,15 @@ get_source_language_manager ()
 static gboolean
 file_exists (const char *fname)
 {
-	GnomeVFSURI *uri;
+	GFile* uri;
 	gboolean ret;
 
 	if (ve_string_empty (fname))
 		return FALSE; 
 
-	uri = gnome_vfs_uri_new (fname);
-	ret = gnome_vfs_uri_exists (uri);
-	gnome_vfs_uri_unref (uri);
+	uri = g_file_new_for_uri (fname);
+	ret = g_file_query_exists (uri, NULL);
+	g_object_unref (uri);
 
 	return ret;
 }
@@ -3286,26 +3246,26 @@ file_exists (const char *fname)
 static gboolean
 file_is_writable (const char *fname)
 {
-	GnomeVFSFileInfo *info;
-	GnomeVFSResult result;
+	GFile* file;
+	GFileInfo* info;
 	gboolean ret;
-
+	
 	if (ve_string_empty (fname))
 		return FALSE; 
 
-	info = gnome_vfs_file_info_new ();
-	result = gnome_vfs_get_file_info (fname, 
-					  info, 
-					  (GNOME_VFS_FILE_INFO_DEFAULT 
-					   | GNOME_VFS_FILE_INFO_FOLLOW_LINKS
-					   | GNOME_VFS_FILE_INFO_GET_ACCESS_RIGHTS));
-	ret = (info->permissions & GNOME_VFS_PERM_ACCESS_WRITABLE);
-	gnome_vfs_file_info_unref (info);
+	file = g_file_new_for_uri (fname);
+	info = g_file_query_info (file, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE, G_FILE_QUERY_INFO_NONE, NULL, NULL);
 
-	if (result == GNOME_VFS_OK)
-		return ret;
-	else
+	if (info == NULL)
+	{
+		g_object_unref (file);
 		return FALSE;
+	}
+	ret = g_file_info_get_attribute_boolean (info, G_FILE_ATTRIBUTE_ACCESS_CAN_WRITE);
+	g_object_unref (info);
+	g_object_unref (file);
+
+	return ret;
 }
 
 
@@ -3414,13 +3374,18 @@ new_program (const char *filename)
 				p);
 
 	if (filename == NULL) {
+		GFile* file;
 		char *d = g_get_current_dir ();
 		char *n = g_strdup_printf (_("Program_%d.gel"), cnt);
 		/* the file name will have an underscore */
 		char *fn = g_build_filename (d, n, NULL);
 		g_free (d);
 		g_free (n);
-		p->name = gnome_vfs_get_uri_from_local_path (fn);
+
+		file = g_file_new_for_path (fn);
+		p->name = g_file_get_uri (file);
+
+		g_object_unref (file);
 		g_free (fn);
 		p->vname = g_strdup_printf (_("Program %d"), cnt);
 		cnt++;
@@ -3828,7 +3793,7 @@ really_save_console_cb (GtkFileChooser *fs, int response, gpointer data)
 					      MAX(row-genius_setup.scrollback+1, 0),
 					      0,
 					      row,
-					      VTE_TERMINAL (term)->column_count - 1,
+					      vte_terminal_get_column_count (VTE_TERMINAL (term)) - 1,
 					      always_selected,
 					      NULL,
 					      NULL);
@@ -4471,6 +4436,9 @@ get_new_line (GIOChannel *source, GIOCondition condition, gpointer data)
 	int fd = g_io_channel_unix_get_fd (source);
 	int r;
 	char buf[5] = "EOF!";
+
+	/* make sure the GUI responds */
+	check_events ();
 	
 	if (condition & G_IO_HUP) {
 		char *str;
@@ -4684,51 +4652,23 @@ get_version_details (void)
 	return str->str;
 }
 
-static gboolean
-is_uri (const char *s)
-{
-	const char *p;
-	if ( ! s)
-		return FALSE;
-
-	for (p = s; (*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z'); p++)
-		;
-	if (p == s)
-		return FALSE;
-	if (*p == ':') {
-		GnomeVFSURI *uri =
-			gnome_vfs_uri_new (s);
-
-		if (uri != NULL) {
-			gnome_vfs_uri_unref (uri);
-			return TRUE;
-		} else {
-			return FALSE;
-		}
-	}
-	return FALSE;
-}
-
 static void
 loadup_files_from_cmdline (int argc, char *argv[])
 {
 	int i;
 
 	for (i = 1; i < argc && argv[i] != NULL; i++) {
-		char *fn;
-		if (is_uri (argv[i])) {
-			fn = g_strdup (argv[i]);
-		} else if (g_path_is_absolute (argv[i])) {
-			fn = gnome_vfs_get_uri_from_local_path (argv[i]);
-		} else {
-			char *d = g_get_current_dir ();
-			char *n = g_build_filename (d, argv[i], NULL);
-			fn = gnome_vfs_get_uri_from_local_path (n);
-			g_free (d);
-			g_free (n);
-		}
-		new_program (fn);
-		g_free (fn);
+		GFile *file;
+		char *uri;
+		
+		file = g_file_new_for_commandline_arg (argv[i]);
+		uri = g_file_get_uri (file);
+
+		g_object_unref (file);
+
+		new_program (uri);
+		
+		g_free (uri);
 	}
 }
 
@@ -4737,22 +4677,19 @@ drag_data_received (GtkWidget *widget, GdkDragContext *context,
 		    gint x, gint y, GtkSelectionData *selection_data, 
 		    guint info, guint time)
 {
-	GList *list;
-	GList *li;
-	
+	char *uri;
+	char **uris;
+	int i = 0;
+
 	if (info != TARGET_URI_LIST)
 		return;
 			
-	list = gnome_vfs_uri_list_parse ((gpointer)selection_data->data);
+	uris = gtk_selection_data_get_uris (selection_data);
 
-	for (li = list; li != NULL; li = li->next) {
-		const GnomeVFSURI *uri = li->data;
-		char *s = gnome_vfs_uri_to_string (uri,
-						   GNOME_VFS_URI_HIDE_NONE);
-		new_program (s);
+	for (uri = uris[i]; uri != NULL; i++, uri = uris[i]) {
+		new_program (uri);
 	}
-	
-	gnome_vfs_uri_list_free (list);
+	g_strfreev (uris);
 }
 
 static void
@@ -4763,8 +4700,8 @@ update_term_geometry (void)
 	int char_height;
 	int xpad, ypad;
 
-	char_width = VTE_TERMINAL (term)->char_width;
-	char_height = VTE_TERMINAL (term)->char_height;
+	char_width = vte_terminal_get_char_width (VTE_TERMINAL (term));
+	char_height = vte_terminal_get_char_height (VTE_TERMINAL (term));
   
 	vte_terminal_get_padding (VTE_TERMINAL (term), &xpad, &ypad);
 
@@ -4848,7 +4785,6 @@ main (int argc, char *argv[])
 						      NULL);
 
 	gtk_init (&argc, &argv);
-	gnome_vfs_init ();
 	/* FIXME: handle errors */
 
 	if (give_no_lib_error_after_init) {
@@ -4958,18 +4894,11 @@ main (int argc, char *argv[])
 					     default_console_font :
 					     genius_setup.font);
 	setup_term_color ();
-	/* breaks binary back compatibility */
-/* #if VTE_CHECK_VERSION(0,17,1)
 	vte_terminal_set_cursor_blink_mode
 		(VTE_TERMINAL (term),
 		 genius_setup.blinking_cursor ?
 		 VTE_CURSOR_BLINK_SYSTEM :
 		 VTE_CURSOR_BLINK_OFF);
-#else*/
-	vte_terminal_set_cursor_blinks
-		(VTE_TERMINAL (term),
-		 genius_setup.blinking_cursor);
-/*#endif*/
 	vte_terminal_set_encoding (VTE_TERMINAL (term), "UTF-8");
 
 	update_term_geometry ();
@@ -4988,7 +4917,7 @@ main (int argc, char *argv[])
 	if (gel_plugin_list != NULL) {
 		GSList *li;
 		int i;
-		GtkWidget *menu = GTK_MENU_ITEM (gtk_ui_manager_get_widget (genius_ui, "/MenuBar/PluginsMenu"))->submenu;
+		GtkWidget *menu = gtk_menu_item_get_submenu (GTK_MENU_ITEM (gtk_ui_manager_get_widget (genius_ui, "/MenuBar/PluginsMenu")));
 
 		for (i = 0, li = gel_plugin_list;
 		     li != NULL;
@@ -5031,7 +4960,7 @@ main (int argc, char *argv[])
 			   "\e[0;32m" /* green */,
 			   "\e[0m" /* white on black */,
 			   VERSION,
-			   GENIUS_COPYRIGHT_STRING,
+			   _(GENIUS_COPYRIGHT_STRING),
 			   "\e[01;36m" /* cyan */,
 			   "\e[0m" /* white on black */,
 			   "\e[01;36m" /* cyan */,

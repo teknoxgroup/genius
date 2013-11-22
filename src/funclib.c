@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2010 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -184,7 +184,7 @@ warranty_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		       "    You should have received a copy of the GNU General Public License\n"
 		       "    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n"),
 			    VERSION,
-			    GENIUS_COPYRIGHT_STRING);
+			    _(GENIUS_COPYRIGHT_STRING));
 	gel_error_num = GEL_IGNORE_ERROR;
 	RAISE_EXCEPTION (exception);
 	return NULL;
@@ -940,6 +940,9 @@ ExpandMatrix_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
 
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_null ();
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "ExpandMatrix"))
 		return NULL;
 
@@ -956,6 +959,9 @@ RowsOf_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
 
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_null ();
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "RowsOf"))
 		return NULL;
 
@@ -970,6 +976,9 @@ static GelETree *
 ColumnsOf_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
+
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_null ();
 
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "ColumnsOf"))
 		return NULL;
@@ -1588,6 +1597,9 @@ IsReal_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 static GelETree *
 IsMatrixReal_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_bool (1);
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "IsMatrixReal"))
 		return NULL;
 
@@ -1644,6 +1656,9 @@ IsGaussInteger_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 static GelETree *
 IsMatrixInteger_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_bool (1);
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "IsMatrixInteger"))
 		return NULL;
 
@@ -1677,6 +1692,9 @@ IsComplexRational_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 static GelETree *
 IsMatrixRational_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_bool (1);
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "IsMatrixRational"))
 		return NULL;
 
@@ -2581,6 +2599,9 @@ min_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 static GelETree *
 IsValueOnly_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_bool (1);
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "IsValueOnly"))
 		return NULL;
 	
@@ -2915,6 +2936,9 @@ elements_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 static GelETree *
 IsMatrixSquare_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
+	if (a[0]->type == GEL_NULL_NODE)
+		return gel_makenum_bool (1);
+
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "IsMatrixSquare"))
 		return NULL;
 	if (gel_matrixw_width (a[0]->mat.matrix) == gel_matrixw_height (a[0]->mat.matrix))
@@ -3008,7 +3032,7 @@ SetMatrixSize_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	GelETree *n;
 	long w,h;
 
-	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "SetMatrixSize"))
+	if G_UNLIKELY ( ! check_argument_matrix_or_null (a, 0, "SetMatrixSize"))
 		return NULL;
 	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 1, "SetMatrixSize"))
 		return NULL;
@@ -3026,7 +3050,30 @@ SetMatrixSize_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return gel_makenum_null ();
 
 	n = gel_stealnode (a[0]);
-	gel_matrixw_set_size (n->mat.matrix, h, w);
+	if (n->type == GEL_NULL_NODE) {
+		GelMatrixW *m;
+
+		n->type = GEL_MATRIX_NODE;
+		n->mat.matrix = m = gel_matrixw_new();
+		n->mat.quoted = FALSE;
+		gel_matrixw_set_size (m, h, w);
+
+		/* trivially rref */
+		m->rref = 1;
+
+		m->cached_value_only = 1;
+		m->value_only = 1;
+		m->cached_value_only_real = 1;
+		m->value_only_real = 1;
+		m->cached_value_only_rational = 1;
+		m->value_only_rational = 1;
+		m->cached_value_only_integer = 1;
+		m->value_only_integer = 1;
+		m->cached_value_or_bool_only = 1;
+		m->value_or_bool_only = 1;
+	} else {
+		gel_matrixw_set_size (n->mat.matrix, h, w);
+	}
 	return n;
 }
 
@@ -5753,6 +5800,38 @@ AskString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return gel_makenum_string_use (txt);
 }
 
+static GelETree *
+AskButtons_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GSList *buttons = NULL;
+	int i;
+	int ret;
+
+	if G_UNLIKELY ( ! check_argument_string (a, 0, "AskButtons"))
+		return NULL;
+
+	i = 1;
+	while (a != NULL && a[i] != NULL) {
+		if G_UNLIKELY ( ! check_argument_string (a, i, "AskButtons")) {
+			g_slist_foreach (buttons, (GFunc)g_free, NULL);
+			g_slist_free (buttons);
+			return NULL;
+		}
+		buttons = g_slist_append (buttons, g_strdup (a[i]->str.str));
+		i++;
+	}
+
+	ret = gel_ask_buttons (a[0]->str.str, buttons);
+
+	g_slist_foreach (buttons, (GFunc)g_free, NULL);
+	g_slist_free (buttons);
+	
+	if (ret < 0)
+		return gel_makenum_null ();
+	else
+		return gel_makenum_ui (ret);
+}
+
 
 static GelETree *
 set_FloatPrecision (GelETree * a)
@@ -6369,7 +6448,7 @@ gel_funclib_addall(void)
 
 	FUNC (SetMatrixSize, 3, "M,rows,columns", "matrix", N_("Make new matrix of given size from old one"));
 	FUNC (IndexComplement, 2, "vec,msize", "matrix", N_("Return the index complement of a vector of indexes"));
-	FUNC (HermitianProduct, 2, "u,v", "matrix", N_("Get the hermitian product of two vectors"));
+	FUNC (HermitianProduct, 2, "u,v", "matrix", N_("Get the Hermitian product of two vectors"));
 	ALIAS (InnerProduct, 2, HermitianProduct);
 
 	FUNC (IsValueOnly, 1, "M", "matrix", N_("Check if a matrix is a matrix of numbers"));
@@ -6449,6 +6528,7 @@ gel_funclib_addall(void)
 	FUNC (Evaluate, 1, "str", "basic", N_("Parse and evaluate a string"));
 
 	VFUNC (AskString, 2, "query,...", "basic", N_("Ask a question and return a string.  Optionally pass in a default."));
+	VFUNC (AskButtons, 3, "query,button1,...", "basic", N_("Ask a question and present a list of buttons.  Returns the 1-based index of the button pressed (or null on failure)."));
 
 	FUNC (CompositeSimpsonsRule, 4, "f,a,b,n", "calculus", N_("Integration of f by Composite Simpson's Rule on the interval [a,b] with n subintervals with error of max(f'''')*h^4*(b-a)/180, note that n should be even"));
 	f->no_mod_all_args = 1;

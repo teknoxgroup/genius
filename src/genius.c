@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2009 Jiri (George) Lebl
+ * Copyright (C) 1997-2010 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -229,6 +229,48 @@ gel_ask_string (const char *query, const char *def)
 	return txt;
 }
 
+int
+gel_ask_buttons (const char *query, GSList *buttons)
+{
+	int ret;
+	GSList *li;
+	int i;
+	int max;
+
+reread_buttons:
+	g_print ("\n%s\n", ve_sure_string (query));
+	i = 1;
+	for (li = buttons; li != NULL; li = li->next) {
+		g_print ("%d) %s\n", i, ve_sure_string ((char *)li->data));
+		i++;
+	}
+	max = i-1;
+	if (use_readline) {
+		char *s;
+		s = readline (">");
+		ret = -1;
+		if ( ! ve_string_empty (s)) {
+			if (sscanf (s, "%d", &ret) != 1) {
+				ret = -1;
+			}
+		}
+	} else {
+		char buf[256];
+		ret = -1;
+		if (fgets (buf, sizeof (buf), stdin) != NULL) {
+			if (sscanf (buf, "%d", &ret) != 1) {
+				ret = -1;
+			}
+		}
+	}
+	if (ret == 0 || ret > max) {
+		g_print (_("Out of range!\n"));
+		goto reread_buttons;
+	}
+
+	return ret;
+}
+
 static int
 long_get_term_width (void)
 {
@@ -443,7 +485,7 @@ main(int argc, char *argv[])
 			g_print (_("Genius %s\n"
 				   "%s%s\n"),
 				 VERSION,
-				 GENIUS_COPYRIGHT_STRING,
+				 _(GENIUS_COPYRIGHT_STRING),
 				 get_version_details ());
 			exit (0);
 		} else {
@@ -498,7 +540,7 @@ main(int argc, char *argv[])
 			   "For license details type `warranty'.\n"
 			   "For help type 'manual' or 'help'.%s\n\n"),
 			 VERSION,
-			 GENIUS_COPYRIGHT_STRING,
+			 _(GENIUS_COPYRIGHT_STRING),
 			 get_version_details ());
 		be_quiet = FALSE;
 	}

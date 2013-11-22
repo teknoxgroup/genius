@@ -1,8 +1,35 @@
+Changes to 1.0.10
+
+* Allow changing variable names for all plotting functions
+* Add SlopefieldTicks, VectorfieldTicks, LinePlotVariableNames, and
+  SurfacePlotVariableNames, parameters
+* Add AskButtons interactive function
+* CHANGE: spelling fix: AuxiliaryUnitMatrix doesn't have two l's
+* Support for setting legend on LinePlotDrawLine with a "legend" parameter
+* Allow comparisons (== and !=) with null, treating it as an empty matrix
+* Uses GIO instead of GnomeVFS (Jan de Groot)
+* Fix compilation without gtksourceview (thanks to Joe Sapp for pointing this
+  out)
+* Fix some crashes in plotting code
+* Allow slopefield solutions to leave plot window by a small fudge factor.
+* Fix zooming plots so that we can zoom by moving mouse in any direction
+* Fix compilation with newer sealed vte (Vincent Untz)
+* Fix up some typos in the documentation (Christian Kirbach, me)
+* Translation updates (Christian Kirbach, Jorge González, Andrej Žnidaršič,
+  Kjartan Maraas, Petr Kovar, Mario Blättermann, Fran Diéguez, Matej Urbančič,
+  Andrej Žnidaršič, Marek Černocký, me)
+
+* For some of the changes the author (Jiri) was partially supported by
+  NSF grant DMS 0900885 and the University of Illinois at Urbana-Champaign
+
 Changes to 1.0.9
 
 * Fix matrix expansion.  This also fixes AuxilliaryUnitMatrix and JordanBlock.
 * Fix several possible crashers.
 * Fix a minor memory leak.
+
+* For some of the changes the author (Jiri) was partially supported by
+  NSF grant DMS 0900885 and the University of Illinois at Urbana-Champaign
 
 Changes to 1.0.8
 
@@ -11,6 +38,9 @@ Changes to 1.0.8
   display anomalies on new vte.
 * Documentation updates
 * Require GTK/GLib 2.12 and use the new tooltips API.
+
+* For some of the changes the author (Jiri) was partially supported by
+  NSF grant DMS 0900885 and the University of Illinois at Urbana-Champaign
 
 Changes to 1.0.7
 

@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 2003-2009 Jiri (George) Lebl
+ * Copyright (C) 2003-2010 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -95,7 +95,10 @@ static GtkPlotData *slopefield_data = NULL;
 static GtkPlotData *vectorfield_data = NULL;
 
 static GtkWidget *plot_entries[MAXFUNC] = { NULL };
+static GtkWidget *plot_y_labels[MAXFUNC] = { NULL };
 static GtkWidget *plot_entries_status[MAXFUNC] = { NULL };
+
+static GtkWidget *lineplot_info_label = NULL;
 
 static GtkWidget *parametric_entry_x = NULL;
 static GtkWidget *parametric_entry_y = NULL;
@@ -104,16 +107,50 @@ static GtkWidget *parametric_status_x = NULL;
 static GtkWidget *parametric_status_y = NULL;
 static GtkWidget *parametric_status_z = NULL;
 
+static GtkWidget *parametric_info_label = NULL;
+static GtkWidget *parametric_x_label = NULL;
+static GtkWidget *parametric_y_label = NULL;
+static GtkWidget *parametric_z_label = NULL;
+static GtkWidget *parametric_trange_label = NULL;
+
 static GtkWidget *slopefield_entry = NULL;
 static GtkWidget *slopefield_status = NULL;
+static GtkWidget *slopefield_info_label = NULL;
+static GtkWidget *slopefield_der_label = NULL;
 
 static GtkWidget *solver_x_sb = NULL;
 static GtkWidget *solver_y_sb = NULL;
+
+static GtkWidget *solver_xinc_label = NULL;
+static GtkWidget *solver_tinc_label = NULL;
+static GtkWidget *solver_tlen_label = NULL;
+static GtkWidget *solver_x_pt_label = NULL;
+static GtkWidget *solver_y_pt_label = NULL;
 
 static GtkWidget *vectorfield_entry_x = NULL;
 static GtkWidget *vectorfield_status_x = NULL;
 static GtkWidget *vectorfield_entry_y = NULL;
 static GtkWidget *vectorfield_status_y = NULL;
+
+static GtkWidget *vectorfield_info_label = NULL;
+static GtkWidget *vectorfield_xder_label = NULL;
+static GtkWidget *vectorfield_yder_label = NULL;
+
+static GtkWidget *lineplot_x_range_label = NULL;
+static GtkWidget *lineplot_y_range_label = NULL;
+
+static GtkWidget *surface_info_label = NULL;
+static GtkWidget *surface_x_range_label = NULL;
+static GtkWidget *surface_y_range_label = NULL;
+
+static char *lp_x_name = NULL;
+static char *lp_y_name = NULL;
+static char *lp_z_name = NULL;
+static char *lp_t_name = NULL;
+
+static char *sp_x_name = NULL;
+static char *sp_y_name = NULL;
+static char *sp_z_name = NULL;
 
 static GSList *solutions_list = NULL;
 
@@ -171,6 +208,12 @@ static double reset_plotx1 = -10;
 static double reset_plotx2 = 10;
 static double reset_ploty1 = -10;
 static double reset_ploty2 = 10;
+
+static int plot_sf_Vtick = 20;
+static int plot_sf_Htick = 20;
+
+static int plot_vf_Vtick = 20;
+static int plot_vf_Htick = 20;
 
 static int plotVtick = 20;
 static int plotHtick = 20;
@@ -247,7 +290,8 @@ static gboolean whack_window_after_plot = FALSE;
 static void plot_axis (void);
 
 /* lineplots */
-static void plot_functions (gboolean do_window_present);
+static void plot_functions (gboolean do_window_present,
+			    gboolean from_gui);
 
 /* surfaces */
 static void plot_surface_functions (gboolean do_window_present);
@@ -259,13 +303,18 @@ static void slopefield_draw_solution (double x, double y, double dx);
 static void vectorfield_draw_solution (double x, double y, double dt, double tlen);
 
 static GtkWidget *
-create_range_spinboxes (const char *title, double *val1, GtkWidget **w1,
+create_range_spinboxes (const char *title, GtkWidget **titlew,
+			double *val1, GtkWidget **w1,
 			double min1, double max1, double step1,
-			const char *totitle, double *val2, GtkWidget **w2,
+			const char *totitle, GtkWidget **totitlew,
+			double *val2, GtkWidget **w2,
 			double min2, double max2, double step2,
 			const char *bytitle, double *by, GtkWidget **wb,
 			double minby, double maxby, double stepby,
 			GCallback activate_callback);
+
+static void set_lineplot_labels (void);
+static void set_surface_labels (void);
 
 #define WIDTH 640
 #define HEIGHT 480
@@ -283,6 +332,60 @@ enum {
 	RESPONSE_PLOT,
 	RESPONSE_CLEAR
 };
+
+static gboolean
+is_letter_or_underscore (char l)
+{
+	if ((l >= 'a' && l <= 'z') ||
+	    (l >= 'A' && l <= 'Z') ||
+	    l == '_')
+		return TRUE;
+	else
+		return FALSE;
+}
+
+static gboolean
+is_letter_underscore_or_number (char l)
+{
+	if ((l >= 'a' && l <= 'z') ||
+	    (l >= 'A' && l <= 'Z') ||
+	    (l >= '0' && l <= '9') ||
+	    l == '_')
+		return TRUE;
+	else
+		return FALSE;
+}
+
+static gboolean
+is_identifier (const char *e)
+{
+	int i;
+	if ( ! is_letter_or_underscore (e[0]))
+		return FALSE;
+	for (i = 1; e[i] != '\0'; i++) {
+		if ( ! is_letter_underscore_or_number (e[i]))
+			return FALSE;
+	}
+	return TRUE;
+}
+
+
+static void
+init_var_names (void)
+{
+	/* this means we have already initialized */
+	if (lp_x_name != NULL)
+		return;
+
+	lp_x_name = g_strdup ("x");
+	lp_y_name = g_strdup ("y");
+	lp_z_name = g_strdup ("z");
+	lp_t_name = g_strdup ("t");
+
+	sp_x_name = g_strdup ("x");
+	sp_y_name = g_strdup ("y");
+	sp_z_name = g_strdup ("z");
+}
 
 static void
 color_alloc (GdkColor *color)
@@ -462,6 +565,7 @@ rotate_cb (GtkWidget *item, gpointer data)
 	GtkWidget *req = NULL;
 	GtkWidget *hbox, *w, *b;
         GtkSizeGroup *sg;
+	char *tmp;
 
 	if (surface_plot == NULL)
 		return;
@@ -483,10 +587,14 @@ rotate_cb (GtkWidget *item, gpointer data)
 	/* X dir */
 
 	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (req)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
 			    hbox, TRUE, TRUE, 0);
 
-	w = gtk_label_new (_("Rotate X: "));
+	tmp = g_strdup_printf (_("Rotate about %s axis: "),
+			       sp_x_name);
+	w = gtk_label_new (tmp);
+	g_free (tmp);
+
 	gtk_size_group_add_widget (sg, w);
 	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
 
@@ -508,10 +616,14 @@ rotate_cb (GtkWidget *item, gpointer data)
 	/* Y dir */
 
 	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (req)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
 			    hbox, TRUE, TRUE, 0);
 
-	w = gtk_label_new (_("Rotate Y: "));
+	tmp = g_strdup_printf (_("Rotate about %s axis: "),
+			       sp_y_name);
+	w = gtk_label_new (tmp);
+	g_free (tmp);
+
 	gtk_size_group_add_widget (sg, w);
 	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
 
@@ -533,10 +645,10 @@ rotate_cb (GtkWidget *item, gpointer data)
 	/* Z dir */
 
 	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (req)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
 			    hbox, TRUE, TRUE, 0);
 
-	w = gtk_label_new (_("Rotate Z: "));
+	w = gtk_label_new (_("Rotate about dependent axis: "));
 	gtk_size_group_add_widget (sg, w);
 	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
 
@@ -624,7 +736,7 @@ graph_window_response (GtkWidget *w, int response, gpointer data)
 }
 
 static void
-print_entry_activate (GtkWidget *entry, gpointer data)
+ok_dialog_entry_activate (GtkWidget *entry, gpointer data)
 {
 	gtk_dialog_response (GTK_DIALOG (data), GTK_RESPONSE_OK);
 }
@@ -658,7 +770,7 @@ plot_print_cb (void)
 	gtk_dialog_set_has_separator (GTK_DIALOG (req), FALSE);
 
 	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (req)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
 			    hbox, TRUE, TRUE, 0);
 
 	w = gtk_label_new (_("Print command: "));
@@ -666,7 +778,7 @@ plot_print_cb (void)
 
 	cmd = gtk_entry_new ();
 	g_signal_connect (G_OBJECT (cmd), "activate",
-			  G_CALLBACK (print_entry_activate), req);
+			  G_CALLBACK (ok_dialog_entry_activate), req);
 	gtk_box_pack_start (GTK_BOX (hbox), cmd, TRUE, TRUE, 0);
 
 	gtk_entry_set_text (GTK_ENTRY (cmd), last_cmd);
@@ -1155,7 +1267,7 @@ plot_zoomfit_cb (void)
 			ploty2 = plot_maxy + size * 0.05;
 
 			/* sanity */
-			if (ploty2 < ploty1)
+			if (ploty2 <= ploty1)
 				ploty2 = ploty1 + 0.1;
 
 			/* sanity */
@@ -1174,7 +1286,7 @@ plot_zoomfit_cb (void)
 			plotx2 = plot_maxx + sizex * 0.05;
 
 			/* sanity */
-			if (plotx2 < plotx1)
+			if (plotx2 <= plotx1)
 				plotx2 = plotx1 + 0.1;
 
 			/* sanity */
@@ -1187,7 +1299,7 @@ plot_zoomfit_cb (void)
 			ploty2 = plot_maxy + size * 0.05;
 
 			/* sanity */
-			if (ploty2 < ploty1)
+			if (ploty2 <= ploty1)
 				ploty2 = ploty1 + 0.1;
 
 			/* sanity */
@@ -1201,7 +1313,7 @@ plot_zoomfit_cb (void)
 			surfacez2 = plot_maxy + size * 0.05;
 
 			/* sanity */
-			if (surfacez2 < surfacez1)
+			if (surfacez2 <= surfacez1)
 				surfacez2 = surfacez1 + 0.1;
 
 			/* sanity */
@@ -1295,6 +1407,18 @@ plot_select_region (GtkPlotCanvas *canvas,
 		double oldymin = ymin;
 		ymin = 1.0 - ymax;
 		ymax = 1.0 - oldymin;
+	}
+
+	if (xmin > xmax) {
+		double tmp = xmax;
+		xmax = xmin;
+		xmin = tmp;
+	}
+
+	if (ymin > ymax) {
+		double tmp = ymax;
+		ymax = ymin;
+		ymin = tmp;
 	}
 
 	if (plot_in_progress == 0 &&
@@ -1484,9 +1608,9 @@ add_surface_plot (void)
 	bottom = gtk_plot_get_axis (GTK_PLOT (surface_plot), GTK_PLOT_AXIS_BOTTOM);
 	left = gtk_plot_get_axis (GTK_PLOT (surface_plot), GTK_PLOT_AXIS_LEFT);
 
-	gtk_plot_axis_set_title (bottom, "X");
-	gtk_plot_axis_set_title (left, "Y");
-	gtk_plot_axis_set_title (top, "Z");
+	gtk_plot_axis_set_title (bottom, sp_x_name);
+	gtk_plot_axis_set_title (left, sp_y_name);
+	gtk_plot_axis_set_title (top, "");
 
 	gtk_plot_set_legends_border (GTK_PLOT (surface_plot),
 				     GTK_PLOT_BORDER_LINE, 3);
@@ -1580,7 +1704,7 @@ solver_cb (GtkWidget *item, gpointer data)
 	gtk_dialog_set_has_separator (GTK_DIALOG (solver_dialog), FALSE);
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (solver_dialog)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (solver_dialog))),
 			    box, TRUE, TRUE, 0);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
 
@@ -1606,9 +1730,11 @@ solver_cb (GtkWidget *item, gpointer data)
 		else
 			inc = 1;
 
-		w = create_range_spinboxes (_("X increment:"), &solver_xinc, NULL,
+		w = create_range_spinboxes (_("X increment:"),
+					    &solver_xinc_label,
+					    &solver_xinc, NULL,
 					    0, G_MAXDOUBLE, inc,
-					    NULL, NULL, NULL, 0, 0, 0,
+					    NULL, NULL, NULL, NULL, 0, 0, 0,
 					    NULL, NULL, NULL, 0, 0, 0,
 					    solver_entry_activate);
 		gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
@@ -1626,9 +1752,13 @@ solver_cb (GtkWidget *item, gpointer data)
 		else
 			inc = 1;
 
-		w = create_range_spinboxes (_("T increment:"), &solver_tinc, NULL,
+		w = create_range_spinboxes (_("T increment:"), 
+					    &solver_tinc_label,
+					    &solver_tinc, NULL,
 					    0, G_MAXDOUBLE, inc,
-					    _("T interval length:"), &solver_tlen, NULL,
+					    _("T interval length:"),
+					    &solver_tlen_label,
+					    &solver_tlen, NULL,
 					    0, G_MAXDOUBLE, 1,
 					    NULL, NULL, NULL, 0, 0, 0,
 					    solver_entry_activate);
@@ -1640,15 +1770,21 @@ solver_cb (GtkWidget *item, gpointer data)
 	if (solver_y < ploty1 || solver_y > ploty2)
 		solver_y = ploty1 + (ploty2-ploty1)/2;
 
-	w = create_range_spinboxes (_("Point x:"), &solver_x,
+	w = create_range_spinboxes (_("Point x:"),
+				    &solver_x_pt_label,
+				    &solver_x,
 				    &solver_x_sb,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("y:"), &solver_y,
+				    _("y:"),
+				    &solver_y_pt_label,
+				    &solver_y,
 				    &solver_y_sb,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    solver_entry_activate);
 	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+
+	set_lineplot_labels ();
 
 	gtk_widget_show_all (solver_dialog);
 }
@@ -1733,7 +1869,7 @@ ensure_window (gboolean do_window_present)
 			  NULL);
 
 	menubar = gtk_menu_bar_new ();
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (graph_window)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (graph_window))),
 			    GTK_WIDGET (menubar), FALSE, TRUE, 0);
 
 	/*
@@ -1860,7 +1996,7 @@ ensure_window (gboolean do_window_present)
 	g_signal_connect (G_OBJECT (plot_canvas), "select_region",
 			  G_CALLBACK (plot_select_region),
 			  NULL);
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (graph_window)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (graph_window))),
 			    GTK_WIDGET (plot_canvas), TRUE, TRUE, 0);
 
 
@@ -2787,26 +2923,39 @@ get_limits_from_matrix (GelETree *m, double *x1, double *x2, double *y1, double 
 		return FALSE;
 	}
 	*x1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 1);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*x2 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 2);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*y1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 3);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*y2 = mpw_get_double (t->val.value);
-
-	/* FIXME: what about errors */
 	if G_UNLIKELY (gel_error_num != 0) {
 		gel_error_num = 0;
 		return FALSE;
@@ -2853,6 +3002,49 @@ make_matrix_from_limits (void)
 	return n;
 }
 
+static GelETree *
+make_matrix_from_lp_varnames (void)
+{
+	GelETree *n;
+	GelMatrixW *m;
+	/*make us a new empty node*/
+	GEL_GET_NEW_NODE (n);
+	n->type = GEL_MATRIX_NODE;
+	m = n->mat.matrix = gel_matrixw_new ();
+	n->mat.quoted = FALSE;
+	gel_matrixw_set_size (m, 4, 1);
+
+	init_var_names ();
+
+	gel_matrixw_set_index (m, 0, 0) = gel_makenum_string (lp_x_name);
+	gel_matrixw_set_index (m, 1, 0) = gel_makenum_string (lp_y_name);
+	gel_matrixw_set_index (m, 2, 0) = gel_makenum_string (lp_z_name);
+	gel_matrixw_set_index (m, 3, 0) = gel_makenum_string (lp_t_name);
+
+	return n;
+}
+
+static GelETree *
+make_matrix_from_sp_varnames (void)
+{
+	GelETree *n;
+	GelMatrixW *m;
+	/*make us a new empty node*/
+	GEL_GET_NEW_NODE (n);
+	n->type = GEL_MATRIX_NODE;
+	m = n->mat.matrix = gel_matrixw_new ();
+	n->mat.quoted = FALSE;
+	gel_matrixw_set_size (m, 3, 1);
+
+	init_var_names ();
+
+	gel_matrixw_set_index (m, 0, 0) = gel_makenum_string (sp_x_name);
+	gel_matrixw_set_index (m, 1, 0) = gel_makenum_string (sp_y_name);
+	gel_matrixw_set_index (m, 2, 0) = gel_makenum_string (sp_z_name);
+
+	return n;
+}
+
 static gboolean
 get_limits_from_matrix_surf (GelETree *m, double *x1, double *x2, double *y1, double *y2, double *z1, double *z2)
 {
@@ -2870,38 +3062,61 @@ get_limits_from_matrix_surf (GelETree *m, double *x1, double *x2, double *y1, do
 		return FALSE;
 	}
 	*x1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 1);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*x2 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 2);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*y1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 3);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*y2 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 4);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*z1 = mpw_get_double (t->val.value);
+	if G_UNLIKELY (gel_error_num != 0) {
+		gel_error_num = 0;
+		return FALSE;
+	}
+
 	t = gel_matrixw_vindex (m->mat.matrix, 5);
 	if (t->type != GEL_VALUE_NODE) {
 		gel_errorout (_("Graph limits not given as numbers"));
 		return FALSE;
 	}
 	*z2 = mpw_get_double (t->val.value);
-
-	/* FIXME: what about errors */
 	if G_UNLIKELY (gel_error_num != 0) {
 		gel_error_num = 0;
 		return FALSE;
@@ -2960,6 +3175,78 @@ make_matrix_from_limits_surf (void)
 }
 
 static gboolean
+get_ticks_from_matrix (GelETree *m, int *v, int *h)
+{
+	GelETree *t;
+
+	if (m->type == GEL_VALUE_NODE) {
+		long n = mpw_get_long (m->val.value);
+		if G_UNLIKELY (gel_error_num != 0) {
+			gel_error_num = 0;
+			return FALSE;
+		}
+		if (n <= 1 || n > 200) {
+			gel_errorout (_("Ticks must be between 2 and 200"));
+			return FALSE;
+		}
+		*v = *h = n;
+		return TRUE;
+	} else if (m->type == GEL_MATRIX_NODE &&
+	    gel_matrixw_elements (m->mat.matrix) == 2) {
+		t = gel_matrixw_vindex (m->mat.matrix, 0);
+		if (t->type != GEL_VALUE_NODE) {
+			gel_errorout (_("Ticks not given as numbers"));
+			return FALSE;
+		}
+		*v = mpw_get_long (t->val.value);
+		if G_UNLIKELY (gel_error_num != 0) {
+			gel_error_num = 0;
+			return FALSE;
+		}
+		if (*v <= 1 || *v > 200) {
+			gel_errorout (_("Ticks must be between 2 and 200"));
+			return FALSE;
+		}
+		t = gel_matrixw_vindex (m->mat.matrix, 1);
+		if (t->type != GEL_VALUE_NODE) {
+			gel_errorout (_("Ticks not given as numbers"));
+			return FALSE;
+		}
+		*h = mpw_get_long (t->val.value);
+		if G_UNLIKELY (gel_error_num != 0) {
+			gel_error_num = 0;
+			return FALSE;
+		}
+		if (*h <= 1 || *h > 200) {
+			gel_errorout (_("Ticks must be between 2 and 200"));
+			return FALSE;
+		}
+		return TRUE;
+	} else {
+		gel_errorout (_("Ticks not given as a number or a 2-vector"));
+		return FALSE;
+	}
+}
+
+static GelETree *
+make_matrix_from_ticks (int v, int h)
+{
+	GelETree *n;
+	GelMatrixW *m;
+	/*make us a new empty node*/
+	GEL_GET_NEW_NODE (n);
+	n->type = GEL_MATRIX_NODE;
+	m = n->mat.matrix = gel_matrixw_new ();
+	n->mat.quoted = FALSE;
+	gel_matrixw_set_size (m, 2, 1);
+
+	gel_matrixw_set_index (m, 0, 0) = gel_makenum_si (v);
+	gel_matrixw_set_index (m, 1, 0) = gel_makenum_si (h);
+
+	return n;
+}
+
+static gboolean
 parametric_get_value (double *x, double *y, double t)
 {
 	static int hookrun = 0;
@@ -3001,7 +3288,8 @@ parametric_get_value (double *x, double *y, double t)
 }
 
 static GtkPlotData *
-draw_line (double *x, double *y, int len, int thickness, GdkColor *color)
+draw_line (double *x, double *y, int len, int thickness, GdkColor *color,
+	   char *legend)
 {
 	GtkPlotData *data;
 
@@ -3012,7 +3300,11 @@ draw_line (double *x, double *y, int len, int thickness, GdkColor *color)
 	g_object_set_data_full (G_OBJECT (data),
 				"y", y, (GDestroyNotify)g_free);
 	gtk_plot_add_data (GTK_PLOT (line_plot), data);
-	gtk_plot_data_hide_legend (data);
+	if (legend == NULL)
+		gtk_plot_data_hide_legend (data);
+	else
+		gtk_plot_data_set_legend (data,
+					  legend);
 
 	color_alloc (color); 
 
@@ -3098,16 +3390,19 @@ slopefield_draw_solution (double x, double y, double dx)
 	GSList *points2 = NULL;
 	GSList *li;
 	GtkPlotData *data;
+	double fudgey;
 
 	if (slopefield_func == NULL)
 		return;
 
 	gdk_color_parse ("red", &color);
 
+	fudgey = (ploty2-ploty1)/100;
+
 	len1 = 0;
 	cx = x;
 	cy = y;
-	while (cx < plotx2 && cy > ploty1 && cy < ploty2) {
+	while (cx < plotx2 && cy > ploty1-fudgey && cy < ploty2+fudgey) {
 		double *pt;
 		gboolean ex = FALSE;
 		double k1, k2, k3, k4, sl;
@@ -3145,7 +3440,7 @@ slopefield_draw_solution (double x, double y, double dx)
 	len2 = 0;
 	cx = x;
 	cy = y;
-	while (cx > plotx1 && cy > ploty1 && cy < ploty2) {
+	while (cx > plotx1 && cy > ploty1-fudgey && cy < ploty2+fudgey) {
 		double *pt;
 		gboolean ex = FALSE;
 		double k1, k2, k3, k4, sl;
@@ -3218,7 +3513,7 @@ slopefield_draw_solution (double x, double y, double dx)
 	/* Adjust ends */
 	/*clip_line_ends (xx, yy, len);*/
 
-	data = draw_line (xx, yy, len, 2 /* thickness */, &color);
+	data = draw_line (xx, yy, len, 2 /* thickness */, &color, NULL /*legend*/);
 	solutions_list = g_slist_prepend (solutions_list,
 					  data);
 	g_signal_connect (G_OBJECT (data), "destroy",
@@ -3302,7 +3597,7 @@ vectorfield_draw_solution (double x, double y, double dt, double tlen)
 
 	len = i;
 
-	data = draw_line (xx, yy, len, 2 /* thickness */, &color);
+	data = draw_line (xx, yy, len, 2 /* thickness */, &color, NULL /*legend*/);
 	solutions_list = g_slist_prepend (solutions_list,
 					  data);
 	g_signal_connect (G_OBJECT (data), "destroy",
@@ -3313,6 +3608,8 @@ vectorfield_draw_solution (double x, double y, double dt, double tlen)
 static void
 replot_fields (void)
 {
+	init_var_names ();
+
 	if (slopefield_func != NULL) {
 		get_slopefield_points ();
 		if (plot_points_num > 0) {
@@ -3348,10 +3645,19 @@ replot_fields (void)
 
 				gtk_plot_flux_show_scale (GTK_PLOT_FLUX (slopefield_data), FALSE);
 
-				label = label_func (-1, slopefield_func, "x,y", slopefield_name);
+				tmp = g_strdup_printf ("%s,%s",
+						       lp_x_name,
+						       lp_y_name);
+				label = label_func (-1, slopefield_func, tmp, slopefield_name);
+				g_free (tmp);
 				/* FIXME: gtkextra is broken (adding the "  ")
 				 * and I don't feel like fixing it */
-				tmp = g_strconcat ("dy/dx = ", label, "  ", NULL);
+				/* add dy/dx = */
+				tmp = g_strconcat ("d",
+						   lp_y_name,
+						   "/d",
+						   lp_x_name,
+						   " = ", label, "  ", NULL);
 				g_free (label);
 				gtk_plot_data_set_legend (slopefield_data, tmp);
 				g_free (tmp);
@@ -3405,11 +3711,25 @@ replot_fields (void)
 
 				gtk_plot_flux_show_scale (GTK_PLOT_FLUX (vectorfield_data), FALSE);
 
-				l1 = label_func (-1, vectorfield_func_x, "x,y", vectorfield_name_x);
-				l2 = label_func (-1, vectorfield_func_y, "x,y", vectorfield_name_y);
+				tmp = g_strdup_printf ("%s,%s",
+						       lp_x_name,
+						       lp_y_name);
+				l1 = label_func (-1, vectorfield_func_x, tmp, vectorfield_name_x);
+				l2 = label_func (-1, vectorfield_func_y, tmp, vectorfield_name_y);
+				g_free (tmp);
 				/* FIXME: gtkextra is broken (adding the "  ")
 				 * and I don't feel like fixing it */
-				tmp = g_strconcat ("dx/dt = ", l1, ",  dy/dt = ", l2, "  ", NULL);
+				/*tmp = g_strconcat ("dx/dt = ", l1, ",  dy/dt = ", l2, "  ", NULL);*/
+				tmp = g_strconcat ("d",
+						   lp_x_name,
+						   "/d",
+						   lp_t_name,
+						   " = ", l1, ",  d",
+						   lp_y_name,
+						   "/d",
+						   lp_t_name,
+						   " = ", l2,
+						   "  ", NULL);
 				g_free (l1);
 				g_free (l2);
 				gtk_plot_data_set_legend (vectorfield_data, tmp);
@@ -3448,7 +3768,8 @@ init_plot_ctx (void)
 }
 
 static void
-plot_functions (gboolean do_window_present)
+plot_functions (gboolean do_window_present,
+		gboolean from_gui)
 {
 	char *colors[] = {
 		"darkblue",
@@ -3466,6 +3787,8 @@ plot_functions (gboolean do_window_present)
 		NULL };
 	int i;
 	int color_i;
+
+	init_var_names ();
 
 	ensure_window (do_window_present);
 
@@ -3532,7 +3855,9 @@ plot_functions (gboolean do_window_present)
 						   GDK_JOIN_ROUND,
 						   2, &color);
 
-		label = label_func (i, plot_func[i], "x", plot_func_name[i]);
+		label = label_func (i, plot_func[i],
+				    lp_x_name,
+				    plot_func_name[i]);
 		gtk_plot_data_set_legend (line_data[i], label);
 		g_free (label);
 	}
@@ -3627,6 +3952,8 @@ plot_functions (gboolean do_window_present)
 static void
 plot_surface_functions (gboolean do_window_present)
 {
+	init_var_names ();
+
 	ensure_window (do_window_present);
 
 	clear_graph ();
@@ -3707,16 +4034,16 @@ plot_surface_functions (gboolean do_window_present)
 
 /*exact answer callback*/
 static void
-double_spin_cb(GtkAdjustment *adj, double *data)
+double_spin_cb (GtkAdjustment *adj, double *data)
 {
-	*data = adj->value;
+	*data = gtk_adjustment_get_value (adj);
 }
 
 /*exact answer callback*/
 static void
-int_spin_cb(GtkAdjustment *adj, int *data)
+int_spin_cb (GtkAdjustment *adj, int *data)
 {
-	*data = (int)(adj->value);
+	*data = (int)(gtk_adjustment_get_value (adj));
 }
 
 static void
@@ -3728,9 +4055,11 @@ entry_activate (void)
 }
 
 static GtkWidget *
-create_range_spinboxes (const char *title, double *val1, GtkWidget **w1,
+create_range_spinboxes (const char *title, GtkWidget **titlew,
+			double *val1, GtkWidget **w1,
 			double min1, double max1, double step1,
-			const char *totitle, double *val2, GtkWidget **w2,
+			const char *totitle, GtkWidget **totitlew,
+			double *val2, GtkWidget **w2,
 			double min2, double max2, double step2,
 			const char *bytitle, double *by, GtkWidget **wb,
 			double minby, double maxby, double stepby,
@@ -3741,6 +4070,13 @@ create_range_spinboxes (const char *title, double *val1, GtkWidget **w1,
 
 	b = gtk_hbox_new (FALSE, GENIUS_PAD);
 	w = gtk_label_new(title);
+	if (titlew != NULL) {
+		*titlew = w;
+		g_signal_connect (G_OBJECT (w),
+				  "destroy",
+				  G_CALLBACK (gtk_widget_destroyed),
+				  titlew);
+	}
 	gtk_box_pack_start (GTK_BOX (b), w, FALSE, FALSE, 0);
 	adj = (GtkAdjustment *)gtk_adjustment_new (*val1,
 						   min1,
@@ -3767,6 +4103,13 @@ create_range_spinboxes (const char *title, double *val1, GtkWidget **w1,
 
 	if (val2 != NULL) {
 		w = gtk_label_new (totitle);
+		if (totitlew != NULL) {
+			*totitlew = w;
+			g_signal_connect (G_OBJECT (w),
+					  "destroy",
+					  G_CALLBACK (gtk_widget_destroyed),
+					  totitlew);
+		}
 		gtk_box_pack_start (GTK_BOX (b), w, FALSE, FALSE, 0);
 		adj = (GtkAdjustment *)gtk_adjustment_new (*val2,
 							   min2,
@@ -3854,15 +4197,25 @@ create_int_spinbox (const char *title, int *val, int min, int max)
 
 static GtkWidget *
 create_expression_box (const char *label,
+		       GtkWidget **labelw,
 		       GtkWidget **entry,
 		       GtkWidget **status)
 {
 	GtkWidget *b;
+	GtkWidget *l;
 
 	b = gtk_hbox_new (FALSE, GENIUS_PAD);
 
-	gtk_box_pack_start (GTK_BOX (b),
-			    gtk_label_new (label), FALSE, FALSE, 0);
+	l = gtk_label_new (label);
+	if (labelw != NULL) {
+		*labelw = l;
+		g_signal_connect (G_OBJECT (l),
+				  "destroy",
+				  G_CALLBACK (gtk_widget_destroyed),
+				  labelw);
+	}
+
+	gtk_box_pack_start (GTK_BOX (b), l, FALSE, FALSE, 0);
 
 	*entry = gtk_entry_new ();
 	g_signal_connect (G_OBJECT (*entry), "activate",
@@ -3874,23 +4227,509 @@ create_expression_box (const char *label,
 	return b;
 }
 
+static GtkWidget *
+create_simple_expression_box (const char *label,
+			      GtkWidget **labelw,
+			      GtkWidget **entry)
+{
+	GtkWidget *b;
+	GtkWidget *l;
+
+	b = gtk_hbox_new (FALSE, GENIUS_PAD);
+
+	l = gtk_label_new (label);
+	if (labelw != NULL)
+		*labelw = l;
+
+	gtk_box_pack_start (GTK_BOX (b), l, FALSE, FALSE, 0);
+
+	*entry = gtk_entry_new ();
+	gtk_box_pack_start (GTK_BOX (b), *entry, TRUE, TRUE, 0);
+
+	return b;
+}
+
 /*option callback*/
 static void
 optioncb (GtkWidget * widget, int *data)
 {
-	if (GTK_TOGGLE_BUTTON (widget)->active)
+	if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget)))
 		*data = TRUE;
 	else
 		*data = FALSE;
+}
+
+static void
+set_lineplot_labels (void)
+{
+	char *s;
+
+	if (slopefield_info_label != NULL) {
+		s = g_strdup_printf (_("Type in function name or expression involving "
+				       "the %s and %s variables (or the %s variable which will be %s=%s+i%s) "
+				       "that gives the slope "
+				       "at the point (%s,%s)."),
+				     lp_x_name,
+				     lp_y_name,
+				     lp_z_name,
+				     lp_z_name,
+				     lp_x_name,
+				     lp_y_name,
+				     lp_x_name,
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (slopefield_info_label), s);
+		g_free (s);
+	}
+
+	if (slopefield_der_label != NULL) {
+		s = g_strdup_printf ("d%s/d%s=",
+				     lp_y_name,
+				     lp_x_name);
+		gtk_label_set_text (GTK_LABEL (slopefield_der_label), s);
+		g_free (s);
+	}
+
+	if (lineplot_x_range_label != NULL) {
+		s = g_strdup_printf (_("%s from:"),
+				     lp_x_name);
+		gtk_label_set_text (GTK_LABEL (lineplot_x_range_label), s);
+		g_free (s);
+	}
+
+	if (lineplot_y_range_label != NULL) {
+		s = g_strdup_printf (_("%s from:"),
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (lineplot_y_range_label), s);
+		g_free (s);
+	}
+
+	if (solver_xinc_label != NULL) {
+		s = g_strdup_printf (_("%s increment:"),
+				     lp_x_name);
+		gtk_label_set_text (GTK_LABEL (solver_xinc_label), s);
+		g_free (s);
+	}
+
+	if (solver_tinc_label != NULL) {
+		s = g_strdup_printf (_("%s increment:"),
+				     lp_t_name);
+		gtk_label_set_text (GTK_LABEL (solver_tinc_label), s);
+		g_free (s);
+	}
+
+	if (solver_tlen_label != NULL) {
+		s = g_strdup_printf (_("%s interval length:"),
+				     lp_t_name);
+		gtk_label_set_text (GTK_LABEL (solver_tlen_label), s);
+		g_free (s);
+	}
+
+	if (solver_x_pt_label != NULL) {
+		s = g_strdup_printf (_("Point %s:"),
+				     lp_x_name);
+		gtk_label_set_text (GTK_LABEL (solver_x_pt_label), s);
+		g_free (s);
+	}
+
+	if (solver_y_pt_label != NULL) {
+		s = g_strdup_printf ("%s:",
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (solver_y_pt_label), s);
+		g_free (s);
+	}
+	if (vectorfield_info_label != NULL) {
+		s = g_strdup_printf (_("Type in function names or expressions involving "
+				       "the %s and %s variables (or the %s variable which will be %s=%s+i%s) "
+				       "that give the d%s/d%s and d%s/d%s of the autonomous system to be plotted "
+				       "at the point (%s,%s)."),
+				     lp_x_name,
+				     lp_y_name,
+				     lp_z_name,
+				     lp_z_name,
+				     lp_x_name,
+				     lp_y_name,
+				     lp_x_name,
+				     lp_t_name,
+				     lp_y_name,
+				     lp_t_name,
+				     lp_x_name,
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (vectorfield_info_label), s);
+		g_free (s);
+	}
+
+	if (vectorfield_xder_label != NULL) {
+		s = g_strdup_printf ("d%s/d%s=",
+				     lp_x_name,
+				     lp_t_name);
+		gtk_label_set_text (GTK_LABEL (vectorfield_xder_label), s);
+		g_free (s);
+	}
+	if (vectorfield_yder_label != NULL) {
+		s = g_strdup_printf ("d%s/d%s=",
+				     lp_y_name,
+				     lp_t_name);
+		gtk_label_set_text (GTK_LABEL (vectorfield_yder_label), s);
+		g_free (s);
+	}
+
+	if (lineplot_info_label != NULL) {
+		s = g_strdup_printf (_("Type in function names or expressions involving "
+				       "the %s variable in the boxes below to graph "
+				       "them"), lp_x_name);
+		gtk_label_set_text (GTK_LABEL (lineplot_info_label), s);
+		g_free (s);
+	}
+
+	if (plot_y_labels[0] != NULL) {
+		int i;
+		s = g_strdup_printf ("%s=", lp_y_name);
+		for (i = 0; i < MAXFUNC; i++) {
+			gtk_label_set_text (GTK_LABEL (plot_y_labels[i]), s);
+		}
+		g_free (s);
+	}
+
+	if (parametric_info_label != NULL) {
+		s = g_strdup_printf (_("Type in function names or expressions involving "
+				       "the %s variable in the boxes below to graph "
+				       "them.  Either fill in both boxes with %s= and %s= "
+				       "in front of them giving the %s and %s coordinates "
+				       "separately, or alternatively fill in the %s= box "
+				       "giving %s and %s as the real and imaginary part of "
+				       "a complex number."),
+				     lp_t_name,
+				     lp_x_name,
+				     lp_y_name,
+				     lp_x_name,
+				     lp_y_name,
+				     lp_z_name,
+				     lp_x_name,
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (parametric_info_label), s);
+		g_free (s);
+	}
+
+	if (parametric_x_label != NULL) {
+		s = g_strdup_printf ("%s=",
+				     lp_x_name);
+		gtk_label_set_text (GTK_LABEL (parametric_x_label), s);
+		g_free (s);
+	}
+
+	if (parametric_y_label != NULL) {
+		s = g_strdup_printf ("%s=",
+				     lp_y_name);
+		gtk_label_set_text (GTK_LABEL (parametric_y_label), s);
+		g_free (s);
+	}
+
+	if (parametric_z_label != NULL) {
+		s = g_strdup_printf ("%s=",
+				     lp_z_name);
+		gtk_label_set_text (GTK_LABEL (parametric_z_label), s);
+		g_free (s);
+	}
+
+	if (parametric_trange_label != NULL) {
+		s = g_strdup_printf (_("Parameter %s from:"),
+				     lp_t_name);
+		gtk_label_set_text (GTK_LABEL (parametric_trange_label), s);
+		g_free (s);
+	}
+}
+
+static void
+set_surface_labels (void)
+{
+	char *s;
+
+	if (surface_info_label != NULL) {
+		s = g_strdup_printf
+			(_("Type a function name or an expression involving "
+			   "the %s and %s variables (or the %s variable which will be %s=%s+i%s) "
+			   "in the boxes below to graph them.  Functions with one argument only "
+			   "will be passed a complex number."),
+			 sp_x_name,
+			 sp_y_name,
+			 sp_z_name,
+			 sp_z_name,
+			 sp_x_name,
+			 sp_y_name);
+		gtk_label_set_text (GTK_LABEL (surface_info_label), s);
+		g_free (s);
+	}
+
+	if (surface_x_range_label != NULL) {
+		s = g_strdup_printf (_("%s from:"),
+				     sp_x_name);
+		gtk_label_set_text (GTK_LABEL (surface_x_range_label), s);
+		g_free (s);
+	}
+
+	if (surface_y_range_label != NULL) {
+		s = g_strdup_printf (_("%s from:"),
+				     sp_y_name);
+		gtk_label_set_text (GTK_LABEL (surface_y_range_label), s);
+		g_free (s);
+	}
+}
+
+static char *
+get_varname_from_entry (GtkEntry *e, const char *def, gboolean *ex)
+{
+	char *str = g_strdup (gtk_entry_get_text (GTK_ENTRY (e)));
+	if (ve_string_empty (str)) {
+		g_free (str); 
+		*ex = TRUE;
+		return g_strdup (def);
+	}
+
+	if ( ! is_identifier (str))
+		*ex = TRUE;
+
+	str = g_strcanon (str,
+			  G_CSET_a_2_z G_CSET_A_2_Z G_CSET_DIGITS "_",
+			  '_');
+	if (str[0] >= '0' && str[0] <= '9') {
+		*ex = TRUE;
+		str[0] = '_';
+	}
+
+	return str;
+}
+
+static void
+change_lineplot_varnames (GtkWidget *button, gpointer data)
+{
+	GtkWidget *req = NULL;
+	GtkWidget *b, *l;
+	GtkWidget *xe;
+	GtkWidget *ye;
+	GtkWidget *ze;
+	GtkWidget *te;
+	GtkWidget *errlabel;
+        GtkSizeGroup *sg;
+
+	req = gtk_dialog_new_with_buttons
+		(_("Change variable names") /* title */,
+		 GTK_WINDOW (graph_window) /* parent */,
+		 GTK_DIALOG_MODAL /* flags */,
+		 GTK_STOCK_OK,
+		 GTK_RESPONSE_OK,
+		 GTK_STOCK_CANCEL,
+		 GTK_RESPONSE_CANCEL,
+		 NULL);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (req),
+					 GTK_RESPONSE_OK);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (req), FALSE);
+
+	sg = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+
+	errlabel = gtk_label_new (_("Some values were illegal"));
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    errlabel, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("independent variable (x):"),
+					  &l, &xe);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (xe), lp_x_name);
+	g_signal_connect (G_OBJECT (xe), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("dependent variable (y):"),
+					  &l, &ye);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (ye), lp_y_name);
+	g_signal_connect (G_OBJECT (ye), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("complex variable (z = x+iy):"),
+					  &l, &ze);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (ze), lp_z_name);
+	g_signal_connect (G_OBJECT (ze), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("parameter variable (t):"),
+					  &l, &te);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (te), lp_t_name);
+	g_signal_connect (G_OBJECT (te), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	gtk_widget_show_all (req);
+	gtk_widget_hide (errlabel);
+
+run_dialog_again:
+
+	if (gtk_dialog_run (GTK_DIALOG (req)) == GTK_RESPONSE_OK) {
+		gboolean ex = FALSE;
+		char *xn, *yn, *zn, *tn;
+
+		xn = get_varname_from_entry (GTK_ENTRY (xe), "x", &ex);
+		yn = get_varname_from_entry (GTK_ENTRY (ye), "y", &ex);
+		zn = get_varname_from_entry (GTK_ENTRY (ze), "z", &ex);
+		tn = get_varname_from_entry (GTK_ENTRY (te), "t", &ex);
+		if (strcmp (xn, yn) == 0 ||
+		    strcmp (xn, zn) == 0 ||
+		    strcmp (xn, tn) == 0 ||
+		    strcmp (yn, zn) == 0 ||
+		    strcmp (yn, tn) == 0 ||
+		    strcmp (zn, tn) == 0)
+			ex = TRUE;
+		if (ex) {
+			gtk_entry_set_text (GTK_ENTRY (xe), xn);
+			gtk_entry_set_text (GTK_ENTRY (ye), yn);
+			gtk_entry_set_text (GTK_ENTRY (ze), zn);
+			gtk_entry_set_text (GTK_ENTRY (te), tn);
+			g_free (xn);
+			g_free (yn);
+			g_free (zn);
+			g_free (tn);
+			gtk_widget_show (errlabel);
+			goto run_dialog_again;
+		}
+
+		g_free (lp_x_name);
+		g_free (lp_y_name);
+		g_free (lp_z_name);
+		g_free (lp_t_name);
+		lp_x_name = xn;
+		lp_y_name = yn;
+		lp_z_name = zn;
+		lp_t_name = tn;
+	}
+	gtk_widget_destroy (req);
+
+	set_lineplot_labels ();
+}
+
+static void
+change_surface_varnames (GtkWidget *button, gpointer data)
+{
+	GtkWidget *req = NULL;
+	GtkWidget *b, *l;
+	GtkWidget *xe;
+	GtkWidget *ye;
+	GtkWidget *ze;
+	GtkWidget *te;
+	GtkWidget *errlabel;
+        GtkSizeGroup *sg;
+
+	req = gtk_dialog_new_with_buttons
+		(_("Change variable names") /* title */,
+		 GTK_WINDOW (graph_window) /* parent */,
+		 GTK_DIALOG_MODAL /* flags */,
+		 GTK_STOCK_OK,
+		 GTK_RESPONSE_OK,
+		 GTK_STOCK_CANCEL,
+		 GTK_RESPONSE_CANCEL,
+		 NULL);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (req),
+					 GTK_RESPONSE_OK);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (req), FALSE);
+
+	sg = gtk_size_group_new (GTK_SIZE_GROUP_HORIZONTAL);
+
+	errlabel = gtk_label_new (_("Some values were illegal"));
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    errlabel, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("independent variable (x):"),
+					  &l, &xe);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (xe), sp_x_name);
+	g_signal_connect (G_OBJECT (xe), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("independent variable (y):"),
+					  &l, &ye);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (ye), sp_y_name);
+	g_signal_connect (G_OBJECT (ye), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	b = create_simple_expression_box (_("independent complex variable (z = x+iy):"),
+					  &l, &ze);
+	gtk_misc_set_alignment (GTK_MISC (l), 0.0, 0.5);
+	gtk_size_group_add_widget (sg, l);
+	gtk_entry_set_text (GTK_ENTRY (ze), sp_z_name);
+	g_signal_connect (G_OBJECT (ze), "activate",
+			  G_CALLBACK (ok_dialog_entry_activate), req);
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (req))),
+			    b, FALSE, FALSE, 0);
+
+	gtk_widget_show_all (req);
+	gtk_widget_hide (errlabel);
+
+run_dialog_again:
+
+	if (gtk_dialog_run (GTK_DIALOG (req)) == GTK_RESPONSE_OK) {
+		gboolean ex = FALSE;
+		char *xn, *yn, *zn, *tn;
+
+		xn = get_varname_from_entry (GTK_ENTRY (xe), "x", &ex);
+		yn = get_varname_from_entry (GTK_ENTRY (ye), "y", &ex);
+		zn = get_varname_from_entry (GTK_ENTRY (ze), "z", &ex);
+		if (strcmp (xn, yn) == 0 ||
+		    strcmp (xn, zn) == 0 ||
+		    strcmp (yn, zn) == 0)
+			ex = TRUE;
+		if (ex) {
+			gtk_entry_set_text (GTK_ENTRY (xe), xn);
+			gtk_entry_set_text (GTK_ENTRY (ye), yn);
+			gtk_entry_set_text (GTK_ENTRY (ze), zn);
+			g_free (xn);
+			g_free (yn);
+			g_free (zn);
+			gtk_widget_show (errlabel);
+			goto run_dialog_again;
+		}
+
+		g_free (sp_x_name);
+		g_free (sp_y_name);
+		g_free (sp_z_name);
+		sp_x_name = xn;
+		sp_y_name = yn;
+		sp_z_name = zn;
+	}
+	gtk_widget_destroy (req);
+
+	set_surface_labels ();
 }
 
 static GtkWidget *
 create_lineplot_box (void)
 {
 	GtkWidget *mainbox, *frame;
-	GtkWidget *box, *b, *fb, *w;
+	GtkWidget *box, *hbox, *b, *fb, *w;
+	char *s;
 	int i;
 
+	init_var_names ();
 
 	mainbox = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (mainbox), GENIUS_PAD);
@@ -3903,13 +4742,15 @@ create_lineplot_box (void)
 	 */
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	w = gtk_label_new (_("Type in function names or expressions involving "
-			     "the x variable in the boxes below to graph "
-			     "them"));
-	gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-	gtk_label_set_line_wrap (GTK_LABEL (w), TRUE);
-	gtk_widget_set_size_request (w, 610, -1);
-	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	lineplot_info_label = gtk_label_new ("");
+	gtk_misc_set_alignment (GTK_MISC (lineplot_info_label), 0.0, 0.5);
+	gtk_label_set_line_wrap (GTK_LABEL (lineplot_info_label), TRUE);
+	gtk_widget_set_size_request (lineplot_info_label, 610, -1);
+	gtk_box_pack_start (GTK_BOX (box), lineplot_info_label, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (lineplot_info_label),
+			  "destroy",
+			  G_CALLBACK (gtk_widget_destroyed),
+			  &lineplot_info_label);
 
 	fb = box;
 
@@ -3933,6 +4774,7 @@ create_lineplot_box (void)
 
 	for (i = 0; i < MAXFUNC; i++) {
 		b = create_expression_box ("y=",
+					   &(plot_y_labels[i]),
 					   &(plot_entries[i]),
 					   &(plot_entries_status[i]));
 		gtk_box_pack_start (GTK_BOX (fb), b, FALSE, FALSE, 0);
@@ -3948,26 +4790,26 @@ create_lineplot_box (void)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	w = gtk_label_new (_("Type in function names or expressions involving "
-			     "the t variable in the boxes below to graph "
-			     "them.  Either fill in both boxes with x= and y= "
-			     "in front of them giving the x and y coordinates "
-			     "separately, or alternatively fill in the z= box "
-			     "giving x and y as the real and imaginary part of "
-			     "a complex number."));
-	gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-	gtk_label_set_line_wrap (GTK_LABEL (w), TRUE);
-	gtk_widget_set_size_request (w, 610, -1);
-	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	parametric_info_label = gtk_label_new ("");
+	gtk_misc_set_alignment (GTK_MISC (parametric_info_label), 0.0, 0.5);
+	gtk_label_set_line_wrap (GTK_LABEL (parametric_info_label), TRUE);
+	gtk_widget_set_size_request (parametric_info_label, 610, -1);
+	gtk_box_pack_start (GTK_BOX (box), parametric_info_label, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (parametric_info_label),
+			  "destroy",
+			  G_CALLBACK (gtk_widget_destroyed),
+			  &parametric_info_label);
 
 	/* x */
 	b = create_expression_box ("x=",
+				   &parametric_x_label,
 				   &parametric_entry_x,
 				   &parametric_status_x);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
 
 	/* y */
 	b = create_expression_box ("y=",
+				   &parametric_y_label,
 				   &parametric_entry_y,
 				   &parametric_status_y);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
@@ -3978,6 +4820,7 @@ create_lineplot_box (void)
 
 	/* z */
 	b = create_expression_box ("z=",
+				   &parametric_z_label,
 				   &parametric_entry_z,
 				   &parametric_status_z);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
@@ -3986,9 +4829,13 @@ create_lineplot_box (void)
 	gtk_box_pack_start (GTK_BOX (box), gtk_label_new (""), FALSE, FALSE, 0);
 
 	/* t range */
-	b = create_range_spinboxes (_("Parameter t from:"), &spint1, NULL,
+	b = create_range_spinboxes (_("Parameter t from:"), 
+				    &parametric_trange_label,
+				    &spint1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &spint2, NULL,
+				    _("to:"),
+				    NULL,
+				    &spint2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    _("by:"), &spintinc, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
@@ -4005,17 +4852,20 @@ create_lineplot_box (void)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	w = gtk_label_new (_("Type in function name or expression involving "
-			     "the x and y variables (or the z variable which will be z=x+iy) "
-			     "that gives the slope "
-			     "at the point (x,y)."));
-	gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-	gtk_label_set_line_wrap (GTK_LABEL (w), TRUE);
-	gtk_widget_set_size_request (w, 610, -1);
-	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+
+	slopefield_info_label = gtk_label_new ("");
+	gtk_misc_set_alignment (GTK_MISC (slopefield_info_label), 0.0, 0.5);
+	gtk_label_set_line_wrap (GTK_LABEL (slopefield_info_label), TRUE);
+	gtk_widget_set_size_request (slopefield_info_label, 610, -1);
+	gtk_box_pack_start (GTK_BOX (box), slopefield_info_label, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (slopefield_info_label),
+			  "destroy",
+			  G_CALLBACK (gtk_widget_destroyed),
+			  &slopefield_info_label);
 
 	/* dy/dx */
 	b = create_expression_box ("dy/dx=",
+				   &slopefield_der_label,
 				   &slopefield_entry,
 				   &slopefield_status);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
@@ -4038,23 +4888,27 @@ create_lineplot_box (void)
 
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
-	w = gtk_label_new (_("Type in function names or expressions involving "
-			     "the x and y variables (or the z variable which will be z=x+iy) "
-			     "that give the dx/dt and dy/dt of the autonomous system to be plotted "
-			     "at the point (x,y)."));
-	gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-	gtk_label_set_line_wrap (GTK_LABEL (w), TRUE);
-	gtk_widget_set_size_request (w, 610, -1);
-	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	vectorfield_info_label = gtk_label_new ("");
+
+	gtk_misc_set_alignment (GTK_MISC (vectorfield_info_label), 0.0, 0.5);
+	gtk_label_set_line_wrap (GTK_LABEL (vectorfield_info_label), TRUE);
+	gtk_widget_set_size_request (vectorfield_info_label, 610, -1);
+	gtk_box_pack_start (GTK_BOX (box), vectorfield_info_label, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (vectorfield_info_label),
+			  "destroy",
+			  G_CALLBACK (gtk_widget_destroyed),
+			  &vectorfield_info_label);
 
 	/* dx/dt */
 	b = create_expression_box ("dx/dt=",
+				   &vectorfield_xder_label,
 				   &vectorfield_entry_x,
 				   &vectorfield_status_x);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
 
 	/* dy/dt */
 	b = create_expression_box ("dy/dt=",
+				   &vectorfield_yder_label,
 				   &vectorfield_entry_y,
 				   &vectorfield_status_y);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
@@ -4084,15 +4938,27 @@ create_lineplot_box (void)
 	 * Below notebook
 	 */
 
+	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
+	gtk_box_pack_start (GTK_BOX (mainbox), hbox, FALSE, FALSE, 0);
+
+	/* draw legend? */
 	w = gtk_check_button_new_with_mnemonic (_("_Draw legend"));
-	gtk_box_pack_start (GTK_BOX (mainbox), w, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (hbox), w, FALSE, FALSE, 0);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
 				      lineplot_draw_legends_cb);
 	g_signal_connect (G_OBJECT (w), "toggled",
 			  G_CALLBACK (optioncb),
 			  (gpointer)&lineplot_draw_legends_cb);
 
+	/* change varnames */
+	b = gtk_button_new_with_label (_("Change variable names..."));
+	gtk_box_pack_end (GTK_BOX (hbox), b, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (b), "clicked",
+			  G_CALLBACK (change_lineplot_varnames), NULL);
 
+
+
+	/* plot window */
 	frame = gtk_frame_new (_("Plot Window"));
 	gtk_box_pack_start (GTK_BOX (mainbox), frame, FALSE, FALSE, 0);
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
@@ -4102,9 +4968,10 @@ create_lineplot_box (void)
 	/*
 	 * X range
 	 */
-	b = create_range_spinboxes (_("X from:"), &spinx1, NULL,
+	b = create_range_spinboxes (_("X from:"), &lineplot_x_range_label,
+				    &spinx1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &spinx2, NULL,
+				    _("to:"), NULL, &spinx2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
@@ -4113,13 +4980,17 @@ create_lineplot_box (void)
 	/*
 	 * Y range
 	 */
-	b = create_range_spinboxes (_("Y from:"), &spiny1, NULL,
+	b = create_range_spinboxes (_("Y from:"), &lineplot_y_range_label,
+				    &spiny1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &spiny2, NULL,
+				    _("to:"), NULL, &spiny2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
 	gtk_box_pack_start (GTK_BOX(box), b, FALSE, FALSE, 0);
+
+	/* set labels correclty */
+	set_lineplot_labels ();
 
 	return mainbox;
 }
@@ -4128,7 +4999,9 @@ static GtkWidget *
 create_surface_box (void)
 {
 	GtkWidget *mainbox, *frame;
-	GtkWidget *box, *b, *w;
+	GtkWidget *hbox, *box, *b, *w;
+
+	init_var_names ();
 
 	mainbox = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (mainbox), GENIUS_PAD);
@@ -4138,15 +5011,12 @@ create_surface_box (void)
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
 	gtk_container_set_border_width (GTK_CONTAINER (box), GENIUS_PAD);
 	gtk_container_add (GTK_CONTAINER (frame), box);
-	w = gtk_label_new (_("Type a function name or an expression involving "
-			     "the x and y variables (or the z variable which will be z=x+iy) "
-			     "in the boxes below to graph them.  Functions with one argument only "
-			     "will be passed a complex number."));
-	gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
-	gtk_widget_set_size_request (w, 610, -1);
-	gtk_label_set_line_wrap (GTK_LABEL (w), TRUE);
+	surface_info_label = gtk_label_new ("");
+	gtk_misc_set_alignment (GTK_MISC (surface_info_label), 0.0, 0.5);
+	gtk_widget_set_size_request (surface_info_label, 610, -1);
+	gtk_label_set_line_wrap (GTK_LABEL (surface_info_label), TRUE);
 
-	gtk_box_pack_start (GTK_BOX (box), w, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (box), surface_info_label, FALSE, FALSE, 0);
 
 	b = gtk_hbox_new (FALSE, GENIUS_PAD);
 	gtk_box_pack_start (GTK_BOX (box), b, FALSE, FALSE, 0);
@@ -4159,6 +5029,20 @@ create_surface_box (void)
 	surface_entry_status = gtk_image_new ();
 	gtk_box_pack_start (GTK_BOX (b), surface_entry_status, FALSE, FALSE, 0);
 
+
+	/* change varnames */
+	hbox = gtk_hbox_new (FALSE, GENIUS_PAD);
+	gtk_box_pack_start (GTK_BOX (mainbox), hbox, FALSE, FALSE, 0);
+
+	b = gtk_button_new_with_label (_("Change variable names..."));
+	gtk_box_pack_end (GTK_BOX (hbox), b, FALSE, FALSE, 0);
+	g_signal_connect (G_OBJECT (b), "clicked",
+			  G_CALLBACK (change_surface_varnames), NULL);
+
+	/*
+	 * Plot window frame
+	 */
+
 	frame = gtk_frame_new (_("Plot Window"));
 	gtk_box_pack_start (GTK_BOX (mainbox), frame, FALSE, FALSE, 0);
 	box = gtk_vbox_new (FALSE, GENIUS_PAD);
@@ -4168,9 +5052,10 @@ create_surface_box (void)
 	/*
 	 * X range
 	 */
-	b = create_range_spinboxes (_("X from:"), &surf_spinx1, NULL,
+	b = create_range_spinboxes (_("X from:"), &surface_x_range_label,
+				    &surf_spinx1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &surf_spinx2, NULL,
+				    _("to:"), NULL, &surf_spinx2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
@@ -4179,9 +5064,10 @@ create_surface_box (void)
 	/*
 	 * Y range
 	 */
-	b = create_range_spinboxes (_("Y from:"), &surf_spiny1, NULL,
+	b = create_range_spinboxes (_("Y from:"), &surface_y_range_label,
+				    &surf_spiny1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &surf_spiny2, NULL,
+				    _("to:"), NULL, &surf_spiny2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
@@ -4190,13 +5076,16 @@ create_surface_box (void)
 	/*
 	 * Z range
 	 */
-	b = create_range_spinboxes (_("Z from:"), &surf_spinz1, NULL,
+	b = create_range_spinboxes (_("Dependent axis from:"), NULL, &surf_spinz1, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
-				    _("to:"), &surf_spinz2, NULL,
+				    _("to:"), NULL, &surf_spinz2, NULL,
 				    -G_MAXDOUBLE, G_MAXDOUBLE, 1,
 				    NULL, NULL, NULL, 0, 0, 0,
 				    entry_activate);
 	gtk_box_pack_start (GTK_BOX(box), b, FALSE, FALSE, 0);
+
+	/* set labels correclty */
+	set_surface_labels ();
 
 	return mainbox;
 }
@@ -4215,42 +5104,6 @@ create_plot_dialog (void)
 				  gtk_label_new_with_mnemonic (_("_Surface plot")));
 	
 	return plot_notebook;
-}
-
-static gboolean
-is_letter_or_underscore (char l)
-{
-	if ((l >= 'a' && l <= 'z') ||
-	    (l >= 'A' && l <= 'Z') ||
-	    l == '_')
-		return TRUE;
-	else
-		return FALSE;
-}
-
-static gboolean
-is_letter_underscore_or_number (char l)
-{
-	if ((l >= 'a' && l <= 'z') ||
-	    (l >= 'A' && l <= 'Z') ||
-	    (l >= '0' && l <= '9') ||
-	    l == '_')
-		return TRUE;
-	else
-		return FALSE;
-}
-
-static gboolean
-is_identifier (const char *e)
-{
-	int i;
-	if ( ! is_letter_or_underscore (e[0]))
-		return FALSE;
-	for (i = 1; e[i] != '\0'; i++) {
-		if ( ! is_letter_underscore_or_number (e[i]))
-			return FALSE;
-	}
-	return TRUE;
 }
 
 static GelEFunc *
@@ -4305,7 +5158,11 @@ function_from_expression (const char *e, const char *var, gboolean *ex)
 }
 
 static GelEFunc *
-function_from_expression2 (const char *e, gboolean *ex)
+function_from_expression2 (const char *e,
+			   const char *xname,
+			   const char *yname,
+			   const char *zname,
+			   gboolean *ex)
 {
 	GelEFunc *f = NULL;
 	GelETree *value;
@@ -4317,9 +5174,9 @@ function_from_expression2 (const char *e, gboolean *ex)
 
 	ce = g_strstrip (g_strdup (e));
 	if (is_identifier (ce) &&
-	    strcmp (ce, "x") != 0 &&
-	    strcmp (ce, "y") != 0 &&
-	    strcmp (ce, "z") != 0) {
+	    strcmp (ce, xname) != 0 &&
+	    strcmp (ce, yname) != 0 &&
+	    strcmp (ce, zname) != 0) {
 		f = d_lookup_global (d_intern (ce));
 		g_free (ce);
 		if (f != NULL) {
@@ -4344,30 +5201,30 @@ function_from_expression2 (const char *e, gboolean *ex)
 	gel_got_eof = FALSE;
 
 	/* FIXME: funcbody?  I think it must be done. */
-	got_x = gel_eval_find_identifier (value, d_intern ("x"), TRUE /*funcbody*/);
-	got_y = gel_eval_find_identifier (value, d_intern ("y"), TRUE /*funcbody*/);
-	got_z = gel_eval_find_identifier (value, d_intern ("z"), TRUE /*funcbody*/);
+	got_x = gel_eval_find_identifier (value, d_intern (xname), TRUE /*funcbody*/);
+	got_y = gel_eval_find_identifier (value, d_intern (yname), TRUE /*funcbody*/);
+	got_z = gel_eval_find_identifier (value, d_intern (zname), TRUE /*funcbody*/);
 
 	/* FIXME: if "x" or "y" or "z" not used try to evaluate and if it returns a function use that */
 	if (value != NULL) {
 		if ( ! got_x && ! got_y && got_z) {
 			f = d_makeufunc (NULL /* id */,
 					 value,
-					 g_slist_append (NULL, d_intern ("z")),
+					 g_slist_append (NULL, d_intern (zname)),
 					 1,
 					 NULL /* extra_dict */);
 		} else if ( ! got_z) {
-			GSList *l = g_slist_append (NULL, d_intern ("x"));
-			l = g_slist_append (l, d_intern ("y"));
+			GSList *l = g_slist_append (NULL, d_intern (xname));
+			l = g_slist_append (l, d_intern (yname));
 			f = d_makeufunc (NULL /* id */,
 					 value,
 					 l,
 					 2,
 					 NULL /* extra_dict */);
 		} else {
-			GSList *l = g_slist_append (NULL, d_intern ("x"));
-			l = g_slist_append (l, d_intern ("y"));
-			l = g_slist_append (l, d_intern ("z"));
+			GSList *l = g_slist_append (NULL, d_intern (xname));
+			l = g_slist_append (l, d_intern (yname));
+			l = g_slist_append (l, d_intern (zname));
 			f = d_makeufunc (NULL /* id */,
 					 value,
 					 l,
@@ -4412,11 +5269,14 @@ get_func_from_entry (GtkWidget *entry, GtkWidget *status,
 
 static GelEFunc *
 get_func_from_entry2 (GtkWidget *entry, GtkWidget *status,
+		      const char *xname,
+		      const char *yname,
+		      const char *zname,
 		      gboolean *ex)
 {
 	GelEFunc *f;
 	const char *str = gtk_entry_get_text (GTK_ENTRY (entry));
-	f = function_from_expression2 (str, ex);
+	f = function_from_expression2 (str, xname, yname, zname, ex);
 	if (f != NULL) {
 		gtk_image_set_from_stock
 			(GTK_IMAGE (status),
@@ -4444,7 +5304,7 @@ surface_from_dialog (void)
 	double x1, x2, y1, y2, z1, z2;
 	gboolean last_info;
 	gboolean last_error;
-	const char *error_to_print = NULL;
+	char *error_to_print = NULL;
 	gboolean ex;
 
 	plot_mode = MODE_SURFACE;
@@ -4455,11 +5315,12 @@ surface_from_dialog (void)
 	genius_setup.error_box = TRUE;
 
 	ex = FALSE;
-	func = get_func_from_entry2 (surface_entry, surface_entry_status, &ex);
+	func = get_func_from_entry2 (surface_entry, surface_entry_status, 
+				     sp_x_name, sp_y_name, sp_z_name, &ex);
 
 	if (func == NULL) {
-		error_to_print = _("No functions to plot or no functions "
-				   "could be parsed");
+		error_to_print = g_strdup (_("No functions to plot or no functions "
+					     "could be parsed"));
 		goto whack_copied_funcs;
 	}
 
@@ -4489,17 +5350,19 @@ surface_from_dialog (void)
 	}
 
 	if (x1 == x2) {
-		error_to_print = _("Invalid X range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  sp_x_name);
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		error_to_print = _("Invalid Y range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  sp_y_name);
 		goto whack_copied_funcs;
 	}
 
 	if (z1 == z2) {
-		error_to_print = _("Invalid Z range");
+		error_to_print = g_strdup (_("Invalid dependent range"));
 		goto whack_copied_funcs;
 	}
 
@@ -4546,8 +5409,10 @@ whack_copied_funcs:
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
 
-	if (error_to_print != NULL)
+	if (error_to_print != NULL) {
 		genius_display_error (plot_dialog, error_to_print);
+		g_free (error_to_print);
+	}
 }
 
 static void
@@ -4595,7 +5460,7 @@ plot_from_dialog_lineplot (void)
 	int i, j;
 	gboolean last_info;
 	gboolean last_error;
-	const char *error_to_print = NULL;
+	char *error_to_print = NULL;
 
 	plot_mode = MODE_LINEPLOT;
 
@@ -4609,7 +5474,7 @@ plot_from_dialog_lineplot (void)
 		gboolean ex = FALSE;
 		f = get_func_from_entry (plot_entries[i],
 					 plot_entries_status[i],
-					 "x",
+					 lp_x_name,
 					 &ex);
 		if (f != NULL) {
 			func[i] = f;
@@ -4618,8 +5483,8 @@ plot_from_dialog_lineplot (void)
 	}
 
 	if (funcs == 0) {
-		error_to_print = _("No functions to plot or no functions "
-				   "could be parsed");
+		error_to_print = g_strdup (_("No functions to plot or no functions "
+					     "could be parsed"));
 		goto whack_copied_funcs;
 	}
 
@@ -4641,12 +5506,14 @@ plot_from_dialog_lineplot (void)
 	}
 
 	if (x1 == x2) {
-		error_to_print = _("Invalid X range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_x_name);
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		error_to_print = _("Invalid Y range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_y_name);
 		goto whack_copied_funcs;
 	}
 
@@ -4669,7 +5536,8 @@ plot_from_dialog_lineplot (void)
 		}
 	}
 
-	plot_functions (TRUE /* do_window_present */);
+	plot_functions (TRUE /* do_window_present */,
+			TRUE /* from_gui */);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -4690,8 +5558,10 @@ whack_copied_funcs:
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
 
-	if (error_to_print != NULL)
+	if (error_to_print != NULL) {
 		genius_display_error (plot_dialog, error_to_print);
+		g_free (error_to_print);
+	}
 }
 
 static void
@@ -4703,7 +5573,7 @@ plot_from_dialog_parametric (void)
 	double x1, x2, y1, y2;
 	gboolean last_info;
 	gboolean last_error;
-	const char *error_to_print = NULL;
+	char *error_to_print = NULL;
 	gboolean exx = FALSE;
 	gboolean exy = FALSE;
 	gboolean exz = FALSE;
@@ -4717,31 +5587,32 @@ plot_from_dialog_parametric (void)
 
 	funcpx = get_func_from_entry (parametric_entry_x,
 				      parametric_status_x,
-				      "t",
+				      lp_t_name,
 				      &exx);
 	funcpy = get_func_from_entry (parametric_entry_y,
 				      parametric_status_y,
-				      "t",
+				      lp_t_name,
 				      &exy);
 	funcpz = get_func_from_entry (parametric_entry_z,
 				      parametric_status_z,
-				      "t",
+				      lp_t_name,
 				      &exz);
 	if (((funcpx || exx) || (funcpy || exy)) && (funcpz || exz)) {
-		error_to_print = _("Only specify x and y, or z, not all at once.");
+		error_to_print = g_strdup_printf (_("Only specify %s and %s, or %s, not all at once."), lp_x_name, lp_y_name, lp_z_name);
 		goto whack_copied_funcs;
 	}
 
 	if ( ! ( (funcpz == NULL && funcpx != NULL && funcpy != NULL) ||
 		 (funcpz != NULL && funcpx == NULL && funcpy == NULL))) {
-		error_to_print = _("No functions to plot or no functions "
-				   "could be parsed");
+		error_to_print = g_strdup (_("No functions to plot or no functions "
+					     "could be parsed"));
 		goto whack_copied_funcs;
 	}
 
 	if (spint1 >= spint2 ||
 	    spintinc <= 0.0) {
-		error_to_print = _("Invalid t range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_t_name);
 		goto whack_copied_funcs;
 	}
 
@@ -4763,12 +5634,14 @@ plot_from_dialog_parametric (void)
 	}
 
 	if (x1 == x2) {
-		error_to_print = _("Invalid X range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_x_name);
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		error_to_print = _("Invalid Y range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_y_name);
 		goto whack_copied_funcs;
 	}
 
@@ -4795,7 +5668,8 @@ plot_from_dialog_parametric (void)
 					       NULL);
 	}
 
-	plot_functions (TRUE /* do_window_present */);
+	plot_functions (TRUE /* do_window_present */,
+			TRUE /* from_gui */);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -4818,8 +5692,10 @@ whack_copied_funcs:
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
 
-	if (error_to_print != NULL)
+	if (error_to_print != NULL) {
 		genius_display_error (plot_dialog, error_to_print);
+		g_free (error_to_print);
+	}
 }
 
 static void
@@ -4829,7 +5705,7 @@ plot_from_dialog_slopefield (void)
 	double x1, x2, y1, y2;
 	gboolean last_info;
 	gboolean last_error;
-	const char *error_to_print = NULL;
+	char *error_to_print = NULL;
 	gboolean ex = FALSE;
 
 	plot_mode = MODE_LINEPLOT_SLOPEFIELD;
@@ -4839,12 +5715,18 @@ plot_from_dialog_slopefield (void)
 	genius_setup.info_box = TRUE;
 	genius_setup.error_box = TRUE;
 
+	init_var_names ();
+
 	ex = FALSE;
-	funcp = get_func_from_entry2 (slopefield_entry, slopefield_status, &ex);
+	funcp = get_func_from_entry2 (slopefield_entry, slopefield_status, 
+				      lp_x_name,
+				      lp_y_name,
+				      lp_z_name,
+				      &ex);
 
 	if (funcp == NULL) {
-		error_to_print = _("No functions to plot or no functions "
-				   "could be parsed");
+		error_to_print = g_strdup(_("No functions to plot or no functions "
+					    "could be parsed"));
 		goto whack_copied_funcs;
 	}
 
@@ -4866,12 +5748,14 @@ plot_from_dialog_slopefield (void)
 	}
 
 	if (x1 == x2) {
-		error_to_print = _("Invalid X range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_x_name);
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		error_to_print = _("Invalid Y range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_y_name);
 		goto whack_copied_funcs;
 	}
 
@@ -4888,7 +5772,8 @@ plot_from_dialog_slopefield (void)
 	slopefield_func = funcp;
 	slopefield_name = g_strdup (gtk_entry_get_text (GTK_ENTRY (slopefield_entry)));
 
-	plot_functions (TRUE /* do_window_present */);
+	plot_functions (TRUE /* do_window_present */,
+			TRUE /* from_gui */);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -4907,8 +5792,10 @@ whack_copied_funcs:
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
 
-	if (error_to_print != NULL)
+	if (error_to_print != NULL) {
 		genius_display_error (plot_dialog, error_to_print);
+		g_free (error_to_print);
+	}
 }
 
 static void
@@ -4919,7 +5806,7 @@ plot_from_dialog_vectorfield (void)
 	double x1, x2, y1, y2;
 	gboolean last_info;
 	gboolean last_error;
-	const char *error_to_print = NULL;
+	char *error_to_print = NULL;
 	gboolean ex = FALSE;
 
 	plot_mode = MODE_LINEPLOT_VECTORFIELD;
@@ -4933,13 +5820,17 @@ plot_from_dialog_vectorfield (void)
 		vectorfield_normalize_arrow_length_cb;
 
 	ex = FALSE;
-	funcpx = get_func_from_entry2 (vectorfield_entry_x, vectorfield_status_x, &ex);
+	funcpx = get_func_from_entry2 (vectorfield_entry_x,
+				       vectorfield_status_x, 
+				       lp_x_name, lp_y_name, lp_z_name, &ex);
 	ex = FALSE;
-	funcpy = get_func_from_entry2 (vectorfield_entry_y, vectorfield_status_y, &ex);
+	funcpy = get_func_from_entry2 (vectorfield_entry_y,
+				       vectorfield_status_y,
+				       lp_x_name, lp_y_name, lp_z_name, &ex);
 
 	if (funcpx == NULL || funcpy == NULL) {
-		error_to_print = _("No functions to plot or no functions "
-				   "could be parsed");
+		error_to_print = g_strdup (_("No functions to plot or no functions "
+					     "could be parsed"));
 		goto whack_copied_funcs;
 	}
 
@@ -4961,12 +5852,14 @@ plot_from_dialog_vectorfield (void)
 	}
 
 	if (x1 == x2) {
-		error_to_print = _("Invalid X range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_x_name);
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		error_to_print = _("Invalid Y range");
+		error_to_print = g_strdup_printf (_("Invalid %s range"),
+						  lp_y_name);
 		goto whack_copied_funcs;
 	}
 
@@ -4985,7 +5878,8 @@ plot_from_dialog_vectorfield (void)
 	vectorfield_name_x = g_strdup (gtk_entry_get_text (GTK_ENTRY (vectorfield_entry_x)));
 	vectorfield_name_y = g_strdup (gtk_entry_get_text (GTK_ENTRY (vectorfield_entry_y)));
 
-	plot_functions (TRUE /* do_window_present */);
+	plot_functions (TRUE /* do_window_present */,
+			TRUE /* from_gui */);
 
 	if (gel_interrupted)
 		gel_interrupted = FALSE;
@@ -5006,8 +5900,10 @@ whack_copied_funcs:
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
 
-	if (error_to_print != NULL)
+	if (error_to_print != NULL) {
 		genius_display_error (plot_dialog, error_to_print);
+		g_free (error_to_print);
+	}
 }
 
 static void
@@ -5079,7 +5975,7 @@ genius_plot_dialog (void)
 
 	insides = create_plot_dialog ();
 
-	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (plot_dialog)->vbox),
+	gtk_box_pack_start (GTK_BOX (gtk_dialog_get_content_area (GTK_DIALOG (plot_dialog))),
 			    insides, TRUE, TRUE, 0);
 
 	gtk_widget_show_all (plot_dialog);
@@ -5431,8 +6327,12 @@ SlopefieldPlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	reset_ploty1 = ploty1 = y1;
 	reset_ploty2 = ploty2 = y2;
 
+	plotVtick = plot_sf_Vtick;
+	plotHtick = plot_sf_Htick;
+
 	plot_mode = MODE_LINEPLOT_SLOPEFIELD;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from gui */);
 
 	if (gel_interrupted)
 		return NULL;
@@ -5547,8 +6447,12 @@ VectorfieldPlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	vectorfield_normalize_arrow_length =
 		vectorfield_normalize_arrow_length_parameter;
 
+	plotVtick = plot_vf_Vtick;
+	plotHtick = plot_vf_Htick;
+
 	plot_mode = MODE_LINEPLOT_VECTORFIELD;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from_gui */);
 
 	if (gel_interrupted)
 		return NULL;
@@ -5665,7 +6569,8 @@ LinePlot_op (GelCtx *ctx, GelETree * * a, int *exception)
 	reset_ploty2 = ploty2 = y2;
 
 	plot_mode = MODE_LINEPLOT;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from_gui */);
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -5808,7 +6713,8 @@ LinePlotParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 	plottinc = tinc;
 
 	plot_mode = MODE_LINEPLOT_PARAMETRIC;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from_gui */ );
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -5947,7 +6853,8 @@ LinePlotCParametric_op (GelCtx *ctx, GelETree * * a, int *exception)
 	plottinc = tinc;
 
 	plot_mode = MODE_LINEPLOT_PARAMETRIC;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from_gui */);
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -5974,7 +6881,8 @@ LinePlotClear_op (GelCtx *ctx, GelETree * * a, int *exception)
 
 	/* This will just clear the window */
 	plot_mode = MODE_LINEPLOT;
-	plot_functions (FALSE /* do_window_present */);
+	plot_functions (FALSE /* do_window_present */,
+			FALSE /* from_gui */);
 
 	if G_UNLIKELY (gel_interrupted)
 		return NULL;
@@ -6137,7 +7045,7 @@ draw_arrowhead (double xx1, double yy1, double xx2, double yy2,
 			    ym - cos(angle)* /*aw*/5* thickness / 2.0,
 			    & (ax[2]), & (ay[2]));
 
-	draw_line (ax, ay, 3, thickness, color);
+	draw_line (ax, ay, 3, thickness, color, NULL /*legend*/);
 } 
 
 
@@ -6154,6 +7062,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 	gboolean arrow_end = FALSE;
 	int i;
 	gboolean update = FALSE;
+	char *legend = NULL;
 
 	if G_UNLIKELY (plot_in_progress != 0) {
 		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
@@ -6210,6 +7119,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 			static GelToken *endid = NULL;
 			static GelToken *bothid = NULL;
 			static GelToken *noneid = NULL;
+			static GelToken *legendid = NULL;
 
 			if (colorid == NULL) {
 				colorid = d_intern ("color");
@@ -6221,6 +7131,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				endid = d_intern ("end");
 				bothid = d_intern ("both");
 				noneid = d_intern ("none");
+				legendid = d_intern ("legend");
 			}
 
 			if (a[i]->type == GEL_STRING_NODE)
@@ -6231,6 +7142,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				if G_UNLIKELY (a[i+1] == NULL)  {
 					gel_errorout (_("%s: No color specified"),
 						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6243,6 +7155,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				} else {
 					gel_errorout (_("%s: Color must be a string"),
 						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6252,12 +7165,14 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				if G_UNLIKELY (a[i+1] == NULL)  {
 					gel_errorout (_("%s: No thickness specified"),
 						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
 				}
 				if G_UNLIKELY ( ! check_argument_positive_integer (a, i+1,
 										   "LinePlotDrawLine")) {
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6273,6 +7188,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 						a[i+1]->type != GEL_MATRIX_NODE)) {
 					gel_errorout (_("%s: No window specified"),
 						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6306,6 +7222,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				} else if (get_limits_from_matrix (a[i+1], &x1, &x2, &y1, &y2)) {
 					update = update_lineplot_window (x1, x2, y1, y2);
 				} else {
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6319,6 +7236,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 						a[i+1]->type != GEL_IDENTIFIER_NODE)) {
 					gel_errorout (_("%s: arrow style should be \"origin\", \"end\", \"both\", or \"none\""),
 						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6343,6 +7261,31 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				} else {
 					gel_errorout (_("%s: arrow style should be \"origin\", \"end\", \"both\", or \"none\""),
 						      "LinePlotDrawLine");
+					g_free (legend);
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				i++;
+			} else if (id == legendid) {
+				if G_UNLIKELY (a[i+1] == NULL)  {
+					gel_errorout (_("%s: No legend specified"),
+						      "LinePlotDrawLine");
+					g_free (legend);
+					g_free (x);
+					g_free (y);
+					return NULL;
+				}
+				if (a[i+1]->type == GEL_STRING_NODE) {
+					g_free (legend);
+					legend = g_strdup (a[i+1]->str.str);
+				} else if (a[i+1]->type == GEL_IDENTIFIER_NODE) {
+					g_free (legend);
+					legend = g_strdup (a[i+1]->id.id->token);
+				} else {
+					gel_errorout (_("%s: Legend must be a string"),
+						      "LinePlotDrawLine");
+					g_free (legend);
 					g_free (x);
 					g_free (y);
 					return NULL;
@@ -6350,12 +7293,14 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 				i++;
 			} else {
 				gel_errorout (_("%s: Unknown style"), "LinePlotDrawLine");
+				g_free (legend);
 				g_free (x);
 				g_free (y);
 				return NULL;
 			}
 		} else {
 			gel_errorout (_("%s: Bad parameter"), "LinePlotDrawLine");
+			g_free (legend);
 			g_free (x);
 			g_free (y);
 			return NULL;
@@ -6382,7 +7327,7 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 		plot_axis ();
 	}
 
-	draw_line (x, y, len, thickness, &color);
+	draw_line (x, y, len, thickness, &color, legend);
 
 	if (arrow_end && len > 1)
 		draw_arrowhead (x[len-2], y[len-2],
@@ -6392,6 +7337,8 @@ LinePlotDrawLine_op (GelCtx *ctx, GelETree * * a, int *exception)
 		draw_arrowhead (x[1], y[1],
 				x[0], y[0],
 				thickness, &color);
+
+	g_free (legend);
 
 	return gel_makenum_null ();
 }
@@ -6488,6 +7435,225 @@ get_SurfacePlotWindow (void)
 }
 
 static GelETree *
+set_SlopefieldTicks (GelETree * a)
+{
+	int v, h;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_SlopefieldTicks", "set_SlopefieldTicks");
+		return NULL;
+	}
+
+	if G_UNLIKELY ( ! get_ticks_from_matrix (a, &v, &h))
+		return NULL;
+
+	plot_sf_Vtick = v;
+	plot_sf_Htick = h;
+
+	return make_matrix_from_ticks (plot_sf_Vtick, plot_sf_Htick);
+}
+
+static GelETree *
+get_SlopefieldTicks (void)
+{
+	return make_matrix_from_ticks (plot_sf_Vtick, plot_sf_Htick);
+}
+
+static GelETree *
+set_VectorfieldTicks (GelETree * a)
+{
+	int v, h;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_VectorfieldTicks", "set_VectorfieldTicks");
+		return NULL;
+	}
+
+	if G_UNLIKELY ( ! get_ticks_from_matrix (a, &v, &h))
+		return NULL;
+
+	plot_vf_Vtick = v;
+	plot_vf_Htick = h;
+
+	return make_matrix_from_ticks (plot_vf_Vtick, plot_vf_Htick);
+}
+
+static GelETree *
+get_VectorfieldTicks (void)
+{
+	return make_matrix_from_ticks (plot_vf_Vtick, plot_vf_Htick);
+}
+
+static GelETree *
+set_LinePlotVariableNames (GelETree * a)
+{
+	GelETree *t;
+	char *sx, *sy, *sz, *st;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_LinePlotVariableNames", "set_LinePlotVariableNames");
+		return NULL;
+	}
+
+	if (a->type != GEL_MATRIX_NODE ||
+	    gel_matrixw_elements (a->mat.matrix) != 4) {
+		gel_errorout (_("Variable names not given in a 4-vector"));
+		return NULL;
+	}
+
+	t = gel_matrixw_vindex (a->mat.matrix, 0);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sx = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sx = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	t = gel_matrixw_vindex (a->mat.matrix, 1);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sy = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sy = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	t = gel_matrixw_vindex (a->mat.matrix, 2);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sz = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sz = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	t = gel_matrixw_vindex (a->mat.matrix, 3);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		st = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		st = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	if ( ! is_identifier (sx) ||
+	     ! is_identifier (sy) ||
+	     ! is_identifier (sz) ||
+	     ! is_identifier (st)) {
+		gel_errorout (_("Variable names must be valid identifiers"));
+		return NULL;
+	}
+	if (strcmp (sx, sy) == 0 ||
+	    strcmp (sx, sz) == 0 ||
+	    strcmp (sx, st) == 0 ||
+	    strcmp (sy, sz) == 0 ||
+	    strcmp (sy, st) == 0 ||
+	    strcmp (sz, st) == 0) {
+		gel_errorout (_("Variable names must be mutually distinct"));
+		return NULL;
+	}
+
+	g_free (lp_x_name);
+	g_free (lp_y_name);
+	g_free (lp_z_name);
+	g_free (lp_t_name);
+	lp_x_name = g_strdup (sx);
+	lp_y_name = g_strdup (sy);
+	lp_z_name = g_strdup (sz);
+	lp_t_name = g_strdup (st);
+
+	set_lineplot_labels ();
+
+	return make_matrix_from_lp_varnames ();
+}
+
+static GelETree *
+get_LinePlotVariableNames (void)
+{
+	return make_matrix_from_lp_varnames ();
+}
+
+static GelETree *
+set_SurfacePlotVariableNames (GelETree * a)
+{
+	GelETree *t;
+	char *sx, *sy, *sz;
+
+	if G_UNLIKELY (plot_in_progress != 0) {
+		gel_errorout (_("%s: Plotting in progress, cannot call %s"),
+			      "set_SurfacePlotVariableNames", "set_SurfacePlotVariableNames");
+		return NULL;
+	}
+
+	if (a->type != GEL_MATRIX_NODE ||
+	    gel_matrixw_elements (a->mat.matrix) != 3) {
+		gel_errorout (_("Variable names not given in a 3-vector"));
+		return NULL;
+	}
+
+	t = gel_matrixw_vindex (a->mat.matrix, 0);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sx = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sx = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	t = gel_matrixw_vindex (a->mat.matrix, 1);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sy = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sy = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	t = gel_matrixw_vindex (a->mat.matrix, 2);
+	if (t->type == GEL_IDENTIFIER_NODE) {
+		sz = t->id.id->token;
+	} else if (t->type == GEL_STRING_NODE) {
+		sz = t->str.str;
+	} else {
+		gel_errorout (_("Variable names should be strings"));
+		return NULL;
+	}
+	if ( ! is_identifier (sx) ||
+	     ! is_identifier (sy) ||
+	     ! is_identifier (sz)) {
+		gel_errorout (_("Variable names must be valid identifiers"));
+		return NULL;
+	}
+	if (strcmp (sx, sy) == 0 ||
+	    strcmp (sx, sz) == 0 ||
+	    strcmp (sy, sz) == 0) {
+		gel_errorout (_("Variable names must be mutually distinct"));
+		return NULL;
+	}
+
+	g_free (sp_x_name);
+	g_free (sp_y_name);
+	g_free (sp_z_name);
+	sp_x_name = g_strdup (sx);
+	sp_y_name = g_strdup (sy);
+	sp_z_name = g_strdup (sz);
+
+	set_surface_labels ();
+
+	return make_matrix_from_sp_varnames ();
+}
+
+static GelETree *
+get_SurfacePlotVariableNames (void)
+{
+	return make_matrix_from_sp_varnames ();
+}
+
+static GelETree *
 set_VectorfieldNormalized (GelETree * a)
 {
 	if G_UNLIKELY (plot_in_progress != 0) {
@@ -6571,6 +7737,11 @@ gel_add_graph_functions (void)
 
 	FUNC (LinePlotClear, 0, "", "plotting", N_("Show the line plot window and clear out functions"));
 	VFUNC (LinePlotDrawLine, 2, "x1,y1,x2,y2,args", "plotting", N_("Draw a line from x1,y1 to x2,y2.  x1,y1,x2,y2 can be replaced by a n by 2 matrix for a longer line"));
+
+	PARAMETER (SlopefieldTicks, N_("Number of slopefield ticks as a vector [vertical,horizontal]."));
+	PARAMETER (VectorfieldTicks, N_("Number of vectorfield ticks as a vector [vertical,horizontal]."));
+	PARAMETER (LinePlotVariableNames, N_("Default names used by all 2D plot functions.  Should be a 4 vector of strings or identifiers [x,y,z,t]."));
+	PARAMETER (SurfacePlotVariableNames, N_("Default names used by surface plot functions.  Should be a 3 vector of strings or identifiers [x,y,z] (where z=x+iy and not the dependent axis)."));
 
 	PARAMETER (VectorfieldNormalized, N_("Normalize vectorfields if true.  That is, only show direction and not magnitude."));
 	PARAMETER (LinePlotDrawLegends, N_("If to draw legends or not on line plots."));

@@ -1,3 +1,127 @@
+Wed Sep 08 00:48:15 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.10
+
+Wed Sep 08 00:47:50 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: require Gtk+ 2.14 and VTE 0.17.1
+
+	* src/gnome-genius.c, src/graphing.c, ve/ve-miscui.c: fix some
+	  sealing things.  Do note that we do not yet compile even without
+	  deprecated stuff since gtkextra is full of it.  Also use some newer
+	  things that required gtk+ 2.14 and vte 0.17.1
+
+	* src/graphing.c: fix zooming in 2D plots when moving mouse
+	  in any direction.
+
+Mon Aug 30 22:33:08 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.h, ssrc/funclib.c, src/genius.c, src/gnome-genius.c:
+	  update copyright string and make it translatable
+
+Mon Aug 30 15:31:37 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml, help/C/gel-function-list.xml:
+	  Hand apply some changes from Christian Kirbach
+	  (christian.kirbach at googlemail dot com) to fix typos
+
+	* lib/*/*.gel, src/funclib.c:  Fix some typos.  Fix spelling of the
+	  function name AuxiliaryUnitMatrix!
+
+Mon Aug 30 14:43:41 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, configure.in: Apply patch from
+	  Jan de Groot jan at jgc.homeip.net to port the GnomeVFS stuff
+	  to GIO.  This raises the glib requirement to 2.16 for the gnome
+	  version.  When built without gnome then 2.12 is all that is needed
+	  still.
+
+Mon Aug 30 13:41:49 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: ExpandMatrix,SetMatrixSize,ColumnsOf,RowsOf,
+	  IsMatrix* accept null as the input (0x0) matrix and act accordingly
+
+	* src/geniustests.txt: Add tests
+
+Mon Aug 30 13:28:23 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add "legend" style parameter to LinePlotDrawLine
+
+	* lib/equation_solving/diffeqs.gel: Add RungeKuttaFull and
+	  EulersMethodFull which return all points computed (and slightly
+	  optimize Runge-Kutta)
+	
+	* src/geniustests.txt, help/C/*.xml: update
+
+Mon Aug 30 10:23:49 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: Patch from Vincent Untz to fix access to sealed
+	  vte structure members
+
+Tue Jun 29 11:38:38 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Add SurfacePlotVariableNames and some fixes
+
+	* help/C/*.xml: document above and some fixes
+
+Tue Jun 29 11:11:04 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: allow changing variable names for surfaces when
+	  plotting from a dialog
+
+Sat Feb 27 16:57:50 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: check events every time we get something from
+	  readline.  That way, the new line from "return" is truly
+	  synchroneous.  (it was in the wrong place for commands, even though
+	  for expression this already got fixed)
+
+Wed Feb 03 00:10:42 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: when drawing slopefield solutions, allow the graph
+	  to leave window by a small fudge factor of 1/100 of the window size
+
+	* gtkextra/gtkplot.c, gtkextra/gtkplot3d.c: add some sanity fixes to
+	  fix crashes on tick calculations when the supplied data is less
+	  than sane.  The tick calculation stuff is very evil and there are
+	  still some crashes around when doing insensible things with 
+	  graphs.
+
+Tue Feb 02 21:42:42 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix compilation when gtksourceview is disabled
+
+Tue Feb 02 13:30:44 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: Allow changing variable names.  Either in the GUI
+	  or using the new parameter LinePlotVariableNames.
+
+	* help/C/gel-function-list.xml: document the new parameter
+
+Tue Feb 02 10:32:53 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c, help/C/gel-function-list.xml: Add SlopefieldTicks
+	  and VectorfieldTicks, to allow setting ticks from the command line.
+
+Wed Jan 27 00:52:13 2010  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.h, src/genius.c, src/gnome-genius.c, src/funclib.c:
+	  Implement AskButtons interactive function which asks the user to
+	  select from a list of buttons.
+
+	* src/eval.c: allow comparisons (only == and !=) with null.  We
+	  really want to treat null as an empty matrix.  null is only
+	  equal to null itself of course.
+
+	* src/geniustests.txt: add tests for null comparisons
+
+	* help/C/genius.xml, help/C/gel-function-list.xml: Document
+	  AskButtons
+
+Wed Dec 23 15:41:42 2009  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.9
+
 Wed Dec 23 15:18:56 2009  Jiri (George) Lebl <jirka@5z.com>
 
 	* src/calc.c: fix minor leak
