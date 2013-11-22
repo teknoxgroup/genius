@@ -421,6 +421,7 @@ AC_DEFUN([AC_ISC_POSIX],
   ]
 )
 
+ll## intltool.m4 - Configure intltool for the target system. -*-Shell-script-*-
 
 dnl AC_PROG_INTLTOOL([MINIMUM-VERSION])
 # serial 1 AC_PROG_INTLTOOL
@@ -456,6 +457,7 @@ INTLTOOL_SOUNDLIST_RULE='%.soundlist: %.soundlist.in $(INTLTOOL_MERGE) $(wildcar
        INTLTOOL_UI_RULE='%.ui:        %.ui.in        $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
       INTLTOOL_XML_RULE='%.xml:       %.xml.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
       INTLTOOL_XAM_RULE='%.xam:       %.xml.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
+      INTLTOOL_KBD_RULE='%.kbd:       %.kbd.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -x -u -m -c $(top_builddir)/po/.intltool-merge-cache'
     INTLTOOL_CAVES_RULE='%.caves:     %.caves.in     $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -d -u -c $(top_builddir)/po/.intltool-merge-cache'
   INTLTOOL_SCHEMAS_RULE='%.schemas:   %.schemas.in   $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -s -u -c $(top_builddir)/po/.intltool-merge-cache'
     INTLTOOL_THEME_RULE='%.theme:     %.theme.in     $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< [$]@ -d -u -c $(top_builddir)/po/.intltool-merge-cache'
@@ -471,6 +473,7 @@ AC_SUBST(INTLTOOL_SHEET_RULE)
 AC_SUBST(INTLTOOL_SOUNDLIST_RULE)
 AC_SUBST(INTLTOOL_UI_RULE)
 AC_SUBST(INTLTOOL_XAM_RULE)
+AC_SUBST(INTLTOOL_KBD_RULE)
 AC_SUBST(INTLTOOL_XML_RULE)
 AC_SUBST(INTLTOOL_CAVES_RULE)
 AC_SUBST(INTLTOOL_SCHEMAS_RULE)
@@ -492,6 +495,9 @@ if test -z "$INTLTOOL_PERL"; then
 fi
 if test -z "`$INTLTOOL_PERL -v | fgrep '5.' 2> /dev/null`"; then
    AC_MSG_ERROR([perl 5.x required for intltool])
+fi
+if ! `perl -e "require XML::Parser" 2>/dev/null`; then
+   AC_MSG_ERROR([XML::Parser perl module is required for intltool])
 fi
 
 # Remove file type tags (using []) from po/POTFILES.
@@ -529,7 +535,8 @@ fi
 chmod ugo+x intltool-extract
 chmod u+w intltool-extract
 
-sed -e "s:@INTLTOOL_PERL@:${INTLTOOL_PERL}:;" < ${srcdir}/intltool-merge.in > intltool-merge.out
+sed -e "s:@INTLTOOL_PERL@:${INTLTOOL_PERL}:;" \
+    < ${srcdir}/intltool-merge.in > intltool-merge.out
 if cmp -s intltool-merge intltool-merge.out 2>/dev/null; then
   rm -f intltool-merge.out
 else
@@ -6594,6 +6601,148 @@ SED=$lt_cv_path_SED
 AC_MSG_RESULT([$SED])
 ])
 
+dnl GNOME_COMPILE_WARNINGS
+dnl Turn on many useful compiler warnings
+dnl For now, only works on GCC
+AC_DEFUN([GNOME_COMPILE_WARNINGS],[
+    dnl ******************************
+    dnl More compiler warnings
+    dnl ******************************
+
+    if test -z "$1" ; then
+	default_compile_warnings=yes
+    else
+	default_compile_warnings="$1"
+    fi
+
+    AC_ARG_ENABLE(compile-warnings, 
+    [  --enable-compile-warnings=[no/minimum/yes/maximum/error]	Turn on compiler warnings.],, [enable_compile_warnings="$default_compile_warnings"])
+
+    warnCFLAGS=
+    if test "x$GCC" != xyes; then
+	enable_compile_warnings=no
+    fi
+
+    warning_flags=
+    realsave_CFLAGS="$CFLAGS"
+
+    case "$enable_compile_warnings" in
+    no)
+	warning_flags=
+	;;
+    minimum)
+	warning_flags="-Wall"
+	;;
+    yes)
+	warning_flags="-Wall -Wmissing-prototypes"
+	;;
+    maximum|error)
+	warning_flags="-Wall -Wmissing-prototypes -Wnested-externs -Wpointer-arith"
+	CFLAGS="$warning_flags $CFLAGS"
+	for option in -Wno-sign-compare; do
+		SAVE_CFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS $option"
+		AC_MSG_CHECKING([whether gcc understands $option])
+		AC_TRY_COMPILE([], [],
+			has_option=yes,
+			has_option=no,)
+		CFLAGS="$SAVE_CFLAGS"
+		AC_MSG_RESULT($has_option)
+		if test $has_option = yes; then
+		  warning_flags="$warning_flags $option"
+		fi
+		unset has_option
+		unset SAVE_CFLAGS
+	done
+	unset option
+	if test "$enable_compile_warnings" = "error" ; then
+	    warning_flags="$warning_flags -Werror"
+	fi
+	;;
+    *)
+	AC_MSG_ERROR(Unknown argument '$enable_compile_warnings' to --enable-compile-warnings)
+	;;
+    esac
+    CFLAGS="$realsave_CFLAGS"
+    AC_MSG_CHECKING(what warning flags to pass to the C compiler)
+    AC_MSG_RESULT($warning_flags)
+
+    AC_ARG_ENABLE(iso-c,
+    [  --enable-iso-c          Try to warn if code is not ISO C ],,
+    enable_iso_c=no)
+
+    AC_MSG_CHECKING(what language compliance flags to pass to the C compiler)
+    complCFLAGS=
+    if test "x$enable_iso_c" != "xno"; then
+	if test "x$GCC" = "xyes"; then
+	case " $CFLAGS " in
+	    *[\ \	]-ansi[\ \	]*) ;;
+	    *) complCFLAGS="$complCFLAGS -ansi" ;;
+	esac
+	case " $CFLAGS " in
+	    *[\ \	]-pedantic[\ \	]*) ;;
+	    *) complCFLAGS="$complCFLAGS -pedantic" ;;
+	esac
+	fi
+    fi
+    AC_MSG_RESULT($complCFLAGS)
+
+    WARN_CFLAGS="$warning_flags $complCFLAGS"
+    AC_SUBST(WARN_CFLAGS)
+])
+
+dnl For C++, do basically the same thing.
+
+AC_DEFUN([GNOME_CXX_WARNINGS],[
+  AC_ARG_ENABLE(cxx-warnings, 
+    [  --enable-cxx-warnings=[no/minimum/yes]	Turn on compiler warnings.],,enable_cxx_warnings=minimum)
+
+  AC_MSG_CHECKING(what warning flags to pass to the C++ compiler)
+  warnCXXFLAGS=
+  if test "x$GCC" != xyes; then
+    enable_compile_warnings=no
+  fi
+  if test "x$enable_cxx_warnings" != "xno"; then
+    if test "x$GCC" = "xyes"; then
+      case " $CXXFLAGS " in
+      *[\ \	]-Wall[\ \	]*) ;;
+      *) warnCXXFLAGS="-Wall -Wno-unused" ;;
+      esac
+
+      ## -W is not all that useful.  And it cannot be controlled
+      ## with individual -Wno-xxx flags, unlike -Wall
+      if test "x$enable_cxx_warnings" = "xyes"; then
+	warnCXXFLAGS="$warnCXXFLAGS -Wshadow -Woverloaded-virtual"
+      fi
+    fi
+  fi
+  AC_MSG_RESULT($warnCXXFLAGS)
+
+   AC_ARG_ENABLE(iso-cxx,
+     [  --enable-iso-cxx          Try to warn if code is not ISO C++ ],,
+     enable_iso_cxx=no)
+
+   AC_MSG_CHECKING(what language compliance flags to pass to the C++ compiler)
+   complCXXFLAGS=
+   if test "x$enable_iso_cxx" != "xno"; then
+     if test "x$GCC" = "xyes"; then
+      case " $CXXFLAGS " in
+      *[\ \	]-ansi[\ \	]*) ;;
+      *) complCXXFLAGS="$complCXXFLAGS -ansi" ;;
+      esac
+
+      case " $CXXFLAGS " in
+      *[\ \	]-pedantic[\ \	]*) ;;
+      *) complCXXFLAGS="$complCXXFLAGS -pedantic" ;;
+      esac
+     fi
+   fi
+  AC_MSG_RESULT($complCXXFLAGS)
+
+  WARN_CXXFLAGS="$CXXFLAGS $warnCXXFLAGS $complCXXFLAGS"
+  AC_SUBST(WARN_CXXFLAGS)
+])
+
 # Copyright (C) 1995-2002 Free Software Foundation, Inc.
 # Copyright (C) 2001-2003 Red Hat, Inc.
 #
@@ -6873,7 +7022,7 @@ glib_DEFUN([GLIB_WITH_NLS],
 # on various variables needed by the Makefile.in.in installed by 
 # glib-gettextize.
 dnl
-glib_DEFUN(GLIB_GNU_GETTEXT,
+glib_DEFUN([GLIB_GNU_GETTEXT],
   [AC_REQUIRE([AC_PROG_CC])dnl
    AC_REQUIRE([AC_HEADER_STDC])dnl
    
@@ -6950,7 +7099,7 @@ glib_DEFUN(GLIB_GNU_GETTEXT,
 # -------------------------------
 # Define VARIABLE to the location where catalog files will
 # be installed by po/Makefile.
-glib_DEFUN(GLIB_DEFINE_LOCALEDIR,
+glib_DEFUN([GLIB_DEFINE_LOCALEDIR],
 [glib_REQUIRE([GLIB_GNU_GETTEXT])dnl
 glib_save_prefix="$prefix"
 glib_save_exec_prefix="$exec_prefix"

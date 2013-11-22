@@ -281,19 +281,24 @@ read_config (VeConfig *config)
 	VeSection *section = config->root;
 	char buf[2048];
 	int cnt;
+	char *getsret;
 
 	config->mtime = get_mtime (config->file);
 
-	fp = fopen (config->file, "r");
+	VE_IGNORE_EINTR (fp = fopen (config->file, "r"));
 	if (fp == NULL)
 		return;
 
 	cnt = 0;
 
-	while (fgets (buf, sizeof (buf), fp) != NULL) {
+	for (;;) {
 		char *nows = buf;
 		char *eq;
 		char *p;
+
+		VE_IGNORE_EINTR (getsret = fgets (buf, sizeof (buf), fp));
+		if (getsret == NULL)
+			break;
 
 		p = strchr (buf, '\n');
 		if (p != NULL)
@@ -337,7 +342,7 @@ read_config (VeConfig *config)
 			break;
 	}
 
-	fclose (fp);
+	VE_IGNORE_EINTR (fclose (fp));
 }
 
 static VeLine *
@@ -528,13 +533,13 @@ save_section (VeSection *section, FILE *fp)
 	for (li = section->lines; li != NULL; li = li->next) {
 		VeLine *line = li->data;
 		if (line->type == VE_LINE_TEXT) {
-			fprintf (fp, "%s\n", line->string);
+			VE_IGNORE_EINTR (fprintf (fp, "%s\n", line->string));
 		} else if (line->type == VE_LINE_KEY) {
 			char *out = g_strescape (ve_sure_string (line->string),
 						 G_CSET_LATINC G_CSET_LATINS);
-			fprintf (fp, "%s=%s\n",
-				 line->key,
-				 out);
+			VE_IGNORE_EINTR (fprintf (fp, "%s=%s\n",
+						  line->key,
+						  out));
 			g_free (out);
 		}
 	}
@@ -551,7 +556,7 @@ ve_config_save (VeConfig *config, gboolean force)
 	if ( ! force && ! config->dirty)
 		return TRUE;
 
-	fp = fopen (config->file, "w");
+	VE_IGNORE_EINTR (fp = fopen (config->file, "w"));
 	if (fp == NULL)
 		return FALSE;
 
@@ -559,11 +564,11 @@ ve_config_save (VeConfig *config, gboolean force)
 
 	for (li = config->sections; li != NULL; li = li->next) {
 		VeSection *section = li->data;
-		fprintf (fp, "[%s]\n", section->name);
+		VE_IGNORE_EINTR (fprintf (fp, "[%s]\n", section->name));
 		save_section (section, fp);
 	}
 
-	fclose (fp);
+	VE_IGNORE_EINTR (fclose (fp));
 
 	/* update the mtime */
 	config->mtime = get_mtime (config->file);

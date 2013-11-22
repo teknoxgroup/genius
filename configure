@@ -462,7 +462,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_PROP_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XAM_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_SCHEMAS_RULE INTLTOOL_THEME_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP LEX LEXLIB LEX_OUTPUT_ROOT build build_cpu build_vendor build_os host host_cpu host_vendor host_os LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL YACC GETTEXT_PACKAGE USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS GLIB_GENMARSHAL TERMCAP_LIB READLINE_LIB GMP_LIB MPFR_LIB GCONFTOOL GCONF_CONFIG_SOURCE INSTALL_GCONF_CONFIG_SOURCE PKG_CONFIG GENIUS_CFLAGS GENIUS_LIBS GUI_CFLAGS GUI_LIBS POPT_LIBS EXTRA_WARNING_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_PROP_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XAM_RULE INTLTOOL_KBD_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_SCHEMAS_RULE INTLTOOL_THEME_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP LEX LEXLIB LEX_OUTPUT_ROOT build build_cpu build_vendor build_os host host_cpu host_vendor host_os LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL YACC WARN_CFLAGS GETTEXT_PACKAGE USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS GLIB_GENMARSHAL TERMCAP_LIB READLINE_LIB GMP_LIB MPFR_LIB GCONFTOOL GCONF_CONFIG_SOURCE INSTALL_GCONF_CONFIG_SOURCE PKG_CONFIG GENIUS_CFLAGS GENIUS_LIBS GUI_CFLAGS GUI_LIBS POPT_LIBS EXTRA_WARNING_CFLAGS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1031,6 +1031,8 @@ Optional Features:
   --enable-fast-install[=PKGS]
                           optimize for fast installation [default=yes]
   --disable-libtool-lock  avoid locking (might break parallel builds)
+  --enable-compile-warnings=no/minimum/yes/maximum/error	Turn on compiler warnings.
+  --enable-iso-c          Try to warn if code is not ISO C
   --enable-gconf-source=sourceaddress Where to install schema files.
   --enable-gtksourceview  Use GtkSourceView library
   --enable-more-warnings  Maximum compiler warnings
@@ -1499,9 +1501,11 @@ INTLTOOL_SOUNDLIST_RULE='%.soundlist: %.soundlist.in $(INTLTOOL_MERGE) $(wildcar
        INTLTOOL_UI_RULE='%.ui:        %.ui.in        $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
       INTLTOOL_XML_RULE='%.xml:       %.xml.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
       INTLTOOL_XAM_RULE='%.xam:       %.xml.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -x -u -c $(top_builddir)/po/.intltool-merge-cache'
+      INTLTOOL_KBD_RULE='%.kbd:       %.kbd.in       $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -x -u -m -c $(top_builddir)/po/.intltool-merge-cache'
     INTLTOOL_CAVES_RULE='%.caves:     %.caves.in     $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -d -u -c $(top_builddir)/po/.intltool-merge-cache'
   INTLTOOL_SCHEMAS_RULE='%.schemas:   %.schemas.in   $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -s -u -c $(top_builddir)/po/.intltool-merge-cache'
     INTLTOOL_THEME_RULE='%.theme:     %.theme.in     $(INTLTOOL_MERGE) $(wildcard $(top_srcdir)/po/*.po) ; LC_ALL=C $(INTLTOOL_MERGE) $(top_srcdir)/po $< $@ -d -u -c $(top_builddir)/po/.intltool-merge-cache'
+
 
 
 
@@ -1576,6 +1580,11 @@ fi
 if test -z "`$INTLTOOL_PERL -v | fgrep '5.' 2> /dev/null`"; then
    { { echo "$as_me:$LINENO: error: perl 5.x required for intltool" >&5
 echo "$as_me: error: perl 5.x required for intltool" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+if ! `perl -e "require XML::Parser" 2>/dev/null`; then
+   { { echo "$as_me:$LINENO: error: XML::Parser perl module is required for intltool" >&5
+echo "$as_me: error: XML::Parser perl module is required for intltool" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
@@ -1792,7 +1801,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.5.6
+VERSION=0.5.7
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { { echo "$as_me:$LINENO: error: source directory already configured; run \"make distclean\" there first" >&5
@@ -4156,7 +4165,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4159 "configure"' > conftest.$ac_ext
+  echo '#line 4168 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5156,7 +5165,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5159:" \
+echo "$as_me:5168:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6161,11 +6170,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6164: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6173: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6168: \$? = $ac_status" >&5
+   echo "$as_me:6177: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6393,11 +6402,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6396: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6405: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6400: \$? = $ac_status" >&5
+   echo "$as_me:6409: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6460,11 +6469,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6463: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6472: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6467: \$? = $ac_status" >&5
+   echo "$as_me:6476: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8496,7 +8505,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8499 "configure"
+#line 8508 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8594,7 +8603,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8597 "configure"
+#line 8606 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10726,11 +10735,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10729: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10738: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:10733: \$? = $ac_status" >&5
+   echo "$as_me:10742: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -10793,11 +10802,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:10796: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:10805: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:10800: \$? = $ac_status" >&5
+   echo "$as_me:10809: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -12060,7 +12069,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12063 "configure"
+#line 12072 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12158,7 +12167,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12161 "configure"
+#line 12170 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12980,11 +12989,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:12983: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:12992: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:12987: \$? = $ac_status" >&5
+   echo "$as_me:12996: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13047,11 +13056,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13050: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13059: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13054: \$? = $ac_status" >&5
+   echo "$as_me:13063: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -15011,11 +15020,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15014: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15023: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15018: \$? = $ac_status" >&5
+   echo "$as_me:15027: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15243,11 +15252,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15246: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15255: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15250: \$? = $ac_status" >&5
+   echo "$as_me:15259: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15310,11 +15319,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15313: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15322: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15317: \$? = $ac_status" >&5
+   echo "$as_me:15326: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17346,7 +17355,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17349 "configure"
+#line 17358 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -17444,7 +17453,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 17447 "configure"
+#line 17456 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18493,7 +18502,139 @@ test -n "$YACC" || YACC="yacc"
 
 
 
-GNOME_COMPILE_WARNINGS
+
+
+    if test -z "" ; then
+	default_compile_warnings=yes
+    else
+	default_compile_warnings=""
+    fi
+
+    # Check whether --enable-compile-warnings or --disable-compile-warnings was given.
+if test "${enable_compile_warnings+set}" = set; then
+  enableval="$enable_compile_warnings"
+
+else
+  enable_compile_warnings="$default_compile_warnings"
+fi;
+
+    warnCFLAGS=
+    if test "x$GCC" != xyes; then
+	enable_compile_warnings=no
+    fi
+
+    warning_flags=
+    realsave_CFLAGS="$CFLAGS"
+
+    case "$enable_compile_warnings" in
+    no)
+	warning_flags=
+	;;
+    minimum)
+	warning_flags="-Wall"
+	;;
+    yes)
+	warning_flags="-Wall -Wmissing-prototypes"
+	;;
+    maximum|error)
+	warning_flags="-Wall -Wmissing-prototypes -Wnested-externs -Wpointer-arith"
+	CFLAGS="$warning_flags $CFLAGS"
+	for option in -Wno-sign-compare; do
+		SAVE_CFLAGS="$CFLAGS"
+		CFLAGS="$CFLAGS $option"
+		echo "$as_me:$LINENO: checking whether gcc understands $option" >&5
+echo $ECHO_N "checking whether gcc understands $option... $ECHO_C" >&6
+		cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  has_option=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+has_option=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+		CFLAGS="$SAVE_CFLAGS"
+		echo "$as_me:$LINENO: result: $has_option" >&5
+echo "${ECHO_T}$has_option" >&6
+		if test $has_option = yes; then
+		  warning_flags="$warning_flags $option"
+		fi
+		unset has_option
+		unset SAVE_CFLAGS
+	done
+	unset option
+	if test "$enable_compile_warnings" = "error" ; then
+	    warning_flags="$warning_flags -Werror"
+	fi
+	;;
+    *)
+	{ { echo "$as_me:$LINENO: error: Unknown argument '$enable_compile_warnings' to --enable-compile-warnings" >&5
+echo "$as_me: error: Unknown argument '$enable_compile_warnings' to --enable-compile-warnings" >&2;}
+   { (exit 1); exit 1; }; }
+	;;
+    esac
+    CFLAGS="$realsave_CFLAGS"
+    echo "$as_me:$LINENO: checking what warning flags to pass to the C compiler" >&5
+echo $ECHO_N "checking what warning flags to pass to the C compiler... $ECHO_C" >&6
+    echo "$as_me:$LINENO: result: $warning_flags" >&5
+echo "${ECHO_T}$warning_flags" >&6
+
+    # Check whether --enable-iso-c or --disable-iso-c was given.
+if test "${enable_iso_c+set}" = set; then
+  enableval="$enable_iso_c"
+
+else
+  enable_iso_c=no
+fi;
+
+    echo "$as_me:$LINENO: checking what language compliance flags to pass to the C compiler" >&5
+echo $ECHO_N "checking what language compliance flags to pass to the C compiler... $ECHO_C" >&6
+    complCFLAGS=
+    if test "x$enable_iso_c" != "xno"; then
+	if test "x$GCC" = "xyes"; then
+	case " $CFLAGS " in
+	    *\ \	-ansi\ \	*) ;;
+	    *) complCFLAGS="$complCFLAGS -ansi" ;;
+	esac
+	case " $CFLAGS " in
+	    *\ \	-pedantic\ \	*) ;;
+	    *) complCFLAGS="$complCFLAGS -pedantic" ;;
+	esac
+	fi
+    fi
+    echo "$as_me:$LINENO: result: $complCFLAGS" >&5
+echo "${ECHO_T}$complCFLAGS" >&6
+
+    WARN_CFLAGS="$warning_flags $complCFLAGS"
+
+
 
 
 
@@ -18590,7 +18731,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="az ca cs de es fr hi it ko nl no pt sr sr@Latn sv pl zh_CN"
+ALL_LINGUAS="az ca cs de es fr hi hr it ko nl no pt sr sr@Latn sv pl zh_CN"
 
 
 for ac_header in locale.h
@@ -21005,12 +21146,13 @@ echo "${ECHO_T}no" >&6
 fi
 CFLAGS="$realsave_CFLAGS"
 EXTRA_WARNING_CFLAGS=" \
-	-DG_DISABLE_DEPRECATED \
-	-DGDK_PIXBUF_DISABLE_DEPRECATED \
-	-DGDK_DISABLE_DEPRECATED \
-	-DGTK_DISABLE_DEPRECATED \
-	-DGNOME_DISABLE_DEPRECATED \
 	$warning_flags"
+#	-DG_DISABLE_DEPRECATED \
+#	-DGDK_PIXBUF_DISABLE_DEPRECATED \
+#	-DGDK_DISABLE_DEPRECATED \
+#	-DGTK_DISABLE_DEPRECATED \
+#	-DGNOME_DISABLE_DEPRECATED \
+
 
 
 echo "$as_me:$LINENO: checking for wordexp" >&5
@@ -21757,6 +21899,7 @@ s,@INTLTOOL_SHEET_RULE@,$INTLTOOL_SHEET_RULE,;t t
 s,@INTLTOOL_SOUNDLIST_RULE@,$INTLTOOL_SOUNDLIST_RULE,;t t
 s,@INTLTOOL_UI_RULE@,$INTLTOOL_UI_RULE,;t t
 s,@INTLTOOL_XAM_RULE@,$INTLTOOL_XAM_RULE,;t t
+s,@INTLTOOL_KBD_RULE@,$INTLTOOL_KBD_RULE,;t t
 s,@INTLTOOL_XML_RULE@,$INTLTOOL_XML_RULE,;t t
 s,@INTLTOOL_CAVES_RULE@,$INTLTOOL_CAVES_RULE,;t t
 s,@INTLTOOL_SCHEMAS_RULE@,$INTLTOOL_SCHEMAS_RULE,;t t
@@ -21816,6 +21959,7 @@ s,@FFLAGS@,$FFLAGS,;t t
 s,@ac_ct_F77@,$ac_ct_F77,;t t
 s,@LIBTOOL@,$LIBTOOL,;t t
 s,@YACC@,$YACC,;t t
+s,@WARN_CFLAGS@,$WARN_CFLAGS,;t t
 s,@GETTEXT_PACKAGE@,$GETTEXT_PACKAGE,;t t
 s,@USE_NLS@,$USE_NLS,;t t
 s,@MSGFMT@,$MSGFMT,;t t
@@ -22343,7 +22487,8 @@ fi
 chmod ugo+x intltool-extract
 chmod u+w intltool-extract
 
-sed -e "s:@INTLTOOL_PERL@:${INTLTOOL_PERL}:;" < ${srcdir}/intltool-merge.in > intltool-merge.out
+sed -e "s:@INTLTOOL_PERL@:${INTLTOOL_PERL}:;" \
+    < ${srcdir}/intltool-merge.in > intltool-merge.out
 if cmp -s intltool-merge intltool-merge.out 2>/dev/null; then
   rm -f intltool-merge.out
 else

@@ -87,12 +87,15 @@ read_aliases (char *file)
   char buf[256];
   if (!alias_table)
     alias_table = g_hash_table_new (g_str_hash, g_str_equal);
-  fp = fopen (file,"r");
+  VE_IGNORE_EINTR (fp = fopen (file,"r"));
   if (!fp)
     return;
-  while (fgets (buf,256,fp))
+  for (;;)
     {
       char *p;
+      VE_IGNORE_EINTR (p = fgets (buf, sizeof (buf), fp));
+      if (p == NULL)
+	      break;
       g_strstrip(buf);
       if (buf[0]=='#' || buf[0]=='\0')
         continue;
@@ -105,7 +108,7 @@ read_aliases (char *file)
       if (!g_hash_table_lookup (alias_table, buf))
 	g_hash_table_insert (alias_table, g_strdup(buf), g_strdup(p));
     }
-  fclose (fp);
+  VE_IGNORE_EINTR (fclose (fp));
 }
 
 /*return the un-aliased language as a newly allocated string*/

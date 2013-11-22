@@ -1,3 +1,8 @@
+Fri Dec 19 11:49:08 2003  George Lebl <jirka@5z.com>
+
+	* ve-config.c, ve-misc.h, ve-nongnome.c:  Better testing and handling
+	  of EINTR on broken, stupid, idiotic systems.
+
 Thu Oct 16 09:48:45 2003  George Lebl <jirka@5z.com>
 
 	* Makefile.am: the disable_deprecated defines are now not defined,

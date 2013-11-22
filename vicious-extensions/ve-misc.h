@@ -23,6 +23,7 @@
 
 #include <glib.h>
 #include <time.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <locale.h>
@@ -91,5 +92,11 @@ const GList * ve_i18n_get_language_list (const gchar *category_name);
 
 char * ve_find_prog_in_path (const char *prog, const char *path);
 gboolean ve_is_prog_in_path (const char *prog, const char *path);
+
+#define VE_IGNORE_EINTR(expr) \
+	do {		\
+		errno = 0;	\
+		expr;		\
+	} while G_UNLIKELY (errno == EINTR);
 
 #endif /* VE_MISC_H */
