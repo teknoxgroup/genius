@@ -1,7 +1,7 @@
 AC_INIT(src/calc.c)
 
 AM_CONFIG_HEADER(config.h)
-AM_INIT_AUTOMAKE(genius,0.7.6.1)
+AM_INIT_AUTOMAKE(genius,0.7.7)
 
 dnl make sure we keep ACLOCAL_FLAGS around for maintainer builds to work
 AC_SUBST(ACLOCAL_AMFLAGS, "$ACLOCAL_FLAGS")
@@ -44,7 +44,7 @@ GETTEXT_PACKAGE=genius
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",[gettext package name])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ja ko nb ne nl pa pl pt pt_BR rw sq sr sr@Latn sv zh_CN zh_TW"
+ALL_LINGUAS="ar az ca cs de dz el en_CA en_GB es fr ga hi hr it ja ko nb ne nl pa pl pt pt_BR rw sq sr sr@Latn sv zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 
 dnl ===============================================================================

@@ -13,7 +13,7 @@ Kai Willadsen
 
     <kaiw@itee.uq.edu.au>
 
-   Copyright © 1997-2006 Jiri (George) Lebl
+   Copyright © 1997-2007 Jiri (George) Lebl
 
    Copyright © 2004 Kai Willadsen
 
@@ -151,6 +151,7 @@ Kai Willadsen
 
         8.1. Matrix support
         8.2. Conjugate transpose and transpose operator
+        8.3. Linear Algebra
 
    9. Polynomials in GEL
 
@@ -1388,23 +1389,24 @@ Chapter 8. Matrices in GEL
 
 8.1. Matrix support
 
-   To enter matrixes use one of the following two syntaxes. You
-   can either enter the matrix separating values by commas and
-   rows by semicolons, or separating values by tabs (not usually
-   easily possible on the console, only in files) and rows by
-   returns, or any combination of the two. So to enter a 3x3
-   matrix of numbers 1-9 you could do
+   To enter matrixes, you can use one of the following two
+   syntaxes. You can either enter the matrix on one line,
+   separating values by commas and rows by semicolons. Or you can
+   enter each row on one line, separating values by commas or
+   tabs. (Note that tabs are not usually easily possible on the
+   console, only in files). You can also just combine the two
+   methods. So to enter a 3x3 matrix of numbers 1-9 you could do
 [1,2,3;4,5,6;7,8,9]
-
-   or
-[1 2 3
- 4 5 6
- 7 8 9]
 
    or
 [1, 2, 3
  4, 5, 6
  7, 8, 9]
+
+   or (where the empty spaces are tabs)
+[1 2 3
+ 4 5 6
+ 7 8 9]
 
    Do not use both ';' and return at once on the same line
    though. Also do not mix tabs and commas. It is just safest to
@@ -1459,28 +1461,34 @@ b = [ a,  10
 [1,2,3]*[4,5,6i].'
      _________________________________________________________
 
+8.3. Linear Algebra
+
+   Genius implements many useful linear algebra and matrix
+   manipulation routines. See the Linear Algebra and Matrix
+   Manipulation sections of the GEL function listing.
+     _________________________________________________________
+
 Chapter 9. Polynomials in GEL
 
    Currently Genius can handle polynomials of one variable
-   written out as vectors and do some basic operations with them.
-   It is planned to expand this support further.
+   written out as vectors, and do some basic operations with
+   these. It is planned to expand this support further.
      _________________________________________________________
 
 9.1. Using Polynomials
 
-   Genius can do some things on polynomials. Polynomials in
-   Genius are just horizontal vectors with value only nodes. The
-   power of the term is the position in the vector, with the
-   first position being 0. So,
+   Currently polynomials in one variable are just horizontal
+   vectors with value only nodes. The power of the term is the
+   position in the vector, with the first position being 0. So,
 [1,2,3]
 
    translates to a polynomial of
 1 + 2*x + 3*x^2
 
    You can add, subtract and multiply polynomials using the
-   AddPoly, SubtractPoly and MultiplyPoly functions respectively.
-   You can print a polynomial using the PolyToString function.
-   For example,
+   AddPoly, SubtractPoly, and MultiplyPoly functions
+   respectively. You can print a polynomial using the
+   PolyToString function. For example,
 PolyToString([1,2,3],"y")
 
    gives
@@ -1493,8 +1501,15 @@ PolyToString([1,2,3],"y")
 f = PolyToFunction([0,1,1])
 f(2)
 
-   Look at the function table for the rest of polynomial
-   functions.
+   It is also possible to find roots of polynomials of degrees 1
+   through 4 by using the function PolynomialRoots, which calls
+   the appropriate formula function. Higher degree polynomials
+   must be converted to functions and solved numerically using a
+   function such as FindRootBisection, FindRootFalsePosition,
+   FindRootMullersMethod, or FindRootSecant.
+
+   Look at the function table for the rest of functions acting on
+   polynomials.
      _________________________________________________________
 
 Chapter 10. List of GEL functions
@@ -3012,8 +3027,8 @@ DeleteRow (M,row)
 
 DiagonalOf (M)
 
-          Gets the diagonal entries of a matrix as a horizontal
-          vector
+          Gets the diagonal entries of a matrix as a column
+          vector.
 
    DotProduct
 
@@ -3386,8 +3401,12 @@ Eigenvalues (M)
 
           Aliases: eig
 
-          Get the eigenvalues of a matrix (Currently only for 2x2
-          and triangular matrices)
+          Get the eigenvalues of a square matrix. Currently only
+          works for matrices of size up to 4 by 4, or for
+          triangular matrices (for which the eigenvalues are on
+          the diagonal).
+
+          See Planetmath or Mathworld for more information.
 
    GramSchmidt
 
@@ -3476,7 +3495,49 @@ IsInvertibleField (n)
 
 IsNormal (M)
 
-          Is a matrix normal
+          Is M a normal matrix. That is, does M*M' == M'*M.
+
+          See Planetmath or Mathworld for more information.
+
+   IsPositiveDefinite
+
+IsPositiveDefinite (M)
+
+          Is M a hermitian positive definite matrix. That is if
+          HermitianProduct(M*v,v) is always strictly positive for
+          any vector v. M must be square and hermitian to be
+          positive definite. The check that is performed is that
+          every principal submatrix has a nonnegative
+          determinant. (See HermitianProduct)
+
+          Note that some authors (for example Mathworld) do not
+          require that M be hermitian, and then the condition is
+          on the real part of the inner product, but we do not
+          take this view. If you wish to perform this check, just
+          check the hermitian part of the matrix M as follows:
+          IsPositiveDefinite(M+M').
+
+          See Planetmath or Mathworld for more information.
+
+   IsPositiveSemidefinite
+
+IsPositiveSemidefinite (M)
+
+          Is M a hermitian positive semidefinite matrix. That is
+          if HermitianProduct(M*v,v) is always nonnegative for
+          any vector v. M must be square and hermitian to be
+          positive semidefinite. The check that is performed is
+          that every principal submatrix has a nonnegative
+          determinant. (See HermitianProduct)
+
+          Note that some authors do not require that M be
+          hermitian, and then the condition is on the real part
+          of the inner product, but we do not take this view. If
+          you wish to perform this check, just check the
+          hermitian part of the matrix M as follows:
+          IsPositiveSemidefinite(M+M').
+
+          See Planetmath or Mathworld for more information.
 
    IsSkewHermitian
 
@@ -3491,7 +3552,10 @@ IsSkewHermitian (M)
 
 IsUnitary (M)
 
-          Is a matrix unitary
+          Is a matrix unitary? That is, does M'*M and M*M' equal
+          the identity.
+
+          See Planetmath or Mathworld for more information.
 
    JordanBlock
 
@@ -3499,7 +3563,10 @@ JordanBlock (n,lambda)
 
           Aliases: J
 
-          Get the jordan block corresponding to lambda and n
+          Get the Jordan block corresponding to the eigenvalue
+          lambda with multiplicity n.
+
+          See Planetmath or Mathworld for more information.
 
    Kernel
 
@@ -3592,8 +3659,8 @@ OrthogonalComplement (M)
 PivotColumns (M)
 
           Return pivot columns of a matrix, that is columns which
-          have a leading 1 in rref form, also returns the row
-          where they occur
+          have a leading 1 in row reduced form. Also returns the
+          row where they occur.
 
    Projection
 
@@ -3622,11 +3689,15 @@ genius> R = QRDecomposition(A,&Q)
 
           See Planetmath or Mathworld for more information.
 
-   RaleighQuotient
+   RayleighQuotient
 
-RaleighQuotient (A,x)
+RayleighQuotient (A,x)
 
-          Return the Raleigh Quotient of a matrix and a vector
+          Return the Rayleigh quotient (also called the
+          Rayleigh-Ritz quotient or ratio) of a matrix and a
+          vector.
+
+          See Planetmath for more information.
 
    Rank
 
@@ -4324,13 +4395,13 @@ CubicFormula (p)
           Compute roots of a cubic (degree 3) polynomial using
           the cubic formula. The polynomial should be given as a
           vector of coefficients. That is 4*x^3 + 2*x + 1
-          corresponds to the vector [1,2,0,4].
+          corresponds to the vector [1,2,0,4]. Returns a column
+          vector of the three solutions. The first solution is
+          always the real one as a cubic always has one real
+          solution.
 
-          Note that due to limitations of the current
-          implementation, only polynomials with real coefficients
-          are supported.
-
-          See Planetmath or Mathworld for more information.
+          See Planetmath, Mathworld, or Wikipedia for more
+          information.
 
    EulerMethod
 
@@ -4371,13 +4442,14 @@ FindRootSecant (f,a,b,TOL,N)
 
 PolynomialRoots (p)
 
-          Compute roots of a polynomial (degrees 1 through 3
-          currently) using one of the formulas for such
-          polynomials. The polynomial should be given as a vector
-          of coefficients. That is 4*x^3 + 2*x + 1 corresponds to
-          the vector [1,2,0,4].
+          Compute roots of a polynomial (degrees 1 through 4)
+          using one of the formulas for such polynomials. The
+          polynomial should be given as a vector of coefficients.
+          That is 4*x^3 + 2*x + 1 corresponds to the vector
+          [1,2,0,4]. Returns a column vector of the solutions.
 
-          The function calls QuadraticFormula and CubicFormula.
+          The function calls QuadraticFormula, CubicFormula, and
+          QuarticFormula.
 
    QuadraticFormula
 
@@ -4386,9 +4458,23 @@ QuadraticFormula (p)
           Compute roots of a quadratic (degree 2) polynomial
           using the quadratic formula. The polynomial should be
           given as a vector of coefficients. That is 3*x^2 + 2*x
-          + 1 corresponds to the vector [1,2,3].
+          + 1 corresponds to the vector [1,2,3]. Returns a column
+          vector of the two solutions.
 
           See Planetmath or Mathworld for more information.
+
+   QuarticFormula
+
+QuarticFormula (p)
+
+          Compute roots of a quartic (degree 4) polynomial using
+          the quartic formula. The polynomial should be given as
+          a vector of coefficients. That is 5*x^4 + 2*x + 1
+          corresponds to the vector [1,2,0,0,5]. Returns a column
+          vector of the four solutions.
+
+          See Planetmath, Mathworld, or Wikipedia for more
+          information.
 
    RungeKutta
 
@@ -4618,7 +4704,7 @@ AlphabetToString (vec,alphabet)
 
 StringToASCII (str)
 
-          Convert a string to a vector of ASCII values
+          Convert a string to a vector of ASCII values.
 
    StringToAlphabet
 
@@ -4876,6 +4962,21 @@ MaxDigits = 12
           Should we print out full expressions for non-numeric
           return values (longer than a line) (FullExpressions)
 
+   Use mixed fractions
+          If fractions should be printed as mixed fractions such
+          as "1 1/3" rather than "4/3". (MixedFractions)
+
+   Remember output settings across sessions
+          Should the output settings in the Number/Expression
+          output options frame be remembered for next session.
+          Does not apply to the Error/Info output options frame.
+
+          If unchecked, either the default or any previously
+          saved settings are used each time Genius starts up.
+          Note that settings are saved at the end of the session,
+          so if you wish to change the defaults check this box,
+          restart genius and then uncheck it again.
+
    Display errors in a dialog
           If set the errors will be displayed in a seprate
           dialog, if unset the errors will be printed on the
@@ -4899,10 +5000,6 @@ MaxDigits = 12
    console. For others that may affect the output see Section
    10.3.
 
-   MixedFractions
-          If fractions should be printed as mixed fractions such
-          as "1 1/3" rather than "4/3"
-
    IntegerOutputBase
           The base that will be used to output integers
 
@@ -4922,6 +5019,14 @@ MaxDigits = 12
           have them more precise you will have to recompute them.
           Exceptions to this are the system constants such as pi
           or e.
+
+   Remember precision setting across sessions
+          Should the precision setting be remembered for the next
+          session. If unchecked, either the default or any
+          previously saved setting is used each time Genius
+          starts up. Note that settings are saved at the end of
+          the session, so if you wish to change the default check
+          this box, restart genius and then uncheck it again.
      _________________________________________________________
 
 12.3. Terminal

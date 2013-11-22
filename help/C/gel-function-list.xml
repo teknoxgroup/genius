@@ -2005,7 +2005,7 @@ number is specified) of the given size returned.  For example
          <term>DiagonalOf</term>
          <listitem>
           <synopsis>DiagonalOf (M)</synopsis>
-          <para>Gets the diagonal entries of a matrix as a horizontal vector</para>
+          <para>Gets the diagonal entries of a matrix as a column vector.</para>
          </listitem>
         </varlistentry>
 
@@ -2491,7 +2491,16 @@ same size.  No conjugates are taken so this is a bilinear form even if working o
          <listitem>
           <synopsis>Eigenvalues (M)</synopsis>
           <para>Aliases: <function>eig</function></para>
-          <para>Get the eigenvalues of a matrix (Currently only for 2x2 and triangular matrices)</para>
+          <para>Get the eigenvalues of a square matrix.
+	    Currently only works for matrices of size up to 4 by 4, or for
+	    triangular matrices (for which the eigenvalues are on the
+            diagonal).
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/Eigenvalue.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/Eigenvalue.html">Mathworld</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2608,7 +2617,67 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>IsNormal</term>
          <listitem>
           <synopsis>IsNormal (M)</synopsis>
-          <para>Is a matrix normal</para>
+          <para>Is <varname>M</varname> a normal matrix.  That is,
+	  does <userinput>M*M' == M'*M</userinput>.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/NormalMatrix.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/NormalMatrix.html">Mathworld</ulink> for more information.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsPositiveDefinite">
+         <term>IsPositiveDefinite</term>
+         <listitem>
+          <synopsis>IsPositiveDefinite (M)</synopsis>
+          <para>Is <varname>M</varname> a hermitian positive definite matrix.  That is if
+<userinput>HermitianProduct(M*v,v)</userinput> is always strictly positive for
+any vector <varname>v</varname>.
+<varname>M</varname> must be square and hermitian to be positive definite.
+The check that is performed is that every principal submatrix has a nonnegative
+determinant.
+(See <link linkend="gel-function-HermitianProduct">HermitianProduct</link>)</para>
+	  <para>
+	    Note that some authors (for example Mathworld) do not require that
+	    <varname>M</varname> be hermitian, and then the condition is
+	    on the real part of the inner product, but we do not take this
+	    view.  If you wish to perform this check, just check the
+	    hermitian part of the matrix <varname>M</varname> as follows:
+	    <userinput>IsPositiveDefinite(M+M')</userinput>.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/PositiveDefinite.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/PositiveDefiniteMatrix.html">Mathworld</ulink> for more information.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-IsPositiveSemidefinite">
+         <term>IsPositiveSemidefinite</term>
+         <listitem>
+          <synopsis>IsPositiveSemidefinite (M)</synopsis>
+          <para>Is <varname>M</varname> a hermitian positive semidefinite matrix.  That is if
+<userinput>HermitianProduct(M*v,v)</userinput> is always nonnegative for
+any vector <varname>v</varname>.
+<varname>M</varname> must be square and hermitian to be positive semidefinite.
+The check that is performed is that every principal submatrix has a nonnegative
+determinant.
+(See <link linkend="gel-function-HermitianProduct">HermitianProduct</link>)</para>
+	  <para>
+	    Note that some authors do not require that
+	    <varname>M</varname> be hermitian, and then the condition is
+	    on the real part of the inner product, but we do not take this
+	    view.  If you wish to perform this check, just check the
+	    hermitian part of the matrix <varname>M</varname> as follows:
+	    <userinput>IsPositiveSemidefinite(M+M')</userinput>.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/PositiveSemidefinite.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/PositiveSemidefiniteMatrix.html">Mathworld</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2628,7 +2697,14 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>IsUnitary</term>
          <listitem>
           <synopsis>IsUnitary (M)</synopsis>
-          <para>Is a matrix unitary</para>
+          <para>Is a matrix unitary?  That is, does
+	  <userinput>M'*M</userinput> and <userinput>M*M'</userinput>
+	  equal the identity.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/UnitaryTransformation.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/UnitaryMatrix.html">Mathworld</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2637,7 +2713,14 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <listitem>
           <synopsis>JordanBlock (n,lambda)</synopsis>
           <para>Aliases: <function>J</function></para>
-          <para>Get the jordan block corresponding to lambda and n</para>
+          <para>Get the Jordan block corresponding to the eigenvalue
+	  <varname>lambda</varname> with multiplicity <varname>n</varname>.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/JordanCanonicalFormTheorem.html">Planetmath</ulink> or
+	    <ulink url="http://mathworld.wolfram.com/JordanBlock.html">Mathworld</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -2759,7 +2842,7 @@ a sesquilinear form.  The vectors will be made orthonormal with respect to
          <term>PivotColumns</term>
          <listitem>
           <synopsis>PivotColumns (M)</synopsis>
-          <para>Return pivot columns of a matrix, that is columns which have a leading 1 in rref form, also returns the row where they occur</para>
+          <para>Return pivot columns of a matrix, that is columns which have a leading 1 in row reduced form.  Also returns the row where they occur.</para>
          </listitem>
         </varlistentry>
 
@@ -2802,11 +2885,15 @@ function of two arguments or it can be a matrix giving a sesquilinear form.
          </listitem>
         </varlistentry>
 
-        <varlistentry id="gel-function-RaleighQuotient">
-         <term>RaleighQuotient</term>
+        <varlistentry id="gel-function-RayleighQuotient">
+         <term>RayleighQuotient</term>
          <listitem>
-          <synopsis>RaleighQuotient (A,x)</synopsis>
-          <para>Return the Raleigh Quotient of a matrix and a vector</para>
+          <synopsis>RayleighQuotient (A,x)</synopsis>
+          <para>Return the Rayleigh quotient (also called the Rayleigh-Ritz quotient or ratio) of a matrix and a vector.</para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/RayleighQuotient.html">Planetmath</ulink> for more information.
+          </para>
          </listitem>
         </varlistentry>
 
@@ -3693,15 +3780,14 @@ do (
 	    vector of coefficients.  That is
 	    <userinput>4*x^3 + 2*x + 1</userinput> corresponds to the vector
             <userinput>[1,2,0,4]</userinput>.
-	  </para>
-          <para>
-	    Note that due to limitations of the current implementation, only 
-	    polynomials with real coefficients are supported.
+	    Returns a column vector of the three solutions.  The first solution is always
+	    the real one as a cubic always has one real solution.
 	  </para>
           <para>
 	    See
-	    <ulink url="http://planetmath.org/encyclopedia/CubicFormula.html">Planetmath</ulink> or
-	    <ulink url="http://mathworld.wolfram.com/CubicFormula.html">Mathworld</ulink> for more information.
+	    <ulink url="http://planetmath.org/encyclopedia/CubicFormula.html">Planetmath</ulink>,
+	    <ulink url="http://mathworld.wolfram.com/CubicFormula.html">Mathworld</ulink>, or
+	    <ulink url="http://en.wikipedia.org/wiki/Cubic_equation">Wikipedia</ulink> for more information.
 	  </para>
          </listitem>
         </varlistentry>
@@ -3760,18 +3846,19 @@ do (
          <listitem>
           <synopsis>PolynomialRoots (p)</synopsis>
           <para>
-	    Compute roots of a polynomial (degrees 1 through 3 currently)
+	    Compute roots of a polynomial (degrees 1 through 4)
 	    using one of the formulas for such polynomials.
 	    The polynomial should be given as a
 	    vector of coefficients.  That is
 	    <userinput>4*x^3 + 2*x + 1</userinput> corresponds to the vector
             <userinput>[1,2,0,4]</userinput>.
+	    Returns a column vector of the solutions.
 	  </para>
 	  <para>
 	    The function calls
-	    <link linkend="gel-function-QuadraticFormula">QuadraticFormula</link>
-	    and
-	    <link linkend="gel-function-CubicFormula">CubicFormula</link>.
+	    <link linkend="gel-function-QuadraticFormula">QuadraticFormula</link>,
+	    <link linkend="gel-function-CubicFormula">CubicFormula</link>, and
+	    <link linkend="gel-function-QuarticFormula">QuarticFormula</link>.
 	  </para>
          </listitem>
         </varlistentry>
@@ -3786,11 +3873,33 @@ do (
 	    vector of coefficients.  That is
 	    <userinput>3*x^2 + 2*x + 1</userinput> corresponds to the vector
             <userinput>[1,2,3]</userinput>.
+	    Returns a column vector of the two solutions.
 	  </para>
           <para>
 	    See
 	    <ulink url="http://planetmath.org/encyclopedia/QuadraticFormula.html">Planetmath</ulink> or
 	    <ulink url="http://mathworld.wolfram.com/QuadraticFormula.html">Mathworld</ulink> for more information.
+	  </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry id="gel-function-QuarticFormula">
+         <term>QuarticFormula</term>
+         <listitem>
+          <synopsis>QuarticFormula (p)</synopsis>
+          <para>
+	    Compute roots of a quartic (degree 4) polynomial using the
+	    quartic formula.  The polynomial should be given as a
+	    vector of coefficients.  That is
+	    <userinput>5*x^4 + 2*x + 1</userinput> corresponds to the vector
+            <userinput>[1,2,0,0,5]</userinput>.
+	    Returns a column vector of the four solutions.
+	  </para>
+          <para>
+	    See
+	    <ulink url="http://planetmath.org/encyclopedia/QuarticFormula.html">Planetmath</ulink>,
+	    <ulink url="http://mathworld.wolfram.com/QuarticEquation.html">Mathworld</ulink>, or
+	    <ulink url="http://en.wikipedia.org/wiki/Quartic_equation">Wikipedia</ulink> for more information.
 	  </para>
          </listitem>
         </varlistentry>
@@ -4090,7 +4199,7 @@ do (
          <term>StringToASCII</term>
          <listitem>
           <synopsis>StringToASCII (str)</synopsis>
-          <para>Convert a string to a vector of ASCII values</para>
+          <para>Convert a string to a vector of ASCII values.</para>
          </listitem>
         </varlistentry>
 

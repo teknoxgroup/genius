@@ -1,3 +1,146 @@
+Fri Feb 02 10:10:19 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 0.7.7
+
+Wed Jan 31 23:01:00 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/graphing.c: use HUGE_VAL instead of 0.0 when we get an error,
+	  this is better in that it doesn't display anything rather then 0
+	  when for example the return value is not real.
+
+Mon Jan 29 18:49:07 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: do what we do on inside program runs, when
+	  we do "load and run" in terms of printout on the console
+
+Mon Jan 29 16:53:24 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.[ch]: add "remember" settings to the gui and by
+	  default don't remember precision and output settings as those
+	  are most likely temporary.  Also add "mixed fractions" option to
+	  the gui.  Add a Help button to the settings dialog
+
+	* help/C/prefs-display.xml, help/C/prefs-precision.xml,
+	  help/C/genius.xml: update for the above
+
+	* help/C/Makefile.am: add gel-matrix-linalg.xml
+
+Mon Jan 29 13:52:33 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: don't set output style to normal before showing
+	  full answer, we want it in the current style
+
+Mon Jan 29 13:32:29 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml, help/C/gel-function-list.xml,
+	  help/C/gel-matrix-linalg.xml: minor updates, add skeleton
+	  "Linear Algebra" section
+
+	* src/funclib.c, src/matrixw.c, src/gnome-genius.c, src/calc.h:
+	  update copyright strings
+
+Mon Jan 29 12:04:16 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: Add "Show Full Answer" menu item, always show
+	the Programs menu and add a "Console" item to the programs menu
+
+Mon Jan 29 10:24:52 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/equation_solving/formulas.gel: Fix handling of real solutions
+	  for the cubic to avoid ugly expressions with small imaginary values
+	  where everything should be real.
+	
+	* src/geniustests.txt, src/longtest.gel: Fixup tests
+
+	* help/C/gel-function-list.xml: small update to the formula entries
+
+Mon Jan 29 01:35:56 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c, src/matrixw.c: DiagonalOf now returns a column
+	  vector
+
+	* lib/equation_solving/formulas.gel: Add QuarticFormula and use it in
+	  PolynomialRoots.  Also return column vectors from QuadraticFormula,
+	  CubicFormula
+
+	* lib/linear_algebra/linear_algebra.gel: add support for 4x4 matrices
+	  in Eigenvalues and always return column vector from that function
+
+	* src/gnome-genius.c: add Next/Previous Tab menu item and accelerator
+
+	* src/longtest.gel: test the quartic
+
+	* help/C/gel-matrix-support.xml, help/C/gel-polynomials.xml,
+	  help/C/gel-function-list.xml: Update the documentation
+
+2007-01-24  Pema Geyleg  <pema.geyleg@gmail.com>
+
+	* configure.in: Added 'dz' to ALL_LINGUAS.
+
+Sat Jan 20 00:14:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/gel-function-list.gel: fix unbalanced para
+
+Sat Jan 20 00:08:18 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: Fix spelling, it's
+	  RayleighQuotient
+
+	* lib/linear_algebra/linear_algebra.gel,
+	  lib/equation_solving/formulas.gel:  Fixup CubicFormula to work
+	  correctly with complex coefficients and implement Eigenvalues
+	  for 3 by 3 matrices.
+
+	* help/C/gel-function-list.xml, help/C/genius.xml: add a bunch of
+	  documentation to the function list and Planetmath and Mathworld
+	  links.
+
+	* src/geniustests.txt, src/longtest.gel: add tests
+
+	* add missing files to subversion
+
+Fri Jan 19 21:34:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: add IsPositiveDefinite
+	  and IsPositiveSemidefinite
+
+	* src/geniustests.txt: add tests
+
+	* help/C/gel-function-list.xml: update for the above
+
+Sat Sep 02 11:27:01 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add undo/redo capability
+
+	* configure.in: raise version
+
+Mon Aug 28 12:47:44 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/plugin.c, src/plugread.c, src/Makefile.am:  Fix plugin reading.
+	  Fix the interface to be portable and append the proper extension on
+	  reading the plugin.  Pass proper options to the linker on compiling
+	  the test plugin.
+
+	* src/test.plugin.in: whack the extension
+
+	* src/calc.c, src/gnome-genius.c, src/genius.c, src/graphing.c:  Some
+	  portability fixes with respect to the path names
+
+Wed Aug 23 11:45:49 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-geniuc.c: cosmetic update to about box
+
+	* src/calc.h: add diactrical marks in Jiri in the copyright string
+
+Wed Aug 23 11:33:49 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: add Kai as documentor in the about box and add
+	  the diactrical marks in Jiri in the about box
+
+Sat Aug 19 11:59:04 2006  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/lexer.l: fix flex braindamage with respect to yywrap function
+
 Tue Aug 15 11:05:54 2006  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 0.7.6.1

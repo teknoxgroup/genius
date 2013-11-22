@@ -3,9 +3,9 @@
 "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
   <!ENTITY app "<application>Genius Math Tool</application>">
   <!ENTITY appname "Genius">
-  <!ENTITY appversion "0.7.6">
-  <!ENTITY manrevision "0.2.1">
-  <!ENTITY date "August 2006">
+  <!ENTITY appversion "0.7.7">
+  <!ENTITY manrevision "0.2.2">
+  <!ENTITY date "January 2007">
 
   <!ENTITY legal SYSTEM "legal.xml">
 
@@ -29,6 +29,7 @@
 
   <!ENTITY gel-matrix-support SYSTEM "gel-matrix-support.xml">
   <!ENTITY gel-matrix-transpose SYSTEM "gel-matrix-transpose.xml">
+  <!ENTITY gel-matrix-linalg SYSTEM "gel-matrix-linalg.xml">
 
   <!ENTITY gel-conditionals SYSTEM "gel-conditionals.xml">
   <!ENTITY gel-loops SYSTEM "gel-loops.xml">
@@ -44,7 +45,6 @@
 
   <!ENTITY examples SYSTEM "examples.xml">
 
-  <!ENTITY prefs SYSTEM "prefs.xml">
   <!ENTITY prefs-display SYSTEM "prefs-display.xml">
   <!ENTITY prefs-precision SYSTEM "prefs-precision.xml">
   <!ENTITY prefs-terminal SYSTEM "prefs-terminal.xml">
@@ -68,7 +68,7 @@
     <title>&appname; Manual</title>       
 
     <copyright>
-      <year>1997-2006</year>
+      <year>1997-2007</year>
       <holder>Jiri (George) Lebl</holder>
     </copyright>
     <copyright>
@@ -285,6 +285,7 @@
 
     &gel-matrix-support;
     &gel-matrix-transpose;
+    &gel-matrix-linalg;
 
   </chapter>
 

@@ -261,7 +261,7 @@ typedef union YYSTYPE
 	mpw_t val;
 	char *id;
 }
-/* Line 193 of yacc.c.  */
+/* Line 187 of yacc.c.  */
 #line 266 "y.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
