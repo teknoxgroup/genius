@@ -59,17 +59,24 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+AR = @AR@
 AS = @AS@
 CATALOGS = @CATALOGS@
 CATOBJEXT = @CATOBJEXT@
 CC = @CC@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
+CXX = @CXX@
+CXXCPP = @CXXCPP@
 DATADIRNAME = @DATADIRNAME@
 DLLTOOL = @DLLTOOL@
 ECHO = @ECHO@
+EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 EXTRA_WARNING_CFLAGS = @EXTRA_WARNING_CFLAGS@
+F77 = @F77@
+GCJ = @GCJ@
+GCJFLAGS = @GCJFLAGS@
 GCONFTOOL = @GCONFTOOL@
 GCONF_CONFIG_SOURCE = @GCONF_CONFIG_SOURCE@
 GENCAT = @GENCAT@
@@ -82,6 +89,8 @@ GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
+GUI_CFLAGS = @GUI_CFLAGS@
+GUI_LIBS = @GUI_LIBS@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
 INSTALL_GCONF_CONFIG_SOURCE = @INSTALL_GCONF_CONFIG_SOURCE@
 INSTOBJEXT = @INSTOBJEXT@
@@ -105,6 +114,7 @@ INTLTOOL_SOUNDLIST_RULE = @INTLTOOL_SOUNDLIST_RULE@
 INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
+INTLTOOL_XAM_RULE = @INTLTOOL_XAM_RULE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
 LDFLAGS = @LDFLAGS@
 LEX = @LEX@
@@ -125,19 +135,19 @@ POSUB = @POSUB@
 PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
 PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
+RC = @RC@
 READLINE_LIB = @READLINE_LIB@
 STRIP = @STRIP@
 TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
-WARN_CFLAGS = @WARN_CFLAGS@
 YACC = @YACC@
-cxxflags_set = @cxxflags_set@
 l = @l@
 
 Librarydir = $(datadir)/genius/gel
 Plugindescdir = $(datadir)/genius/plugins
+Langdescdir = $(datadir)/genius/gtksourceview/
 
 plugindir = $(libdir)/genius
 
@@ -146,7 +156,7 @@ plugin_includedir = $(includedir)/genius
 #YACCFLAGS += -d -t
 YFLAGS =  -d -t
 
-INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_builddir)						$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
+INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_srcdir)/vicious-extensions				-I$(top_builddir)						-I$(top_builddir)/vicious-extensions				$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
 
 
 bin_PROGRAMS = gnome-genius genius
@@ -156,20 +166,20 @@ libexec_PROGRAMS = genius-readline-helper-fifo
 gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
 
 
-gnome_genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+gnome_genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lviciousui					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helper.c
 
 
 # FIXME: no need for so many libs
-genius_readline_helper_fifo_LDADD =  	-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_readline_helper_fifo_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread_nongnome.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
 
-genius_LDADD =  	-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
 
 
 plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		mpzextra.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			lexer.h			eval.h
@@ -189,10 +199,12 @@ Desktop_in_files =  	gnome-genius.desktop.in
 
 Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
-EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in
+EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in 	genius.lang
 
 
 Plugindesc_DATA = test.plugin
+
+Langdesc_DATA = genius.lang
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
@@ -221,7 +233,7 @@ genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
 util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) mpwrap.$(OBJEXT) \
 mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
 compil.$(OBJEXT) parseutil.$(OBJEXT) inter.$(OBJEXT) lexer.$(OBJEXT) \
-plugin.$(OBJEXT) plugread_nongnome.$(OBJEXT) parse.$(OBJEXT) \
+plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
 genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
@@ -235,7 +247,7 @@ COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CF
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DATA =  $(Desktop_DATA) $(Plugindesc_DATA)
+DATA =  $(Desktop_DATA) $(Langdesc_DATA) $(Plugindesc_DATA)
 
 HEADERS =  $(plugin_include_HEADERS)
 
@@ -422,6 +434,25 @@ uninstall-DesktopDATA:
 	  rm -f $(DESTDIR)$(Desktopdir)/$$p; \
 	done
 
+install-LangdescDATA: $(Langdesc_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(Langdescdir)
+	@list='$(Langdesc_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Langdescdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(Langdescdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(Langdescdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(Langdescdir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-LangdescDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(Langdesc_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(Langdescdir)/$$p; \
+	done
+
 install-PlugindescDATA: $(Plugindesc_DATA)
 	@$(NORMAL_INSTALL)
 	$(mkinstalldirs) $(DESTDIR)$(Plugindescdir)
@@ -537,11 +568,17 @@ parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
 	calc.h matrix.h matrixw.h parseutil.h extra.h
 parseutil.o: parseutil.c ../config.h structs.h mpwrap.h eval.h dict.h \
 	util.h calc.h matrix.h matrixw.h parseutil.h extra.h
-plugin.o: plugin.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h parse.h plug_api.h \
+plugin.o: plugin.c ../config.h ../vicious-extensions/vicious.h \
+	../vicious-extensions/ve-misc.h \
+	../vicious-extensions/ve-config.h \
+	../vicious-extensions/ve-signal.h calc.h structs.h mpwrap.h \
+	eval.h util.h dict.h funclib.h matrixw.h matrix.h compil.h \
+	parse.h plug_api.h plugin.h plugread.h
+plugread.o: plugread.c ../config.h ../vicious-extensions/vicious.h \
+	../vicious-extensions/ve-misc.h \
+	../vicious-extensions/ve-config.h \
+	../vicious-extensions/ve-signal.h calc.h structs.h mpwrap.h \
 	plugin.h plugread.h
-plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugin.h \
-	plugread.h
 plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
 	mpwrap.h plugin.h plugread.h
 testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h eval.h \
@@ -562,7 +599,8 @@ install-exec-am: install-binPROGRAMS install-libexecPROGRAMS
 install-exec: install-exec-am
 
 install-data-am: install-pluginLTLIBRARIES install-DesktopDATA \
-		install-PlugindescDATA install-plugin_includeHEADERS
+		install-LangdescDATA install-PlugindescDATA \
+		install-plugin_includeHEADERS
 install-data: install-data-am
 
 install-am: all-am
@@ -570,7 +608,7 @@ install-am: all-am
 install: install-am
 uninstall-am: uninstall-pluginLTLIBRARIES uninstall-binPROGRAMS \
 		uninstall-libexecPROGRAMS uninstall-DesktopDATA \
-		uninstall-PlugindescDATA \
+		uninstall-LangdescDATA uninstall-PlugindescDATA \
 		uninstall-plugin_includeHEADERS
 uninstall: uninstall-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(DATA) $(HEADERS)
@@ -580,7 +618,7 @@ install-strip:
 installdirs:
 	$(mkinstalldirs)  $(DESTDIR)$(plugindir) $(DESTDIR)$(bindir) \
 		$(DESTDIR)$(libexecdir) $(DESTDIR)$(Desktopdir) \
-		$(DESTDIR)$(Plugindescdir) \
+		$(DESTDIR)$(Langdescdir) $(DESTDIR)$(Plugindescdir) \
 		$(DESTDIR)$(plugin_includedir)
 
 
@@ -637,14 +675,15 @@ uninstall-binPROGRAMS install-binPROGRAMS mostlyclean-libexecPROGRAMS \
 distclean-libexecPROGRAMS clean-libexecPROGRAMS \
 maintainer-clean-libexecPROGRAMS uninstall-libexecPROGRAMS \
 install-libexecPROGRAMS uninstall-DesktopDATA install-DesktopDATA \
-uninstall-PlugindescDATA install-PlugindescDATA \
-uninstall-plugin_includeHEADERS install-plugin_includeHEADERS tags \
-mostlyclean-tags distclean-tags clean-tags maintainer-clean-tags \
-distdir info-am info dvi-am dvi check check-am installcheck-am \
-installcheck install-exec-am install-exec install-data-am install-data \
-install-am install uninstall-am uninstall all-redirect all-am all \
-installdirs mostlyclean-generic distclean-generic clean-generic \
-maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+uninstall-LangdescDATA install-LangdescDATA uninstall-PlugindescDATA \
+install-PlugindescDATA uninstall-plugin_includeHEADERS \
+install-plugin_includeHEADERS tags mostlyclean-tags distclean-tags \
+clean-tags maintainer-clean-tags distdir info-am info dvi-am dvi check \
+check-am installcheck-am installcheck install-exec-am install-exec \
+install-data-am install-data install-am install uninstall-am uninstall \
+all-redirect all-am all installdirs mostlyclean-generic \
+distclean-generic clean-generic maintainer-clean-generic clean \
+mostlyclean distclean maintainer-clean
 
 
 @INTLTOOL_DESKTOP_RULE@

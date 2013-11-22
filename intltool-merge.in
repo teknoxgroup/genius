@@ -34,7 +34,7 @@
 ## Release information
 my $PROGRAM = "intltool-merge";
 my $PACKAGE = "intltool";
-my $VERSION = "0.26";
+my $VERSION = "0.27.2";
 
 ## Loaded modules
 use strict; 
@@ -53,6 +53,7 @@ my $RFC822DEB_STYLE_ARG = 0;
 my $QUIET_ARG = 0;
 my $PASS_THROUGH_ARG = 0;
 my $UTF8_ARG = 0;
+my $MULTIPLE_OUTPUT = 0;
 my $cache_file;
 
 ## Handle options
@@ -70,6 +71,7 @@ GetOptions
  "rfc822deb-style|r" => \$RFC822DEB_STYLE_ARG,
  "pass-through|p" => \$PASS_THROUGH_ARG,
  "utf8|u" => \$UTF8_ARG,
+ "multiple-output|m" => \$MULTIPLE_OUTPUT,
  "cache|c=s" => \$cache_file
  ) or &error;
 
@@ -109,7 +111,16 @@ elsif ($XML_STYLE_ARG && @ARGV > 2)
         &utf8_sanity_check;
 	&preparation;
 	&print_message;
-	&xml_merge_translations;
+	
+	if ($MULTIPLE_OUTPUT)
+	{
+	    &xml_merge_multiple_output;
+	}
+	else
+	{
+	    &xml_merge_single_output;
+	}
+
 	&finalize;
 } 
 elsif ($KEYS_STYLE_ARG && @ARGV > 2) 
@@ -151,35 +162,47 @@ exit;
 ## Sub for printing release information
 sub print_version
 {
-    print "${PROGRAM} (${PACKAGE}) ${VERSION}\n";
-    print "Written by Maciej Stachowiak, Darin Adler and Kenneth Christiansen.\n\n";
-    print "Copyright (C) 2000-2002 Free Software Foundation, Inc.\n";
-    print "Copyright (C) 2000-2001 Eazel, Inc.\n";
-    print "This is free software; see the source for copying conditions.  There is NO\n";
-    print "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n";
+    print <<_EOF_;
+${PROGRAM} (${PACKAGE}) ${VERSION}
+Written by Maciej Stachowiak, Darin Adler and Kenneth Christiansen.
+
+Copyright (C) 2000-2003 Free Software Foundation, Inc.
+Copyright (C) 2000-2001 Eazel, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+_EOF_
     exit;
 }
 
 ## Sub for printing usage information
 sub print_help
 {
-    print "Usage: ${PROGRAM} [OPTIONS] PO_DIRECTORY FILENAME OUTPUT_FILE\n";
-    print "Generates an output file that includes translated versions of some attributes,\n";
-    print "from an untranslated source and a po directory that includes translations.\n\n";
-    print "  -b, --ba-style         includes translations in the bonobo-activation style\n";
-    print "  -d, --desktop-style    includes translations in the desktop style\n";
-    print "  -k, --keys-style       includes translations in the keys style\n";
-    print "  -s, --schemas-style    includes translations in the schemas style\n";
-    print "  -r, --rfc822deb-style  includes translations in the RFC822 style\n";
-    print "  -x, --xml-style        includes translations in the standard xml style\n";
-    print "  -u, --utf8             convert all strings to UTF-8 before merging\n";
-    print "  -p, --pass-through     use strings as found in .po files, without\n";
-    print "                         conversion (STRONGLY unrecommended with -x)\n";
-    print "  -q, --quiet            suppress most messages\n";
-    print "      --help             display this help and exit\n";
-    print "      --version          output version information and exit\n";
-    print "\nReport bugs to bugzilla.gnome.org, module intltool, or contact us through \n";
-    print "<xml-i18n-tools-list\@gnome.org>.\n";
+    print <<_EOF_;
+Usage: ${PROGRAM} [OPTION]... PO_DIRECTORY FILENAME OUTPUT_FILE
+Generates an output file that includes some localized attributes from an
+untranslated source file.
+
+Mandatory options: (exactly one must be specified)
+  -b, --ba-style         includes translations in the bonobo-activation style
+  -d, --desktop-style    includes translations in the desktop style
+  -k, --keys-style       includes translations in the keys style
+  -s, --schemas-style    includes translations in the schemas style
+  -r, --rfc822deb-style  includes translations in the RFC822 style
+  -x, --xml-style        includes translations in the standard xml style
+
+Other options:
+  -u, --utf8             convert all strings to UTF-8 before merging
+  -p, --pass-through     use strings as found in .po files, without
+                         conversion (STRONGLY unrecommended with -x)
+  -c, --cache=FILE       specify cache file name
+                         (usually \$top_builddir/po/.intltool-merge-cache)
+  -q, --quiet            suppress most messages
+      --help             display this help and exit
+      --version          output version information and exit
+
+Report bugs to http://bugzilla.gnome.org/ (product name "$PACKAGE")
+or send email to <xml-i18n-tools\@gnome.org>.
+_EOF_
     exit;
 }
 
@@ -571,7 +594,64 @@ sub ba_merge_translations
 
 ## XML (non-bonobo-activation) merge code
 
-sub xml_merge_translations
+sub xml_merge_multiple_output
+{
+    my $source;
+
+    {
+       local $/; # slurp mode
+       open INPUT, "<$FILE" or die "can't open $FILE: $!";
+       $source = <INPUT>;
+       close INPUT;
+    }
+
+    # FIXME: support attribute translations
+
+    # Empty nodes never need translation, so unmark all of them.
+    # For example, <_foo/> is just replaced by <foo/>.
+    $source =~ s|<\s*_($w+)\s*/>|<$1/>|g;
+
+    for my $lang (sort keys %po_files_by_lang) 
+    {
+	my $source_copy = $source;
+
+	open OUTPUT, ">$OUTFILE-$lang" or die;     
+	
+	# Support for <_foo>blah</_foo> style translations.
+	while ($source_copy =~ s|^(.*?)([ \t]*)<\s*_($w+)\s*>(.*?)<\s*/_\3\s*>([ \t]*\n)?||s) 
+	{
+	    print OUTPUT $1;
+	    
+	    my $spaces = $2;
+	    my $tag = $3;
+	    my $string = $4;
+	    
+	    $string =~ s/\s+/ /g;
+	    $string =~ s/^ //;
+	    $string =~ s/ $//;
+	    $string = entity_decode($string);
+	    
+	    my $translation = $translations{$lang, $string};
+
+	    if (!$translation)
+	    {
+		print OUTPUT "$spaces<$tag>$string</$tag>\n";
+	    }
+	    else
+	    {
+		$translation = entity_encode($translation);
+		
+		print OUTPUT "$spaces<$tag>$translation</$tag>\n";
+	    }
+	}
+	print OUTPUT $source_copy;
+
+	print "CREATED $OUTFILE-$lang\n";
+	close OUTPUT;
+    }
+}
+
+sub xml_merge_single_output
 {
     my $source;
 

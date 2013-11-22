@@ -31,7 +31,7 @@ typedef enum {
 	GEL_USER_FUNC, /*function that points to an GelETree for evaluation*/
 	GEL_VARIABLE_FUNC, /*function that points to an GelETree result */
 	GEL_REFERENCE_FUNC /*a function that points to some other GelEFunc*/
-} GelEFuncType;
+} GelEFuncType; /* should fit in 3 bits (it does) */
 
 typedef struct _GelEFunc GelEFunc;
 typedef union _GelETree GelETree;
@@ -69,6 +69,8 @@ typedef struct _GelMatrixW GelMatrixW;
 typedef GelETree *(* ParameterSetFunc) (GelETree *val);
 typedef GelETree *(* ParameterGetFunc) (void);
 
+typedef	GelETree *(* GelBIFunction) (GelCtx *ctx, GelETree * *, gboolean *); /*the gboolean is exception*/
+
 /* tokens point to this structure globaly, there is
    one such structure for each token.  */
 struct _GelToken {
@@ -81,33 +83,37 @@ struct _GelToken {
 	gpointer data1;
 	gpointer data2;
 
-	guint32 protected:1;
-	guint32 parameter:1;
-	guint32 built_in_parameter:1;
+	guint8 protected:1;
+	guint8 parameter:1;
+	guint8 built_in_parameter:1;
 };
 
 struct _GelEFunc {
 	GelToken *id;
-	GelEFuncType type;
 	int context; /*the context number this is used for .. if we pop this
 		       context, we will destroy the function*/
-	int nargs; /*number of arguments*/
 	GSList *named_args; /*names of arguments*/
 
 	GSList *extra_dict;
 
 	union {
 		GelETree *user;
-		GelETree *(*func)(GelCtx *ctx, GelETree * *, int *); /*the integer is exception*/
+		GelBIFunction func;
 		GelEFunc *ref;
 		GelEFunc *next; /*this is for keeping a free list*/
 	} data;
+
+	guint16 nargs; /*number of arguments*/
+
+	/* GelEFuncType type; */
+	guint8 type:3;
+
 	/* if true, we must take this off the subst list for a context pop,
 	 * before we free the function */
-	guint32 on_subst_list:1;
-	guint32 vararg:1;
-	guint32 propagate_mod:1;
-	guint32 no_mod_all_args:1;
+	guint8 on_subst_list:1;
+	guint8 vararg:1;
+	guint8 propagate_mod:1;
+	guint8 no_mod_all_args:1;
 };
 
 typedef enum {
@@ -150,7 +156,13 @@ struct _GelETreeMatrix {
 	GelETreeType type;
 	GelETree *next;
 	GelMatrixW *matrix;
+	gboolean quoted;
+	
+	/* gboolean is faster, then a bitfield and we right now
+	   don't gain anything */
+	/*
 	guint quoted:1;
+	*/
 };
 
 /* FIXME: Not implemented */
@@ -158,15 +170,29 @@ struct _GelETreeSet {
 	GelETreeType type;
 	GelETree *next;
 	GelETree *items;
+	gboolean multiset;
+
+	/* gboolean is faster, then a bitfield and we right now
+	   don't gain anything */
+	/*
 	guint multiset:1;
+	*/
 };
 
 struct _GelETreePolynomial {
 	GelETreeType type;
 	GelETree *next;
-	int arraysize;
-	int largest; /* largest exponent */
-	int vars; /* number of variables */
+	guint16 largest; /* largest exponent */
+	guint8 vars; /* number of variables */
+
+	/* This needs redoing.  No need to store
+	   this in the ETree struct since we want to
+	   conserve memory.  Probably need an array
+	   type for this. */
+	/*
+	guint16 arraysize;
+	*/
+
 	mpw_ptr *indexes; /* indexes when written out in standard form
 			     from smallest to largest.  If more then one
 			     variable then this is '(largest+1)^vars'
@@ -176,8 +202,8 @@ struct _GelETreePolynomial {
 struct _GelETreeOperator {
 	GelETreeType type;
 	GelETree *next;
-	int oper;
-	int nargs;
+	gint8 oper;
+	guint16 nargs;
 	GelETree *args;
 };
 
@@ -202,7 +228,7 @@ struct _GelETreeFunction {
 struct _GelETreeComparison {
 	GelETreeType type;
 	GelETree *next;
-	int nargs;
+	gint16 nargs;
 	GelETree *args;
 	GSList *comp;
 };
@@ -210,14 +236,14 @@ struct _GelETreeComparison {
 struct _GelETreeUsertype {
 	GelETreeType type;
 	GelETree *next;
-	int ttype;
+	gint16 ttype;
 	gpointer data;
 };
 
 struct _GelETreeMatrixRow {
 	GelETreeType type;
 	GelETree *next;
-	int nargs;
+	gint16 nargs;
 	GelETree *args;
 };
 
@@ -296,8 +322,8 @@ typedef enum {
 struct _GelEvalLoop {
 	GelETree * condition;
 	GelETree * body;
-	guint32 is_while:1; /*if false, this is an until loop*/
-	guint32 body_first:1; /*if true body is the first argument*/
+	guint8 is_while:1; /*if false, this is an until loop*/
+	guint8 body_first:1; /*if true body is the first argument*/
 };
 /*data structure for 'for' loops*/
 struct _GelEvalFor {
@@ -305,7 +331,7 @@ struct _GelEvalFor {
 	mpw_ptr x;
 	mpw_ptr by;
 	mpw_ptr to;
-	int init_cmp;
+	gint8 init_cmp;
 	GelETree * result;
 	GelETree * body;
 	GelETree * orig_body;
@@ -328,7 +354,7 @@ struct _GelCtx {
 	GelEvalStack *stack;
 	gpointer *topstack;
 	GelETree *res;
-	int post;
+	gboolean post;
 	GelETree *current;
 	mpw_ptr modulo;
 };

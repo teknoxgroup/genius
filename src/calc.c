@@ -30,6 +30,8 @@
 #include <signal.h>
 #ifdef HAVE_WORDEXP
 #include <wordexp.h>
+#else
+#include <glob.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -93,14 +95,14 @@ GSList *evalstack=NULL;
 
 /*error .. global as well*/
 GeniusError error_num = NO_ERROR;
-int got_eof = FALSE;
+gboolean gel_got_eof = FALSE;
 
 /*the current state of the calculator*/
 calcstate_t calcstate = {0};
 
 /*error reporting function*/
-void (*errorout)(const char *)=NULL;
-void (*infoout)(const char *)=NULL;
+void (*errorout)(const char *) = NULL;
+void (*infoout)(const char *) = NULL;
 
 GelCommand gel_command = GEL_NO_COMMAND;
 char *gel_command_arg = NULL;
@@ -349,7 +351,7 @@ add_alias (const char *func, const char *alias)
 
 	help = get_help (func, TRUE /* insert */);
 	if (help->aliasfor != NULL) {
-		(* errorout)(_("Trying to set an alias for an alias"));
+		gel_errorout (_("Trying to set an alias for an alias"));
 		return;
 	}
 
@@ -457,8 +459,8 @@ whack_help (const char *func)
 void
 gel_push_file_info(const char *file,int line)
 {
-	curfile = g_slist_prepend(curfile,file?g_strdup(file):NULL);
-	curline = g_slist_prepend(curline,GINT_TO_POINTER(line));
+	curfile = g_slist_prepend (curfile, file?g_strdup(file):NULL);
+	curline = g_slist_prepend (curline, GINT_TO_POINTER (line));
 }
 
 void
@@ -481,11 +483,11 @@ gel_incr_file_info(void)
 {
 	int i;
 	
-	if(!curline)
+	if (curline == NULL)
 		return;
 	
-	i = GPOINTER_TO_INT(curline->data);
-	curline->data = GINT_TO_POINTER((i+1));
+	i = GPOINTER_TO_INT (curline->data);
+	curline->data = GINT_TO_POINTER ((i+1));
 }
 
 void
@@ -949,15 +951,15 @@ appendoper(GelOutput *gelo, GelETree *n)
 			} else if(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE) {
 				GelETree *t;
 				GET_L(l,t);
-				if(t->type!=IDENTIFIER_NODE) {
-					(*errorout)(_("Bad identifier for function node!"));
+				if G_UNLIKELY (t->type!=IDENTIFIER_NODE) {
+					gel_errorout (_("Bad identifier for function node!"));
 					gel_output_string(gelo,"?)");
 					break;
 				}
 				gel_output_string(gelo,"*");
 				gel_output_string(gelo,t->id.id->token);
 			} else {
-				(*errorout)(_("Bad identifier for function node!"));
+				gel_errorout (_("Bad identifier for function node!"));
 				gel_output_string(gelo,"?)");
 				break;
 			}
@@ -987,7 +989,7 @@ appendoper(GelOutput *gelo, GelETree *n)
 			append_binaryoper(gelo," mod ",n); break;
 
 		default:
-			(*errorout)(_("Unexpected operator!"));
+			gel_errorout (_("Unexpected operator!"));
 			gel_output_string(gelo,"(?)");
 			break;
 	}
@@ -1158,10 +1160,10 @@ appendpolynomial (GelOutput *gelo, GelETree *n)
 	int stride;
 	gboolean first = TRUE;
 
-	if (n->poly.vars > 3) {
+	if G_UNLIKELY (n->poly.vars > 3) {
 		/* FIXME: */
-		(*errorout)(_("Cannot currently print polynomials of "
-			      "more then 3 vars"));
+		gel_errorout (_("Cannot currently print polynomials of "
+				"more then 3 vars"));
 		gel_output_string (gelo, "(?)");
 		return;
 	}
@@ -1232,8 +1234,8 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 {
 	char *p;
 
-	if (n == NULL) {
-		(*errorout)(_("NULL tree!"));
+	if G_UNLIKELY (n == NULL) {
+		gel_errorout (_("NULL tree!"));
 		gel_output_string (gelo, "(?)");
 		return;
 	}
@@ -1307,8 +1309,8 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 			GelEFunc *f;
 			
 			f = n->func.func;
-			if(!f) {
-				(*errorout)(_("NULL function!"));
+			if G_UNLIKELY (f == NULL) {
+				gel_errorout (_("NULL function!"));
 				gel_output_string(gelo,"(?)");
 				break;
 			}
@@ -1329,7 +1331,7 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 			if (f->vararg)
 				gel_output_string (gelo, "...");
 
-			if(f->type==GEL_USER_FUNC) {
+			if G_LIKELY (f->type==GEL_USER_FUNC) {
 				gel_output_string(gelo,")=(");
 				D_ENSURE_USER_BODY (f);
 				print_etree(gelo, f->data.user, FALSE);
@@ -1337,7 +1339,7 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 			} else {
 				/*variable and reference functions should
 				  never be in the etree*/
-				(*errorout)(_("Unexpected function type!"));
+				gel_errorout (_("Unexpected function type!"));
 				gel_output_string(gelo,")(?)");
 			}
 			break;
@@ -1346,7 +1348,7 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 		appendcomp(gelo,n);
 		break;
 	default:
-		(*errorout)(_("Unexpected node!"));
+		gel_errorout (_("Unexpected node!"));
 		gel_output_string(gelo,"(?)");
 	       break;
 	}
@@ -1604,23 +1606,22 @@ gel_compile_all_user_funcs(FILE *outfile)
 }
 
 static void
-load_compiled_fp(const char *file, FILE *fp)
+load_compiled_fp (const char *file, FILE *fp)
 {
 	char *buf;
 	int buf_size = 4096;
 	gboolean break_on_next = FALSE;
 	GelEFunc *last_func = NULL;
 
-	buf = g_new(char, buf_size);
+	buf = g_new (char, buf_size);
 
-	if(!fgets(buf,buf_size,fp)) {
+	if G_UNLIKELY (fgets (buf, buf_size, fp) == NULL) {
 		g_free (buf);
 		return;
 	}
-	if(strcmp(buf,"CGEL "VERSION"\n")!=0) {
-		g_snprintf(buf,buf_size,_("File '%s' is a wrong version of GEL"),file);
-		(*errorout)(buf);
+	if G_UNLIKELY (strcmp (buf, "CGEL "VERSION"\n") != 0) {
 		g_free (buf);
+		gel_errorout (_("File '%s' is a wrong version of GEL"), file);
 		return;
 	}
 
@@ -1628,15 +1629,15 @@ load_compiled_fp(const char *file, FILE *fp)
 	  except the global one, if this is the first time called it
 	  will also register the builtin routines with the global
 	  dictionary*/
-	d_singlecontext();
+	d_singlecontext ();
 
-	error_num=NO_ERROR;
+	error_num = NO_ERROR;
 
 	/*if we this was set, then the mp library was initialized for
 	  sure*/
-	g_assert(calcstate.float_prec>0);
+	g_assert (calcstate.float_prec > 0);
 
-	while( ! break_on_next && fgets(buf,buf_size,fp)) {
+	while ( ! break_on_next && fgets (buf, buf_size, fp) != NULL) {
 		char *p;
 		char *b2;
 		GelToken *tok;
@@ -1648,7 +1649,7 @@ load_compiled_fp(const char *file, FILE *fp)
 
 		gel_incr_file_info();
 
-		for(;;) {
+		for (;;) {
 			int len;
 			p = strchr (buf,'\n');
 			if (p != NULL) {
@@ -1665,98 +1666,98 @@ load_compiled_fp(const char *file, FILE *fp)
 		}
 
 		p = strtok(buf,";");
-		if(!p) {
-			(*errorout)(_("Badly formed record"));
+		if G_UNLIKELY (!p) {
+			gel_errorout (_("Badly formed record"));
 			continue;
-		} else if(*p == 'T') {
-			(*errorout)(_("Record out of place"));
+		} else if G_UNLIKELY (*p == 'T') {
+			gel_errorout (_("Record out of place"));
 			continue;
-		} else if(*p == 'A') {
+		} else if (*p == 'A') {
 			char *d;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			d = strtok(NULL,";");
-			if(!d) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!d) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			add_alias(p,d);
 			continue;
-		} else if(*p == 'C') {
+		} else if (*p == 'C') {
 			char *d;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			d = strtok(NULL,";");
-			if(!d) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!d) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			add_category(p,d);
 			continue;
-		} else if(*p == 'D') {
+		} else if (*p == 'D') {
 			char *d;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			d = strtok(NULL,";");
-			if(!d) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!d) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			add_description(p,d);
 			continue;
-		} else if(*p == 'L') {
+		} else if (*p == 'L') {
 			char *d, *h;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			d = strtok(NULL,";");
-			if(!d) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!d) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			h = gel_decode_string (d);
 			add_help_link (p, h);
 			g_free (h);
 			continue;
-		} else if(*p == 'H') {
+		} else if (*p == 'H') {
 			char *d, *h;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			d = strtok(NULL,";");
-			if(!d) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!d) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			h = gel_decode_string (d);
 			add_help_html (p, h);
 			g_free (h);
 			continue;
-		} else if(*p == 'P') {
+		} else if (*p == 'P') {
 			GelToken *tok;
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			tok = d_intern(p);
 			tok->protected = 1;
 			continue;
-		} else if(*p != 'F' && *p != 'V' && *p != 'f' && *p != 'v') {
-			(*errorout)(_("Badly formed record"));
+		} else if G_UNLIKELY (*p != 'F' && *p != 'V' && *p != 'f' && *p != 'v') {
+			gel_errorout (_("Badly formed record"));
 			continue;
 		}
 		type = (*p == 'F' || *p == 'f') ? GEL_USER_FUNC : GEL_VARIABLE_FUNC;
@@ -1768,21 +1769,21 @@ load_compiled_fp(const char *file, FILE *fp)
 
 		/*size*/
 		p = strtok(NULL,";");
-		if(!p) {
-			(*errorout)(_("Badly formed record"));
+		if G_UNLIKELY (!p) {
+			gel_errorout (_("Badly formed record"));
 			continue;
 		}
 		size = -1;
 		sscanf(p,"%d",&size);
-		if(size==-1) {
-			(*errorout)(_("Badly formed record"));
+		if G_UNLIKELY (size==-1) {
+			gel_errorout (_("Badly formed record"));
 			continue;
 		}
 
 		/*id*/
 		p = strtok(NULL,";");
-		if(!p) {
-			(*errorout)(_("Badly formed record"));
+		if G_UNLIKELY (!p) {
+			gel_errorout (_("Badly formed record"));
 			continue;
 		}
 		tok = d_intern(p);
@@ -1790,27 +1791,27 @@ load_compiled_fp(const char *file, FILE *fp)
 		if(type == GEL_USER_FUNC) {
 			/*nargs*/
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			nargs = -1;
 			sscanf(p,"%d",&nargs);
-			if (nargs == -1) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (nargs == -1) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 
 			/*vararg*/
 			p = strtok(NULL,";");
-			if(!p) {
-				(*errorout)(_("Badly formed record"));
+			if (p == NULL) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 			vararg = -1;
 			sscanf(p,"%d",&vararg);
-			if (vararg == -1) {
-				(*errorout)(_("Badly formed record"));
+			if G_UNLIKELY (vararg == -1) {
+				gel_errorout (_("Badly formed record"));
 				continue;
 			}
 
@@ -1818,8 +1819,8 @@ load_compiled_fp(const char *file, FILE *fp)
 			li = NULL;
 			for(i=0;i<nargs;i++) {
 				p = strtok(NULL,";");
-				if(!p) {
-					(*errorout)(_("Badly formed record"));
+				if G_UNLIKELY (p == NULL) {
+					gel_errorout (_("Badly formed record"));
 					g_slist_free(li);
 					goto continue_reading;
 				}
@@ -1829,8 +1830,8 @@ load_compiled_fp(const char *file, FILE *fp)
 
 		/*the value*/
 		b2 = g_new(char,size+2);
-		if(!fgets(b2,size+2,fp)) {
-			(*errorout)(_("Missing value for function"));
+		if G_UNLIKELY (!fgets(b2,size+2,fp)) {
+			gel_errorout (_("Missing value for function"));
 			g_free(b2);
 			g_slist_free(li);
 			goto continue_reading;
@@ -1848,8 +1849,8 @@ load_compiled_fp(const char *file, FILE *fp)
 				func = d_makevfunc (tok, NULL);
 			}
 			func->context = -1;
-			if (last_func == NULL)
-				(*errorout)(_("Extra dictionary for NULL function"));
+			if G_UNLIKELY (last_func == NULL)
+				gel_errorout (_("Extra dictionary for NULL function"));
 			else
 				last_func->extra_dict = g_slist_append
 					(last_func->extra_dict, func);
@@ -1882,14 +1883,14 @@ gel_load_compiled_file (const char *dirprefix, const char *file, gboolean warn)
 		newfile = g_strconcat(dirprefix, "/", file, NULL);
 	else
 		newfile = g_strdup (file);
-	if((fp = fopen(newfile,"r"))) {
-		gel_push_file_info(newfile,1);
-		load_compiled_fp(newfile,fp);
-		gel_pop_file_info();
-	} else if (warn) {
-		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"), newfile);
-		(*errorout)(buf);
+
+	fp = fopen (newfile, "r");
+	if (fp != NULL) {
+		gel_push_file_info (newfile, 1);
+		load_compiled_fp (newfile, fp);
+		gel_pop_file_info ();
+	} else if G_UNLIKELY (warn) {
+		gel_errorout (_("Can't open file: '%s'"), newfile);
 	}
 	g_free (newfile);
 }
@@ -2190,9 +2191,7 @@ help_on (const char *text)
 
 	help = get_help (text, FALSE /*insert*/);
 	if (help == NULL) {
-		char *s = g_strdup_printf (_("'%s' is not documented"), text);
-		(*errorout) (s);
-		g_free (s);
+		gel_errorout (_("'%s' is not documented"), text);
 		not_documented.func = (char *)text;
 		help = &not_documented;
 	}
@@ -2275,8 +2274,8 @@ load_fp(FILE *fp, char *dirprefix)
 	gel_lexer_open(fp);
 	while(1) {
 		gel_evalexp(NULL, fp, NULL, NULL, FALSE, dirprefix);
-		if(got_eof) {
-			got_eof = FALSE;
+		if (gel_got_eof) {
+			gel_got_eof = FALSE;
 			break;
 		}
 		if(interrupted)
@@ -2291,25 +2290,23 @@ gel_load_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
 	char *newfile;
-	int oldgeof = got_eof;
-	got_eof = FALSE;
+	gboolean oldgeof = gel_got_eof;
+	gel_got_eof = FALSE;
 	if(dirprefix && file[0]!='/')
 		newfile = g_strconcat(dirprefix, "/", file, NULL);
 	else
 		newfile = g_strdup (file);
 
-	if((fp = fopen(newfile,"r"))) {
-		char *dir = g_dirname(newfile);
+	if G_LIKELY ((fp = fopen(newfile,"r"))) {
+		char *dir = g_path_get_dirname (newfile);
 		gel_push_file_info(newfile,1);
 		load_fp(fp, dir);
 		gel_pop_file_info();
 		g_free(dir);
-		got_eof = oldgeof;
-	} else if (warn) {
-		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"),newfile);
-		(*errorout)(buf);
-		got_eof = oldgeof;
+		gel_got_eof = oldgeof;
+	} else if G_UNLIKELY (warn) {
+		gel_errorout (_("Can't open file: '%s'"),newfile);
+		gel_got_eof = oldgeof;
 	}
 	g_free(newfile);
 }
@@ -2319,14 +2316,14 @@ gel_load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 {
 	FILE *fp;
 	char *newfile;
-	int oldgeof = got_eof;
-	got_eof = FALSE;
+	gboolean oldgeof = gel_got_eof;
+	gel_got_eof = FALSE;
 	if(dirprefix && file[0]!='/')
 		newfile = g_strconcat(dirprefix, "/", file, NULL);
 	else
 		newfile = g_strdup (file);
 
-	if((fp = fopen(newfile,"r"))) {
+	if G_LIKELY ((fp = fopen(newfile,"r"))) {
 		char buf[6];
 		gel_push_file_info(newfile,1);
 		if(fgets(buf,6,fp) &&
@@ -2334,18 +2331,16 @@ gel_load_guess_file (const char *dirprefix, const char *file, gboolean warn)
 			rewind(fp);
 			load_compiled_fp(newfile,fp);
 		} else {
-			char *dir = g_dirname(newfile);
+			char *dir = g_path_get_dirname(newfile);
 			rewind(fp);
 			load_fp(fp, dir);
 			g_free(dir);
 		}
 		gel_pop_file_info();
-		got_eof = oldgeof;
-	} else if (warn) {
-		char buf[256];
-		g_snprintf(buf,256,_("Can't open file: '%s'"), newfile);
-		(*errorout)(buf);
-		got_eof = oldgeof;
+		gel_got_eof = oldgeof;
+	} else if G_UNLIKELY (warn) {
+		gel_errorout (_("Can't open file: '%s'"), newfile);
+		gel_got_eof = oldgeof;
 	}
 	g_free (newfile);
 }
@@ -2382,10 +2377,8 @@ get_wordlist (const char *lst)
 #if HAVE_WORDEXP
 	wordexp_t we;
 	int i;
-	if (wordexp (lst, &we, WRDE_NOCMD) != 0) {
-		char *s = g_strdup_printf (_("Can't expand '%s'"), lst);
-		(*errorout) (s);
-		g_free (s);
+	if G_UNLIKELY (wordexp (lst, &we, WRDE_NOCMD) != 0) {
+		gel_errorout (_("Can't expand '%s'"), lst);
 		return NULL;
 	}
 	for (i = 0; i < we.we_wordc; i++) {
@@ -2395,14 +2388,12 @@ get_wordlist (const char *lst)
 #else
 	glob_t gl;
 	int i;
-	if (glob (lst, 0, NULL, &gl) != 0) {
-		char *s = g_strdup_printf (_("Can't expand '%s'"), lst);
-		(*errorout) (s);
-		g_free (s);
+	if G_UNLIKELY (glob (lst, 0, NULL, &gl) != 0) {
+		gel_errorout (_("Can't expand '%s'"), lst);
 		return NULL;
 	}
 	for (i = 0; i < gl.gl_pathc; i++) {
-		list = g_slist_prepend (list, g_strdup (gl.gl_pathc[i]));
+		list = g_slist_prepend (list, g_strdup (gl.gl_pathv[i]));
 	}
 	globfree (&gl);
 #endif
@@ -2467,11 +2458,9 @@ do_exec_commands (const char *dirprefix)
 				break;
 			}
 		}
-		if (li == NULL) {
-			char *p = g_strdup_printf(_("Cannot open plugin '%s'!"),
-						  arg);
-			(*errorout)(p);
-			g_free(p);
+		if G_UNLIKELY (li == NULL) {
+			gel_errorout (_("Cannot open plugin '%s'!"),
+				      arg);
 		}
 		ret = TRUE;
 		break;
@@ -2595,7 +2584,7 @@ gel_parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean tes
 	  dictionary*/
 	d_singlecontext();
 
-	error_num=NO_ERROR;
+	error_num = NO_ERROR;
 
 	/*if we this was set, then the mp library was initialized for
 	  sure*/
@@ -2674,8 +2663,8 @@ gel_parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean tes
 	if(stacklen!=1) {
 		while(evalstack)
 			gel_freetree(stack_pop(&evalstack));
-		if(!testparse)
-			(*errorout)(_("ERROR: Probably corrupt stack!"));
+		if G_UNLIKELY (!testparse)
+			gel_errorout (_("ERROR: Probably corrupt stack!"));
 		if(finished) *finished = FALSE;
 		return NULL;
 	}
@@ -2696,8 +2685,8 @@ gel_runexp (GelETree *exp)
 	GelETree *ret;
 	GelCtx *ctx;
 	
-	if(busy) {
-		(*errorout)(_("ERROR: Can't execute more things at once!"));
+	if G_UNLIKELY (busy) {
+		gel_errorout (_("ERROR: Can't execute more things at once!"));
 		return NULL;
 	}
 	
@@ -2793,7 +2782,6 @@ void yyerror(char *s);
 void
 yyerror(char *s)
 {
-	char *out=NULL;
 	char *p;
 	
 	if(ignore_end_parse_errors && yytext[0]=='\0') {
@@ -2802,21 +2790,20 @@ yyerror(char *s)
 	}
 	
 	if(strcmp(yytext,"\n")==0) {
-		out=g_strconcat(_("ERROR: "),s,_(" before newline"),NULL);
+		gel_errorout (_("ERROR: %s before newline"), s);
 	} else if(yytext[0]=='\0') {
-		out=g_strconcat(_("ERROR: "),s,_(" at end of input"),NULL);
+		gel_errorout (_("ERROR: %s at end of input"), s);
 	} else {
-		char *tmp = g_strdup(yytext);
-		while((p=strchr(tmp,'\n')))
+		char *tmp = g_strdup (yytext);
+		p = tmp;
+		while( (p = strchr (p, '\n')) != NULL)
 			*p='.';
 
-		out=g_strconcat(_("ERROR: "),s,_(" before '"),tmp,"'",NULL);
-		g_free(tmp);
+		gel_errorout (_("ERROR: %s before '%s'"), s, tmp);
+		g_free (tmp);
 	}
 
-	(*errorout)(out);
-	g_free(out);
-	error_num=PARSE_ERROR;
+	error_num = PARSE_ERROR;
 }
 
 void 

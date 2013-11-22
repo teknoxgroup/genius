@@ -1,0 +1,43 @@
+This is a set of routines and other things I find useful in a bunch of
+programs, it is NOT a library, it is to be included in your module through some
+evil CVS magic.  It builds two .a libs which are NOT installed.  You just
+add it to your toplevel SUBDIRS and then link your executable against it.
+Nothing from this dir is installed.
+
+The two libs and includes are:
+
+	libvicious.a
+	libvicious-gnome.a
+	vicious.h
+
+	libviciousui.a
+	libviciousui-gnome.a
+	libviciousui-minimal.a
+	viciousui.h
+
+Note that libviciousui includes libvicious.  libvicious-gnome.a requires
+linking against libgnome but otherwise is almost the same as libvicious,
+except for using GnomeProgram for file lookup, same for the ui lib.  The
+libviciousui-minimal is like libviciousui, but does not like glade-helper
+and thus no glade.
+
+Feel free to hack on this and feel free to add and modify stuff.  If you do
+modify stuff please fix all the modules that include this.
+
+Note that by including this module you are allowing people to randomly fix your
+use of these routines, so if you're an anal maintainer, this is not for you.
+Though you could always just cut and paste.
+
+Make sure to have
+  AC_CHECK_FUNCS([setenv unsetenv clearenv])
+in your configure.in, and HAVE_SETENV, HAVE_UNSETENV and HAVE_CLEARENV in
+your acconfig.h
+
+License is LGPL
+
+Implementation notes:
+
+  Namespace is "ve" except for "glade_helper" for glade helper 
+  This is different for historical reasons.
+
+-George <jirka@5z.com>

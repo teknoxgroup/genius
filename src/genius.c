@@ -75,7 +75,6 @@ calcstate_t curstate={
 	10
 	};
 	
-extern int got_eof;
 extern int parenth_depth;
 
 extern int interrupted;
@@ -199,8 +198,8 @@ main(int argc, char *argv[])
 
 	genius_is_gui = FALSE;
 
-	bindtextdomain(PACKAGE,GNOMELOCALEDIR);
-	textdomain(PACKAGE);
+	bindtextdomain(GETTEXT_PACKAGE,GNOMELOCALEDIR);
+	textdomain(GETTEXT_PACKAGE);
 
 	signal(SIGINT,interrupt);
 
@@ -272,6 +271,7 @@ main(int argc, char *argv[])
 		}
 	}
 
+#if 0
 	{
 		/* FIXME: use this for option parsing,
 		 * we really only need gnome-program for
@@ -284,6 +284,7 @@ main(int argc, char *argv[])
 				    /* GNOME_PARAM_POPT_TABLE, options, */
 				    NULL);
 	}
+#endif
 
 	gel_read_plugin_list();
 
@@ -403,16 +404,16 @@ main(int argc, char *argv[])
 				line_len_cache = -1;
 				gel_evalexp(NULL, fp, main_out, NULL, FALSE, NULL);
 				line_len_cache = -1;
-				if(interrupted)
-					got_eof = TRUE;
+				if (interrupted)
+					gel_got_eof = TRUE;
 			}
 			if(inter)
 				gel_printout_infos ();
 
-			if(got_eof) {
+			if (gel_got_eof) {
 				if(inter)
 					puts("");
-				got_eof = FALSE;
+				gel_got_eof = FALSE;
 				break;
 			}
 		}

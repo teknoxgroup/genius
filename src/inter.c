@@ -37,7 +37,6 @@
 #include "inter.h"
 
 extern int interrupted;
-extern int got_eof;
 
 static int toplevelokg = TRUE;
 
@@ -88,7 +87,7 @@ get_p_expression(void)
 
 		prompt = "      > ";
 		if(!s) {
-			got_eof = TRUE;
+			gel_got_eof = TRUE;
 			g_string_append_c(gs,'\n');
 			ret = gel_parseexp(gs->str, NULL, TRUE, FALSE, NULL, NULL);
 			g_string_free(gs,TRUE);
@@ -104,8 +103,8 @@ get_p_expression(void)
 		g_string_append_c(gs,'\n');
 		
 		ret = gel_parseexp(gs->str, NULL, TRUE, TRUE, &finished, NULL);
-		if(got_eof)
-			got_eof = FALSE;
+		if (gel_got_eof)
+			gel_got_eof = FALSE;
 		if(finished) {
 			g_string_free(gs,TRUE);
 			return ret;
@@ -122,6 +121,8 @@ write_all_state_to_rl(FILE *fp)
 {
 	GSList *li;
 	int count;
+	char *s;
+
 	li = d_getcontext();
 	count = 0;
 	for(li=d_getcontext();li;li=li->next) {
@@ -153,6 +154,10 @@ write_all_state_to_rl(FILE *fp)
 		fprintf(fp,"%s\n",plg->base);
 	}
 
+	s = g_get_current_dir ();
+	fprintf (fp, "CWD %s\n", s);
+	g_free (s);
+
 	if(toplevelokg)
 		fprintf(fp,"TOPLEVEL OK\n");
 	else
@@ -179,7 +184,7 @@ get_cb_p_expression(char *s, FILE *torlfp)
 	}
 
 	if(!s) {
-		got_eof = TRUE;
+		gel_got_eof = TRUE;
 		g_string_append_c(p_expr, '\n');
 		ret = gel_parseexp(p_expr->str, NULL, TRUE, FALSE, NULL, NULL);
 		g_string_free(p_expr, TRUE);
@@ -197,8 +202,8 @@ get_cb_p_expression(char *s, FILE *torlfp)
 	g_string_append_c(p_expr,'\n');
 
 	ret = gel_parseexp(p_expr->str, NULL, TRUE, TRUE, &finished, NULL);
-	if(got_eof)
-		got_eof = FALSE;
+	if (gel_got_eof)
+		gel_got_eof = FALSE;
 	if(finished) {
 		g_string_free(p_expr,TRUE);
 		p_expr = NULL;
@@ -324,6 +329,8 @@ plugin_generator (const char *text, int state)
 	return NULL;
 }
 
+/* Note: keep in sync with genius-readline-helper.c */
+/* FIXME: make this common */
 static char **
 tab_completion (const char *text, int start, int end)
 {
@@ -351,7 +358,6 @@ tab_completion (const char *text, int start, int end)
 	    strncmp(p,"plugin\t",7)==0)) {
 		return rl_completion_matches (text, plugin_generator);
 	}
-	
 	
 	if(toplevelokg &&
 	   (!*p ||

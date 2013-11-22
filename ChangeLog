@@ -1,6 +1,167 @@
+Thu Oct 16 10:21:38 2003  George Lebl <jirka@5z.com>
+
+	* Release 0.5.6
+
+	* src/Makefile.am: fix build
+
+2003-10-15  Jordi Mallach  <jordi@sindominio.net>
+
+	* configure.in (ALL_LINGUAS): Added "ca" (Catalan).
+
+Tue Oct 07 15:08:52 2003  George Lebl <jirka@5z.com>
+
+	* configure.in: raise version
+
+	* configure.in, src/calc.c, src/compil.c, src/funclib.c,
+	  src/gnome-genius.c, src/graphing.c:  Whack use of
+	  all deprecated stuff.  Also make the graphing canvas
+	  use monospace 10 and not 12
+
+Tue Oct 07 10:04:59 2003  George Lebl <jirka@5z.com>
+
+	* configure.in, Makefile.am, src/Makefile.am, src/plugin.c,
+	  src/plugread.c, src/genius.c: Kill gnome dependency in
+	  the command line genius by using ve-config and
+	  vicious-extensions.  Only codewise though, it is still linked
+	  to gnome.  Though that should not be too hard to fix and
+	  non-gnome non-gui builds may again be possible.  Not to mention
+	  that startup of non-gui code is faster meaning faster testing
+	  and less other whacky code to screw up valgrind runs etc...
+
+	* src/mpwrap.c: fix corruption with respect to extra types when
+	  rop == op1 or op2 and reenable the no_convert extra type
+	  optimization.  Also fixes a leak of gmp internal data on all
+	  divisions and gcd and mod operations.
+
+Mon Oct 06 18:02:07 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: revert the change (sort of) something is wrong,
+	  and I don't have time to investigate
+
+Mon Oct 06 17:47:26 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: during some operations we were unnecessairly
+	  converting the rop only to wipe it, so add a no_convert version
+	  of the extra type function (affected are division and mod in case
+	  rop was of a different type)
+
+Mon Oct 06 17:00:38 2003  George Lebl <jirka@5z.com>
+
+	* lib/misc/misc.gel: add Identity function
+
+	* lib/calculus/differentiation.gel, lib/calculus/limits.gel,
+	  lib/functions/numerical.gel: Tolerances should be floats really
+
+	* configure.in, lib/Makefile.am, lib/sets/Makefile.am,
+	  lib/sets/basic.gel, lib/misc/misc.gel:  Move the set theoretic
+	  functions from misc to new dir called 'sets'
+
+	* lib/functions/numerical.gel: add aliases Sign and AbsoluteValue
+
+	* src/calc.c, src/compil.c, src/dict.h, src/eval.c, src/funclib.c,
+	  src/graphing.c, src/matrixw.h, src/mpwrap.[ch], src/mpzextra.c,
+	  src/structs.h:  Some minor cleanup all over the place, plus 
+	  more reordering and other struct tricks to reduce footprint of
+	  common structures even further.
+
+2003-10-05  Danilo ≈†egan  <dsegan@gmx.net>
+
+	* configure.in: Added "sr" and "sr@Latn" to ALL_LINGUAS.
+
+Fri Sep 26 18:46:32 2003  George Lebl <jirka@5z.com>
+
+	* src/structs.h, src/eval.c: shave 4 bytes off the GelETree (at least
+	  on x86) The savings will be invisible on archs with alignment.  So
+	  we're down at 20 bytes per GelETree node (plus any data of course)
+
+2003-09-01  Metin Amiroff  <metin@karegen.com>
+
+	configure.in: Added "az" in ALL_LINGUAS.
+
+Sun Aug 31 23:27:00 2003  Wang Jian  <lark@linux.net.cn>
+
+	* configure.in: Added "zh_CN" to ALL_LINGUAS.
+
+Thu Aug 28 23:29:12 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.[ch], src/dict.[ch], src/eval.c, src/funclib.c,
+	  src/genius.c, src/gnome-genius.c, src/inter.c, src/lexer.l,
+	  src/mpwrap.c, src/structs.h:  Can't sleep so doing general
+	  cleanup such as using standard argument checking for functions,
+	  fixing up error output, converting to gel_errorout/infoout,
+	  and s/int/gboolean/ where appropriate.  Also fixed up the
+	  function structure to save sizeof(int) bytes per function.
+
+Thu Aug 28 17:51:35 2003  George Lebl <jirka@5z.com>
+
+	* src/funclib.c: move stuff to generalized function parameter
+	  handling as possible.  Should make translations easier.  Also
+	  accept identifiers in places where it makes sense to (SetHelp,
+	  protect, and such) and add a bunch of G_UNLIKELY/G_LIKELY's
+
+Wed Aug 27 18:06:05 2003  George Lebl <jirka@5z.com>
+
+	* src/dict.c: initialize the function structures correctly.
+
+Thu Aug 21 12:21:16 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: also set the PRIMARY and not just CLIPBOARD on
+	  the special copy items
+
+Sat Aug 16 18:58:56 2003  Guntupalli Karunakar  <karunakar@freedomink.org>
+
+	* configure.in: Added "hi" for Hindi in ALL_LINGUAS.
+
+Fri Aug 15 02:39:47 2003  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c, src/eval.c, src/calc.c: go wild with G_LIKELY
+	  and G_UNLIKELY, some cleanup, fix two very minor leaks.
+
+Mon Jul 28 10:35:26 2003  George Lebl <jirka@5z.com>
+
+	* configure.in, acconfig.h: check for ncurses as well if libtermcap
+	  isn't found
+
+	* src/genius.c: use GETTEXT_PACKAGE and not PACKAGE
+
+Thu Jul 24 17:24:59 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.c: I hate it when I apply half of a patch.  in any
+	  case yet again from the FreeBSD ports: the glob usage was wrong
+
+Thu Jul 24 17:22:52 2003  George Lebl <jirka@5z.com>
+
+	* src/calc.c: when wordexp is missing and we use glob but
+	  we weren't including glob.h  (from the FreeBSD ports)
+
+Thu Jun 12 14:17:01 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: load programs from command line
+
+Thu Jun 12 14:09:34 2003  George Lebl <jirka@5z.com>
+
+	* configure.in, src/Makefile.am, genius.lang, src/gnome-genius.c: add
+	  optional GtkSourceView support and add highlighting with that.
+	  I should figure out the mime type mess and install all this stuff
+	  so that even gedit can get highlighting for gel files.
+
+Wed Jun 11 11:27:18 2003  George Lebl <jirka@5z.com>
+
+	* src/genius-readline-helper.c, src/inter.c: change directory in the
+	  readline helper, and update the helper completion routine to match
+	  inter.c
+
+Fri Jun 06 16:25:15 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: the preference dialog has hig ordered buttons
+	  and all the other dialogs also now lack the separator thingie.
+
 Mon Jun 02 13:32:12 2003  George Lebl <jirka@5z.com>
 
 	* Release 0.5.5 
+
+	* src/gnome-genius.c: when we go to the last error there was an
+	  "off by one" error
 
 Mon Jun 02 13:18:53 2003  George Lebl <jirka@5z.com>
 
@@ -1168,7 +1329,7 @@ Fri Sep 27 13:24:35 2002  George Lebl <jirka@5z.com>
 
 The following comes from the dr-genius work of genius:
 
-2000-11-30  Martin Norb‰ck  <d95mback@dtek.chalmers.se>
+2000-11-30  Martin Norb√§ck  <d95mback@dtek.chalmers.se>
 
 	* gnome-genius.desktop: added Swedish translation
 
@@ -1666,7 +1827,7 @@ Mon May 17 23:55:50 1999  George Lebl  <jirka@5z.com>
 
 	* configure.in: raised version
 
-1999-05-18 03:27 1999  Tomas ÷gren  <stric@ing.umu.se>
+1999-05-18 03:27 1999  Tomas √ñgren  <stric@ing.umu.se>
 
 	* src/*.c: Fixed i18n support
 
