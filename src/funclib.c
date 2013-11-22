@@ -3,9 +3,11 @@
  *
  * Author: Jiri (George) Lebl
  *
- * This program is free software; you can redistribute it and/or modify
+ * This file is part of Genius.
+ *
+ * Genius is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
@@ -14,9 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the  Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
- * USA.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -164,21 +164,19 @@ static GelETree *
 warranty_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	gel_infoout (_("Genius %s\n"
-		    "%s\n\n"
-		    "    This program is free software; you can redistribute it and/or modify\n"
-		    "    it under the terms of the GNU General Public License as published by\n"
-		    "    the Free Software Foundation; either version 2 of the License , or\n"
-		    "    (at your option) any later version.\n"
-		    "\n"
-		    "    This program is distributed in the hope that it will be useful,\n"
-		    "    but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
-		    "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
-		    "    GNU General Public License for more details.\n"
-		    "\n"
-		    "    You should have received a copy of the GNU General Public License\n"
-		    "    along with this program. If not, write to the Free Software\n"
-		    "    Foundation,  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,\n"
-		    "    USA.\n"), 
+		       "%s\n\n"
+		       "    This program is free software: you can redistribute it and/or modify\n"
+		       "    it under the terms of the GNU General Public License as published by\n"
+		       "    the Free Software Foundation, either version 3 of the License, or\n"
+		       "    (at your option) any later version.\n"
+		       "\n"
+		       "    This program is distributed in the hope that it will be useful,\n"
+		       "    but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+		       "    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+		       "    GNU General Public License for more details.\n"
+		       "\n"
+		       "    You should have received a copy of the GNU General Public License\n"
+		       "    along with this program.  If not, see <http://www.gnu.org/licenses/>.\n"),
 			    VERSION,
 			    COPYRIGHT_STRING);
 	error_num = IGNORE_ERROR;
@@ -1354,6 +1352,16 @@ static GelETree *
 IsMatrix_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	if (a[0]->type == MATRIX_NODE)
+		return gel_makenum_bool (1);
+	else
+		return gel_makenum_bool (0);
+}
+static GelETree *
+IsVector_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	if (a[0]->type == MATRIX_NODE &&
+	    (gel_matrixw_width(a[0]->mat.matrix) == 1 ||
+	     gel_matrixw_height(a[0]->mat.matrix) == 1))
 		return gel_makenum_bool (1);
 	else
 		return gel_makenum_bool (0);
@@ -2576,6 +2584,86 @@ IsMatrixSquare_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	else
 		return gel_makenum_bool (0);
 }
+
+static GelETree *
+IsLowerTriangular_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	int i,j,w;
+	GelMatrixW *m;
+
+	if G_UNLIKELY ( ! check_argument_square_matrix (a, 0, "IsLowerTriangular"))
+		return NULL;
+
+	m = a[0]->mat.matrix;
+
+	w = gel_matrixw_width (m);
+	for (i = 1; i < w; i++) {
+		for (j = 0; j < i; j++) {
+			GelETree *node = gel_matrixw_set_index (m, i, j);
+			if (node != NULL &&
+			    (node->type != VALUE_NODE ||
+			     /* FIXME: perhaps use some zero tolerance */
+			     ! mpw_eql_ui (node->val.value, 0))) {
+				return gel_makenum_bool (0);
+			}
+		}
+	}
+	return gel_makenum_bool (1);
+}
+
+static GelETree *
+IsUpperTriangular_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	int i,j,w;
+	GelMatrixW *m;
+
+	if G_UNLIKELY ( ! check_argument_square_matrix (a, 0, "IsUpperTriangular"))
+		return NULL;
+
+	m = a[0]->mat.matrix;
+
+	w = gel_matrixw_width (m);
+	for (j = 1; j < w; j++) {
+		for (i = 0; i < j; i++) {
+			GelETree *node = gel_matrixw_set_index (m, i, j);
+			if (node != NULL &&
+			    (node->type != VALUE_NODE ||
+			     /* FIXME: perhaps use some zero tolerance */
+			     ! mpw_eql_ui (node->val.value, 0))) {
+				return gel_makenum_bool (0);
+			}
+		}
+	}
+	return gel_makenum_bool (1);
+}
+
+static GelETree *
+IsDiagonal_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	int i,j,w;
+	GelMatrixW *m;
+
+	if G_UNLIKELY ( ! check_argument_square_matrix (a, 0, "IsDiagonal"))
+		return NULL;
+
+	m = a[0]->mat.matrix;
+
+	w = gel_matrixw_width (m);
+	for (i = 0; i < w; i++) {
+		for (j = 0; j < w; j++) {
+			GelETree *node = gel_matrixw_set_index (m, i, j);
+			if (i != j &&
+			    node != NULL &&
+			    (node->type != VALUE_NODE ||
+			     /* FIXME: perhaps use some zero tolerance */
+			     ! mpw_eql_ui (node->val.value, 0))) {
+				return gel_makenum_bool (0);
+			}
+		}
+	}
+	return gel_makenum_bool (1);
+}
+
 static GelETree *
 SetMatrixSize_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
@@ -3229,7 +3317,8 @@ MillerRabinTest_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	int reps;
 	mpz_ptr num;
 
-	if (a[0]->type == MATRIX_NODE)
+	if (a[0]->type == MATRIX_NODE ||
+	    a[1]->type == MATRIX_NODE)
 		return gel_apply_func_to_matrixen (ctx, a[0], a[1],
 						   MillerRabinTest_op,
 						   "MillerRabinTest",
@@ -4455,6 +4544,51 @@ NextCombination_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 }
 
 static GelETree *
+nCr_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	unsigned long r;
+
+	if (a[0]->type == MATRIX_NODE ||
+	    a[1]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrixen (ctx, a[0], a[1],
+						   nCr_op,
+						   "nCr",
+						   exception);
+
+	if G_UNLIKELY ( ! check_argument_real_number (a, 0, "nCr") ||
+			! check_argument_nonnegative_integer (a, 1, "nCr"))
+		return NULL;
+
+	error_num = 0;
+	r = mpw_get_ulong(a[1]->val.value);
+	if G_UNLIKELY (error_num != 0) {
+		error_num = 0;
+		return NULL;
+	}
+
+	if (mpw_is_integer (a[0]->val.value)) {
+		mpw_t num;
+		mpw_init (num);
+		mpw_bin_ui (num, a[0]->val.value, r);
+		return gel_makenum_use(num);
+	} else {
+		unsigned long i;
+		mpw_t num, nm;
+		mpw_init (num);
+		mpw_set_ui (num, 1);
+		mpw_init_set (nm, a[0]->val.value);
+		for (i=0;i<=r-1;i++) {
+			mpw_mul (num, num, nm);
+			mpw_sub_ui (nm, nm, 1);
+		}
+		mpw_fac_ui (nm, r);
+		mpw_div (num, num, nm);
+		mpw_clear (nm);
+		return gel_makenum_use(num);
+	}
+}
+
+static GelETree *
 protect_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelToken *tok;
@@ -5192,9 +5326,9 @@ gel_funclib_addall(void)
 	Denominator_function = f;
 
 	VFUNC (gcd, 2, "a,args", "number_theory", N_("Greatest common divisor"));
-	ALIAS (GCD, 2, gcd);
+	VALIAS (GCD, 2, gcd);
 	VFUNC (lcm, 2, "a,args", "number_theory", N_("Least common multiplier"));
-	ALIAS (LCM, 2, lcm);
+	VALIAS (LCM, 2, lcm);
 	FUNC (IsPerfectSquare, 1, "n", "number_theory", N_("Check a number for being a perfect square"));
 	FUNC (IsPerfectPower, 1, "n", "number_theory", N_("Check a number for being any perfect power (a^b)"));
 	FUNC (Prime, 1, "n", "number_theory", N_("Return the n'th prime (up to a limit)"));
@@ -5245,6 +5379,10 @@ gel_funclib_addall(void)
 	FUNC (rows, 1, "M", "matrix", N_("Get the number of rows of a matrix"));
 	FUNC (columns, 1, "M", "matrix", N_("Get the number of columns of a matrix"));
 	FUNC (IsMatrixSquare, 1, "M", "matrix", N_("Is a matrix square"));
+	FUNC (IsVector, 1, "v", "matrix", N_("Is argument a horizontal or a vertical vector"));
+	FUNC (IsUpperTriangular, 1, "v", "matrix", N_("Is a matrix upper triangular"));
+	FUNC (IsLowerTriangular, 1, "v", "matrix", N_("Is a matrix lower triangular"));
+	FUNC (IsDiagonal, 1, "v", "matrix", N_("Is a matrix diagonal"));
 	FUNC (elements, 1, "M", "matrix", N_("Get the number of elements of a matrix"));
 
 	FUNC (ref, 1, "M", "linear_algebra", N_("Get the row echelon form of a matrix"));
@@ -5309,6 +5447,9 @@ gel_funclib_addall(void)
 	FUNC (Combinations, 2, "k,n", "combinatorics", N_("Get all combinations of k numbers from 1 to n as a vector of vectors"));
 	FUNC (NextCombination, 2, "v,n", "combinatorics", N_("Get combination that would come after v in call to combinations, first combination should be [1:k]."));
 	FUNC (Permutations, 2, "k,n", "combinatorics", N_("Get all permutations of k numbers from 1 to n as a vector of vectors"));
+
+	FUNC (nCr, 2, "n,r", "combinatorics", N_("Calculate combinations (binomial coefficient)"));
+	ALIAS (Binomial, 2, nCr);
 
 	FUNC (StringToASCII, 1, "str", "misc", N_("Convert a string to a vector of ASCII values"));
 	FUNC (ASCIIToString, 1, "vec", "misc", N_("Convert a vector of ASCII values to a string"));

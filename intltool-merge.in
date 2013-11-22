@@ -35,7 +35,7 @@
 ## Release information
 my $PROGRAM = "intltool-merge";
 my $PACKAGE = "intltool";
-my $VERSION = "0.35.4";
+my $VERSION = "0.35.5";
 
 ## Loaded modules
 use strict; 
@@ -1017,8 +1017,8 @@ sub xml_merge_output
 
     if ($MULTIPLE_OUTPUT) {
         for my $lang (sort keys %po_files_by_lang) {
-	    if ( ! -e $lang ) {
-	        mkdir $lang or die "Cannot create subdirectory $lang: $!\n";
+	    if ( ! -d $lang ) {
+	        mkdir $lang or -d $lang or die "Cannot create subdirectory $lang: $!\n";
             }
             open OUTPUT, ">$lang/$OUTFILE" or die "Cannot open $lang/$OUTFILE: $!\n";
             binmode (OUTPUT) if $^O eq 'MSWin32';
@@ -1386,8 +1386,8 @@ sub quoted_merge_translations
     }
 
     for my $lang (sort keys %po_files_by_lang) {
-        if ( ! -e $lang ) {
-            mkdir $lang or die "Cannot create subdirectory $lang: $!\n";
+        if ( ! -d $lang ) {
+            mkdir $lang or -d $lang or die "Cannot create subdirectory $lang: $!\n";
         }
         open INPUT, "<${FILE}" or die;
         open OUTPUT, ">$lang/$OUTFILE" or die "Cannot open $lang/$OUTFILE: $!\n";

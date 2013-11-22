@@ -8,18 +8,6 @@ plugin_includedir = $(includedir)/genius
 
 AM_YFLAGS = -d -t
 
-if INTERNAL_MPFR
-MPFR_INCLUDEDIR = \
-	-I$(top_srcdir)/mpfr					\
-	-I$(top_builddir)/mpfr
-MPFR_LIBDIR = \
-	-L$(top_srcdir)/mpfr					\
-	-L$(top_builddir)/mpfr
-else
-MPFR_INCLUDEDIR =
-MPFR_LIBDIR =
-endif
-
 INCLUDES = \
         -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"	\
 	-DG_LOG_DOMAIN=\"Genius\"				\
@@ -28,14 +16,13 @@ INCLUDES = \
 	-DICONDIR=\""$(datadir)/pixmaps/genius"\"		\
 	-DLIBRARY_DIR=\""$(datadir)/genius/"\"			\
 	-I$(srcdir)						\
-	-I$(includedir)						\
 	-I$(top_srcdir)						\
 	-I$(top_srcdir)/ve					\
 	-I$(top_srcdir)/gtkextra				\
 	-I$(top_builddir)					\
 	-I$(top_builddir)/ve					\
 	-I$(top_builddir)/gtkextra				\
-	$(MPFR_INCLUDEDIR)					\
+	-I$(includedir)						\
 	$(GMP_INCLUDEDIR)					\
 	$(GENIUS_CFLAGS)					\
 	$(EXTRA_WARNING_CFLAGS)
@@ -100,13 +87,10 @@ gnome_genius_SOURCES = 	\
 	funclibhelper.cP
 
 gnome_genius_LDADD = \
-	-L$(top_builddir)/ve			\
-	-lviciousui				\
-	-L$(top_builddir)/gtkextra		\
-	-lgtkextra-genius			\
+	$(top_builddir)/ve/libviciousui.a	\
+	$(top_builddir)/gtkextra/libgtkextra-genius.a	\
 	-lm					\
 	@GMP_LIB@				\
-	$(MPFR_LIBDIR)				\
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_LIBS)				\
@@ -119,8 +103,7 @@ genius_readline_helper_fifo_SOURCES = \
 
 # FIXME: no need for so many libs
 genius_readline_helper_fifo_LDADD = \
-	-L$(top_builddir)/ve			\
-	-lvicious				\
+	$(top_builddir)/ve/libvicious.a		\
 	-lm					\
 	$(GENIUS_NOGUI_LIBS)			\
 	@READLINE_LIB@				\
@@ -177,11 +160,9 @@ genius_SOURCES = 	\
 	funclibhelper.cP
 
 genius_LDADD = \
-	-L$(top_builddir)/ve			\
-	-lvicious				\
+	$(top_builddir)/ve/libvicious.a		\
 	-lm					\
 	@GMP_LIB@				\
-	$(MPFR_LIBDIR)				\
 	-lmpfr					\
 	@LEXLIB@				\
 	$(GENIUS_NOGUI_LIBS)			\

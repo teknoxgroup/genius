@@ -32,7 +32,7 @@
 ## Release information
 my $PROGRAM      = "intltool-extract";
 my $PACKAGE      = "intltool";
-my $VERSION      = "0.35.4";
+my $VERSION      = "0.35.5";
 
 ## Loaded modules
 use strict; 
@@ -261,8 +261,11 @@ sub escape
 
 sub type_ini {
     ### For generic translatable desktop files ###
-    while ($input =~ /^_.*=(.*)$/mg) {
-        $messages{$1} = [];
+    while ($input =~ /^(#(.+)\n)?^_.*=(.*)$/mg) {
+        if (defined($2))  {
+            $comments{$3} = $2;
+        }
+        $messages{$3} = [];
     }
 }
 

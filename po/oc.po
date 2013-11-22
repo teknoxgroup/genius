@@ -1,27 +1,25 @@
-# Arabic translations for THIS package.
-# Copyright (C) 2007 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as THIS package.
-# Automatically generated, 2007.
-# Djihed Afifi <djihed@gmail.com>, 2007
+# Occitan translation of genius
+# Copyright (C) 1998-2004 Free Software Foundation, Inc.
+# This file is distributed under the same license as the genius package.
+#
+# Yannig MARCHEGAY (yannig@marchegay.org) - 2006-2007
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: Arabic\n"
+"Project-Id-Version: genius 0.7.6.1 fr\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-04-21 12:55+0100\n"
-"PO-Revision-Date: 2007-04-14 18:49+0100\n"
-"Last-Translator: Djihed Afifi <djihed@gmail.com>\n"
-"Language-Team: Arabeyes <doc@arabeyes.org>\n"
+"POT-Creation-Date: 2007-06-30 09:03+0200\n"
+"PO-Revision-Date: 2007-08-19 18:55+0200\n"
+"Last-Translator: Yannig Marchegay (Kokoyaya) <yannig@marchegay.org>\n"
+"Language-Team: Occitan (post 1500) <ubuntu-l10n-oci@lists.ubuntu.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=4; plural=n==1 ? 0 : n==2 ? 1 : n>=3 && "
-"n<=10 ? 2 : 3\n"
-
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: ../lib/library-strings.c:1
-#, fuzzy
 msgid "Compose two functions"
-msgstr "وظائف المجموعات"
+msgstr ""
 
 #: ../lib/library-strings.c:2
 msgid ""
@@ -29,16 +27,13 @@ msgid ""
 "x if n == 0"
 msgstr ""
 
-# 48x48/emblems/emblem-marketing.icon.in.h:1
 #: ../lib/library-strings.c:3
-#, fuzzy
 msgid "Make a string"
-msgstr "تسويق"
+msgstr ""
 
 #: ../lib/library-strings.c:4
-#, fuzzy
 msgid "Tolerance of the Chop function"
-msgstr "انقل ورقة إلى الأساس"
+msgstr ""
 
 #: ../lib/library-strings.c:5
 msgid "How many iterations to try to find the limit for continuity and limits"
@@ -69,18 +64,16 @@ msgid "Tolerance for calculating the derivatives of functions"
 msgstr ""
 
 #: ../lib/library-strings.c:11
-#, fuzzy
 msgid "Tolerance of the ErrorFunction"
-msgstr "انقل ورقة إلى الأساس"
+msgstr ""
 
 #: ../lib/library-strings.c:12
 msgid "Tolerance of the GaussDistribution function"
 msgstr ""
 
 #: ../lib/library-strings.c:13
-#, fuzzy
 msgid "The function used for numerical integration in NumericalIntegral"
-msgstr "التزايد المستخدم لكل تكرار في نسق النشاط (ملغى)"
+msgstr ""
 
 #: ../lib/library-strings.c:14
 msgid "Steps to perform in NumericalIntegral"
@@ -101,23 +94,24 @@ msgid "Tolerance for InfiniteSum and InfiniteProduct"
 msgstr ""
 
 #: ../lib/library-strings.c:18 ../src/eval.c:5930
-#, fuzzy
 msgid "Absolute value"
-msgstr "القيمة المطلقة"
+msgstr ""
 
 #: ../lib/library-strings.c:19
 msgid "Replace very small number with zero"
 msgstr ""
 
+# je n'ai pas trouvé de traduction française à fractional part
 #: ../lib/library-strings.c:20
 msgid "Return the fractional part of a number"
 msgstr ""
 
+# w/o = without
 #: ../lib/library-strings.c:21
-#, fuzzy
 msgid "Division w/o remainder"
-msgstr "لعبة ذاكرة القسمة"
+msgstr ""
 
+# voir Wikipedia
 #: ../lib/library-strings.c:22
 msgid "Check if argument is a gaussian integer"
 msgstr ""
@@ -137,87 +131,85 @@ msgid "The arccos (inverse cos) function"
 msgstr ""
 
 #: ../lib/library-strings.c:26
-#, fuzzy
 msgid "The arccosh (inverse cosh) function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
 #: ../lib/library-strings.c:27
-#, fuzzy
 msgid "The arccot (inverse cot) function"
-msgstr "مجموعة المحارف الغاية"
+msgstr ""
 
 #: ../lib/library-strings.c:28
-#, fuzzy
 msgid "The arccoth (inverse coth) function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:29
-#, fuzzy
 msgid "The inverse cosecant function"
-msgstr "دالات محولة"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:30
 msgid "The inverse hyperbolic cosecant function"
 msgstr ""
 
+#
 #: ../lib/library-strings.c:31
-#, fuzzy
 msgid "The inverse secant function"
-msgstr "مسح معاكس"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:32
 msgid "The inverse hyperbolic secant function"
 msgstr ""
 
+#
 #: ../lib/library-strings.c:33
-#, fuzzy
 msgid "The arcsin (inverse sin) function"
-msgstr "مجموعة المحارف الغاية"
+msgstr ""
 
 #: ../lib/library-strings.c:34
-#, fuzzy
 msgid "The arcsinh (inverse sinh) function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:35
-#, fuzzy
 msgid "The arctanh (inverse tanh) function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:36
-#, fuzzy
 msgid "The cotangent function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:37
-#, fuzzy
 msgid "The hyperbolic cotangent function"
-msgstr "اضبط الخيار الزائدي للدوال المثلثية"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:38
-#, fuzzy
 msgid "The cosecant function"
-msgstr "اختر حدث"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:39
-#, fuzzy
 msgid "The hyperbolic cosecant function"
-msgstr "اضبط الخيار الزائدي للدوال المثلثية"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:40
-#, fuzzy
 msgid "The secant function"
-msgstr "العمل الأخير"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:41
-#, fuzzy
 msgid "The hyperbolic secant function"
-msgstr "اضبط الخيار الزائدي للدوال المثلثية"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:42
-#, fuzzy
 msgid "The hyperbolic tangent function"
-msgstr "اضبط الخيار الزائدي للدوال المثلثية"
+msgstr ""
 
 #: ../lib/library-strings.c:43
 msgid "Are a and b relatively prime?"
@@ -233,6 +225,7 @@ msgid ""
 "elements of m, using the Chinese Remainder Theorem"
 msgstr ""
 
+# je ne comprends pas ce que fait la fonction dans genius
 #: ../lib/library-strings.c:46
 msgid ""
 "Given two factorizations, give the factorization of the product, see "
@@ -322,6 +315,7 @@ msgid ""
 "-n/2 to n/2)"
 msgstr ""
 
+# a mon avis, cela devrait être M au lieu de Mp en anglais
 #: ../lib/library-strings.c:63
 msgid "Test if Mp is a Mersenne prime using the Lucas-Lehmer test"
 msgstr ""
@@ -339,10 +333,10 @@ msgid "Returns the padic valuation (number of trailing zeros in base p)."
 msgstr ""
 
 #: ../lib/library-strings.c:67
-#, fuzzy
 msgid "Compute a^b mod m"
-msgstr "اسم ال_حاسوب:"
+msgstr ""
 
+#
 #: ../lib/library-strings.c:68
 msgid "Return all prime factors of a number"
 msgstr ""
@@ -388,14 +382,12 @@ msgid "Calculate the kth compund matrix of A"
 msgstr ""
 
 #: ../lib/library-strings.c:77
-#, fuzzy
 msgid "Delete a column of a matrix"
-msgstr "حذف الحساب؟"
+msgstr ""
 
 #: ../lib/library-strings.c:78
-#, fuzzy
 msgid "Delete a row of a matrix"
-msgstr "ازالة علامة الموقع "
+msgstr ""
 
 #: ../lib/library-strings.c:79
 msgid "Get the dot product of two vectors (no conjugates)"
@@ -414,14 +406,12 @@ msgid "Is a matrix upper triangular"
 msgstr ""
 
 #: ../lib/library-strings.c:83
-#, fuzzy
 msgid "Is argument a horizontal or a vertical vector"
-msgstr "إزالة جميع الأدلة الأفقية والعمودية"
+msgstr ""
 
 #: ../lib/library-strings.c:84
-#, fuzzy
 msgid "Zero out entries above the diagonal"
-msgstr "تعذّر الحصول على بيانات الطقس"
+msgstr ""
 
 #: ../lib/library-strings.c:85
 msgid "Make diagonal matrix from a vector"
@@ -436,18 +426,16 @@ msgid "Calculate the product of all elements in a matrix"
 msgstr ""
 
 #: ../lib/library-strings.c:88
-#, fuzzy
 msgid "Calculate the sum of all elements in a matrix"
-msgstr "تلقي عدد العناصر في مفتاح قائمة."
+msgstr ""
 
 #: ../lib/library-strings.c:89
 msgid "Calculate the sum of squares of all elements in a matrix"
 msgstr ""
 
 #: ../lib/library-strings.c:90
-#, fuzzy
 msgid "Get the outer product of two vectors"
-msgstr "أعط نتيجة عملية ضرب عددين في وقت محدود"
+msgstr ""
 
 #: ../lib/library-strings.c:91
 msgid "Reverse elements in a vector"
@@ -462,9 +450,8 @@ msgid "Calculate sum of squares of each row in a matrix"
 msgstr ""
 
 #: ../lib/library-strings.c:94
-#, fuzzy
 msgid "Sort vector elements"
-msgstr "شبه العناصر للمنتقي "
+msgstr ""
 
 #: ../lib/library-strings.c:95
 msgid "Removes any all-zero rows of M"
@@ -568,9 +555,8 @@ msgid "Get the image (columnspace) of a linear transform"
 msgstr ""
 
 #: ../lib/library-strings.c:119
-#, fuzzy
 msgid "Get the Inf Norm of a vector"
-msgstr "تلقي اسم المصدر اﻻفتراضي"
+msgstr ""
 
 #: ../lib/library-strings.c:120
 msgid ""
@@ -578,9 +564,8 @@ msgid ""
 msgstr ""
 
 #: ../lib/library-strings.c:121
-#, fuzzy
 msgid "Inverse Hilbert matrix of order n"
-msgstr "_بترتيب هجائي معكوس"
+msgstr ""
 
 #: ../lib/library-strings.c:122
 msgid "Is a matrix hermitian"
@@ -617,9 +602,8 @@ msgid "Is a matrix skew-hermitian"
 msgstr ""
 
 #: ../lib/library-strings.c:130
-#, fuzzy
 msgid "Is a matrix unitary"
-msgstr "ا_ستخدم وحدات النظام المتري"
+msgstr ""
 
 #: ../lib/library-strings.c:131
 msgid "Get the jordan block corresponding to lambda and n"
@@ -648,18 +632,16 @@ msgid "Get the p Norm (or 2 Norm if no p is supplied) of a vector"
 msgstr ""
 
 #: ../lib/library-strings.c:137
-#, fuzzy
 msgid "Get the nullspace of a matrix"
-msgstr "تلقي اسم المصدر اﻻفتراضي"
+msgstr ""
 
 #: ../lib/library-strings.c:138
 msgid "Get the nullity of a matrix"
 msgstr ""
 
 #: ../lib/library-strings.c:139
-#, fuzzy
 msgid "Get the orthogonal complement of the columnspace"
-msgstr "الترصيف الأفقي للشارة"
+msgstr ""
 
 #: ../lib/library-strings.c:140
 msgid ""
@@ -678,9 +660,8 @@ msgid "Get the QR decomposition of A, returns R and Q can be a reference"
 msgstr ""
 
 #: ../lib/library-strings.c:143
-#, fuzzy
 msgid "Get the rank of a matrix"
-msgstr "احصل على الوقت والتاريخ الحالي"
+msgstr ""
 
 #: ../lib/library-strings.c:144
 msgid "Return the Rayleigh quotient of a matrix and a vector"
@@ -740,23 +721,21 @@ msgid "Calculate the trace of a matrix"
 msgstr ""
 
 #: ../lib/library-strings.c:157
-#, fuzzy
 msgid "Transpose of a matrix"
-msgstr "شفافية خط الحاشية "
+msgstr ""
 
+#
 #: ../lib/library-strings.c:158
-#, fuzzy
 msgid "Return the Vandermonde matrix"
-msgstr "أعِد آخر عملية متراجع عنها"
+msgstr ""
 
 #: ../lib/library-strings.c:159
 msgid "The angle of two vectors, given an inner product"
 msgstr ""
 
 #: ../lib/library-strings.c:160
-#, fuzzy
 msgid "The direct sum of the vector spaces M and N"
-msgstr "الدليل الذي تم حفظ لقطات الشاشة الأخيرة فيه."
+msgstr ""
 
 #: ../lib/library-strings.c:161
 msgid "Intersection of the subspaces given by M and N"
@@ -818,6 +797,7 @@ msgstr ""
 msgid "Calculate multinomial coefficients"
 msgstr ""
 
+#
 #: ../lib/library-strings.c:175
 msgid "Get the pascal's triangle as a matrix"
 msgstr ""
@@ -839,9 +819,8 @@ msgid "Calculate combinations (binomial coefficient)"
 msgstr ""
 
 #: ../lib/library-strings.c:180
-#, fuzzy
 msgid "Calculate permutations"
-msgstr "الغِ العمليّة"
+msgstr ""
 
 #: ../lib/library-strings.c:181
 msgid ""
@@ -899,9 +878,8 @@ msgid ""
 msgstr ""
 
 #: ../lib/library-strings.c:191
-#, fuzzy
 msgid "Integration by midpoint rule"
-msgstr "المطار الدولي"
+msgstr ""
 
 #: ../lib/library-strings.c:192
 msgid "Attempt to calculate numerical derivative"
@@ -1022,14 +1000,12 @@ msgid "The cis function, that is cos(x)+i*sin(x)"
 msgstr ""
 
 #: ../lib/library-strings.c:218
-#, fuzzy
 msgid "Convert degrees to radians"
-msgstr "الدرجات بالقطر"
+msgstr ""
 
 #: ../lib/library-strings.c:219
-#, fuzzy
 msgid "Convert radians to degrees"
-msgstr "تحويل الصورة إلى مفهرسة"
+msgstr ""
 
 #: ../lib/library-strings.c:220
 msgid "Find roots of a cubic polynomial (given as vector of coefficients)"
@@ -1077,9 +1053,8 @@ msgid ""
 msgstr ""
 
 #: ../lib/library-strings.c:230
-#, fuzzy
 msgid "Calculate average of an entire matrix"
-msgstr "قم بإنتاج رسم أو رسوم متحركة"
+msgstr ""
 
 #: ../lib/library-strings.c:231
 msgid "Integral of the GaussFunction from 0 to x (area under the normal curve)"
@@ -1156,21 +1131,19 @@ msgstr ""
 
 #: ../src/calc.c:187
 msgid "Uncategorized"
-msgstr "غير مصنف"
+msgstr ""
 
 #: ../src/calc.c:353
 msgid "Trying to set an alias for an alias"
 msgstr ""
 
 #: ../src/calc.c:939
-#, fuzzy
 msgid "Bad identifier for function node!"
-msgstr "اسم اللعبة"
+msgstr ""
 
 #: ../src/calc.c:977 ../src/eval.c:6382 ../src/eval.c:6576
-#, fuzzy
 msgid "Unexpected operator!"
-msgstr "خطأ غير متوقع"
+msgstr ""
 
 #. FIXME:
 #: ../src/calc.c:1166
@@ -1182,21 +1155,18 @@ msgid "NULL tree!"
 msgstr ""
 
 #: ../src/calc.c:1316
-#, fuzzy
 msgid "NULL function!"
-msgstr "الوضائف المتعلقة ب NULL"
+msgstr ""
 
 #. variable and reference functions should
 #. never be in the etree
 #: ../src/calc.c:1345
-#, fuzzy
 msgid "Unexpected function type!"
-msgstr "نهاية إرسال غير متوقعة!"
+msgstr ""
 
 #: ../src/calc.c:1360 ../src/eval.c:6812
-#, fuzzy
 msgid "Unexpected node!"
-msgstr "خطأ غير متوقع"
+msgstr ""
 
 #: ../src/calc.c:1769
 #, c-format
@@ -1209,54 +1179,45 @@ msgstr ""
 #: ../src/calc.c:1907 ../src/calc.c:1920 ../src/calc.c:1926 ../src/calc.c:1933
 #: ../src/calc.c:1942 ../src/calc.c:1953 ../src/calc.c:1959 ../src/calc.c:1966
 #: ../src/calc.c:1972 ../src/calc.c:1981 ../src/calc.c:1991
-#, fuzzy
 msgid "Badly formed record"
-msgstr "ترويسة فاسدة"
+msgstr ""
 
 #: ../src/calc.c:1820
-#, fuzzy
 msgid "Record out of place"
-msgstr "الكلمة التي ستتغيّر"
+msgstr ""
 
 #: ../src/calc.c:2005
-#, fuzzy
 msgid "Missing value for function"
-msgstr "وظيفة غير صالحة"
+msgstr ""
 
 #: ../src/calc.c:2025
-#, fuzzy
 msgid "Extra dictionary for NULL function"
-msgstr "الفراغ الإضافي للإضافة لأزرار CAN_DEFAULT"
+msgstr ""
 
 #: ../src/calc.c:2067 ../src/calc.c:2621 ../src/calc.c:2656
-#, fuzzy, c-format
+#, c-format
 msgid "Can't open file: '%s'"
-msgstr "تعذّر تحليل الملف '%s' !"
+msgstr ""
 
 #: ../src/calc.c:2268
-#, fuzzy
 msgid "Load a file into the interpretor"
-msgstr "إنشيء ملف جديد في المجلد المعطى"
+msgstr ""
 
 #: ../src/calc.c:2271
-#, fuzzy
 msgid "Load a plugin"
-msgstr "مُلحق الصوت"
+msgstr ""
 
 #: ../src/calc.c:2274
-#, fuzzy
 msgid "List files in the current directory"
-msgstr "إنشيء ملف جديد في المجلد المعطى"
+msgstr ""
 
 #: ../src/calc.c:2277
-#, fuzzy
 msgid "Change directory"
-msgstr "_غير المجلد"
+msgstr ""
 
 #: ../src/calc.c:2280
-#, fuzzy
 msgid "Print current directory"
-msgstr "إطبع اللعبة الحالية"
+msgstr ""
 
 #: ../src/calc.c:2283
 msgid "Print help (or help on a function/command)"
@@ -1269,51 +1230,42 @@ msgid ""
 msgstr ""
 
 #: ../src/calc.c:2302
-#, fuzzy
 msgid "  manual\n"
-msgstr "افتح الكتيّب"
+msgstr ""
 
 #: ../src/calc.c:2306
-#, fuzzy
 msgid ""
 "\n"
 "For help on a specific function type:\n"
-msgstr "اذهب إلى سطر معيّن"
+msgstr ""
 
 #: ../src/calc.c:2308
-#, fuzzy
 msgid "  help FunctionName\n"
-msgstr "دالّات بيرل"
+msgstr ""
 
 #: ../src/calc.c:2312
-#, fuzzy
 msgid ""
 "\n"
 "Commands:\n"
-msgstr "اﻷوا_مر"
+msgstr ""
 
 #: ../src/calc.c:2360
-#, fuzzy
 msgid ""
 "\n"
 "Undocumented:\n"
 msgstr ""
-"\n"
-"\n"
-"مستند:\n"
 
 #. func
 #. aliasfor
 #. category
 #: ../src/calc.c:2403
-#, fuzzy
 msgid "Not documented"
-msgstr "غير مضموم"
+msgstr ""
 
 #: ../src/calc.c:2425
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is not documented"
-msgstr "مستند %s"
+msgstr ""
 
 #: ../src/calc.c:2427
 #, c-format
@@ -1321,33 +1273,32 @@ msgid "'%s' is not documented.  Perhaps you meant %s."
 msgstr ""
 
 #: ../src/calc.c:2437
-#, fuzzy, c-format
+#, c-format
 msgid "%s is an alias for %s\n"
-msgstr "%s ليس مجلّدا"
+msgstr ""
 
 #: ../src/calc.c:2451
-#, fuzzy
 msgid "Parameter: "
-msgstr "معاملات:"
+msgstr ""
 
 #: ../src/calc.c:2476
 msgid "Aliases:"
-msgstr "اسماء بديلة:"
+msgstr ""
 
 #: ../src/calc.c:2488
-#, fuzzy, c-format
+#, c-format
 msgid "Description: %s\n"
-msgstr "الوصف:  %s"
+msgstr ""
 
 #: ../src/calc.c:2695 ../src/calc.c:2706
-#, fuzzy, c-format
+#, c-format
 msgid "Can't expand '%s'"
-msgstr "لم يمكن توسيع ${%s}"
+msgstr ""
 
 #: ../src/calc.c:2776
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open plugin '%s'!"
-msgstr "لا يمكن فتح %s"
+msgstr ""
 
 #: ../src/calc.c:2986
 msgid "ERROR: Probably corrupt stack!"
@@ -1368,9 +1319,9 @@ msgid "ERROR: %s at end of input"
 msgstr ""
 
 #: ../src/calc.c:3124
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: %s before '%s'"
-msgstr "خطأ: %s"
+msgstr ""
 
 #: ../src/compil.c:459 ../src/compil.c:466
 msgid "Bad tree record when decompiling"
@@ -1413,9 +1364,8 @@ msgid "Powers on matrices in modulo mode are defined on integer matrices only"
 msgstr ""
 
 #: ../src/eval.c:2053
-#, fuzzy
 msgid "Exponent too large"
-msgstr "قد يكون الخط كبيراً جدا"
+msgstr ""
 
 #: ../src/eval.c:2081 ../src/eval.c:2197 ../src/eval.c:2264
 msgid "Matrix appears singular and can't be inverted"
@@ -1431,9 +1381,8 @@ msgstr ""
 
 #: ../src/eval.c:2658 ../src/eval.c:2685 ../src/eval.c:2706 ../src/eval.c:2730
 #: ../src/eval.c:2776
-#, fuzzy
 msgid "Operations on functions with variable argument list not supported"
-msgstr "الإصدارة %s لتهيئة ملف GIF غير مدعومة"
+msgstr ""
 
 #: ../src/eval.c:2663
 msgid ""
@@ -1449,9 +1398,8 @@ msgid "Unevaluatable function type encountered!"
 msgstr ""
 
 #: ../src/eval.c:3382
-#, fuzzy
 msgid "' or '"
-msgstr "س أو"
+msgstr ""
 
 #: ../src/eval.c:3417
 msgid ""
@@ -1482,23 +1430,20 @@ msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr ""
 
 #: ../src/eval.c:3470
-#, fuzzy
 msgid "NULL reference encountered!"
-msgstr "وُجدت شِفرة غير سليمة"
+msgstr ""
 
 #: ../src/eval.c:3597
-#, fuzzy
 msgid "Cannot compare matrixes"
-msgstr "تعذر فتح البريد الإلكتروني"
+msgstr ""
 
 #: ../src/eval.c:3639
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
 
 #: ../src/eval.c:3730
-#, fuzzy
 msgid "Bad argument to modular operation"
-msgstr "متغيّر سيء لنداء النظام"
+msgstr ""
 
 #: ../src/eval.c:4448
 #, c-format
@@ -1511,14 +1456,13 @@ msgid "Function '%s' used uninitialized"
 msgstr ""
 
 #: ../src/eval.c:4476
-#, fuzzy, c-format
+#, c-format
 msgid "Can't dereference '%s'!"
-msgstr "تعذّر تحليل الملف '%s' !"
+msgstr ""
 
 #: ../src/eval.c:4484
-#, fuzzy
 msgid "Can't call a non-function!"
-msgstr "لا يمكن إضافة اتصال VPN"
+msgstr ""
 
 #: ../src/eval.c:4520
 #, c-format
@@ -1549,9 +1493,8 @@ msgid "'for/sum/prod' loop increment can't be 0"
 msgstr ""
 
 #: ../src/eval.c:4937
-#, fuzzy
 msgid "Bad type for 'for in' loop!"
-msgstr "نوع سيء لرقم VT \n"
+msgstr ""
 
 #: ../src/eval.c:5101 ../src/eval.c:5134
 msgid "Continue or break outside a loop, assuming \"return null\""
@@ -1562,24 +1505,21 @@ msgid "Wrong argument type as matrix index"
 msgstr ""
 
 #: ../src/eval.c:5205
-#, fuzzy
 msgid "Matrix index too large"
-msgstr "شريط الأدوات الرّئيسي"
+msgstr ""
 
 #: ../src/eval.c:5208
-#, fuzzy
 msgid "Matrix index less than 1"
-msgstr "الأعداد الأولية الأصغر من %d"
+msgstr ""
 
 #: ../src/eval.c:5231 ../src/eval.c:5246
-#, fuzzy
 msgid "Matrix index out of range"
-msgstr "قيمة خارج المدى.\n"
+msgstr ""
 
 #: ../src/eval.c:5293 ../src/eval.c:5355 ../src/eval.c:5418 ../src/eval.c:5465
-#, fuzzy, c-format
+#, c-format
 msgid "Trying to set a protected id '%s'"
-msgstr "يجري محاولة إعادة تشغيل خادم X."
+msgstr ""
 
 #: ../src/eval.c:5311 ../src/eval.c:5350
 msgid "Indexed Lvalue not user function"
@@ -1631,41 +1571,36 @@ msgid "Vector index not an integer or a vector"
 msgstr ""
 
 #: ../src/eval.c:5905
-#, fuzzy
 msgid "number"
-msgstr "الرقم"
+msgstr "nombre"
 
 #: ../src/eval.c:5906
-#, fuzzy
 msgid "matrix"
-msgstr "ماتورين"
+msgstr ""
 
 #: ../src/eval.c:5907
 msgid "string"
-msgstr "سلسلة نص"
+msgstr "cadena"
 
 #: ../src/eval.c:5908
-#, fuzzy
 msgid "function"
-msgstr "الوظيفة"
+msgstr ""
 
 #: ../src/eval.c:5909
-#, fuzzy
 msgid "identifier"
-msgstr "مميّز الألغورذم"
+msgstr ""
 
 #: ../src/eval.c:5910
-#, fuzzy
 msgid "polynomial"
-msgstr "كولومبيا"
+msgstr ""
 
 #: ../src/eval.c:5911
 msgid "boolean"
-msgstr "منطقي"
+msgstr "boolean"
 
 #: ../src/eval.c:5931
 msgid "Addition"
-msgstr "جمع"
+msgstr "Adicion"
 
 #: ../src/eval.c:5932
 msgid "Element by element addition"
@@ -1673,16 +1608,15 @@ msgstr ""
 
 #: ../src/eval.c:5933
 msgid "Subtraction"
-msgstr "عملية طرح"
+msgstr ""
 
 #: ../src/eval.c:5934
-#, fuzzy
 msgid "Element by element subtraction"
-msgstr "عملية طرح بسيطة"
+msgstr ""
 
 #: ../src/eval.c:5935
 msgid "Multiplication"
-msgstr "عمليات ضرب"
+msgstr ""
 
 #: ../src/eval.c:5936
 msgid "Element by element multiplication"
@@ -1690,38 +1624,35 @@ msgstr ""
 
 #: ../src/eval.c:5937
 msgid "Division"
-msgstr "عمليات قسمة"
+msgstr "Division"
 
 #: ../src/eval.c:5938
 msgid "Element by element division"
 msgstr ""
 
 #: ../src/eval.c:5939
-#, fuzzy
 msgid "Back division"
-msgstr "X تقسيماً"
+msgstr ""
 
 #: ../src/eval.c:5940
 msgid "Element by element back division"
 msgstr ""
 
 #: ../src/eval.c:5941
-#, fuzzy
 msgid "Modulo"
-msgstr "وِحدة"
+msgstr ""
 
 #: ../src/eval.c:5942
 msgid "Element by element modulo"
 msgstr ""
 
 #: ../src/eval.c:5943
-#, fuzzy
 msgid "Negation"
-msgstr "إبحار"
+msgstr ""
 
 #: ../src/eval.c:5944
 msgid "Power"
-msgstr "الطاقة"
+msgstr "Poténcia"
 
 #: ../src/eval.c:5945
 msgid "Element by element power"
@@ -1729,17 +1660,15 @@ msgstr ""
 
 #: ../src/eval.c:5946
 msgid "Factorial"
-msgstr "عاملي"
+msgstr "Factoriala"
 
 #: ../src/eval.c:5947
-#, fuzzy
 msgid "Double factorial"
-msgstr "مضاعفة بعد الإصابة"
+msgstr ""
 
 #: ../src/eval.c:5948
-#, fuzzy
 msgid "Transpose"
-msgstr "نقل"
+msgstr ""
 
 #: ../src/eval.c:5949
 msgid "ConjugateTranspose"
@@ -1754,14 +1683,13 @@ msgid "XOR"
 msgstr ""
 
 #: ../src/eval.c:5952
-#, fuzzy
 msgid "NOT"
-msgstr "شمال"
+msgstr "PAS"
 
 #: ../src/eval.c:5972
-#, fuzzy, c-format
+#, c-format
 msgid "Bad types for '%s'"
-msgstr "خيارات سيّئة للأمر '%s'"
+msgstr ""
 
 #: ../src/eval.c:5983
 #, c-format
@@ -1769,14 +1697,14 @@ msgid "%s not defined on <%s> and <%s>"
 msgstr ""
 
 #: ../src/eval.c:6002
-#, fuzzy, c-format
+#, c-format
 msgid "Bad type for '%s'"
-msgstr "إدخال غير مقبول لـ %s"
+msgstr ""
 
 #: ../src/eval.c:6012
-#, fuzzy, c-format
+#, c-format
 msgid "%s not defined on <%s>"
-msgstr "%s: لا يمكن فتح %s بأمان"
+msgstr ""
 
 #: ../src/eval.c:6031 ../src/eval.c:6048
 msgid "Vector building only works on numbers"
@@ -1793,17 +1721,16 @@ msgid "%s: argument can't be negative or 0"
 msgstr ""
 
 #: ../src/funclib.c:115
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument too large"
-msgstr "قد يكون الخط كبيراً جدا"
+msgstr ""
 
 #: ../src/funclib.c:150
-#, fuzzy
 msgid "Cannot locate the manual"
-msgstr "لا يمكن حذف هذا الشريط"
+msgstr ""
 
 #: ../src/funclib.c:166
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Genius %s\n"
 "%s\n"
@@ -1823,15 +1750,6 @@ msgid ""
 "    Foundation,  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,\n"
 "    USA.\n"
 msgstr ""
-"هذا البرنامج حر، يمكنك توزيعه و/أو تعديله حسب بنود رخصة جنو العمومية كما "
-"نشرتها مؤسسة البرامج الحرة، الإصدار الثاني أو أي إصدار أحدث (حسب رغبتك).\n"
-"هذا البرنامج يوزع على أمل أن يكون مفيداً، ولكن دون أية ضمانات، بما في ذلك "
-"ضمانات قابلية البرنامج للتسويق أو الملاءمة لغرض معين. انظر نص رخصة جنو "
-"العمومية لمزيد من التفاصيل.\n"
-"من المفترض أنك تلقيت نسخة من رخصة جنو العمومية مع هذا البرنامج؛ إذا لم يحدث "
-"هذا فاكتب إلى:\n"
-"Free Software Fondation Inc., 59 Temple Place - Suite 330, Boston, MA 02111 "
-"- 1307, USA"
 
 #: ../src/funclib.c:383
 #, c-format
@@ -1879,9 +1797,9 @@ msgid "%s: matrix argument must be integer only"
 msgstr ""
 
 #: ../src/funclib.c:1927 ../src/funclib.c:2027
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument must be an integer"
-msgstr "\"%s\" يتوقّع أن يكون المعامل الثاني عدد صحيح"
+msgstr ""
 
 #: ../src/funclib.c:2262 ../src/funclib.c:2349
 #, c-format
@@ -1889,9 +1807,9 @@ msgid "%s: matrix argument must be value only"
 msgstr ""
 
 #: ../src/funclib.c:2469 ../src/funclib.c:2509 ../src/funclib.c:3758
-#, fuzzy, c-format
+#, c-format
 msgid "%s: too many arguments"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/funclib.c:2632
 #, c-format
@@ -1909,9 +1827,9 @@ msgid "%s: arguments must be vectors of equal size"
 msgstr ""
 
 #: ../src/funclib.c:2938 ../src/funclib.c:2944
-#, fuzzy, c-format
+#, c-format
 msgid "%s: %s not a reference"
-msgstr "%s ليس مجلّدا"
+msgstr ""
 
 #: ../src/funclib.c:2983
 #, c-format
@@ -1919,26 +1837,23 @@ msgid "%s: matrices not of the same height"
 msgstr ""
 
 #: ../src/funclib.c:2988
-#, fuzzy
 msgid "third argument"
-msgstr "معامِل غير صحيح"
+msgstr ""
 
 #: ../src/funclib.c:2993
-#, fuzzy
 msgid "fourth argument"
-msgstr "اذهب إلى الأب"
+msgstr ""
 
 #: ../src/funclib.c:3265
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument must be greater than 2"
-msgstr "يُرجع أكبر من"
+msgstr ""
 
 #: ../src/funclib.c:3368 ../src/funclib.c:3397 ../src/mpwrap.c:3523
 #: ../src/mpwrap.c:3542 ../src/mpwrap.c:3599 ../src/mpwrap.c:3628
 #: ../src/mpwrap.c:3645 ../src/mpwrap.c:3694
-#, fuzzy
 msgid "Division by zero!"
-msgstr "لعبة ذاكرة القسمة"
+msgstr ""
 
 #: ../src/funclib.c:3436
 #, c-format
@@ -1952,19 +1867,19 @@ msgstr ""
 
 #: ../src/funclib.c:3986 ../src/funclib.c:4075 ../src/funclib.c:4303
 #: ../src/funclib.c:4358 ../src/funclib.c:4428 ../src/funclib.c:4442
-#, fuzzy, c-format
+#, c-format
 msgid "%s: value out of range"
-msgstr "قيمة خارج المدى.\n"
+msgstr ""
 
 #: ../src/funclib.c:4513
-#, fuzzy, c-format
+#, c-format
 msgid "%s: undefined function"
-msgstr "الدوال المحددة من طرف المستخدم"
+msgstr ""
 
 #: ../src/funclib.c:4519
-#, fuzzy, c-format
+#, c-format
 msgid "%s: flags argument must be a string"
-msgstr "\"%s\" يتوقّع أن يكون المعامل الأول سلسلة محارف"
+msgstr ""
 
 #: ../src/funclib.c:4632
 #, c-format
@@ -1977,9 +1892,9 @@ msgid "%s: argument not a function of one variable"
 msgstr ""
 
 #: ../src/funclib.c:4745 ../src/funclib.c:4781 ../src/funclib.c:4977
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument should be between %d and %d"
-msgstr "خمن عدداً بين %d و %d"
+msgstr ""
 
 #: ../src/funclib.c:4882
 msgid "OutputStyle must be one of normal, troff, latex or mathml"
@@ -1992,162 +1907,139 @@ msgstr ""
 
 #: ../src/funclib.c:5039
 msgid "Basic"
-msgstr "بسيط"
+msgstr "Basic"
 
 #. internal
 #: ../src/funclib.c:5040
-#, fuzzy
 msgid "Parameters"
-msgstr "معاملات:"
+msgstr "Paramètres"
 
 #. internal
 #: ../src/funclib.c:5041
 msgid "Constants"
-msgstr "ثوابت"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5042
 msgid "Numeric"
-msgstr "رقمي"
+msgstr "Numeric"
 
 #. internal
 #: ../src/funclib.c:5043
-#, fuzzy
 msgid "Trigonometry"
-msgstr "مونتغومري"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5044
-#, fuzzy
 msgid "Number Theory"
-msgstr "_رقم عند كل"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5045
-#, fuzzy
 msgid "Matrix Manipulation"
-msgstr "استعمال الفأرة"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5046
-#, fuzzy
 msgid "Linear Algebra"
-msgstr "خطي ب"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5047
-#, fuzzy
 msgid "Combinatorics"
-msgstr "المنسّق"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5048
-#, fuzzy
 msgid "Calculus"
-msgstr "نداء"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5049
-#, fuzzy
 msgid "Functions"
-msgstr "الوظيفة"
+msgstr "Foncions"
 
 #. internal
 #: ../src/funclib.c:5050
-#, fuzzy
 msgid "Equation Solving"
-msgstr "تحذير إيفُليوشِن"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5051
-#, fuzzy
 msgid "Statistics"
-msgstr "إح_صائيّات"
+msgstr "Estadisticas"
 
 #. internal
 #: ../src/funclib.c:5052
-#, fuzzy
 msgid "Polynomials"
-msgstr "مضلع"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5053
-#, fuzzy
 msgid "Set Theory"
-msgstr "اجلس هنا"
+msgstr ""
 
 #. internal
 #: ../src/funclib.c:5054
 msgid "Miscellaneous"
-msgstr "متنوع"
+msgstr "Divèrs"
 
 #. internal
 #: ../src/funclib.c:5056
-#, fuzzy
 msgid "Displays the user manual"
-msgstr "عرض المساعدة للمستخدم"
+msgstr ""
 
 #: ../src/funclib.c:5057
-#, fuzzy
 msgid "Gives the warranty information"
-msgstr "معلومات الحدث"
+msgstr ""
 
 #: ../src/funclib.c:5058
-#, fuzzy
 msgid "Exits the program"
-msgstr "اخرج من البرنامج"
+msgstr ""
 
 #: ../src/funclib.c:5060
-#, fuzzy
 msgid "Prints a string to the error stream"
-msgstr "اطبع النتائج للكونسول"
+msgstr ""
 
 #: ../src/funclib.c:5061
 msgid "Waits a specified number of seconds"
 msgstr ""
 
 #: ../src/funclib.c:5062
-#, fuzzy
 msgid "The true boolean value"
-msgstr "قيمة منطقية"
+msgstr ""
 
 #: ../src/funclib.c:5064
-#, fuzzy
 msgid "The false boolean value"
-msgstr "قيمة منطقية"
+msgstr ""
 
 #: ../src/funclib.c:5073
 msgid "Make integer (0 or 1) from a boolean value"
 msgstr ""
 
 #: ../src/funclib.c:5075
-#, fuzzy
 msgid "Prints an expression"
-msgstr "اطبع إصدارة GDM"
+msgstr ""
 
 #: ../src/funclib.c:5076
-#, fuzzy
 msgid "Changes current directory"
-msgstr "اظهار المجلد المحلى الحالى "
+msgstr ""
 
 #: ../src/funclib.c:5077
 msgid "Prints an expression without a trailing newline"
 msgstr ""
 
 #: ../src/funclib.c:5078
-#, fuzzy
 msgid "Display a string and an expression"
-msgstr "اعرض الإصدار و اخرج"
+msgstr ""
 
 #: ../src/funclib.c:5079
-#, fuzzy
 msgid "Set a global variable"
-msgstr "متغيّرات عامّة"
+msgstr ""
 
 #: ../src/funclib.c:5081
-#, fuzzy
 msgid "Set the category and help description line for a function"
-msgstr "حدد وصف حدث atk ضغط "
+msgstr ""
 
 #: ../src/funclib.c:5082
 msgid "Sets up a help alias"
@@ -2158,38 +2050,32 @@ msgid "Identity function, returns its argument"
 msgstr ""
 
 #: ../src/funclib.c:5086
-#, fuzzy
 msgid "Generate random float"
-msgstr "ولِّد كلمة سر _عشوائيّة"
+msgstr ""
 
 #: ../src/funclib.c:5088
-#, fuzzy
 msgid "Generate random integer"
-msgstr "ولِّد كلمة سر _عشوائيّة"
+msgstr ""
 
 #: ../src/funclib.c:5091 ../src/gnome-genius.c:1278
-#, fuzzy
 msgid "Floating point precision"
-msgstr "استثناء أرقام عشرية"
+msgstr ""
 
 #: ../src/funclib.c:5092
-#, fuzzy
 msgid "Maximum digits to display"
-msgstr "نص ليُعرض"
+msgstr ""
 
 #: ../src/funclib.c:5093
-#, fuzzy
 msgid "Maximum errors to display"
-msgstr "أ_قصى عدد معروض من النتائج:"
+msgstr ""
 
 #: ../src/funclib.c:5094
 msgid "Output style: normal, latex, mathml or troff"
 msgstr ""
 
 #: ../src/funclib.c:5095
-#, fuzzy
 msgid "Integer output base"
-msgstr "عدد صحيح"
+msgstr ""
 
 #: ../src/funclib.c:5096
 msgid "If true, mixed fractions are printed"
@@ -2200,14 +2086,12 @@ msgid "Print full expressions, even if more than a line"
 msgstr ""
 
 #: ../src/funclib.c:5098
-#, fuzzy
 msgid "Convert all results to floats before printing"
-msgstr "تعذر تحديد خط الطباعة الإفتراضي\n"
+msgstr ""
 
 #: ../src/funclib.c:5099
-#, fuzzy
 msgid "Use scientific notation"
-msgstr "استخدام أصوات التَّبليغ"
+msgstr ""
 
 #: ../src/funclib.c:5101
 msgid ""
@@ -2232,72 +2116,60 @@ msgid "Gets the diagonal entries of a matrix as a column vector"
 msgstr ""
 
 #: ../src/funclib.c:5111
-#, fuzzy
 msgid "Count the number of zero columns in a matrix"
-msgstr "عدد الأعمدة في الجدول"
+msgstr ""
 
 #: ../src/funclib.c:5112
-#, fuzzy
 msgid "Removes any all-zero columns of M"
-msgstr "ازالة ملف محلى "
+msgstr ""
 
 #: ../src/funclib.c:5114
-#, fuzzy
 msgid "Calculates the conjugate"
-msgstr "احسب النتيحة"
+msgstr ""
 
 #: ../src/funclib.c:5119
-#, fuzzy
 msgid "Calculates the sine function"
-msgstr "مسح المنتقى"
+msgstr ""
 
 #: ../src/funclib.c:5121
-#, fuzzy
 msgid "Calculates the cosine function"
-msgstr "مسح المنتقى"
+msgstr ""
 
 #: ../src/funclib.c:5123
 msgid "Calculates the hyperbolic sine function"
 msgstr ""
 
 #: ../src/funclib.c:5125
-#, fuzzy
 msgid "Calculates the hyperbolic cosine function"
-msgstr "اضبط الخيار الزائدي للدوال المثلثية"
+msgstr ""
 
 #: ../src/funclib.c:5127
-#, fuzzy
 msgid "Calculates the tan function"
-msgstr "احسب النتيحة"
+msgstr ""
 
 #: ../src/funclib.c:5129
-#, fuzzy
 msgid "Calculates the arctan function"
-msgstr "وظائف المجموعات"
+msgstr ""
 
 #: ../src/funclib.c:5133
 msgid "Calculates the arctan2 function (arctan(y/x) if x>0)"
 msgstr ""
 
 #: ../src/funclib.c:5136
-#, fuzzy
 msgid "The number pi"
-msgstr "العدد اذا أمكن تطبيقه"
+msgstr ""
 
 #: ../src/funclib.c:5138
-#, fuzzy
 msgid "The natural number e"
-msgstr "الرقم المسلسل:"
+msgstr ""
 
 #: ../src/funclib.c:5140
-#, fuzzy
 msgid "The Golden Ratio"
-msgstr "غولدن روك"
+msgstr ""
 
 #: ../src/funclib.c:5142
-#, fuzzy
 msgid "Free fall acceleration"
-msgstr "مفتاح الاختصار لعمود القائمة"
+msgstr ""
 
 #: ../src/funclib.c:5145
 msgid "Euler's Constant gamma"
@@ -2319,19 +2191,16 @@ msgid "The Gamma function (only real values implemented)"
 msgstr ""
 
 #: ../src/funclib.c:5161
-#, fuzzy
 msgid "The square root"
-msgstr "الجذر المربع"
+msgstr ""
 
 #: ../src/funclib.c:5165
-#, fuzzy
 msgid "The exponential function"
-msgstr "نصّ على الزرّ"
+msgstr ""
 
 #: ../src/funclib.c:5167
-#, fuzzy
 msgid "The natural logarithm"
-msgstr "باستخدام خوارزمية داخلية"
+msgstr ""
 
 #: ../src/funclib.c:5169
 msgid "Logarithm of x base 2"
@@ -2342,9 +2211,8 @@ msgid "Logarithm of x base 10"
 msgstr ""
 
 #: ../src/funclib.c:5174
-#, fuzzy
 msgid "Round a number"
-msgstr "رقم عشوائي"
+msgstr ""
 
 #: ../src/funclib.c:5177
 msgid "Get the highest integer less than or equal to n"
@@ -2363,9 +2231,8 @@ msgid "Make number a float"
 msgstr ""
 
 #: ../src/funclib.c:5189
-#, fuzzy
 msgid "Get the numerator of a rational number"
-msgstr "تلقي عدد العناصر في مفتاح قائمة."
+msgstr ""
 
 #: ../src/funclib.c:5191
 msgid "Get the denominator of a rational number"
@@ -2376,14 +2243,12 @@ msgid "Greatest common divisor"
 msgstr ""
 
 #: ../src/funclib.c:5196
-#, fuzzy
 msgid "Least common multiplier"
-msgstr "سطر أوامر Xnest"
+msgstr ""
 
 #: ../src/funclib.c:5198
-#, fuzzy
 msgid "Check a number for being a perfect square"
-msgstr "عدد البيتات لكل نموذج"
+msgstr ""
 
 #: ../src/funclib.c:5199
 msgid "Check a number for being any perfect power (a^b)"
@@ -2472,14 +2337,12 @@ msgid "Calculate the Legendre symbol (a/p)"
 msgstr ""
 
 #: ../src/funclib.c:5230
-#, fuzzy
 msgid "Get the real part of a complex number"
-msgstr "ما إذا كان الكائن مركبا من كائن آخر"
+msgstr ""
 
 #: ../src/funclib.c:5233
-#, fuzzy
 msgid "Get the imaginary part of a complex number"
-msgstr "ما إذا كان الكائن مركبا من كائن آخر"
+msgstr ""
 
 #: ../src/funclib.c:5237
 msgid "Make an identity matrix of a given size"
@@ -2494,24 +2357,20 @@ msgid "Make an matrix of all ones (or a row vector)"
 msgstr ""
 
 #: ../src/funclib.c:5245
-#, fuzzy
 msgid "Get the number of rows of a matrix"
-msgstr "عدد السطور في البكسبف"
+msgstr ""
 
 #: ../src/funclib.c:5246
-#, fuzzy
 msgid "Get the number of columns of a matrix"
-msgstr "عدد أعمدة البكسبف"
+msgstr ""
 
 #: ../src/funclib.c:5247
-#, fuzzy
 msgid "Is a matrix square"
-msgstr "المربعات الفنية"
+msgstr ""
 
 #: ../src/funclib.c:5248
-#, fuzzy
 msgid "Get the number of elements of a matrix"
-msgstr "تلقي عدد العناصر في مفتاح قائمة."
+msgstr ""
 
 #: ../src/funclib.c:5250
 msgid "Get the row echelon form of a matrix"
@@ -2529,9 +2388,8 @@ msgid ""
 msgstr ""
 
 #: ../src/funclib.c:5261
-#, fuzzy
 msgid "Get the determinant of a matrix"
-msgstr "اضبط عنوان الطرفيّة"
+msgstr ""
 
 #: ../src/funclib.c:5264
 msgid "Make new matrix of given size from old one"
@@ -2600,18 +2458,16 @@ msgid "Check if argument is a matrix"
 msgstr ""
 
 #: ../src/funclib.c:5283
-#, fuzzy
 msgid "Check if argument is a function"
-msgstr "النص الثاني المعطى للوظيفة"
+msgstr ""
 
 #: ../src/funclib.c:5284
 msgid "Check if argument is a function or an identifier"
 msgstr ""
 
 #: ../src/funclib.c:5285
-#, fuzzy
 msgid "Check if argument is a function reference"
-msgstr "تفضيلات إستبانة الشاشة"
+msgstr ""
 
 #: ../src/funclib.c:5287
 msgid "Check if argument is a complex (non-real) number"
@@ -2646,9 +2502,8 @@ msgid "Check if argument is a possibly complex rational number"
 msgstr ""
 
 #: ../src/funclib.c:5297
-#, fuzzy
 msgid "Check if argument is a floating point number (non-complex)"
-msgstr "لا يمكن تحليل \"%s\" كعدد فاصلة متحرّكة"
+msgstr ""
 
 #: ../src/funclib.c:5299
 msgid "Add two polynomials (vectors)"
@@ -2701,14 +2556,12 @@ msgid "Get all permutations of k numbers from 1 to n as a vector of vectors"
 msgstr ""
 
 #: ../src/funclib.c:5313
-#, fuzzy
 msgid "Convert a string to a vector of ASCII values"
-msgstr "تحويل المحدد إلى الفرشاة"
+msgstr ""
 
 #: ../src/funclib.c:5314
-#, fuzzy
 msgid "Convert a vector of ASCII values to a string"
-msgstr "تحويل المحدد إلى نموذج"
+msgstr ""
 
 #: ../src/funclib.c:5316
 msgid ""
@@ -2748,9 +2601,9 @@ msgid ""
 msgstr ""
 
 #: ../src/genius.c:97
-#, fuzzy, c-format
+#, c-format
 msgid "line %d: %s\n"
-msgstr "خطأ في السطر %d: %s"
+msgstr ""
 
 #: ../src/genius.c:115
 #, c-format
@@ -2759,9 +2612,9 @@ msgstr ""
 
 #: ../src/genius.c:224 ../src/genius.c:233 ../src/genius.c:240
 #: ../src/genius.c:249
-#, fuzzy, c-format
+#, c-format
 msgid "%s should be between %d and %d, using %d"
-msgstr "خمن عدداً بين %d و %d"
+msgstr ""
 
 #: ../src/genius.c:268 ../src/genius.c:277
 #, c-format
@@ -2803,10 +2656,9 @@ msgid ""
 msgstr ""
 
 #: ../src/genius.c:352
-#, fuzzy
 msgid ""
 "Can't specify both an expression and files to execute on the command line"
-msgstr "يجب تحديد مفتاح أو أكثر عند سطر اﻻوامر\n"
+msgstr ""
 
 #: ../src/genius.c:378
 #, c-format
@@ -2826,268 +2678,229 @@ msgid ""
 msgstr ""
 
 #: ../src/genius.c:455 ../src/genius.c:526
-#, fuzzy
 msgid "Can't open file"
-msgstr "لا يمكن فتح الملف"
+msgstr ""
 
 #: ../src/genius.lang.h:1
-#, fuzzy
 msgid "Base-N Integers"
-msgstr "قاعدة - ج عدد صحيح"
+msgstr ""
 
 #: ../src/genius.lang.h:2
 msgid "Commands"
-msgstr "أوامر"
+msgstr "Comandas"
 
 #: ../src/genius.lang.h:3
-#, fuzzy
 msgid "Decimal Integers"
-msgstr "عدد عشري"
+msgstr ""
 
 #: ../src/genius.lang.h:4
-#, fuzzy
 msgid "Floats"
-msgstr "طفو"
+msgstr ""
 
 #: ../src/genius.lang.h:5
-#, fuzzy
 msgid "Genius"
-msgstr "القوائم"
+msgstr ""
 
 #: ../src/genius.lang.h:6
 msgid "Keywords"
-msgstr "الكلمات المفاتيح"
+msgstr "Mots clau"
 
 #: ../src/genius.lang.h:7
 msgid "Line Comment"
-msgstr "تعليق عن السطر"
+msgstr ""
 
 #: ../src/genius.lang.h:8
 msgid "Scripts"
-msgstr "نصوص تشفيرية"
+msgstr ""
 
 #: ../src/genius.lang.h:9
-#, fuzzy
 msgid "String"
-msgstr "سلسلة2"
+msgstr "Cadena"
 
 #: ../src/gnome-genius.c:219
-#, fuzzy
 msgid "_New Program"
-msgstr "ال_برنامج:"
+msgstr ""
 
 #: ../src/gnome-genius.c:219 ../src/gnome-genius.c:346
-#, fuzzy
 msgid "Create new program tab"
-msgstr "انشيء مشروع جديد"
+msgstr ""
 
 #: ../src/gnome-genius.c:226
-#, fuzzy
 msgid "_Reload from Disk"
-msgstr "جاري القراءة من %s"
+msgstr ""
 
 #: ../src/gnome-genius.c:226
-#, fuzzy
 msgid "Reload the selected program from disk"
-msgstr "احذِف علامة الموقع المحدد"
+msgstr ""
 
 #: ../src/gnome-genius.c:230
-#, fuzzy
 msgid "_Load and Run..."
-msgstr "أر_ض..."
+msgstr ""
 
 #: ../src/gnome-genius.c:230
-#, fuzzy
 msgid "Load and execute a file in genius"
-msgstr "تعذّر تنفيذ %s: لم يُرْسَل البريد."
+msgstr ""
 
 #: ../src/gnome-genius.c:255
 msgid "Copy Answer As Plain _Text"
 msgstr ""
 
 #: ../src/gnome-genius.c:256
-#, fuzzy
 msgid "Copy last answer into the clipboard in plain text"
-msgstr "ا_نسخ العنوان إلى الحافظة"
+msgstr ""
 
 #: ../src/gnome-genius.c:259
 msgid "Copy Answer As _LaTeX"
 msgstr ""
 
 #: ../src/gnome-genius.c:260
-#, fuzzy
 msgid "Copy last answer into the clipboard as LaTeX"
-msgstr "ا_نسخ العنوان إلى الحافظة"
+msgstr ""
 
 #: ../src/gnome-genius.c:263
 msgid "Copy Answer As _MathML"
 msgstr ""
 
 #: ../src/gnome-genius.c:264
-#, fuzzy
 msgid "Copy last answer into the clipboard as MathML"
-msgstr "ا_نسخ العنوان إلى الحافظة"
+msgstr ""
 
 #: ../src/gnome-genius.c:267
 msgid "Copy Answer As T_roff"
 msgstr ""
 
 #: ../src/gnome-genius.c:268
-#, fuzzy
 msgid "Copy last answer into the clipboard as Troff eqn"
-msgstr "ا_نسخ العنوان إلى الحافظة"
+msgstr ""
 
 #: ../src/gnome-genius.c:281
 msgid "_Run"
-msgstr "_شغّل"
+msgstr "E_xécuter"
 
 #: ../src/gnome-genius.c:281 ../src/gnome-genius.c:345
-#, fuzzy
 msgid "Run current program"
-msgstr "تشغيل برنامج الطابعة"
+msgstr ""
 
 #: ../src/gnome-genius.c:282
-#, fuzzy
 msgid "_Interrupt"
-msgstr "قاطِع"
+msgstr ""
 
 #: ../src/gnome-genius.c:282 ../src/gnome-genius.c:343
-#, fuzzy
 msgid "Interrupt current calculation"
-msgstr "احذف الموقع الحالي"
+msgstr ""
 
 #: ../src/gnome-genius.c:284
-#, fuzzy
 msgid "Show _Full Answer"
-msgstr "إظهار المساطر"
+msgstr ""
 
 #: ../src/gnome-genius.c:284
-#, fuzzy
 msgid "Show the full text of last answer"
-msgstr "اظهر الصفحة الأخيرة"
+msgstr ""
 
 #: ../src/gnome-genius.c:286 ../src/graphing.c:3319
-#, fuzzy
 msgid "_Plot"
-msgstr "طفو"
+msgstr ""
 
 #: ../src/gnome-genius.c:286 ../src/gnome-genius.c:348
-#, fuzzy
 msgid "Plot a function"
-msgstr "وظائف عالمية"
+msgstr ""
 
 #: ../src/gnome-genius.c:292
-#, fuzzy
 msgid "_Help on Function"
-msgstr "دالّات بيرل"
+msgstr ""
 
 #: ../src/gnome-genius.c:293
 msgid "Help on a function or a command"
 msgstr ""
 
 #: ../src/gnome-genius.c:296
-#, fuzzy
 msgid "_Warranty"
-msgstr "غواراني"
+msgstr ""
 
 #: ../src/gnome-genius.c:297
-#, fuzzy
 msgid "Display warranty information"
-msgstr "اعرض صندوق حوار معلومات النص"
+msgstr ""
 
 #: ../src/gnome-genius.c:309
-#, fuzzy
 msgid "_Next Tab"
-msgstr "المقطوعة ال_تالية"
+msgstr "Onglet _seguent"
 
 #: ../src/gnome-genius.c:309
-#, fuzzy
 msgid "Go to next tab"
-msgstr "اذهب إلى الصفحة التالية"
+msgstr ""
 
 #: ../src/gnome-genius.c:313
-#, fuzzy
 msgid "_Previous Tab"
-msgstr "الصفحة ال_سابقة"
+msgstr "Onglet _precedent"
 
 #: ../src/gnome-genius.c:313
-#, fuzzy
 msgid "Go to previous tab"
-msgstr "اذهب إلى الصفحة السابقة"
+msgstr ""
 
 #: ../src/gnome-genius.c:320
 msgid "_Console"
-msgstr "وحدة تح_كم"
+msgstr ""
 
 #: ../src/gnome-genius.c:321
-#, fuzzy
 msgid "Go to the console tab"
-msgstr "اذهب إلى الصفحة التالية"
+msgstr ""
 
 #: ../src/gnome-genius.c:331
 msgid "_Calculator"
-msgstr "آ_لة حاسبة"
+msgstr ""
 
 #: ../src/gnome-genius.c:333
-#, fuzzy
 msgid "P_lugins"
-msgstr "ملحقات"
+msgstr ""
 
 #: ../src/gnome-genius.c:335
-#, fuzzy
 msgid "_Programs"
-msgstr "برامج"
+msgstr ""
 
 #: ../src/gnome-genius.c:343
 msgid "Interrupt"
-msgstr "قاطِع"
+msgstr ""
 
 #: ../src/gnome-genius.c:345
 msgid "Run"
-msgstr "شغّل"
+msgstr "Executar"
 
 #: ../src/gnome-genius.c:346
 msgid "New"
-msgstr "جديد"
+msgstr "Novèl"
 
 #: ../src/gnome-genius.c:347
-#, fuzzy
 msgid "Open"
-msgstr "ا_فتح"
+msgstr "Dobrir"
 
 #: ../src/gnome-genius.c:347
 msgid "Open a GEL file for running"
 msgstr ""
 
 #: ../src/gnome-genius.c:348 ../src/graphing.c:1277
-#, fuzzy
 msgid "Plot"
-msgstr "بيلوتاس"
+msgstr ""
 
 #: ../src/gnome-genius.c:349
-#, fuzzy
 msgid "Exit"
-msgstr "موجود"
+msgstr "Sortir"
 
 #: ../src/gnome-genius.c:349
-#, fuzzy
 msgid "Exit genius"
-msgstr "الخروج من البرنامج"
+msgstr ""
 
 #: ../src/gnome-genius.c:433
-#, fuzzy
 msgid "Help on Function"
-msgstr "دالّات بيرل"
+msgstr ""
 
 #: ../src/gnome-genius.c:444
-#, fuzzy
 msgid "Function or command name:"
-msgstr "دالة جيب تمام"
+msgstr ""
 
 #: ../src/gnome-genius.c:477
-#, fuzzy, c-format
+#, c-format
 msgid "<b>Help on %s not found</b>"
-msgstr "لم يُعثر على مستند المساعدة %s/%s"
+msgstr ""
 
 #: ../src/gnome-genius.c:481
 #, c-format
@@ -3099,18 +2912,17 @@ msgstr ""
 
 #: ../src/gnome-genius.c:532
 msgid "Error"
-msgstr "خطأ"
+msgstr "Error"
 
 #: ../src/gnome-genius.c:534
 msgid "Information"
-msgstr "معلومات"
+msgstr "Informacions"
 
 #. error
 #. always textbox
 #: ../src/gnome-genius.c:608
-#, fuzzy
 msgid "Full Answer"
-msgstr "إجابة آلية"
+msgstr ""
 
 #: ../src/gnome-genius.c:621
 #, c-format
@@ -3129,14 +2941,12 @@ msgstr ""
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
 #: ../src/gnome-genius.c:791
-#, fuzzy
 msgid "translator-credits"
-msgstr "المترجمون:"
+msgstr "Yannig MARCHEGAY (Kokoyaya) <yannig@marchegay.org>"
 
 #: ../src/gnome-genius.c:810
-#, fuzzy
 msgid "About Genius"
-msgstr "عن برنامج gnopernicus"
+msgstr ""
 
 #: ../src/gnome-genius.c:813
 msgid ""
@@ -3151,63 +2961,52 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.c:1000
-#, fuzzy
 msgid "There are unsaved programs, are you sure you wish to quit?"
 msgstr ""
-"هناك ملفات يتم نقلها \n"
-" هل انت متاءكد بانك تريد الخروج؟"
 
 #: ../src/gnome-genius.c:1007
 msgid "Genius is executing something, are you sure you wish to quit?"
 msgstr ""
 
 #: ../src/gnome-genius.c:1014
-#, fuzzy
 msgid "Are you sure you wish to quit?"
-msgstr "أمتأكد أنك تريد الخروج؟"
+msgstr ""
 
 #: ../src/gnome-genius.c:1126
-#, fuzzy
 msgid "Genius Setup"
-msgstr "إعداد الصفحة"
+msgstr ""
 
 #: ../src/gnome-genius.c:1144
-#, fuzzy
 msgid "Output"
-msgstr "الخ_رْج:"
+msgstr "Sortida"
 
 #: ../src/gnome-genius.c:1147
-#, fuzzy
 msgid "Number/Expression output options"
-msgstr "عدد خصوم الحاسوب"
+msgstr ""
 
 #: ../src/gnome-genius.c:1157
 msgid "Maximum digits to output (0=unlimited)"
 msgstr ""
 
 #: ../src/gnome-genius.c:1177
-#, fuzzy
 msgid "Results as floats"
-msgstr "أع_د ضبط الخطوط"
+msgstr ""
 
 #: ../src/gnome-genius.c:1185
-#, fuzzy
 msgid "Floats in scientific notation"
-msgstr "تصنيف"
+msgstr ""
 
 #: ../src/gnome-genius.c:1193
 msgid "Always print full expressions"
 msgstr ""
 
 #: ../src/gnome-genius.c:1201
-#, fuzzy
 msgid "Use mixed fractions"
-msgstr "خصّص الأفعال"
+msgstr ""
 
 #: ../src/gnome-genius.c:1209
-#, fuzzy
 msgid "Remember output settings across sessions"
-msgstr "_تذكّر لهذه الجلسة"
+msgstr ""
 
 #: ../src/gnome-genius.c:1218
 msgid ""
@@ -3217,29 +3016,24 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.c:1224
-#, fuzzy
 msgid "Error/Info output options"
-msgstr "خيارات الأخطاء"
+msgstr ""
 
 #: ../src/gnome-genius.c:1232
-#, fuzzy
 msgid "Display errors in a dialog"
-msgstr "اعرض صندوق حوار الخطأ"
+msgstr ""
 
 #: ../src/gnome-genius.c:1240
-#, fuzzy
 msgid "Display information messages in a dialog"
-msgstr "اعرض معلومات الصفحة في الحوار"
+msgstr ""
 
 #: ../src/gnome-genius.c:1251
-#, fuzzy
 msgid "Maximum errors to display (0=unlimited)"
-msgstr "أ_قصى عدد معروض من النتائج:"
+msgstr ""
 
 #: ../src/gnome-genius.c:1275
-#, fuzzy
 msgid "Precision"
-msgstr "تحديد الدقّة"
+msgstr ""
 
 #: ../src/gnome-genius.c:1285
 msgid ""
@@ -3249,14 +3043,12 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.c:1294
-#, fuzzy
 msgid "Floating point precision (bits)"
-msgstr "استثناء أرقام عشرية"
+msgstr ""
 
 #: ../src/gnome-genius.c:1313
-#, fuzzy
 msgid "Remember precision setting across sessions"
-msgstr "_تذكّر لهذه الجلسة"
+msgstr ""
 
 #: ../src/gnome-genius.c:1322
 msgid "Should the precision setting be remembered for next session."
@@ -3264,30 +3056,27 @@ msgstr ""
 
 #: ../src/gnome-genius.c:1331
 msgid "Terminal"
-msgstr "طرفية"
+msgstr "Terminal"
 
 #: ../src/gnome-genius.c:1333
-#, fuzzy
 msgid "Terminal options"
-msgstr "إنهاء"
+msgstr ""
 
 #: ../src/gnome-genius.c:1342
-#, fuzzy
 msgid "Scrollback lines"
-msgstr "_شريط التمرير:"
+msgstr ""
 
 #: ../src/gnome-genius.c:1365
 msgid "Font:"
-msgstr "الخط:"
+msgstr "Poliça :"
 
 #: ../src/gnome-genius.c:1380
 msgid "Black on white"
-msgstr "أسود على أبيض"
+msgstr ""
 
 #: ../src/gnome-genius.c:1388
-#, fuzzy
 msgid "Blinking cursor"
-msgstr "ومّاض"
+msgstr ""
 
 #: ../src/gnome-genius.c:1418
 msgid ""
@@ -3297,75 +3086,69 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.c:1467
-#, fuzzy
 msgid "GEL files"
-msgstr "ملفات XML"
+msgstr ""
 
 #: ../src/gnome-genius.c:1472 ../src/graphing.c:904
 msgid "All files"
-msgstr "جميع الملفات"
+msgstr "Totes los fichièrs"
 
 #: ../src/gnome-genius.c:1506 ../src/gnome-genius.c:2280
-#, fuzzy
 msgid "Cannot open file!"
-msgstr "لا يمكن فتح الملف"
+msgstr ""
 
 #: ../src/gnome-genius.c:1551 ../src/gnome-genius.c:1569
-#, fuzzy
 msgid "Load and Run"
-msgstr "فشل التحميل"
+msgstr ""
 
 #: ../src/gnome-genius.c:1555
-#, fuzzy
 msgid "_Load"
-msgstr "الحِمل:"
+msgstr "_Carga"
 
 #: ../src/gnome-genius.c:2088
 msgid "Cannot open file"
-msgstr "لا يمكن فتح الملف"
+msgstr "Impossible de dobrir lo fichièr"
 
 #: ../src/gnome-genius.c:2120 ../src/gnome-genius.c:3141
-#, fuzzy, c-format
+#, c-format
 msgid "Line: %d"
-msgstr "مربوط"
+msgstr ""
 
 #: ../src/gnome-genius.c:2202
-#, fuzzy, c-format
+#, c-format
 msgid "Program_%d.gel"
-msgstr "البرنامج"
+msgstr ""
 
 #: ../src/gnome-genius.c:2207
-#, fuzzy, c-format
+#, c-format
 msgid "Program %d"
-msgstr "البرنامج"
+msgstr ""
 
 #: ../src/gnome-genius.c:2228
 #, c-format
 msgid "Cannot open %s"
-msgstr "لا يمكن فتح %s"
+msgstr "Impossible de dobrir %s"
 
+#
 #: ../src/gnome-genius.c:2307 ../src/gnome-genius.c:2326
 msgid "Open..."
-msgstr "افتح..."
+msgstr "Dobrir..."
 
 #. new fname
 #: ../src/gnome-genius.c:2401 ../src/gnome-genius.c:2456
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "<b>Cannot save file</b>\n"
 "Details: %s"
-msgstr "لا يمكن حفظ الملف: %s\n"
+msgstr ""
 
 #: ../src/gnome-genius.c:2450 ../src/graphing.c:663 ../src/graphing.c:790
-#, fuzzy
 msgid "File already exists.  Overwrite it?"
 msgstr ""
-"%s موجود\n"
-"هل تريد الكتابة فوقه؟"
 
 #: ../src/gnome-genius.c:2507 ../src/gnome-genius.c:2529
 msgid "Save As..."
-msgstr "احفظ كـ..."
+msgstr ""
 
 #: ../src/gnome-genius.c:2603
 msgid ""
@@ -3375,9 +3158,9 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.c:2708
-#, fuzzy, c-format
+#, c-format
 msgid "Genius %s"
-msgstr "افتح %s"
+msgstr ""
 
 #. error
 #. always textbox
@@ -3395,7 +3178,7 @@ msgstr ""
 
 #: ../src/gnome-genius.c:3389
 msgid "Console"
-msgstr "كونسول"
+msgstr ""
 
 #: ../src/gnome-genius.c:3441
 #, c-format
@@ -3409,9 +3192,8 @@ msgid ""
 msgstr ""
 
 #: ../src/gnome-genius.desktop.in.h:1
-#, fuzzy
 msgid "Genius Math Tool"
-msgstr "أشرطة القوائم و أشرطة الأدوات"
+msgstr ""
 
 #: ../src/gnome-genius.desktop.in.h:2
 msgid "Genius Mathematical Tool and Calculator"
@@ -3419,149 +3201,124 @@ msgstr ""
 
 #: ../src/graphing.c:319
 msgid "Rotate"
-msgstr "تدوير"
+msgstr ""
 
 #: ../src/graphing.c:338
-#, fuzzy
 msgid "Rotate X: "
-msgstr "تدوير"
+msgstr ""
 
 #: ../src/graphing.c:363
-#, fuzzy
 msgid "Rotate Y: "
-msgstr "تدوير"
+msgstr ""
 
 #: ../src/graphing.c:388
-#, fuzzy
 msgid "Rotate Z: "
-msgstr "تدوير"
+msgstr ""
 
 #: ../src/graphing.c:497
 msgid "Print"
-msgstr "اطبع"
+msgstr "Estampar"
 
 #: ../src/graphing.c:514
-#, fuzzy
 msgid "Print command: "
-msgstr "أمر الطابعة"
+msgstr ""
 
 #: ../src/graphing.c:541
-#, fuzzy
 msgid "Cannot open temporary file, cannot print."
-msgstr "لا يمكن فتح صندوق البريد المؤقّت: %s"
+msgstr ""
 
 #: ../src/graphing.c:570
-#, fuzzy
 msgid "Printing failed"
-msgstr "يجري طباعة %d"
+msgstr ""
 
 #: ../src/graphing.c:742 ../src/graphing.c:809 ../src/graphing.c:826
-#, fuzzy
 msgid "Export failed"
-msgstr "فشل الإستيراد"
+msgstr ""
 
 #: ../src/graphing.c:869
-#, fuzzy
 msgid "Export encapsulated postscript"
-msgstr "PostScript مغلف"
+msgstr ""
 
 #: ../src/graphing.c:871
-#, fuzzy
 msgid "Export postscript"
-msgstr "هيئة التصدير"
+msgstr ""
 
 #: ../src/graphing.c:873
-#, fuzzy
 msgid "Export PNG"
-msgstr "صدِّر"
+msgstr ""
 
 #: ../src/graphing.c:890
-#, fuzzy
 msgid "EPS files"
-msgstr "ملفات"
+msgstr ""
 
 #: ../src/graphing.c:894
-#, fuzzy
 msgid "PS files"
-msgstr "ملفات"
+msgstr ""
 
 #: ../src/graphing.c:898
-#, fuzzy
 msgid "PNG files"
-msgstr "ملفات صور PNG"
+msgstr ""
 
 #: ../src/graphing.c:1303
-#, fuzzy
 msgid "_Graph"
-msgstr "رسم بياني"
+msgstr ""
 
 #: ../src/graphing.c:1307
 msgid "_Print..."
-msgstr "ا_طبع..."
+msgstr "_Estampar..."
 
 #: ../src/graphing.c:1313
-#, fuzzy
 msgid "_Export postscript..."
-msgstr "صدّر قائمة تشغيل..."
+msgstr ""
 
 #: ../src/graphing.c:1319
-#, fuzzy
 msgid "E_xport encapsulated postscript..."
-msgstr "PostScript مغلف"
+msgstr ""
 
 #: ../src/graphing.c:1325
-#, fuzzy
 msgid "_Export PNG..."
-msgstr "صدّر قائمة تشغيل..."
+msgstr ""
 
 #: ../src/graphing.c:1333
-#, fuzzy
 msgid "_Zoom"
-msgstr "تكبير"
+msgstr ""
 
 #: ../src/graphing.c:1337
-#, fuzzy
 msgid "Zoom _out"
-msgstr "تصغير"
+msgstr ""
 
 #: ../src/graphing.c:1343
-#, fuzzy
 msgid "Zoom _in"
-msgstr "تكبير"
+msgstr ""
 
 #: ../src/graphing.c:1349
-#, fuzzy
 msgid "_Fit dependent axis"
-msgstr "إ_عتماديات"
+msgstr ""
 
 #: ../src/graphing.c:1357
-#, fuzzy
 msgid "_View"
-msgstr "_عرض/"
+msgstr "_Mostrar"
 
 #: ../src/graphing.c:1362
-#, fuzzy
 msgid "_Reset angles"
-msgstr "إ_عادة ضبط الميزان"
+msgstr ""
 
 #: ../src/graphing.c:1367
-#, fuzzy
 msgid "_Top view"
-msgstr "عرض _جزئي"
+msgstr ""
 
 #: ../src/graphing.c:1372
-#, fuzzy
 msgid "R_otate axis..."
-msgstr "الم_راسَلون..."
+msgstr ""
 
 #: ../src/graphing.c:2011
 msgid "Function"
-msgstr "الوظيفة"
+msgstr "Foncion"
 
 #: ../src/graphing.c:2013
-#, fuzzy, c-format
+#, c-format
 msgid "Function #%d"
-msgstr "الوظيفة"
+msgstr ""
 
 #: ../src/graphing.c:2022
 #, c-format
@@ -3584,14 +3341,12 @@ msgid "Graph limits not given as a 6-vector"
 msgstr ""
 
 #: ../src/graphing.c:2529
-#, fuzzy
 msgid "to:"
-msgstr "إلى"
+msgstr "Autor :"
 
 #: ../src/graphing.c:2547
-#, fuzzy
 msgid "by:"
-msgstr "أداء"
+msgstr ""
 
 #: ../src/graphing.c:2609
 msgid ""
@@ -3600,9 +3355,8 @@ msgid ""
 msgstr ""
 
 #: ../src/graphing.c:2625
-#, fuzzy
 msgid "_Functions / Expressions"
-msgstr "دالة جيب"
+msgstr ""
 
 #: ../src/graphing.c:2633
 msgid ""
@@ -3613,46 +3367,39 @@ msgid ""
 msgstr ""
 
 #: ../src/graphing.c:2656
-#, fuzzy
 msgid "or"
-msgstr "لـ"
+msgstr "o"
 
 #. t range
 #: ../src/graphing.c:2671
-#, fuzzy
 msgid "Parameter t from:"
-msgstr "معاملات:"
+msgstr ""
 
 #: ../src/graphing.c:2679
-#, fuzzy
 msgid "_Parametric"
-msgstr "معاملات:"
+msgstr ""
 
 #: ../src/graphing.c:2681 ../src/graphing.c:2736
-#, fuzzy
 msgid "Plot Window"
-msgstr "اغلق النافذة"
+msgstr ""
 
 #.
 #. * X range
 #.
 #: ../src/graphing.c:2690 ../src/graphing.c:2745
-#, fuzzy
 msgid "X from:"
-msgstr "من"
+msgstr ""
 
 #.
 #. * Y range
 #.
 #: ../src/graphing.c:2696 ../src/graphing.c:2752
-#, fuzzy
 msgid "Y from:"
-msgstr "من"
+msgstr ""
 
 #: ../src/graphing.c:2711
-#, fuzzy
 msgid "Function / Expression"
-msgstr "دالة جيب"
+msgstr ""
 
 #: ../src/graphing.c:2716
 msgid ""
@@ -3665,57 +3412,49 @@ msgstr ""
 #. * Z range
 #.
 #: ../src/graphing.c:2759
-#, fuzzy
 msgid "Z from:"
-msgstr "من"
+msgstr ""
 
 #: ../src/graphing.c:2773
-#, fuzzy
 msgid "Function _line plot"
-msgstr "دالة جيب"
+msgstr ""
 
 #: ../src/graphing.c:2777
-#, fuzzy
 msgid "_Surface plot"
-msgstr "خيار المصدر"
+msgstr ""
 
 #: ../src/graphing.c:2977 ../src/graphing.c:3180
 msgid "No functions to plot or no functions could be parsed"
 msgstr ""
 
 #: ../src/graphing.c:3008 ../src/graphing.c:3211
-#, fuzzy
 msgid "Invalid X range"
-msgstr "صورة غير صحيحة"
+msgstr ""
 
 #: ../src/graphing.c:3013 ../src/graphing.c:3216
-#, fuzzy
 msgid "Invalid Y range"
-msgstr "صورة غير صحيحة"
+msgstr ""
 
 #: ../src/graphing.c:3018
-#, fuzzy
 msgid "Invalid Z range"
-msgstr "صورة غير صحيحة"
+msgstr ""
 
 #: ../src/graphing.c:3169
 msgid "Only specify x and y, or z, not all at once."
 msgstr ""
 
 #: ../src/graphing.c:3188
-#, fuzzy
 msgid "Invalid t range"
-msgstr "صورة غير صحيحة"
+msgstr ""
 
 #: ../src/graphing.c:3314
-#, fuzzy
 msgid "Create Plot"
-msgstr "إنشاء"
+msgstr ""
 
 #: ../src/graphing.c:3354 ../src/graphing.c:3499
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument not a function"
-msgstr "ابحث عن دالّة"
+msgstr ""
 
 #: ../src/graphing.c:3364
 #, c-format
@@ -3724,20 +3463,20 @@ msgstr ""
 
 #: ../src/graphing.c:3431 ../src/graphing.c:3550 ../src/graphing.c:3679
 #: ../src/graphing.c:3810
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid X range"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/graphing.c:3436 ../src/graphing.c:3555 ../src/graphing.c:3684
 #: ../src/graphing.c:3815
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid Y range"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/graphing.c:3441
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid Z range"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/graphing.c:3494
 #, c-format
@@ -3745,19 +3484,19 @@ msgid "%s: only up to 10 functions supported"
 msgstr ""
 
 #: ../src/graphing.c:3598
-#, fuzzy, c-format
+#, c-format
 msgid "%s: First two arguments must be functions"
-msgstr "النص الأول المعطى للوظيفة"
+msgstr ""
 
 #: ../src/graphing.c:3689 ../src/graphing.c:3820
-#, fuzzy, c-format
+#, c-format
 msgid "%s: invalid T range"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/graphing.c:3731
-#, fuzzy, c-format
+#, c-format
 msgid "%s: First argument must be functions"
-msgstr "النص الأول المعطى للوظيفة"
+msgstr ""
 
 #: ../src/graphing.c:3875 ../src/graphing.c:3923
 #, c-format
@@ -3767,39 +3506,38 @@ msgid ""
 msgstr ""
 
 #: ../src/graphing.c:3962
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Wrong number of arguments"
-msgstr "%s: مُعطى غير صحيح"
+msgstr ""
 
 #: ../src/graphing.c:4001
-#, fuzzy, c-format
+#, c-format
 msgid "%s: No color specified"
-msgstr "%s: لم يحدد مُرِحّب."
+msgstr ""
 
 #: ../src/graphing.c:4013
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Color must be a string"
-msgstr "%s: لم يمكن أن يصبح %s. إلغاء."
+msgstr ""
 
 #: ../src/graphing.c:4022
-#, fuzzy, c-format
+#, c-format
 msgid "%s: No thicnkess specified"
-msgstr "%s: لم يحدد مُرِحّب."
+msgstr ""
 
 #: ../src/graphing.c:4038
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Unknown style"
-msgstr "نوع مجهول"
+msgstr ""
 
 #: ../src/graphing.c:4045
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Bad parameter"
-msgstr "معامل رديء"
+msgstr ""
 
 #: ../src/graphing.c:4123
-#, fuzzy
 msgid "Plotting"
-msgstr "طافية"
+msgstr ""
 
 #. internal
 #: ../src/graphing.c:4125
@@ -3853,9 +3591,8 @@ msgid "Determinant of a non-square matrix is undefined"
 msgstr ""
 
 #: ../src/mpwrap.c:482
-#, fuzzy
 msgid "Integer exponent too large to compute"
-msgstr "العدد الصحيح `%s' كبير أو صغير جدا"
+msgstr ""
 
 #: ../src/mpwrap.c:1334
 msgid "Can't do modulo of floats or rationals!"
@@ -3895,9 +3632,8 @@ msgid "No such thing as negative lucas numbers!"
 msgstr ""
 
 #: ../src/mpwrap.c:1469
-#, fuzzy
 msgid "Cannot get next prime after non-integer!"
-msgstr "لا يمكن العثور على الصورة التالية!"
+msgstr ""
 
 #: ../src/mpwrap.c:1489 ../src/mpwrap.c:1502 ../src/mpwrap.c:1515
 #: ../src/mpwrap.c:1528
@@ -3910,9 +3646,8 @@ msgid "Can't do factorials of rationals or floats!"
 msgstr ""
 
 #: ../src/mpwrap.c:1576 ../src/mpwrap.c:1616
-#, fuzzy
 msgid "Number too large to compute factorial!"
-msgstr "عدد الصفحات التي يتم الإختيار منها"
+msgstr ""
 
 #: ../src/mpwrap.c:1581 ../src/mpwrap.c:1621
 msgid "Can't do factorials of negative numbers!"
@@ -3920,23 +3655,22 @@ msgstr ""
 
 #: ../src/mpwrap.c:1923 ../src/mpwrap.c:1991 ../src/mpwrap.c:4004
 #: ../src/mpwrap.c:4025
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Bad types for mod power"
-msgstr "نوع سيء لرقم VT \n"
+msgstr ""
 
 #: ../src/mpwrap.c:1960
-#, fuzzy, c-format
+#, c-format
 msgid "Can't invert %s modulo %s in %s"
-msgstr "لا يمكن الكتابة على %s: %s"
+msgstr ""
 
 #: ../src/mpwrap.c:2279
 msgid "Can't make random integer from a non-integer"
 msgstr ""
 
 #: ../src/mpwrap.c:2284
-#, fuzzy
 msgid "Range for random integer must be positive"
-msgstr "العدد الصحيح %ld يجب أن يكون ايجابيا"
+msgstr ""
 
 #: ../src/mpwrap.c:2469 ../src/mpwrap.c:2497
 msgid "Can't get numerator of floating types"
@@ -3947,14 +3681,13 @@ msgid "Can't compare complex numbers"
 msgstr ""
 
 #: ../src/mpwrap.c:3707
-#, fuzzy
 msgid "Can't modulo complex numbers"
-msgstr "تعلم الأعداد الأولية"
+msgstr ""
 
 #: ../src/mpwrap.c:3730
-#, fuzzy, c-format
+#, c-format
 msgid "Inverse of %s modulo %s not found!"
-msgstr "%s: الملف %s غير موجود"
+msgstr ""
 
 #: ../src/mpwrap.c:3739
 msgid "Can't do modulo invert on complex numbers"
@@ -3999,10 +3732,10 @@ msgstr ""
 msgid "%s: can't take logarithm of 0"
 msgstr ""
 
+#
 #: ../src/mpwrap.c:4586
-#, fuzzy
 msgid "arctan2 not defined for complex numbers"
-msgstr "%s: لا يمكن ايجاد رقم عرض شاغر"
+msgstr ""
 
 #: ../src/mpwrap.c:4634
 msgid "Can't make random integer out of a complex number"
@@ -4021,14 +3754,12 @@ msgid "Can't convert complex number into integer"
 msgstr ""
 
 #: ../src/mpwrap.c:5210
-#, fuzzy
 msgid "Can't convert real number to integer"
-msgstr "أدخل المستخدم الذي تريد جسّه."
+msgstr ""
 
 #: ../src/mpwrap.c:5214
-#, fuzzy
 msgid "Integer too large for this operation"
-msgstr "سلسلة الهوية للاستخدام لهذا التطبيق"
+msgstr ""
 
 #: ../src/mpwrap.c:5227
 msgid "Can't convert complex number into a double"
@@ -4039,19 +3770,16 @@ msgid "Can't convert real number to double"
 msgstr ""
 
 #: ../src/mpwrap.c:5242 ../src/mpwrap.c:5257
-#, fuzzy
 msgid "Number too large for this operation"
-msgstr "عدد بكسلات الإزاحة"
+msgstr ""
 
 #: ../src/plugin.c:147
-#, fuzzy
 msgid "Can't open plugin!"
-msgstr "تعذر فتح الموقع"
+msgstr ""
 
 #: ../src/plugin.c:162 ../src/plugin.c:170
-#, fuzzy
 msgid "Can't initialize plugin!"
-msgstr "لا يمكن تشغيل الأعمال."
+msgstr ""
 
 #: ../src/symbolic.c:665
 #, c-format
@@ -4064,9 +3792,8 @@ msgid "%s: Cannot differentiate the '%s' function"
 msgstr ""
 
 #: ../src/symbolic.c:783
-#, fuzzy
 msgid "Symbolic Operations"
-msgstr "وصلة رمزية"
+msgstr ""
 
 #: ../src/symbolic.c:786
 msgid ""
@@ -4105,18 +3832,17 @@ msgid ""
 msgstr ""
 
 #: ../src/util.c:96 ../src/util.c:115
-#, fuzzy
 msgid "Stack underflow!"
-msgstr "فيضان المكدّس"
+msgstr ""
 
 #: ../ve/glade-helper.c:82 ../ve/glade-helper.c:114 ../ve/glade-helper.c:136
 msgid "(memory buffer)"
-msgstr "(ذاكرة مخبأة)"
+msgstr ""
 
 #. markup
 #: ../ve/glade-helper.c:171 ../ve/glade-helper.c:224 ../ve/glade-helper.c:278
 msgid "Cannot load user interface"
-msgstr "لا يمكن تحميل واجهة المستخدم"
+msgstr ""
 
 #: ../ve/glade-helper.c:172
 #, c-format
@@ -4125,9 +3851,6 @@ msgid ""
 "Possibly the glade interface description was corrupted.  %s cannot continue "
 "and will exit now.  You should check your installation of %s or reinstall %s."
 msgstr ""
-"حصل خطأ عند تحميل عنصر واجهة المستخدم %s%sمن الملف %s. ربما كان وصف واجهة "
-"glade فاسدا.لا يمكن لـ %s المواصلة و سيخرج الآن. افحص تثبيتك لـ %s أو أعد "
-"تثبيت %s."
 
 #: ../ve/glade-helper.c:188
 #, c-format
@@ -4135,8 +3858,6 @@ msgid ""
 "Glade file is on crack! Make sure the correct file is installed!\n"
 "file: %s widget: %s"
 msgstr ""
-"ملف glade مكسور! تأكد من تثبيتك للملف الصحيح!\n"
-"الملف: %s القطعة: %s"
 
 #: ../ve/glade-helper.c:225
 #, c-format
@@ -4145,27 +3866,11 @@ msgid ""
 "s. CList type widget should have %d column. Possibly the glade interface "
 "description was corrupted. %s cannot continue and will exit now. You should "
 "check your installation of %s or reinstall %s."
-msgid_plural ""
 "An error occurred while loading the user interface element %s%s from file %"
 "s. CList type widget should have %d columns. Possibly the glade interface "
 "description was corrupted. %s cannot continue and will exit now. You should "
 "check your installation of %s or reinstall %s."
-msgstr[0] ""
-"حدث خطأ أثناء تحميل عنصر واجهة المستخدم %s%sمن الملف %s. يجب أن يكون للقطع "
-"ذات نوع CList (قائمة الأوامر)%d جداول. ربما كان وصف ملف glade فاسدا.%s لا "
-"يمكنه المتابعة و سيخرج الآن. افحص تثبيتك لـ %s أو أعد التثبيت %s."
-msgstr[1] ""
-"حدث خطأ أثناء تحميل عنصر واجهة المستخدم %s%sمن الملف %s. يجب أن يكون للقطع "
-"ذات نوع CList (قائمة الأوامر)%d جداول. ربما كان وصف ملف كلايد فاسدا.%s لا "
-"يمكنه المتابعة و سيخرج الآن.تثبت من تثبيتك لـ %s أو أعد التثبيت %s."
-msgstr[2] ""
-"حدث خطأ أثناء تحميل عنصر واجهة المستخدم %s%sمن الملف %s. يجب أن يكون للقطع "
-"ذات نوع CList (قائمة الأوامر)%d جداول. ربما كان وصف ملف كلايد فاسدا.%s لا "
-"يمكنه المتابعة و سيخرج الآن.تثبت من تثبيتك لـ %s أو أعد التثبيت %s."
-msgstr[3] ""
-"حدث خطأ أثناء تحميل عنصر واجهة المستخدم %s%sمن الملف %s. يجب أن يكون للقطع "
-"ذات نوع CList (قائمة الأوامر)%d جداول. ربما كان وصف ملف كلايد فاسدا.%s لا "
-"يمكنه المتابعة و سيخرج الآن.تثبت من تثبيتك لـ %s أو أعد التثبيت %s."
+msgstr ""
 
 #: ../ve/glade-helper.c:254
 #, c-format
@@ -4173,8 +3878,6 @@ msgid ""
 "Glade file is on crack! Make sure the correct file is installed!\n"
 "file: %s widget: %s expected clist columns: %d"
 msgstr ""
-"ملف glade مكسور! تأكد من تثبيتك للملف الصحيح!\n"
-"الملف: %s القطعة: %s عامود clist المتوقع: %d"
 
 #: ../ve/glade-helper.c:279
 #, c-format
@@ -4183,15 +3886,12 @@ msgid ""
 "the glade interface description was not found.  %s cannot continue and will "
 "exit now.  You should check your installation of %s or reinstall %s."
 msgstr ""
-"حصل خطأ أثناء تحميل واجهة المستخدم من الملف%s.  ربما لم يوجد وصف glade "
-"للواجهة.%s  لا يمكن الاستمرار سأخرج الآن.  افحص تثبيتك %s أو أعد التثيبت %s."
 
 #: ../ve/glade-helper.c:291
 #, c-format
 msgid "No interface could be loaded. This is BAD! (file: %s)"
-msgstr "لا يمكن تحميل أي واجهة، هذا سيئ! (الملف: %s)"
+msgstr ""
 
 #: ../ve/ve-nongnome.c:134
 msgid "Too many alias levels for a locale; may indicate a loop"
-msgstr "كُنى كثيرة جدا لمحلية واحدة، قد يدل ذلك على حلقة مفرغة"
-
+msgstr ""

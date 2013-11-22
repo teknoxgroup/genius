@@ -30,7 +30,7 @@
 
 ## Release information
 my $PROGRAM = "intltool-update";
-my $VERSION = "0.35.4";
+my $VERSION = "0.35.5";
 my $PACKAGE = "intltool";
 
 ## Loaded modules
@@ -344,7 +344,7 @@ sub FindLeftoutFiles
     ## comparing with POTFILES.in
     foreach my $ignore ("POTFILES.skip", "POTFILES.ignore")
     {
-	(-s $ignore) or next;
+	(-s "$SRCDIR/$ignore") or next;
 
 	if ("$ignore" eq "POTFILES.ignore")
 	{
@@ -563,16 +563,21 @@ sub Console_WriteError_InvalidOption
     exit 1;
 }
 
+sub isIntltoolExtractInPath
+{
+    my ($file) = @_;
+    # If either a file exists, or when run it returns 0 exit status
+    return 1 if ((-x $file) or (system("$file >/dev/null") == 0));
+    return 0;
+}
+
 sub GenerateHeaders
 {
-    my $EXTRACT = "@INTLTOOL_EXTRACT@";
-    chomp $EXTRACT;
-
-    $EXTRACT = $ENV{"INTLTOOL_EXTRACT"} if $ENV{"INTLTOOL_EXTRACT"};
+    my $EXTRACT = $ENV{"INTLTOOL_EXTRACT"} || "intltool-extract";
 
     ## Generate the .h header files, so we can allow glade and
     ## xml translation support
-    if (! -x "$EXTRACT")
+    if (! isIntltoolExtractInPath("$EXTRACT"))
     {
 	print STDERR "\n *** The intltool-extract script wasn't found!"
 	     ."\n *** Without it, intltool-update can not generate files.\n";

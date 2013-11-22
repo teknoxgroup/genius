@@ -1,3 +1,111 @@
+Mon Oct 08 01:56:06 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/*.xml: documentation updates
+
+	* Release 1.0.0
+
+Sun Oct 07 12:48:33 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: add missing languages
+
+Sun Sep 30 21:00:49 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: use the "Genius Mathematics Tool" that sounds
+	  better
+
+Sun Sep 30 20:53:11 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* COPYING, src/genius.c, src/gnome-genius.c, src/funclib.c: update
+	  to GPLv2
+
+	* AUTHORS, TODO, README: minor updates
+
+Sun Sep 30 20:31:30 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in, NEWS, help/C/genius.xml: make this 1.0.0 release,
+	  what the hell, it's been 10 years, we deserve a 1.0 of Genius
+
+Sun Sep 30 11:42:59 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: workaround a segfault in vte when
+	  a very long string is given.
+	
+	* src/mpwrap.c: fix bug with scientific notation.  Also change
+	  behaviour of automatic scientific notation to follow the max digits
+	  parameter
+
+	* src/Makefile.am: fix order of -I and change the way we link our own
+	  libs to be more robust.
+
+	* configure.in: fix
+
+	* src/funclibhelper.cP: fix nonegative integer vs positive integer
+	  checking and add square matrix checking
+
+	* src/mpwrap.[ch]: add binomial and get_ulong
+
+	* src/funclib.c: Add builtin versions of IsVector, IsDiagonal,
+	  IsUpperTriangular, IsLowerTriangular, nCr (Binomial) for speed.
+
+	* help/C/gel-function-list.xml: add docs for
+	  RayleighQuotientIteration, StirlingNumberFirst and Second,
+	  and update nCr doc string
+
+	* help/C/*.xml: update the document to look better printed.  Remove
+	  uneeded paragraph separators, and rewrite small bits.
+
+	* lib/linear_algebra/misc.gel: fix ApplyOverMatrix2, remove some
+	  unneeded semicolons, remove functions now builtin
+
+	* lib/linear_algebra/linear_algebra.gel: fix RayleighQuotient
+	  and add RayleighQuotientIteration
+
+	* lib/combinatorics/misc.gel: Hofstadter, HarmonicNumber
+	  works over matrixes.  Add StirlingNumberFirst and
+	  StirlingNumberSecond
+
+	* lib/combinatorics/factorial.gel: remove nCr as it's builtin
+
+	* src/calc.h, src/gnome-genius.c: brag about my Ph.D.
+
+	* src/geniustests.txt: add bunch of tests
+
+Fri Sep 28 19:41:00 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* mpfr/*, configure.in, Makefile.am, src/Makefile.am:
+	  Remove the internal MPFR, this is just too much trouble to maintain
+	  here and MPFR is nowdays quite ubiquitous.
+
+	* lib/combinatorics/factorial.gel, help/C/gel-function-list.xml:
+	  it's Pochhammer, not Puchhammer
+
+Fri Sep 28 03:19:50 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/combinatorics/misc.gel: add FrobeniusNumber and GreedyAlgorithm
+
+	* src/funclib.c: fix vararg calls to the GCD and LCM aliases
+
+	* src/geniustests.txt: add some tests
+
+	* help/C/gel-function-list.xml: add help for FrobeniusNumber
+	  and GreedyAlgorithm
+
+	* configure.in: raise version
+
+	* help/C/*.xml, help/C/figures/*.eps: add eps figures so that
+	  postscript (and thus pdf by ps2pdf, docbook2pdf is broken now)
+	  output has figures
+
+Fri Mar 27 15:07:39 2007  Raivis Dejus  <orvils@gmail.com>
+
+        * configure.in: Added Latvian Translation.
+
+Fri Mar 09 09:17:39 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: fix for platforms that don't have wordexp and use glob.
+	  Include the GLOB_NOCHECK flag to glob.  Patch from
+	  Joerg Sonnenberger <joerg@britannica.bec.de>
+
 Fri Feb 02 10:10:19 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 0.7.7
