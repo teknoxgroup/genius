@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 1999-09-02 14:00-0700\n"
+"POT-Creation-Date: 1999-09-06 14:43-0700\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,143 +14,151 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: ENCODING\n"
 
-#: src/gnome-genius.c:116
+#: src/gnome-genius.c:131
+msgid "Error"
+msgstr ""
+
+#: src/gnome-genius.c:131
+msgid "Information"
+msgstr ""
+
+#: src/gnome-genius.c:163
 #, c-format
 msgid ""
 "\n"
 "Too many errors! (%d followed)"
 msgstr ""
 
-#: src/gnome-genius.c:126
+#: src/gnome-genius.c:173
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
 msgstr ""
 
-#: src/gnome-genius.c:229 src/gnome-genius.c:680
+#: src/gnome-genius.c:268 src/gnome-genius.c:719
 msgid "GnomENIUS Calculator"
 msgstr ""
 
 #. another comments
-#: src/gnome-genius.c:234
+#: src/gnome-genius.c:273
 msgid "The Gnome calculator style edition of genius"
 msgstr ""
 
-#: src/gnome-genius.c:356
+#: src/gnome-genius.c:395
 msgid "GnomENIUS Calculator setup"
 msgstr ""
 
-#: src/gnome-genius.c:362
+#: src/gnome-genius.c:401
 msgid "Output"
 msgstr ""
 
-#: src/gnome-genius.c:365
+#: src/gnome-genius.c:404
 msgid "Number/Expression output options"
 msgstr ""
 
-#: src/gnome-genius.c:375
+#: src/gnome-genius.c:414
 msgid "Maximum digits to output (0=unlimited)"
 msgstr ""
 
-#: src/gnome-genius.c:395
+#: src/gnome-genius.c:434
 msgid "Results as floats"
 msgstr ""
 
-#: src/gnome-genius.c:403
+#: src/gnome-genius.c:442
 msgid "Floats in scientific notation"
 msgstr ""
 
-#: src/gnome-genius.c:411
+#: src/gnome-genius.c:450
 msgid "Always print full expressions"
 msgstr ""
 
-#: src/gnome-genius.c:420
+#: src/gnome-genius.c:459
 msgid "Error/Info output options"
 msgstr ""
 
-#: src/gnome-genius.c:428
+#: src/gnome-genius.c:467
 msgid "Display errors in a dialog"
 msgstr ""
 
-#: src/gnome-genius.c:436
+#: src/gnome-genius.c:475
 msgid "Display information messages in a dialog"
 msgstr ""
 
-#: src/gnome-genius.c:447
+#: src/gnome-genius.c:486
 msgid "Maximum errors to display (0=unlimited)"
 msgstr ""
 
-#: src/gnome-genius.c:471
+#: src/gnome-genius.c:510
 msgid "Precision"
 msgstr ""
 
-#: src/gnome-genius.c:474
+#: src/gnome-genius.c:513
 msgid "Floating point precision"
 msgstr ""
 
-#: src/gnome-genius.c:481
+#: src/gnome-genius.c:520
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
 "and new variables will be affected."
 msgstr ""
 
-#: src/gnome-genius.c:490
+#: src/gnome-genius.c:529
 msgid "Floating point precision (bits)"
 msgstr ""
 
-#: src/gnome-genius.c:514
+#: src/gnome-genius.c:553
 msgid "Terminal"
 msgstr ""
 
-#: src/gnome-genius.c:517
+#: src/gnome-genius.c:556
 msgid "Terminal options"
 msgstr ""
 
-#: src/gnome-genius.c:526
+#: src/gnome-genius.c:565
 msgid "Scrollback lines"
 msgstr ""
 
-#: src/gnome-genius.c:549
+#: src/gnome-genius.c:588
 msgid "Font:"
 msgstr ""
 
-#: src/gnome-genius.c:588
+#: src/gnome-genius.c:627
 msgid "Can not open file!"
 msgstr ""
 
-#: src/gnome-genius.c:609
+#: src/gnome-genius.c:648
 msgid "Load GEL file"
 msgstr ""
 
-#: src/gnome-genius.c:631
+#: src/gnome-genius.c:670
 msgid "_Load"
 msgstr ""
 
-#: src/gnome-genius.c:631
+#: src/gnome-genius.c:670
 msgid "Load and execute a file in genius"
 msgstr ""
 
-#: src/gnome-genius.c:642
+#: src/gnome-genius.c:681
 msgid "_Interrupt"
 msgstr ""
 
-#: src/gnome-genius.c:642 src/gnome-genius.c:668
+#: src/gnome-genius.c:681 src/gnome-genius.c:707
 msgid "Interrupt current calculation"
 msgstr ""
 
-#: src/gnome-genius.c:658
+#: src/gnome-genius.c:697
 msgid "_Calculator"
 msgstr ""
 
-#: src/gnome-genius.c:660
+#: src/gnome-genius.c:699
 msgid "_Plugins"
 msgstr ""
 
-#: src/gnome-genius.c:668
+#: src/gnome-genius.c:707
 msgid "Interrupt"
 msgstr ""
 
-#: src/genius.c:219 src/gnome-genius.c:957
+#: src/genius.c:219 src/gnome-genius.c:996
 #, c-format
 msgid ""
 "Genius %s\n"

@@ -1,3 +1,22 @@
+Mon Sep 06 14:38:44 1999  George Lebl  <jirka@5z.com>
+
+	* Release 0.4.6: last Genius before integration with Dr.Geo
+
+Mon Sep 06 09:43:16 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: accept E+ for floats as well
+
+Sun Sep 05 17:06:23 1999  George Lebl  <jirka@5z.com>
+
+	* src/gnome-genius.c,src/funclib.c: rework the info/error dialogs
+	  and make them display in a textbox if there is too much text,
+	  also rework how info's and errors are printed to screen so that
+	  we don't hang (for example on 'help')
+
+Sun Sep 05 14:16:20 1999  George Lebl  <jirka@5z.com>
+
+	* src/lexer.l: read E as well for exponents in floats
+
 Thu Sep 02 14:05:50 1999  George Lebl  <jirka@5z.com>
 
 	* Release 0.4.5
@@ -5,6 +24,10 @@ Thu Sep 02 14:05:50 1999  George Lebl  <jirka@5z.com>
 Thu Sep 02 14:00:19 1999  George Lebl  <jirka@5z.com>
 
 	* src/mpwrap.c: don't check/free values after mpw_clear again
+
+1999-09-03  Zbigniew Chyla  <chyla@alice.ci.pwr.wroc.pl>
+
+        * configure.in (ALL_LINGUAS): Added pl.
 
 Wed Sep 01 20:36:01 1999  George Lebl  <jirka@5z.com>
 

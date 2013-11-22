@@ -1642,11 +1642,15 @@ help_op(ETree * * a, int *exception)
 	li = g_list_last(d_getcontext());
 	for(;li;li=g_list_previous(li)) {
 		EFunc *f = li->data;
+		char *s;
 		if(!f->id || !f->id->token ||
 		   strcmp(f->id->token,"ni")==0 ||
 		   strcmp(f->id->token,"shrubbery")==0)
 			continue;
-		fprintf(outputfp,"%-20s - %s\n",f->id->token,get_description(f->id->token));
+		s = g_strdup_printf("%-20s - %s",
+				    f->id->token,get_description(f->id->token));
+		(*infoout)(s);
+		g_free(s);
 	}
 
 	return makenum_null();

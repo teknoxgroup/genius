@@ -88,23 +88,70 @@ geniussetup_t cursetup = {
 static int torl[2];
 static int fromrl[2];
 
+static void feed_to_zvt(gpointer data, gint source,
+			GdkInputCondition condition);
+static void get_new_buffer(gpointer data, gint source,
+			   GdkInputCondition condition);
+
 /*used inside rl_getc*/
 static int need_quitting = FALSE;
 static int in_recursive = FALSE;
 
+static void
+print_to_term(char *s)
+{
+	feed_to_zvt(NULL,fromrl[0],0);
+	zvt_term_feed(ZVT_TERM(zvt),s,strlen(s));
+}
+
+static int
+count_char(char *s, char c)
+{
+	int i = 0;
+	while(*s) {
+		if(*(s++) == c)
+			i++;
+	}
+	return i;
+}
+
+
 /*display a message in a messagebox*/
 static void
-geniuserrorbox(char *s)
+geniusbox(int error, char *s)
 {
 	GtkWidget *mb;
-	
-	mb=gnome_message_box_new(s,GNOME_MESSAGE_BOX_ERROR,
-				 GNOME_STOCK_BUTTON_OK,NULL);
+	if(count_char(s,'\n')<=20) {
+		mb=gnome_message_box_new(s,
+					 error?GNOME_MESSAGE_BOX_ERROR:
+					   GNOME_MESSAGE_BOX_INFO,
+					 GNOME_STOCK_BUTTON_OK,NULL);
+	} else {
+		GtkWidget *sw,*t;
+		mb=gnome_dialog_new(error?_("Error"):_("Information"),
+				    GNOME_STOCK_BUTTON_OK,
+				    NULL);
+		gtk_signal_connect_object(GTK_OBJECT(mb),"clicked",
+					  GTK_SIGNAL_FUNC(gtk_widget_destroy),
+					  GTK_OBJECT(mb));
+		sw = gtk_scrolled_window_new(NULL,NULL);
+		gtk_box_pack_start(GTK_BOX(GNOME_DIALOG(mb)->vbox),sw,
+				   TRUE,TRUE,0);
+		t = gtk_text_new(NULL,NULL);
+		gtk_text_set_editable(GTK_TEXT(t),FALSE);
+		gtk_text_set_line_wrap(GTK_TEXT(t),TRUE);
+		gtk_text_set_word_wrap(GTK_TEXT(t),TRUE);
+		gtk_text_insert(GTK_TEXT(t),ZVT_TERM(zvt)->font,
+				NULL,NULL,s,strlen(s));
+		gtk_container_add(GTK_CONTAINER(sw),t);
+		gtk_widget_set_usize(sw,500,300);
+	}
 	gtk_window_set_transient_for(GTK_WINDOW(mb),
 				     GTK_WINDOW(window));
 
-	gtk_widget_show(mb);
+	gtk_widget_show_all(mb);
 }
+
 
 static void
 printout_error_num_and_reset(void)
@@ -116,7 +163,7 @@ printout_error_num_and_reset(void)
 						  _("\nToo many errors! (%d followed)"),
 						  errors_printed-curstate.max_errors);
 			}
-			geniuserrorbox(errors->str);
+			geniusbox(TRUE,errors->str);
 			g_string_free(errors,TRUE);
 			errors=NULL;
 		}
@@ -157,31 +204,20 @@ geniuserror(char *s)
 			errors = g_string_new(str);
 		}
 	} else {
-		fprintf(rl_outstream,"\e[01;31m%s\e[0m\n",str);
+		char *s;
+		s = g_strdup_printf("\e[01;31m%s\e[0m\r\n",str);
+		print_to_term(s);
+		g_free(s);
 	}
 
 	g_free(str);
-}
-
-/*display a message in a messagebox*/
-static void
-geniusinfobox(char *s)
-{
-	GtkWidget *mb;
-	
-	mb=gnome_message_box_new(s,GNOME_MESSAGE_BOX_INFO,
-				 GNOME_STOCK_BUTTON_OK,NULL);
-	gtk_window_set_transient_for(GTK_WINDOW(mb),
-				     GTK_WINDOW(window));
-
-	gtk_widget_show(mb);
 }
 
 static void
 printout_info(void)
 {
 	if(infos) {
-		geniusinfobox(infos->str);
+		geniusbox(FALSE,infos->str);
 		g_string_free(infos,TRUE);
 		infos=NULL;
 	}
@@ -210,7 +246,10 @@ geniusinfo(char *s)
 			infos = g_string_new(str);
 		}
 	} else {
-		fprintf(rl_outstream,"\e[0;32m%s\e[0m\n",str);
+		char *s;
+		s = g_strdup_printf("\e[0;32m%s\e[0m\r\n",str);
+		print_to_term(s);
+		g_free(s);
 	}
 
 	g_free(str);

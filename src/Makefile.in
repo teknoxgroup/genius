@@ -457,44 +457,6 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h plugin.h parse.h
-compil.o: compil.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h matrix.h matrixw.h compil.h
-dict.o: dict.c ../config.h eval.h mpwrap.h structs.h dict.h util.h \
-	funclib.h compil.h
-eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h compil.h
-funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
-	funclib.h calc.h matrix.h matrixw.h matop.h
-genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
-	inter.h plugin.h
-gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
-	util.h dict.h plugin.h inter.h
-inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h plugin.h \
-	inter.h
-lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
-	parse.h util.h
-matop.o: matop.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h
-matrix.o: matrix.c ../config.h matrix.h
-matrixw.o: matrixw.c ../config.h structs.h mpwrap.h eval.h matrix.h \
-	matrixw.h
-mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
-parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
-	calc.h matrix.h matrixw.h parseutil.h
-parseutil.o: parseutil.c ../config.h structs.h mpwrap.h eval.h dict.h \
-	util.h calc.h matrix.h matrixw.h parseutil.h
-plugin.o: plugin.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h parse.h plug_api.h \
-	plugin.h plugread.h
-plugread.o: plugread.c ../config.h calc.h structs.h mpwrap.h plugin.h \
-	plugread.h
-plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
-	mpwrap.h plugin.h plugread.h
-testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h calc.h \
-	structs.h mpwrap.h
-util.o: util.c ../config.h util.h
 
 info-am:
 info: info-am

@@ -1,3 +1,8 @@
+Changes to 0.4.6
+
+* accept more different formats of floats in scientific notation
+* fix problems with hangs on help and large dialogs
+
 Changes to 0.4.5
 
 * modular arithmetic support (e.g. "expr mod n")
