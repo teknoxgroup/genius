@@ -2,6 +2,7 @@
 Encoding=UTF-8
 Name=Genius Math Tool
 Name[cs]=Matematický nástroj Genius
+Name[sv]=Matteverktyget Genius
 Comment=Genius Mathematical Tool and Calculator
 Comment[cs]=Matematický nástroj a kalkulátor Genius
 Type=Application

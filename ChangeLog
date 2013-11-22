@@ -1,6 +1,57 @@
+Mon Jun 02 13:32:12 2003  George Lebl <jirka@5z.com>
+
+	* Release 0.5.5 
+
+Mon Jun 02 13:18:53 2003  George Lebl <jirka@5z.com>
+
+	* src/geniustests.txt: add test for sqrt with mod
+
+	* src/gnome-genius.c: print line number in the statusbar, and on
+	  error place the cursor at the point of the last error (kind of
+	  a hack, should somehow mark all errors)
+
+Mon Jun 02 10:13:13 2003  George Lebl <jirka@5z.com>
+
+	* src/eval.c: fix resetting the modulo after recursive eval call
+	  (was a crash)
+
+	* src/funclib.c, src/calc.[ch]: a lot of messages are now unified
+	  for ease of translation and argument checking is done with
+	  helper routines.  Also when the sqrt is called with mod try calling
+	  the SqrtModPrime or erroring out.
+
+Sun Jun 01 09:14:06 2003  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/modulus.gel: add
+	  SilverPohligHellmanWithFactorization function which does the
+	  discrete log but knowing the factorization of q-1, so if you do
+	  a bunch of discrete logs this can be a lot faster.
+
+Sat May 31 15:11:04 2003  George Lebl <jirka@5z.com>
+
+	* lib/numbertheory/modulus.gel: add IsPrimitiveModWithPrimeFactors,
+	  which is like IsPrimitiveMod, but we already put in the
+	  prime factors of q-1, so this is faster if we are testing a whole
+	  bunch of numbers or if we know factorization of q-1 beforehand.
+	  Use this for the primitive element finding routines.
+	  Also add SqrtModPrime which computes square roots modulo a prime.
+
+	* src/gnome-genius.c: Fix saving and opening of files (DOH!) also
+	  set the filename and the directory each time when openning the
+	  fileselector so that you don't have to retype everything.
+
+	* src/calc.c, src/funclib.c: rename an easter egg to prevent
+	  name conflict
+
+Fri May 30 17:13:43 2003  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: print out errors/infos after program run.  DOH!
+
 Wed May 28 16:57:25 2003  George Lebl <jirka@5z.com>
 
 	* Release 0.5.4
+
+	* src/gnome-genius.desktop.in: add Office category keyword
 
 Wed May 28 16:37:12 2003  George Lebl <jirka@5z.com>
 

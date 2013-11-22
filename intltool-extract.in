@@ -4,7 +4,7 @@
 #
 #  The Intltool Message Extractor
 #
-#  Copyright (C) 2000-2001 Free Software Foundation.
+#  Copyright (C) 2000-2001, 2003 Free Software Foundation.
 #
 #  Intltool is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License as
@@ -32,7 +32,7 @@
 ## Release information
 my $PROGRAM      = "intltool-extract";
 my $PACKAGE      = "intltool";
-my $VERSION      = "0.25";
+my $VERSION      = "0.26";
 
 ## Loaded modules
 use strict; 
@@ -359,7 +359,7 @@ sub type_glade {
 }
 
 sub type_scheme {
-    while ($input =~ /_\(?"((?:[^"\\]+|\\.)*)"\)?/sg) {
+    while ($input =~ /_\w*\(?"((?:[^"\\]+|\\.)*)"\)?/sg) {
 	$messages{$1} = [];
     }
 }

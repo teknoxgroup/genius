@@ -34,7 +34,7 @@
 ## Release information
 my $PROGRAM = "intltool-merge";
 my $PACKAGE = "intltool";
-my $VERSION = "0.25";
+my $VERSION = "0.26";
 
 ## Loaded modules
 use strict; 
@@ -79,6 +79,7 @@ my $OUTFILE;
 
 my %po_files_by_lang = ();
 my %translations = ();
+my $iconv = $ENV{"INTLTOOL_ICONV"} || "iconv";
 
 # Use this instead of \w for XML files to handle more possible characters.
 my $w = "[-A-Za-z0-9._:]";
@@ -269,7 +270,10 @@ sub get_po_encoding
         $encoding = "ISO-8859-1";
     }
 
-    $encoding = get_local_charset($encoding);
+    system ("$iconv -f $encoding -t UTF-8 </dev/null 2>/dev/null");
+    if ($?) {
+	$encoding = get_local_charset($encoding);
+    }
 
     return $encoding
 }
@@ -368,7 +372,6 @@ sub create_translation_database
             {
 		print STDERR "WARNING: $po_file is not in UTF-8 but $encoding, converting...\n" unless $QUIET_ARG;;
 
-                my $iconv = $ENV{"INTLTOOL_ICONV"} || "iconv";
                 open PO_FILE, "$iconv -f $encoding -t UTF-8 $po_file|";	
             }
         } 

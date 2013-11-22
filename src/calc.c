@@ -269,7 +269,7 @@ get_undocumented (void)
 		if(f->id == NULL ||
 		   f->id->token == NULL ||
 		   strcmp (f->id->token, "Ans") == 0 ||
-		   strcmp (f->id->token, "ni") == 0 ||
+		   strcmp (f->id->token, "ninini") == 0 ||
 		   strcmp (f->id->token, "shrubbery") == 0)
 			continue;
 		help = get_help (f->id->token, FALSE /* insert */);
@@ -2817,4 +2817,34 @@ yyerror(char *s)
 	(*errorout)(out);
 	g_free(out);
 	error_num=PARSE_ERROR;
+}
+
+void 
+gel_errorout (const char *format, ...)
+{
+    va_list args;
+    char *s;
+
+    va_start (args, format);
+    s = g_strdup_vprintf (format, args);
+    va_end (args);
+
+    (*errorout) (s);
+    
+    g_free (s);
+}
+
+void 
+gel_infoout (const char *format, ...)
+{
+    va_list args;
+    char *s;
+
+    va_start (args, format);
+    s = g_strdup_vprintf (format, args);
+    va_end (args);
+
+    (*infoout) (s);
+    
+    g_free (s);
 }

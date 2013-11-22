@@ -29,7 +29,7 @@
 
 ## Release information
 my $PROGRAM = "intltool-update";
-my $VERSION = "0.25";
+my $VERSION = "0.26";
 my $PACKAGE = "intltool";
 
 ## Loaded modules
@@ -62,6 +62,7 @@ my %po_files_by_lang = ();
 my $xml_extension =
 "xml(\.in)*|".		# .in is not required
 "ui|".
+"lang|".
 "glade2?(\.in)*|".	# .in is not required
 "scm(\.in)*|".		# .in is not required
 "oaf(\.in)+|".
@@ -208,7 +209,7 @@ sub determine_type ($)
 
    # FIXME: Use $xml_extentions, and maybe do all this even nicer
    my $xml_regex = 
-       "(?:xml(\.in)*|ui|oaf(?:\.in)+|server(?:\.in)+|sheet(?:\.in)+|".
+       "(?:xml(\.in)*|ui|lang|oaf(?:\.in)+|server(?:\.in)+|sheet(?:\.in)+|".
        "pong(?:\.in)+|etspec|schemas(?:\.in)+)";
    my $ini_regex =
        "(?:desktop(?:\.in)+|theme(?:\.in)+|caves(?:\.in)+|directory(?:\.in)+|".
@@ -748,18 +749,24 @@ sub find_package_name
 	local $/; # slurp mode
 	$conf_source = <IN>;
     }
-    
-    my $name = "";
 
-    $name = $1 if $conf_source =~ /^AM_INIT_AUTOMAKE\([\s\[]*([^,\)\s\]]+)/m;
+    my $name = "untitled";
+
+    # /^AM_INIT_AUTOMAKE\([\s\[]*([^,\)\s\]]+)/m 
+    # the \s makes this not work, why?
+    if ($conf_source =~ /^AM_INIT_AUTOMAKE\([\s\[]*([^,\)\]]+)/m)
+    {
+	$name = $1;
+    }
     
     if ($conf_source =~ /^AC_INIT\([\s\[]*([^,\)\s\]]+)\]?\s*,/m) 
     {
 	$name = $1;
 	$varhash{"AC_PACKAGE_NAME"} = $1;
     }
-    
-    $name = $1 if $conf_source =~ /^GETTEXT_PACKAGE=\[?([^\s\]]+)/m;
+
+    # \s makes this not work, why?
+    $name = $1 if $conf_source =~ /^GETTEXT_PACKAGE=\[?([^\n\]]+)/m;
     
     $name = "\$AC_PACKAGE_NAME" if "$name" eq "AC_PACKAGE_NAME";
     
