@@ -1,3 +1,230 @@
+Thu Dec 23 11:03:27 2004  George Lebl <jirka@5z.com>
+
+	* Release 0.7.2
+
+	* help/*: Fix the makefiles
+
+Thu Dec 23 10:45:11 2004  George Lebl <jirka@5z.com>
+
+	* help/C/*.xml: some fixes and use := rather then = in places
+
+Thu Dec 23 10:22:12 2004  George Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: optimize and shorten
+	  LUDecomposition
+
+	* src/calc.c: fix output for @(,n) and @(n,)
+
+	* lib/equation_solving/diffeqs.gel: Add EulersMethod and RungeKutta
+	  for simple single ode solving
+
+	* help/C/*.xml: update
+
+	* src/geniustests.txt: updated
+
+	* src/gnome-genius.c: add "New" toolbar item
+
+Wed Dec 22 18:01:51 2004  George Lebl <jirka@5z.com>
+
+	* src/funclib.c, help/C/*.xml: Fix then vs. than typos
+
+Wed Dec 22 16:58:23 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: add y= before the entries to make it clear what to
+	  type in.
+
+	* src/eval.c: when we encounter a reference to a non-existant
+	  variable make the variable in the current context.
+
+	* src/eval.c: fix errors in expensive matrix multiply, now doesn't
+	  crash!
+
+	* lib/linear_algebra/linear_algebra.gel: Add LUDecomposition function
+	  from David W. Hutchison <dahutchi@indiana.edu>
+
+	* help/C/*.xml: update
+
+Wed Dec 22 14:47:00 2004  George Lebl <jirka@5z.com>
+
+	* help/C/*.xml, help/C/genius.txt: make the text version and fix some
+	  typos
+
+Wed Dec 22 14:42:01 2004  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/misc.gel:  Added MoebiusMu from Alessio
+	  Frusciante <algol@firenze.linux.it>
+
+	* lib/number_theory/misc.gel:  Fixed parameters of IsNthPower to
+	  be less confusing
+
+	* lib/combinatorics/factorial.gel:  Nicer, less heavy argument testing
+
+	* src/funclib.c: Added IsNonNegativeInteger and fix EulerConstant
+	  helpstring
+
+	* src/geniustests.txt: added some tests
+
+	* help/C/*.xml: updated for the above functions and a lot more.
+	  Add a bunch of references to MathWorld (should add planetmath,
+	  but that's currently down, will do later)
+
+Wed Dec 22 11:43:42 2004  George Lebl <jirka@5z.com>
+
+	* mpfr/*: update to newest mpfr
+
+Wed Dec 22 11:21:02 2004  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/eval.[ch], src/calc.c: get similar ids if
+	  function is not documented and check for the function being
+	  documented in the gui help on function dialog.
+
+Wed Dec 22 11:03:34 2004  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c, src/calc.[ch], src/funclib.c: some help fixes,
+	  remove the old manual code and add a "Help on Function" menu entry.
+
+Wed Dec 22 10:24:05 2004  George Lebl <jirka@5z.com>
+
+	* help/C/*.xml: update the documentation a bit.
+
+Tue Dec 21 18:53:54 2004  George Lebl <jirka@5z.com>
+
+	* help/C/gel-operator-list.xml: make the list of operators an
+	  actual list
+
+	* help/C/gel-separator.xml,genius.xml: reorganize a tiny bit
+
+Tue Dec 21 18:13:52 2004  George Lebl <jirka@5z.com>
+
+	* configure.in, Makefile.am, src/gnome-genius.c, help/*:
+	  Docbookize the manual, patch and docbook by Kai Willadsen
+	  <kaiw@itee.uq.edu.au>
+
+	* src/funclib.c, src/calc.c: correct some help problems
+
+	* src/gnome-genius.c: don't show the "manual" menu entry since we
+	  now just show the help files directly.
+
+	* src/calc.[ch], src/genius.c, src/gnome-genius.c, src/funclib.c:
+	  Display the help functions and the manual
+
+Fri Dec 17 09:58:48 2004  George Lebl <jirka@5z.com>
+
+	* src/lexer.l: remove the warning killing hack since it doesn't work
+
+Thu Nov 11 10:01:31 2004  George Lebl <jirka@5z.com>
+
+	* lib/statistics/basic.gel: Add GaussFunction (normal curve),
+	  GaussDistribution (area under the normal curve)
+
+Tue Nov 09 11:28:26 2004  George Lebl <jirka@5z.com>
+
+	* src/calc.[ch], src/compil.c, src/eval.c, src/funclib.c, src/mpwrap.c,
+	  src/mpzextra.c:  Fix issues with strtok reentrancy by using
+	  strtok_r, should fix some issues with the library functions where
+	  rationals were used.  Also the evalhook calling logic is changed a
+	  tiny bit
+
+	* src/funclib.c, lib/calculus/integration.gel: Make
+	  CompositeSimpsonsRule built in for speed, fix issues
+	  when n is odd (add 1 in that case) and add
+	  CompositeSimpsonsRuleTolerance
+
+Fri Nov 05 2004 Amanpreet Singh Alam <aalam@redhat.com>
+
+	* ALL_LINUGUS: pa (Punjabi) Language is added
+
+Wed Sep 22 11:05:07 2004  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: fix mpw_uncomplex which could undercount the zero
+	  allocation
+
+	* lib/combinatorics/misc.gel: Fix Hofstadter and optimize it
+
+	* lib/linear_algebra/linear_algebra.gel: Don't use Transpose but .'
+	  operator that should be slightly faster
+
+Wed Sep 22 09:40:10 2004  George Lebl <jirka@5z.com>
+
+	* src/compil.c, src/eval.[ch], src/funclib.c, src/parse.y,
+	  src/parseutil.h, src/structs.h: Treat strings as constants (don't
+	  copy) thus getting speedups up to 10% (very optimistic) if running
+	  loops or things where strings are used.
+
+Thu Sep 16 18:22:28 2004  George Lebl <jirka@5z.com>
+
+	* src/mpwrap.c: fix round, ceil and trunc, plus round (0.5) should
+	  really return 0 not 1
+
+	* src/geniustest.pl, src/geniustests.txt: fixes plus some new tests
+
+Thu Sep 16 17:54:27 2004  George Lebl <jirka@5z.com>
+
+	* lib/functions/elementary.gel: optimize erf a bit and fix it's
+	  comment
+
+	* configure.in, Makefile.am, src/Makefile.am, mpfr/*:  Include a
+	  recent CVS version of mpfr to avoid all the mess.  We can still
+	  compile with an outside version if needed though.
+
+	* src/funclib.c, src/genius.c, src/gnome-genius.c, src/mpwrap.[ch]:
+	  remove all non-mpfr stuff since we always have mpfr now which
+	  removes quite a bit of ugliness.  Plus remove some other
+	  cruft as well.
+
+Tue Sep 14 17:14:53 2004  George Lebl <jirka@5z.com>
+
+	* src/funclib.c, lib/number_theory/misc.gel: make Divides built-in
+	  which should make a number of things faster.  Also add
+	  ExactDivision function using gmp's divexact which does exact
+	  division much faster once we know that the two numbers actually
+	  divide one another (it returns garbage otherwise).
+
+	* src/geniustests.txt: add some tests
+
+Tue Sep 14 16:31:51 2004  George Lebl <jirka@5z.com>
+
+	* lib/number_theory/misc.gel: Use ApplyOverMatrix(2) on a few
+	  functions, and add BernoulliNumber
+
+	* src/geniustests.txt: Add test for BernoulliNumber
+
+Tue Sep 14 09:57:15 2004  George Lebl <jirka@5z.com>
+
+	* configure.in: some cleanup, and set the extra optimization flags
+	  directly rather then use -O3 since then -O2 would just reset thing,
+	  so we again optimize nicely.
+
+	* src/calc.[ch], src/funclib.c, src/genius.c, src/graphing.c:
+	  Implement translation of help texts coming from the standard
+	  library.  Still error texts are not translated, will need to
+	  figure that out.  User generated help strings are gotten with
+	  "genius --gettext" similarly to the "--compile" option.
+
+	* Makefile.am, lib/Makefile.am, po/POTFILES.in: create and use
+	  lib/library-strings.c
+
+	* lib/equation_solving/find_root.gel: Move FIXME's from help text
+	  to comment
+
+	* src/genius.c: add --version option
+
+	* gtkextra/gdmpsfont.c: fix memleak
+
+Thu Aug 26 09:26:43 2004  Takeshi AIHANA <aihana@gnome.gr.jp>
+
+	* configure.in: Added 'ja' (Japanese) to ALL_LINGUAS.
+
+Fri Aug 20 10:57:58 2004  George Lebl <jirka@5z.com>
+
+	* genius.spec.in, pixmaps/48x48/Makefile.am: install 48x48 icon in
+	  the proper place
+
+Fri Aug 20 10:35:25 2004  George Lebl <jirka@5z.com>
+
+	* configure.in, Makefile.am, src/gnome-genius.desktop.in,
+	  pixmaps/*: Added an icon Eugenia Loli-Queru (eloli@hotmail.com)
+
 Thu Aug 19 16:38:14 2004  George Lebl <jirka@5z.com>
 
 	* Release 0.7.1

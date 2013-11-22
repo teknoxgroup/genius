@@ -346,6 +346,7 @@ gel_makenum_string (const char *str)
 	GET_NEW_NODE (n);
 	n->type = STRING_NODE;
 	n->str.str = g_strdup (str); 
+	n->str.constant = FALSE;
 	n->any.next = NULL;
 
 	return n;
@@ -358,6 +359,34 @@ gel_makenum_string_use (char *str)
 	GET_NEW_NODE (n);
 	n->type = STRING_NODE;
 	n->str.str = str; 
+	n->str.constant = FALSE;
+	n->any.next = NULL;
+
+	return n;
+}
+
+GelETree *
+gel_makenum_string_constant (const char *str)
+{
+	GelETree *n;
+	char *hstr;
+	static GHashTable *constant_strings = NULL;
+
+	if (constant_strings == NULL)
+		constant_strings = g_hash_table_new (g_str_hash, g_str_equal);
+
+	hstr = g_hash_table_lookup (constant_strings, str);
+
+	if (hstr == NULL) {
+		hstr = g_strdup (str);
+		g_hash_table_insert (constant_strings,
+				     hstr, hstr);
+	}
+
+	GET_NEW_NODE (n);
+	n->type = STRING_NODE;
+	n->str.str = hstr; 
+	n->str.constant = TRUE;
 	n->any.next = NULL;
 
 	return n;
@@ -508,7 +537,8 @@ freetree_full(GelETree *n, gboolean freeargs, gboolean kill)
 		}
 		break;
 	case STRING_NODE:
-		g_free(n->str.str);
+		if ( ! n->str.constant)
+			g_free (n->str.str);
 		break;
 	case FUNCTION_NODE:
 		d_freefunc(n->func.func);
@@ -669,7 +699,11 @@ copynode_to(GelETree *empty, GelETree *o)
 	case STRING_NODE:
 		empty->type = STRING_NODE;
 		empty->any.next = o->any.next;
-		empty->str.str = g_strdup(o->str.str);
+		empty->str.constant = o->str.constant;
+		if (o->str.constant)
+			empty->str.str = o->str.str;
+		else
+			empty->str.str = g_strdup (o->str.str);
 		break;
 	case FUNCTION_NODE:
 		empty->type = FUNCTION_NODE;
@@ -1677,7 +1711,7 @@ op_two_nodes (GelCtx *ctx, GelETree *ll, GelETree *rr, int oper,
 		n->op.args->any.next = copynode(rr);
 		n->op.args->any.next->any.next = NULL;
 		n->op.nargs = 2;
-		
+
 		if ( ! no_push) {
 			GE_PUSH_STACK (ctx, n, GE_PRE);
 		}
@@ -1830,27 +1864,32 @@ static void
 expensive_matrix_multiply(GelCtx *ctx, GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2)
 {
 	int i,j,k;
-	for(i=0;i<gel_matrixw_width(res);i++) {
-		for(j=0;j<gel_matrixw_height(res);j++) {
+	for(i=0;i<gel_matrixw_width(res);i++) { /* columns M2 */
+		for(j=0;j<gel_matrixw_height(res);j++) { /* rows M1 */
 			GelETree *a = NULL;
-			for(k=0;k<gel_matrixw_width(m1);k++) {
+			for(k=0;k<gel_matrixw_width(m1);k++) { /* columns M1,
+							          rows M2 */
 				GelETree *t;
 				GelETree *t2;
-				t = op_two_nodes(ctx,gel_matrixw_index(m1,j,k),
-						 gel_matrixw_index(m2,k,i),
-						 E_MUL,
-						 FALSE /* no_push */);
-				if(!a) {
-					a=t;
+				t = op_two_nodes (ctx,
+						  gel_matrixw_index (m1, k, j),
+						  gel_matrixw_index (m2, i, k),
+						  E_MUL,
+						  TRUE /* no_push */);
+				if (a == NULL) {
+					a = t;
 				} else {
-					t2 = op_two_nodes(ctx,a,t,E_PLUS,
-							  FALSE /* no_push */);
-					gel_freetree(t);
-					gel_freetree(a);
+					t2 = op_two_nodes (ctx, a, t, E_PLUS,
+							   TRUE /* no_push */);
+					gel_freetree (t);
+					gel_freetree (a);
 					a = t2;
 				}
 			}
-			gel_matrixw_set_index(res,i,j) = a;
+			gel_matrixw_set_index (res, i, j) = a;
+			if (a->type == OPERATOR_NODE) {
+				GE_PUSH_STACK (ctx, a, GE_PRE);
+			}
 		}
 	}
 }
@@ -2305,6 +2344,7 @@ string_concat (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	freetree_full (n, TRUE, FALSE);
 	n->type = STRING_NODE;
 	n->str.str = s;
+	n->str.constant = FALSE;
 
 	return TRUE;
 }
@@ -3194,8 +3234,8 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 	return TRUE;
 }
 
-static char *
-similar_possible_ids (const char *id)
+char *
+gel_similar_possible_ids (const char *id)
 {
 	GSList *similar, *li;
 	GString *sim;
@@ -3251,7 +3291,7 @@ iter_variableop(GelCtx *ctx, GelETree *n)
 					"Perhaps you meant to write '1i' for "
 					"the imaginary number (square root of "
 					"-1)."));
-		} else if ((similar = similar_possible_ids (n->id.id->token))
+		} else if ((similar = gel_similar_possible_ids (n->id.id->token))
 			       != NULL) {
 			gel_errorout (_("Variable '%s' used uninitialized, "
 					"perhaps you meant %s."),
@@ -3279,7 +3319,7 @@ iter_derefvarop(GelCtx *ctx, GelETree *n)
 	
 	f = d_lookup_global(l->id.id);
 	if G_UNLIKELY (f == NULL) {
-		char *similar = similar_possible_ids (l->id.id->token);
+		char *similar = gel_similar_possible_ids (l->id.id->token);
 		if (similar != NULL) {
 			gel_errorout (_("Variable '%s' used uninitialized, "
 					"perhaps you meant %s."),
@@ -4274,7 +4314,7 @@ get_func_from (GelETree *l, gboolean silent)
 		if (f == NULL) {
 			if G_UNLIKELY ( ! silent) {
 				char * similar =
-					similar_possible_ids (l->id.id->token);
+					gel_similar_possible_ids (l->id.id->token);
 				if (similar != NULL) {
 					gel_errorout (_("Function '%s' used uninitialized, "
 							"perhaps you meant %s."),
@@ -6169,12 +6209,26 @@ iter_operator_pre(GelCtx *ctx)
 		break;
 
 	case E_REFERENCE:
-		if (ctx->whackarg) {
-			gel_freetree (n);
-			ctx->current = NULL;
+		{
+			GelETree *t;
+			GelEFunc *rf;
+
+			if (ctx->whackarg) {
+				gel_freetree (n);
+				ctx->current = NULL;
+			}
+
+			/* If doesn't exist, make it and set it to null */
+			t = n->op.args;
+			rf = d_lookup_global (t->id.id);
+			if (rf == NULL) {
+				d_addfunc (d_makevfunc (t->id.id, 
+							gel_makenum_null ()));
+			}
+
+			iter_pop_stack(ctx);
+			break;
 		}
-		iter_pop_stack(ctx);
-		break;
 
 	case E_MOD_CALC:
 		/* Push modulo op, so that we may push the
@@ -6468,9 +6522,9 @@ iter_eval_etree(GelCtx *ctx)
 
 	while((n = ctx->current)) {
 		EDEBUG("ITER");
-		if(evalnode_hook) {
+		if (evalnode_hook != NULL) {
 			static int i = 0;
-			if G_UNLIKELY (i++ > run_hook_every) {
+			if G_UNLIKELY ((i++ & RUN_HOOK_EVERY_MASK) == RUN_HOOK_EVERY_MASK) {
 				(*evalnode_hook)();
 				i = 0;
 			}

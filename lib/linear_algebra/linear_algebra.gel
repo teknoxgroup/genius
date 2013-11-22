@@ -75,7 +75,7 @@ protect ("DeleteColumn")
 
 # Column Reduced Echelon Form
 SetHelp("cref", "linear_algebra", "Compute the Column Reduced Echelon Form")
-function cref(M)=Transpose(rref(Transpose(M)))
+function cref(M)=(rref(M.').')
 protect ("cref")
 SetHelpAlias ("cref", "CREF")
 CREF = cref
@@ -110,7 +110,7 @@ function StripZeroRows (M) =
 (
   if not IsMatrix (M) then
     (error("StripZeroColumns: argument not a matrix");bailout);
-  Transpose (StripZeroColumns (Transpose (M)))
+  StripZeroColumns (M.').'
 )
 protect ("StripZeroRows")
 
@@ -224,7 +224,7 @@ protect ("IsInvertibleField")
 SetHelp("SmithNormalFormField", "linear_algebra", "Smith Normal Form for fields (will end up with 1's on the diagonal)")
 function SmithNormalFormField(A) =
 (
-  Transpose (ref (Transpose (ref (A))))
+  ref (ref (A).').'
 )
 protect ("SmithNormalFormField")
 
@@ -443,3 +443,51 @@ protect ("Eigenvalues")
 eig = Eigenvalues;
 SetHelpAlias ("Eigenvalues", "eig")
 protect ("eig")
+
+# Written by David W. Hutchison, dahutchi@indiana.edu for Genius 0.7.1
+# Copyright (C) 2004 David W. Hutchison (GPL)
+# LU decomposition of a matrix, aka Crout and/or Cholesky reduction.
+# (ISBN 0-201-11577-8 pp.99-103)
+# This function will compute the lower and upper materices of a square matrix
+# 'a.' The upper triangular matrix features a diagonal of values 1 (one).  This
+# is not Doolittle's Method which features the 1's diagonal on the lower
+# matrix. 
+SetHelp("LUDecomposition", "linear_algebra", "Get the LU decomposition of A and store the result in the L and U which should be references.  If not possible returns false.")
+function LUDecomposition(A,L,U) = ( 
+	if not IsMatrix(A) or not IsMatrixSquare(A) then
+        	(error("LUDecomposition: A must be a square matrix");bailout);
+	if not IsFunctionRef(L) or not IsFunctionRef(U) then
+        	(error("LUDecomposition: L and U must be references");bailout);
+	*L = *U = null;
+	if A@(1,1) == 0 then (
+		return false
+	);
+	n = rows(A);
+
+	lower = zeros(n,n);
+	lower@(,1) = A@(,1);
+	upper = I(n);
+	upper@(1,) = A@(1,) / lower@(1,1);
+
+	for j=2 to n do (
+		for i=j to n do (
+			lower@(i,j) = A@(i,j) -
+				(sum k=1 to j-1 do
+					(lower@(i,k)*upper@(k,j)))
+		);
+		ljj = lower@(j,j);
+		if ljj == 0 then (
+			return false
+		);
+		for i = j+1 to n do (
+			upper@(j,i) = (A@(j,i) -
+				(sum k=1 to j-1 do
+					(lower@(j,k)*upper@(k,i)))) /
+				ljj
+		)
+	);
+	*L = lower;
+	*U = upper;
+	true
+);
+protect("LUDecomposition");

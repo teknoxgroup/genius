@@ -102,6 +102,11 @@ void gel_evalexp_parsed (GelETree *parsed /* parsed tree to evaluate */,
  * frontend */
 void gel_printout_infos (void);
 
+/* implemented in the frontend (function can be NULL) */
+void gel_call_help (const char *function);
+
+void gel_help_on (const char *text);
+
 /*these are parts of the above*/
 /*note that parseexp will actually load AND execute files if there are load
   toplevel instructions, as those don't translate into an GelETree*/
@@ -126,6 +131,10 @@ void gel_load_file (const char *dirprefix,
 void gel_load_guess_file (const char *dirprefix,
 			  const char *file,
 			  gboolean warn);
+
+void gel_dump_strings_from_user_funcs (FILE *outfile);
+void gel_dump_strings_from_help (FILE *outfile);
+
 void set_new_calcstate(calcstate_t state);
 void set_new_errorout(void (*func)(const char *));
 void set_new_infoout(void (*func)(const char *));
@@ -145,7 +154,7 @@ void gel_get_file_info(char **file, int *line);
 
 extern FILE *outputfp;
 extern void (*evalnode_hook)(void);
-extern int run_hook_every;
+#define RUN_HOOK_EVERY_MASK 0x3FF
 extern void (*statechange_hook)(calcstate_t);
 
 typedef struct {
@@ -171,12 +180,11 @@ GSList *get_helps (const char *category);
 /* gets undocumented functions */
 GSList *get_undocumented (void);
 
-void new_category (const char *category, const char *name);
+void new_category (const char *category, const char *name, gboolean internal);
 
 GelHelp *get_help (const char *func, gboolean insert);
 
 void add_description (const char *func, const char *desc);
-const char *get_description (const char *func);
 void add_category (const char *func, const char *category);
 void add_alias (const char *func, const char *alias);
 void add_help_link (const char *func, const char *link);

@@ -70,12 +70,12 @@ gboolean genius_is_gui = FALSE;
 GelOutput *main_out = NULL;
 
 void (*evalnode_hook)(void) = NULL;
-int run_hook_every = 1000;
 void (*statechange_hook)(calcstate_t) = NULL;
 
 typedef struct {
 	char *category;
 	char *name;
+	gboolean internal;
 	GSList *funcs;
 } HelpCategory;
 static GSList *categories = NULL;
@@ -190,7 +190,7 @@ get_category_name (const char *category)
 	if (cat == NULL || cat->name == NULL)
 		return category;
 	else
-		return cat->name;
+		return _(cat->name);
 }
 
 /* gets undocumented functions */
@@ -282,11 +282,12 @@ get_undocumented (void)
 }
 
 void
-new_category (const char *category, const char *name)
+new_category (const char *category, const char *name, gboolean internal)
 {
 	HelpCategory *cat = get_category (category, TRUE /* insert */);
 	g_free (cat->name);
 	cat->name = g_strdup (name);
+	cat->internal = internal;
 }
 
 static void
@@ -402,19 +403,6 @@ add_description (const char *func, const char *desc)
 	g_free (help->description);
 	help->description = g_strdup (d);
 	g_free (d);
-}
-
-const char *
-get_description(const char *func)
-{
-	GelHelp *help;
-
-	help = get_help (func, FALSE /* insert */);
-	if (help == NULL ||
-	    help->description == NULL)
-		return  "";
-	else
-		return help->description;
 }
 
 void
@@ -753,17 +741,17 @@ appendoper(GelOutput *gelo, GelETree *n)
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(");
 			gel_print_etree (gelo, l, FALSE);
-			gel_output_string(gelo,"@[");
+			gel_output_string(gelo,"@(");
 			gel_print_etree (gelo, r, FALSE);
-			gel_output_string(gelo,",])");
+			gel_output_string(gelo,",))");
 			break;
 		case E_GET_COL_REGION:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(");
 			gel_print_etree (gelo, l, FALSE);
-			gel_output_string(gelo,"@[,");
+			gel_output_string(gelo,"@(,");
 			gel_print_etree (gelo, r, FALSE);
-			gel_output_string(gelo,"])");
+			gel_output_string(gelo,"))");
 			break;
 
 		case E_QUOTE:
@@ -1799,6 +1787,7 @@ load_compiled_fp (const char *file, FILE *fp)
 		int i;
 		GSList *li = NULL;
 		int type;
+		char *ptrptr;
 
 		gel_incr_file_info();
 
@@ -1818,7 +1807,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			}
 		}
 
-		p = strtok(buf,";");
+		p = strtok_r (buf,";", &ptrptr);
 		if G_UNLIKELY (!p) {
 			gel_errorout (_("Badly formed record"));
 			continue;
@@ -1827,12 +1816,12 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'A') {
 			char *d;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
 			}
-			d = strtok(NULL,";");
+			d = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!d) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1841,12 +1830,12 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'C') {
 			char *d;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
 			}
-			d = strtok(NULL,";");
+			d = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!d) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1855,12 +1844,12 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'D') {
 			char *d;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
 			}
-			d = strtok(NULL,";");
+			d = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!d) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1869,12 +1858,12 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'L') {
 			char *d, *h;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
 			}
-			d = strtok(NULL,";");
+			d = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!d) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1885,12 +1874,12 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'H') {
 			char *d, *h;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
 			}
-			d = strtok(NULL,";");
+			d = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!d) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1901,7 +1890,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			continue;
 		} else if (*p == 'P') {
 			GelToken *tok;
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1921,7 +1910,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			extra_dict = FALSE;
 
 		/*size*/
-		p = strtok(NULL,";");
+		p = strtok_r (NULL,";", &ptrptr);
 		if G_UNLIKELY (!p) {
 			gel_errorout (_("Badly formed record"));
 			continue;
@@ -1934,7 +1923,7 @@ load_compiled_fp (const char *file, FILE *fp)
 		}
 
 		/*id*/
-		p = strtok(NULL,";");
+		p = strtok_r (NULL,";", &ptrptr);
 		if G_UNLIKELY (!p) {
 			gel_errorout (_("Badly formed record"));
 			continue;
@@ -1943,7 +1932,7 @@ load_compiled_fp (const char *file, FILE *fp)
 
 		if (type == GEL_USER_FUNC) {
 			/*nargs*/
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1956,7 +1945,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			}
 
 			/*vararg*/
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if (p == NULL) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -1971,7 +1960,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			/*argument names*/
 			li = NULL;
 			for(i=0;i<nargs;i++) {
-				p = strtok(NULL,";");
+				p = strtok_r (NULL,";", &ptrptr);
 				if G_UNLIKELY (p == NULL) {
 					gel_errorout (_("Badly formed record"));
 					g_slist_free(li);
@@ -1981,7 +1970,7 @@ load_compiled_fp (const char *file, FILE *fp)
 			}
 		} else {
 			/*parameter*/
-			p = strtok(NULL,";");
+			p = strtok_r (NULL,";", &ptrptr);
 			if G_UNLIKELY (!p) {
 				gel_errorout (_("Badly formed record"));
 				continue;
@@ -2159,6 +2148,60 @@ print_function_help (GelHelp *help)
 		f = make_function_with_aliases (help->func, help->aliases);
 		len = strlen (f);
 		do_cyan ();
+
+#if 0
+/* This can be used to autogenerate some docbook */
+		gel_output_printf_full (main_out, FALSE,
+					"        <varlistentry id=\"gel-function-%s\">\n"
+					"         <term>%s</term>\n"
+					"         <listitem>\n"
+					"          <synopsis>",
+					help->func, help->func);
+		{
+			GelEFunc *ff;
+			ff = d_lookup_global (d_intern (help->func));
+			if (ff == NULL || (ff->type == GEL_BUILTIN_FUNC &&
+					   ff->named_args == NULL &&
+					   ! ff->vararg) ||
+			    		  (ff->named_args == NULL &&
+					   d_intern (help->func)->parameter)) {
+				gel_output_printf_full (main_out, FALSE, "%s</synopsis>\n", help->func);
+			} else {
+				GSList *li;
+				gel_output_printf_full (main_out, FALSE, "%s (", help->func);
+
+				for (li = ff->named_args; li != NULL; li = li->next) {
+					GelToken *id = li->data;
+					if (li != ff->named_args)
+						gel_output_full_string (main_out, ",");
+					gel_output_full_string (main_out, id->token);
+				}
+
+				if (ff->vararg)
+					gel_output_full_string (main_out, "...");
+				gel_output_full_string (main_out, ")</synopsis>\n");
+			}
+			gel_output_printf_full (main_out, FALSE, "          <para>");
+			if (help->aliases != NULL) {
+				GSList *li;
+				GString *gs = g_string_new ("Aliases:");
+				for (li = help->aliases; li != NULL; li = li->next) {
+					g_string_append (gs, " <function>");
+					g_string_append (gs, li->data);
+					g_string_append (gs, "</function>");
+				}
+				gel_output_printf_full (main_out, FALSE,
+							"%s</para>\n          <para>", gs->str);
+				g_string_free (gs, TRUE);
+			}
+			gel_output_printf_full (main_out, FALSE,
+						"%s</para>\n         </listitem>\n        </varlistentry>\n\n",
+						help->description);
+		}
+#endif
+
+
+
 		/*if (len <= 20)*/
 			gel_output_printf_full (main_out, FALSE,
 						"%-20s", f);
@@ -2171,7 +2214,7 @@ print_function_help (GelHelp *help)
 		do_green ();
 		if (help->description != NULL)
 			print_description (MAX (20, len),
-					   help->description);
+					   _(help->description));
 		else
 			gel_output_full_string (main_out, "\n");
 		/* if we didn't fit aliases on one line */
@@ -2332,8 +2375,8 @@ full_help (void)
 	gel_output_pop_nonotify (main_out);
 }
 
-static void
-help_on (const char *text)
+void
+gel_help_on (const char *text)
 {
 	GelHelp *help;
 	GelHelp not_documented = { NULL /* func */,
@@ -2351,6 +2394,7 @@ help_on (const char *text)
 	for (i = 0; genius_toplevels[i] != NULL; i++)
 		if (strcmp (text, genius_toplevels[i]) == 0) {
 			print_command_help (text);
+			gel_call_help (text);
 			do_black ();
 			gel_output_pop_nonotify (main_out);
 			return;
@@ -2358,7 +2402,14 @@ help_on (const char *text)
 
 	help = get_help (text, FALSE /*insert*/);
 	if (help == NULL) {
-		gel_errorout (_("'%s' is not documented"), text);
+		char *similar_ids = gel_similar_possible_ids (text);
+		if (similar_ids == NULL) {
+			gel_errorout (_("'%s' is not documented"), text);
+		} else {
+			gel_errorout (_("'%s' is not documented.  Perhaps "
+					"you meant %s."), text, similar_ids);
+			g_free (similar_ids);
+		}
 		not_documented.func = (char *)text;
 		help = &not_documented;
 	}
@@ -2367,7 +2418,7 @@ help_on (const char *text)
 		gel_output_printf_full (main_out, FALSE,
 					_("%s is an alias for %s\n"),
 					text, help->aliasfor);
-		help_on (help->aliasfor);
+		gel_help_on (help->aliasfor);
 		do_black ();
 		gel_output_pop_nonotify (main_out);
 		return;
@@ -2376,7 +2427,14 @@ help_on (const char *text)
 	do_cyan ();
 
 	f = d_lookup_global (d_intern (text));
-	if (f == NULL) {
+
+	if (d_intern (text)->parameter) {
+		gel_output_printf_full (main_out, FALSE, "%s%s\n",
+					_("Parameter: "), text);
+	} else if (f == NULL
+		   || (f->type == GEL_BUILTIN_FUNC &&
+		       f->named_args == NULL &&
+		       ! f->vararg)) {
 		gel_output_printf_full (main_out, FALSE, "%s\n", text);
 	} else {
 		GSList *li;
@@ -2410,13 +2468,82 @@ help_on (const char *text)
 	if (help->description != NULL) {
 		gel_output_printf_full (main_out, FALSE,
 					_("Description: %s\n"),
-					help->description);
+					_(help->description));
 	}
 
 	do_black ();
 	gel_output_pop_nonotify (main_out);
+
+	if (help != &not_documented)
+		gel_call_help (text);
 }
 
+static void
+dump_a_string (FILE *outfile, const char *s)
+{
+	fprintf (outfile, "char *fake = N_(\"%s\");\n", s);
+}
+
+void
+gel_dump_strings_from_user_funcs (FILE *outfile)
+{
+	/* FIXME: implement */
+}
+
+static void
+dump_cat (FILE *outfile, const char *cat)
+{
+	GSList *functions;
+	GSList *fli;
+
+	functions = get_helps (cat);
+
+	if (functions != NULL) {
+		for (fli = functions; fli != NULL; fli = fli->next) {
+			GelHelp *help = fli->data;
+			GelToken *id = d_intern (help->func);
+			GelEFunc *f = d_lookup_global (id);
+
+			if (help->description != NULL &&
+			    (f == NULL ||
+			     f->type != GEL_BUILTIN_FUNC) &&
+			    ! id->built_in_parameter) {
+				dump_a_string (outfile, help->description);
+			}
+
+			fli->data = NULL;
+		}
+
+		g_slist_free (functions);
+	}
+}
+
+void
+gel_dump_strings_from_help (FILE *outfile)
+{
+	GSList *categories = get_categories ();
+	GSList *cli;
+
+	for (cli = categories; cli != NULL; cli = cli->next) {
+		char *cat = cli->data;
+		HelpCategory *cats;
+
+		cats = get_category (cat, FALSE /* insert */);
+		if (cats != NULL &&
+		    cats->name != NULL &&
+		    ! cats->internal) {
+			dump_a_string (outfile, cats->name);
+		}
+
+		dump_cat (outfile, cat);
+
+		cli->data = NULL;
+		g_free (cat);
+	}
+	g_slist_free (categories);
+
+	dump_cat (outfile, NULL);
+}
 
 void
 set_new_calcstate(calcstate_t state)
@@ -2726,7 +2853,7 @@ do_exec_commands (const char *dirprefix)
 		break;
 	case GEL_HELP_ARG:
 		g_strstrip (arg);
-		help_on (arg);
+		gel_help_on (arg);
 		ret = TRUE;
 		break;
 	default:

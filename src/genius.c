@@ -117,6 +117,13 @@ gel_printout_infos (void)
 	errors_printed = 0;
 }
 
+void
+gel_call_help (const char *function)
+{
+	/* No extra processing of help */
+}
+
+
 static int
 long_get_term_width (void)
 {
@@ -176,12 +183,7 @@ nop (void)
 static const char *
 get_version_details (void)
 {
-#ifndef HAVE_MPFR
-	return _("\nNote: Compiled without MPFR (some operations may be slow) "
-		 "see www.mpfr.org");
-#else
 	return "";
-#endif
 }
 
 int
@@ -194,6 +196,7 @@ main(int argc, char *argv[])
 	char *file;
 	FILE *fp;
 	gboolean do_compile = FALSE;
+	gboolean do_gettext = FALSE;
 	gboolean be_quiet = FALSE;
 
 	genius_is_gui = FALSE;
@@ -247,17 +250,30 @@ main(int argc, char *argv[])
 			do_compile = TRUE;
 		else if(strcmp(argv[i],"--nocompile")==0)
 			do_compile = FALSE;
+		else if(strcmp(argv[i],"--gettext")==0)
+			do_gettext = TRUE;
+		else if(strcmp(argv[i],"--nogettext")==0)
+			do_gettext = FALSE;
 		else if(strcmp(argv[i],"--quiet")==0)
 			be_quiet = TRUE;
 		else if(strcmp(argv[i],"--noquiet")==0)
 			be_quiet = FALSE;
-		else {
-			if(strcmp(argv[i],"--help")!=0) {
+		else if (strcmp (argv[i], "--version") == 0) {
+			g_print (_("Genius %s\n"
+				   "%s%s\n"),
+				 VERSION,
+				 COPYRIGHT_STRING,
+				 get_version_details ());
+			exit (0);
+		} else {
+			if (strcmp (argv[i], "--help") != 0) {
 				g_printerr ("Unknown argument '%s'!\n\n",
 					argv[i]);
 			}
 			g_print (_("Genius %s usage:\n\n"
 				   "genius [options] [files]\n\n"
+				   "\t--help            \tPrint this help\n"
+				   "\t--version         \tPrint version number\n"
 				   "\t--precision=num   \tFloating point precision [256]\n"
 				   "\t--maxdigits=num   \tMaximum digits to display (0=no limit) [0]\n"
 				   "\t--[no]floatresult \tAll results as floats [OFF]\n"
@@ -268,10 +284,15 @@ main(int argc, char *argv[])
 				   "\t--intoutbase=num  \tBase to use to print out integers [10]\n"
 				   "\t--[no]readline    \tUse readline if it is available [ON]\n"
 				   "\t--[no]compile     \tCompile everything and dump it to stdout [OFF]\n"
+				   "\t--[no]gettext     \tDump help/error strings in fake .c file to\n"
+				   "\t                  \tstdout (for use with gettext) [OFF]\n"
 				   "\t--[no]quiet       \tBe quiet during non-interactive mode,\n"
 				   "\t                  \t(always on when compiling) [OFF]\n\n"),
 				 VERSION);
-			exit(1);
+			if (strcmp (argv[i], "--help") != 0)
+				exit (1);
+			else
+				exit (0);
 		}
 	}
 
@@ -292,9 +313,9 @@ main(int argc, char *argv[])
 
 	gel_read_plugin_list();
 
-	if (do_compile)
+	if (do_compile || do_gettext)
 		be_quiet = TRUE;
-	inter = isatty(0) && !files && !do_compile;
+	inter = isatty(0) && !files && !(do_compile || do_gettext);
 	/*interactive mode, print welcome message*/
 	if (inter) {
 		g_print (_("Genius %s\n"
@@ -326,7 +347,7 @@ main(int argc, char *argv[])
 	  dictionary*/
 	d_singlecontext ();
 
-	if ( ! do_compile) {
+	if ( ! (do_compile || do_gettext)) {
 		/*
 		 * Read main library
 		 */
@@ -377,7 +398,7 @@ main(int argc, char *argv[])
 			}
 		} while(!fp && files);
 		if(!fp && !files) {
-			if ( ! do_compile)
+			if ( ! (do_compile || do_gettext))
 				gel_save_plugins ();
 			return 0;
 		}
@@ -445,6 +466,15 @@ main(int argc, char *argv[])
 					   signal by returning a 1 */
 					if(total_errors_printed)
 						return 1;
+				} else if (do_gettext) {
+					gel_push_file_info (NULL, 0);
+					gel_dump_strings_from_help (stdout);
+					gel_dump_strings_from_user_funcs (stdout);
+					gel_pop_file_info ();
+					/* if we have gotten errors then
+					   signal by returning a 1 */
+					if (total_errors_printed)
+						return 1;
 				} else {
 					gel_save_plugins ();
 				}
@@ -461,13 +491,22 @@ main(int argc, char *argv[])
 	/*if(fp != stdin)
 		fclose(fp);*/
 	
-	if(do_compile) {
+	if (do_compile) {
 		gel_push_file_info(NULL,0);
 		gel_compile_all_user_funcs(stdout);
 		gel_pop_file_info();
 		/* if we have gotten errors then
 		   signal by returning a 1 */
 		if(total_errors_printed)
+			return 1;
+	} else if (do_gettext) {
+		gel_push_file_info (NULL, 0);
+		gel_dump_strings_from_help (stdout);
+		gel_dump_strings_from_user_funcs (stdout);
+		gel_pop_file_info ();
+		/* if we have gotten errors then
+		   signal by returning a 1 */
+		if (total_errors_printed)
 			return 1;
 	} else {
 		gel_save_plugins ();

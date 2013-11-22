@@ -129,7 +129,6 @@ LTLIB = @LTLIB@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
-MPFR_LIB = @MPFR_LIB@
 MSGFMT = @MSGFMT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
@@ -143,6 +142,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 RC = @RC@
 READLINE_LIB = @READLINE_LIB@
+SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
 STRIP = @STRIP@
 TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
@@ -156,7 +156,8 @@ WARN_CXXFLAGS = @WARN_CXXFLAGS@
 YACC = @YACC@
 l = @l@
 
-SUBDIRS = po vicious-extensions gtkextra src lib doc
+@INTERNAL_MPFR_TRUE@MAYBE_MPFR = mpfr
+SUBDIRS = $(MAYBE_MPFR) vicious-extensions gtkextra src pixmaps lib po help
 
 mimeinfodir = $(datadir)/mime-info
 mimeinfo_DATA = genius.keys genius.mime
@@ -172,6 +173,8 @@ EXTRA_DIST =  	genius.spec 	genius.spec.in 	genius.xml 	genius.mime 	genius.keys
 
 DISTCLEANFILES =  	intltool-extract		intltool-merge			intltool-update
 
+
+distuninstallcheck_listfiles = find . -type f -print | grep -v '^\./var/scrollkeeper' | grep -v 'omf' | grep -v 'figures'
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
@@ -188,6 +191,7 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
+DIST_SUBDIRS =  mpfr vicious-extensions gtkextra src pixmaps lib po help
 all: all-redirect
 .SUFFIXES:
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
@@ -430,7 +434,7 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-	for subdir in $(SUBDIRS); do \
+	for subdir in $(DIST_SUBDIRS); do \
 	  if test "$$subdir" = .; then :; else \
 	    test -d $(distdir)/$$subdir \
 	    || mkdir $(distdir)/$$subdir \
@@ -526,6 +530,11 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 install-data-hook: 
 	-update-mime-database "$(DESTDIR)${datadir}/mime"
+
+genius-function-list.txt: src/genius
+	src/genius --version > genius-function-list.txt
+	echo "------------------------------------------" >> genius-function-list.txt
+	echo help | src/genius >> genius-function-list.txt
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

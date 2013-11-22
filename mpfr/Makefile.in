@@ -1,0 +1,620 @@
+# Makefile.in generated automatically by automake 1.4-p6 from Makefile.am
+
+# Copyright (C) 1994, 1995-8, 1999, 2001 Free Software Foundation, Inc.
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+
+SHELL = @SHELL@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+sbindir = @sbindir@
+libexecdir = @libexecdir@
+datadir = @datadir@
+sysconfdir = @sysconfdir@
+sharedstatedir = @sharedstatedir@
+localstatedir = @localstatedir@
+libdir = @libdir@
+infodir = @infodir@
+mandir = @mandir@
+includedir = @includedir@
+oldincludedir = /usr/include
+
+DESTDIR =
+
+pkgdatadir = $(datadir)/@PACKAGE@
+pkglibdir = $(libdir)/@PACKAGE@
+pkgincludedir = $(includedir)/@PACKAGE@
+
+top_builddir = .
+
+ACLOCAL = @ACLOCAL@
+AUTOCONF = @AUTOCONF@
+AUTOMAKE = @AUTOMAKE@
+AUTOHEADER = @AUTOHEADER@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(AM_INSTALL_PROGRAM_FLAGS)
+INSTALL_DATA = @INSTALL_DATA@
+INSTALL_SCRIPT = @INSTALL_SCRIPT@
+transform = @program_transform_name@
+
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+host_alias = @host_alias@
+host_triplet = @host@
+AWK = @AWK@
+CC = @CC@
+CFLAGS = @CFLAGS@
+HAVE_LIB = @HAVE_LIB@
+INCLUDES = @INCLUDES@
+LDADD = @LDADD@
+LDFLAGS = @LDFLAGS@
+LIB = @LIB@
+LTLIB = @LTLIB@
+MAKEINFO = @MAKEINFO@
+MPFR_LIBM = @MPFR_LIBM@
+OBJEXT = @OBJEXT@
+PACKAGE = @PACKAGE@
+RANLIB = @RANLIB@
+VERSION = @VERSION@
+
+AUTOMAKE_OPTIONS = gnu
+
+SUBDIRS = tests
+EXTRA_DIST = BUGS VERSION generic.c round_raw_generic.c
+
+noinst_HEADERS = mpfr.h mpf2mpfr.h
+
+noinst_LIBRARIES = libmpfr.a
+
+libmpfr_a_SOURCES = mpfr.h mpf2mpfr.h mpfr-gmp.h mpfr-impl.h mpfr-longlong.h mpfr-test.h log_b2.h exceptions.c extract.c uceil_exp2.c uceil_log2.c ufloor_log2.c add.c add1.c add_one_ulp.c add_ui.c agm.c clear.c cmp.c cmp_abs.c cmp_si.c cmp_ui.c comparisons.c div_2exp.c div_2si.c div_2ui.c div.c div_ui.c dump.c eq.c exp10.c exp2.c exp3.c exp.c frac.c get_d.c get_exp.c get_str.c init.c inp_str.c isinteger.c isinf.c isnan.c isnum.c const_log2.c log.c mul_2exp.c mul_2si.c mul_2ui.c mul.c mul_ui.c neg.c next.c out_str.c const_pi.c pow.c pow_si.c pow_ui.c print_raw.c print_rnd_mode.c random2.c random.c reldiff.c round_prec.c set.c setmax.c setmin.c set_d.c set_dfl_prec.c set_exp.c set_rnd.c set_f.c set_prc_raw.c set_prec.c set_q.c set_si.c set_str.c set_str_raw.c set_ui.c set_z.c sqrt.c sqrt_ui.c sub.c sub1.c sub_one_ulp.c sub_ui.c rint.c ui_div.c ui_sub.c urandomb.c get_z_exp.c swap.c  factorial.c cosh.c sinh.c tanh.c acosh.c asinh.c atanh.c atan.c cmp2.c exp_2.c asin.c const_euler.c cos.c sin.c tan.c fma.c hypot.c log1p.c expm1.c log2.c log10.c ui_pow.c ui_pow_ui.c minmax.c dim.c copysign.c gmp_op.c init2.c acos.c sin_cos.c set_nan.c set_inf.c powerof2.c gamma.c set_ld.c get_ld.c cbrt.c volatile.c fits_s.h fits_sshort.c fits_sint.c fits_slong.c fits_u.h fits_ushort.c fits_uint.c fits_ulong.c fits_uintmax.c fits_intmax.c get_si.c get_ui.c zeta.c cmp_d.c erf.c inits.c inits2.c clears.c sgn.c check.c sub1sp.c version.c mpn_exp.c mpfr-gmp.c mp_clz_tab.c sum.c add1sp.c free_cache.c si_op.c cmp_ld.c set_ui_2exp.c set_si_2exp.c set_uj.c set_sj.c get_sj.c get_uj.c get_z.c iszero.c cache.c sqr.c int_ceil_log2.c isqrt.c strtofr.c
+
+libmpfr_a_LIBADD = @LIBOBJS@
+ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
+CONFIG_CLEAN_FILES = 
+LIBRARIES =  $(noinst_LIBRARIES)
+
+
+DEFS = @DEFS@ -I. -I$(srcdir) 
+CPPFLAGS = @CPPFLAGS@
+LIBS = @LIBS@
+libmpfr_a_DEPENDENCIES =  @LIBOBJS@
+libmpfr_a_OBJECTS =  exceptions.$(OBJEXT) extract.$(OBJEXT) \
+uceil_exp2.$(OBJEXT) uceil_log2.$(OBJEXT) ufloor_log2.$(OBJEXT) \
+add.$(OBJEXT) add1.$(OBJEXT) add_one_ulp.$(OBJEXT) add_ui.$(OBJEXT) \
+agm.$(OBJEXT) clear.$(OBJEXT) cmp.$(OBJEXT) cmp_abs.$(OBJEXT) \
+cmp_si.$(OBJEXT) cmp_ui.$(OBJEXT) comparisons.$(OBJEXT) \
+div_2exp.$(OBJEXT) div_2si.$(OBJEXT) div_2ui.$(OBJEXT) div.$(OBJEXT) \
+div_ui.$(OBJEXT) dump.$(OBJEXT) eq.$(OBJEXT) exp10.$(OBJEXT) \
+exp2.$(OBJEXT) exp3.$(OBJEXT) exp.$(OBJEXT) frac.$(OBJEXT) \
+get_d.$(OBJEXT) get_exp.$(OBJEXT) get_str.$(OBJEXT) init.$(OBJEXT) \
+inp_str.$(OBJEXT) isinteger.$(OBJEXT) isinf.$(OBJEXT) isnan.$(OBJEXT) \
+isnum.$(OBJEXT) const_log2.$(OBJEXT) log.$(OBJEXT) mul_2exp.$(OBJEXT) \
+mul_2si.$(OBJEXT) mul_2ui.$(OBJEXT) mul.$(OBJEXT) mul_ui.$(OBJEXT) \
+neg.$(OBJEXT) next.$(OBJEXT) out_str.$(OBJEXT) const_pi.$(OBJEXT) \
+pow.$(OBJEXT) pow_si.$(OBJEXT) pow_ui.$(OBJEXT) print_raw.$(OBJEXT) \
+print_rnd_mode.$(OBJEXT) random2.$(OBJEXT) random.$(OBJEXT) \
+reldiff.$(OBJEXT) round_prec.$(OBJEXT) set.$(OBJEXT) setmax.$(OBJEXT) \
+setmin.$(OBJEXT) set_d.$(OBJEXT) set_dfl_prec.$(OBJEXT) \
+set_exp.$(OBJEXT) set_rnd.$(OBJEXT) set_f.$(OBJEXT) \
+set_prc_raw.$(OBJEXT) set_prec.$(OBJEXT) set_q.$(OBJEXT) \
+set_si.$(OBJEXT) set_str.$(OBJEXT) set_str_raw.$(OBJEXT) \
+set_ui.$(OBJEXT) set_z.$(OBJEXT) sqrt.$(OBJEXT) sqrt_ui.$(OBJEXT) \
+sub.$(OBJEXT) sub1.$(OBJEXT) sub_one_ulp.$(OBJEXT) sub_ui.$(OBJEXT) \
+rint.$(OBJEXT) ui_div.$(OBJEXT) ui_sub.$(OBJEXT) urandomb.$(OBJEXT) \
+get_z_exp.$(OBJEXT) swap.$(OBJEXT) factorial.$(OBJEXT) cosh.$(OBJEXT) \
+sinh.$(OBJEXT) tanh.$(OBJEXT) acosh.$(OBJEXT) asinh.$(OBJEXT) \
+atanh.$(OBJEXT) atan.$(OBJEXT) cmp2.$(OBJEXT) exp_2.$(OBJEXT) \
+asin.$(OBJEXT) const_euler.$(OBJEXT) cos.$(OBJEXT) sin.$(OBJEXT) \
+tan.$(OBJEXT) fma.$(OBJEXT) hypot.$(OBJEXT) log1p.$(OBJEXT) \
+expm1.$(OBJEXT) log2.$(OBJEXT) log10.$(OBJEXT) ui_pow.$(OBJEXT) \
+ui_pow_ui.$(OBJEXT) minmax.$(OBJEXT) dim.$(OBJEXT) copysign.$(OBJEXT) \
+gmp_op.$(OBJEXT) init2.$(OBJEXT) acos.$(OBJEXT) sin_cos.$(OBJEXT) \
+set_nan.$(OBJEXT) set_inf.$(OBJEXT) powerof2.$(OBJEXT) gamma.$(OBJEXT) \
+set_ld.$(OBJEXT) get_ld.$(OBJEXT) cbrt.$(OBJEXT) volatile.$(OBJEXT) \
+fits_sshort.$(OBJEXT) fits_sint.$(OBJEXT) fits_slong.$(OBJEXT) \
+fits_ushort.$(OBJEXT) fits_uint.$(OBJEXT) fits_ulong.$(OBJEXT) \
+fits_uintmax.$(OBJEXT) fits_intmax.$(OBJEXT) get_si.$(OBJEXT) \
+get_ui.$(OBJEXT) zeta.$(OBJEXT) cmp_d.$(OBJEXT) erf.$(OBJEXT) \
+inits.$(OBJEXT) inits2.$(OBJEXT) clears.$(OBJEXT) sgn.$(OBJEXT) \
+check.$(OBJEXT) sub1sp.$(OBJEXT) version.$(OBJEXT) mpn_exp.$(OBJEXT) \
+mpfr-gmp.$(OBJEXT) mp_clz_tab.$(OBJEXT) sum.$(OBJEXT) add1sp.$(OBJEXT) \
+free_cache.$(OBJEXT) si_op.$(OBJEXT) cmp_ld.$(OBJEXT) \
+set_ui_2exp.$(OBJEXT) set_si_2exp.$(OBJEXT) set_uj.$(OBJEXT) \
+set_sj.$(OBJEXT) get_sj.$(OBJEXT) get_uj.$(OBJEXT) get_z.$(OBJEXT) \
+iszero.$(OBJEXT) cache.$(OBJEXT) sqr.$(OBJEXT) int_ceil_log2.$(OBJEXT) \
+isqrt.$(OBJEXT) strtofr.$(OBJEXT)
+AR = ar
+COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
+HEADERS =  $(noinst_HEADERS)
+
+DIST_COMMON =  README AUTHORS COPYING COPYING.LIB ChangeLog INSTALL \
+Makefile.am Makefile.in NEWS TODO acinclude.m4 aclocal.m4 config.guess \
+config.sub configure configure.in install-sh missing mkinstalldirs \
+strcasecmp.c strncasecmp.c texinfo.tex
+
+
+DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
+
+TAR = gtar
+GZIP_ENV = --best
+SOURCES = $(libmpfr_a_SOURCES)
+OBJECTS = $(libmpfr_a_OBJECTS)
+
+all: all-redirect
+.SUFFIXES:
+.SUFFIXES: .S .c .o .obj .s
+$(srcdir)/Makefile.in: Makefile.am $(top_srcdir)/configure.in $(ACLOCAL_M4) 
+	cd $(top_srcdir) && $(AUTOMAKE) --gnu --include-deps Makefile
+
+Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+	cd $(top_builddir) \
+	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+$(ACLOCAL_M4):  configure.in  acinclude.m4
+	cd $(srcdir) && $(ACLOCAL)
+
+config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+	$(SHELL) ./config.status --recheck
+$(srcdir)/configure: $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+	cd $(srcdir) && $(AUTOCONF)
+
+mostlyclean-noinstLIBRARIES:
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+
+distclean-noinstLIBRARIES:
+
+maintainer-clean-noinstLIBRARIES:
+
+.c.o:
+	$(COMPILE) -c $<
+
+# FIXME: We should only use cygpath when building on Windows,
+# and only if it is available.
+.c.obj:
+	$(COMPILE) -c `cygpath -w $<`
+
+.s.o:
+	$(COMPILE) -c $<
+
+.S.o:
+	$(COMPILE) -c $<
+
+mostlyclean-compile:
+	-rm -f *.o core *.core
+	-rm -f *.$(OBJEXT)
+
+clean-compile:
+
+distclean-compile:
+	-rm -f *.tab.c
+
+maintainer-clean-compile:
+
+libmpfr.a: $(libmpfr_a_OBJECTS) $(libmpfr_a_DEPENDENCIES)
+	-rm -f libmpfr.a
+	$(AR) cru libmpfr.a $(libmpfr_a_OBJECTS) $(libmpfr_a_LIBADD)
+	$(RANLIB) libmpfr.a
+
+# This directory's subdirectories are mostly independent; you can cd
+# into them and run `make' without going through this Makefile.
+# To change the values of `make' variables: instead of editing Makefiles,
+# (1) if the variable is set in `config.status', edit `config.status'
+#     (which will cause the Makefiles to be regenerated when you run `make');
+# (2) otherwise, pass the desired values on the `make' command line.
+
+@SET_MAKE@
+
+all-recursive install-data-recursive install-exec-recursive \
+installdirs-recursive install-recursive uninstall-recursive  \
+check-recursive installcheck-recursive info-recursive dvi-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	dot_seen=no; \
+	target=`echo $@ | sed s/-recursive//`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    dot_seen=yes; \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done; \
+	if test "$$dot_seen" = "no"; then \
+	  $(MAKE) $(AM_MAKEFLAGS) "$$target-am" || exit 1; \
+	fi; test -z "$$fail"
+
+mostlyclean-recursive clean-recursive distclean-recursive \
+maintainer-clean-recursive:
+	@set fnord $(MAKEFLAGS); amf=$$2; \
+	dot_seen=no; \
+	rev=''; list='$(SUBDIRS)'; for subdir in $$list; do \
+	  rev="$$subdir $$rev"; \
+	  test "$$subdir" != "." || dot_seen=yes; \
+	done; \
+	test "$$dot_seen" = "no" && rev=". $$rev"; \
+	target=`echo $@ | sed s/-recursive//`; \
+	for subdir in $$rev; do \
+	  echo "Making $$target in $$subdir"; \
+	  if test "$$subdir" = "."; then \
+	    local_target="$$target-am"; \
+	  else \
+	    local_target="$$target"; \
+	  fi; \
+	  (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) $$local_target) \
+	   || case "$$amf" in *=*) exit 1;; *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+tags-recursive:
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+	  test "$$subdir" = . || (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) tags); \
+	done
+
+tags: TAGS
+
+ID: $(HEADERS) $(SOURCES) $(LISP)
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	here=`pwd` && cd $(srcdir) \
+	  && mkid -f$$here/ID $$unique $(LISP)
+
+TAGS: tags-recursive $(HEADERS) $(SOURCES)  $(TAGS_DEPENDENCIES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+	list='$(SUBDIRS)'; for subdir in $$list; do \
+   if test "$$subdir" = .; then :; else \
+	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+   fi; \
+	done; \
+	list='$(SOURCES) $(HEADERS)'; \
+	unique=`for i in $$list; do echo $$i; done | \
+	  awk '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	test -z "$(ETAGS_ARGS)$$unique$(LISP)$$tags" \
+	  || (cd $(srcdir) && etags $(ETAGS_ARGS) $$tags  $$unique $(LISP) -o $$here/TAGS)
+
+mostlyclean-tags:
+
+clean-tags:
+
+distclean-tags:
+	-rm -f TAGS ID
+
+maintainer-clean-tags:
+
+distdir = $(PACKAGE)-$(VERSION)
+top_distdir = $(distdir)
+
+# This target untars the dist file and tries a VPATH configuration.  Then
+# it guarantees that the distribution is self-contained by making another
+# tarfile.
+distcheck: dist
+	-rm -rf $(distdir)
+	GZIP=$(GZIP_ENV) $(TAR) zxf $(distdir).tar.gz
+	mkdir $(distdir)/=build
+	mkdir $(distdir)/=inst
+	dc_install_base=`cd $(distdir)/=inst && pwd`; \
+	cd $(distdir)/=build \
+	  && ../configure --srcdir=.. --prefix=$$dc_install_base \
+	  && $(MAKE) $(AM_MAKEFLAGS) \
+	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
+	  && $(MAKE) $(AM_MAKEFLAGS) check \
+	  && $(MAKE) $(AM_MAKEFLAGS) install \
+	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
+	  && $(MAKE) $(AM_MAKEFLAGS) dist
+	-rm -rf $(distdir)
+	@banner="$(distdir).tar.gz is ready for distribution"; \
+	dashes=`echo "$$banner" | sed s/./=/g`; \
+	echo "$$dashes"; \
+	echo "$$banner"; \
+	echo "$$dashes"
+dist: distdir
+	-chmod -R a+r $(distdir)
+	GZIP=$(GZIP_ENV) $(TAR) chozf $(distdir).tar.gz $(distdir)
+	-rm -rf $(distdir)
+dist-all: distdir
+	-chmod -R a+r $(distdir)
+	GZIP=$(GZIP_ENV) $(TAR) chozf $(distdir).tar.gz $(distdir)
+	-rm -rf $(distdir)
+distdir: $(DISTFILES)
+	-rm -rf $(distdir)
+	mkdir $(distdir)
+	-chmod 777 $(distdir)
+	@for file in $(DISTFILES); do \
+	  d=$(srcdir); \
+	  if test -d $$d/$$file; then \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
+	  else \
+	    test -f $(distdir)/$$file \
+	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
+	    || cp -p $$d/$$file $(distdir)/$$file || :; \
+	  fi; \
+	done
+	for subdir in $(SUBDIRS); do \
+	  if test "$$subdir" = .; then :; else \
+	    test -d $(distdir)/$$subdir \
+	    || mkdir $(distdir)/$$subdir \
+	    || exit 1; \
+	    chmod 777 $(distdir)/$$subdir; \
+	    (cd $$subdir && $(MAKE) $(AM_MAKEFLAGS) top_distdir=../$(distdir) distdir=../$(distdir)/$$subdir distdir) \
+	      || exit 1; \
+	  fi; \
+	done
+acos.o: acos.c mpfr-impl.h mpfr.h mpfr-gmp.h
+acosh.o: acosh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+add.o: add.c mpfr-impl.h mpfr.h mpfr-gmp.h
+add1.o: add1.c mpfr-impl.h mpfr.h mpfr-gmp.h
+add1sp.o: add1sp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+add_one_ulp.o: add_one_ulp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+add_ui.o: add_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+agm.o: agm.c mpfr-impl.h mpfr.h mpfr-gmp.h
+asin.o: asin.c mpfr-impl.h mpfr.h mpfr-gmp.h
+asinh.o: asinh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+atan.o: atan.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+atanh.o: atanh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+cache.o: cache.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cbrt.o: cbrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
+check.o: check.c mpfr-impl.h mpfr.h mpfr-gmp.h
+clear.o: clear.c mpfr-impl.h mpfr.h mpfr-gmp.h
+clears.o: clears.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cmp.o: cmp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cmp2.o: cmp2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+cmp_abs.o: cmp_abs.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cmp_d.o: cmp_d.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cmp_ld.o: cmp_ld.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cmp_si.o: cmp_si.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+cmp_ui.o: cmp_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+comparisons.o: comparisons.c mpfr-impl.h mpfr.h mpfr-gmp.h
+const_euler.o: const_euler.c mpfr-impl.h mpfr.h mpfr-gmp.h \
+	mpfr-longlong.h
+const_log2.o: const_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h \
+	generic.c
+const_pi.o: const_pi.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h \
+	generic.c
+copysign.o: copysign.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cos.o: cos.c mpfr-impl.h mpfr.h mpfr-gmp.h
+cosh.o: cosh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+dim.o: dim.c mpfr-impl.h mpfr.h mpfr-gmp.h
+div.o: div.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+div_2exp.o: div_2exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+div_2si.o: div_2si.c mpfr-impl.h mpfr.h mpfr-gmp.h
+div_2ui.o: div_2ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
+div_ui.o: div_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+dump.o: dump.c mpfr-impl.h mpfr.h mpfr-gmp.h
+eq.o: eq.c mpfr-impl.h mpfr.h mpfr-gmp.h
+erf.o: erf.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+exceptions.o: exceptions.c mpfr-impl.h mpfr.h mpfr-gmp.h
+exp.o: exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+exp10.o: exp10.c mpfr-impl.h mpfr.h mpfr-gmp.h
+exp2.o: exp2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+exp3.o: exp3.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+exp_2.o: exp_2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+expm1.o: expm1.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+extract.o: extract.c mpfr-impl.h mpfr.h mpfr-gmp.h
+factorial.o: factorial.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+fits_intmax.o: fits_intmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_sint.o: fits_sint.c fits_s.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_slong.o: fits_slong.c fits_s.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_sshort.o: fits_sshort.c fits_s.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_uint.o: fits_uint.c fits_u.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_uintmax.o: fits_uintmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_ulong.o: fits_ulong.c fits_u.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fits_ushort.o: fits_ushort.c fits_u.h mpfr-impl.h mpfr.h mpfr-gmp.h
+fma.o: fma.c mpfr-impl.h mpfr.h mpfr-gmp.h
+frac.o: frac.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+free_cache.o: free_cache.c mpfr-impl.h mpfr.h mpfr-gmp.h
+gamma.o: gamma.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+get_d.o: get_d.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+get_exp.o: get_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_ld.o: get_ld.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_si.o: get_si.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_sj.o: get_sj.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_str.o: get_str.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+get_ui.o: get_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_uj.o: get_uj.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_z.o: get_z.c mpfr-impl.h mpfr.h mpfr-gmp.h
+get_z_exp.o: get_z_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+gmp_op.o: gmp_op.c mpfr-impl.h mpfr.h mpfr-gmp.h
+hypot.o: hypot.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+init.o: init.c mpfr-impl.h mpfr.h mpfr-gmp.h
+init2.o: init2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+inits.o: inits.c mpfr-impl.h mpfr.h mpfr-gmp.h
+inits2.o: inits2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+inp_str.o: inp_str.c mpfr-impl.h mpfr.h mpfr-gmp.h
+int_ceil_log2.o: int_ceil_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h \
+	mpfr-longlong.h
+isinf.o: isinf.c mpfr-impl.h mpfr.h mpfr-gmp.h
+isinteger.o: isinteger.c mpfr-impl.h mpfr.h mpfr-gmp.h
+isnan.o: isnan.c mpfr-impl.h mpfr.h mpfr-gmp.h
+isnum.o: isnum.c mpfr-impl.h mpfr.h mpfr-gmp.h
+isqrt.o: isqrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
+iszero.o: iszero.c mpfr-impl.h mpfr.h mpfr-gmp.h
+log.o: log.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+log10.o: log10.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+log1p.o: log1p.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+log2.o: log2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+minmax.o: minmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mp_clz_tab.o: mp_clz_tab.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+mpfr-gmp.o: mpfr-gmp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mpn_exp.o: mpn_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+mul.o: mul.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mul_2exp.o: mul_2exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mul_2si.o: mul_2si.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mul_2ui.o: mul_2ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
+mul_ui.o: mul_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+neg.o: neg.c mpfr-impl.h mpfr.h mpfr-gmp.h
+next.o: next.c mpfr-impl.h mpfr.h mpfr-gmp.h
+out_str.o: out_str.c mpfr-impl.h mpfr.h mpfr-gmp.h
+pow.o: pow.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+pow_si.o: pow_si.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+pow_ui.o: pow_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
+powerof2.o: powerof2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+print_raw.o: print_raw.c mpfr-impl.h mpfr.h mpfr-gmp.h
+print_rnd_mode.o: print_rnd_mode.c mpfr-impl.h mpfr.h mpfr-gmp.h
+random.o: random.c mpfr-impl.h mpfr.h mpfr-gmp.h
+random2.o: random2.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+reldiff.o: reldiff.c mpfr-impl.h mpfr.h mpfr-gmp.h
+rint.o: rint.c mpfr-impl.h mpfr.h mpfr-gmp.h
+round_prec.o: round_prec.c mpfr-impl.h mpfr.h mpfr-gmp.h \
+	round_raw_generic.c
+save_expo.o: save_expo.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set.o: set.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_d.o: set_d.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_dfl_prec.o: set_dfl_prec.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_exp.o: set_exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_f.o: set_f.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_inf.o: set_inf.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_ld.o: set_ld.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_nan.o: set_nan.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_prc_raw.o: set_prc_raw.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_prec.o: set_prec.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_q.o: set_q.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_rnd.o: set_rnd.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_si.o: set_si.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_si_2exp.o: set_si_2exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_sj.o: set_sj.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_str.o: set_str.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_str_raw.o: set_str_raw.c mpfr-impl.h mpfr.h mpfr-gmp.h \
+	mpfr-longlong.h
+set_ui.o: set_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_ui_2exp.o: set_ui_2exp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+set_uj.o: set_uj.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+set_z.o: set_z.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+setmax.o: setmax.c mpfr-impl.h mpfr.h mpfr-gmp.h
+setmin.o: setmin.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sgn.o: sgn.c mpfr-impl.h mpfr.h mpfr-gmp.h
+si_op.o: si_op.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sin.o: sin.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sin_cos.o: sin_cos.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sinh.o: sinh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sqr.o: sqr.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sqrt.o: sqrt.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sqrt_ui.o: sqrt_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+strtofr.o: strtofr.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sub.o: sub.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sub1.o: sub1.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sub1sp.o: sub1sp.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sub_one_ulp.o: sub_one_ulp.c mpfr-impl.h mpfr.h mpfr-gmp.h
+sub_ui.o: sub_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+sum.o: sum.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+swap.o: swap.c mpfr-impl.h mpfr.h mpfr-gmp.h
+tan.o: tan.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+tanh.o: tanh.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+uceil_exp2.o: uceil_exp2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+uceil_log2.o: uceil_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+ufloor_log2.o: ufloor_log2.c mpfr-impl.h mpfr.h mpfr-gmp.h
+ui_div.o: ui_div.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+ui_pow.o: ui_pow.c mpfr-impl.h mpfr.h mpfr-gmp.h
+ui_pow_ui.o: ui_pow_ui.c mpfr-impl.h mpfr.h mpfr-gmp.h
+ui_sub.o: ui_sub.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+urandomb.o: urandomb.c mpfr-impl.h mpfr.h mpfr-gmp.h mpfr-longlong.h
+version.o: version.c mpfr-impl.h mpfr.h mpfr-gmp.h
+volatile.o: volatile.c mpfr-impl.h mpfr.h mpfr-gmp.h
+zeta.o: zeta.c mpfr-impl.h mpfr.h mpfr-gmp.h
+
+info-am:
+info: info-recursive
+dvi-am:
+dvi: dvi-recursive
+check-am: all-am
+check: check-recursive
+installcheck-am:
+installcheck: installcheck-recursive
+install-exec-am:
+install-exec: install-exec-recursive
+
+install-data-am:
+install-data: install-data-recursive
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+install: install-recursive
+uninstall-am:
+uninstall: uninstall-recursive
+all-am: Makefile $(LIBRARIES) $(HEADERS)
+all-redirect: all-recursive
+install-strip:
+	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
+installdirs: installdirs-recursive
+installdirs-am:
+
+
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-rm -f Makefile $(CONFIG_CLEAN_FILES)
+	-rm -f config.cache config.log stamp-h stamp-h[0-9]*
+
+maintainer-clean-generic:
+mostlyclean-am:  mostlyclean-noinstLIBRARIES mostlyclean-compile \
+		mostlyclean-tags mostlyclean-generic
+
+mostlyclean: mostlyclean-recursive
+
+clean-am:  clean-noinstLIBRARIES clean-compile clean-tags clean-generic \
+		mostlyclean-am
+
+clean: clean-recursive
+
+distclean-am:  distclean-noinstLIBRARIES distclean-compile \
+		distclean-tags distclean-generic clean-am
+
+distclean: distclean-recursive
+	-rm -f config.status
+
+maintainer-clean-am:  maintainer-clean-noinstLIBRARIES \
+		maintainer-clean-compile maintainer-clean-tags \
+		maintainer-clean-generic distclean-am
+	@echo "This command is intended for maintainers to use;"
+	@echo "it deletes files that may require special tools to rebuild."
+
+maintainer-clean: maintainer-clean-recursive
+	-rm -f config.status
+
+.PHONY: mostlyclean-noinstLIBRARIES distclean-noinstLIBRARIES \
+clean-noinstLIBRARIES maintainer-clean-noinstLIBRARIES \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile install-data-recursive \
+uninstall-data-recursive install-exec-recursive \
+uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
+all-recursive check-recursive installcheck-recursive info-recursive \
+dvi-recursive mostlyclean-recursive distclean-recursive clean-recursive \
+maintainer-clean-recursive tags tags-recursive mostlyclean-tags \
+distclean-tags clean-tags maintainer-clean-tags distdir info-am info \
+dvi-am dvi check check-am installcheck-am installcheck install-exec-am \
+install-exec install-data-am install-data install-am install \
+uninstall-am uninstall all-redirect all-am all installdirs-am \
+installdirs mostlyclean-generic distclean-generic clean-generic \
+maintainer-clean-generic clean mostlyclean distclean maintainer-clean
+
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:

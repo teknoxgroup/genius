@@ -129,7 +129,6 @@ LTLIB = @LTLIB@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
-MPFR_LIB = @MPFR_LIB@
 MSGFMT = @MSGFMT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
@@ -143,6 +142,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 RC = @RC@
 READLINE_LIB = @READLINE_LIB@
+SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
 STRIP = @STRIP@
 TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
@@ -162,13 +162,15 @@ SUBDIRS = calculus combinatorics equation_solving functions 	linear_algebra misc
 
 Library_DATA = lib.cgel loader.gel
 
-MOSTLYCLEANFILES = lib.cgel temp.cgel loader.gel
+noinst_DATA = library-strings.c
 
-EXTRA_DIST = make_loader_gel.sh
+MOSTLYCLEANFILES = lib.cgel temp.cgel loader.gel library-strings.c
+
+EXTRA_DIST = make_loader_gel.sh library-strings.c
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
 CONFIG_CLEAN_FILES = 
-DATA =  $(Library_DATA)
+DATA =  $(Library_DATA) $(noinst_DATA)
 
 DIST_COMMON =  Makefile.am Makefile.in
 
@@ -397,6 +399,9 @@ lib.cgel: loader.gel $(top_builddir)/src/genius
 
 loader.gel: $(SUBDIRS:%=%/loader.gel)
 	cd $(top_builddir)/lib && $(top_srcdir)/lib/make_loader_gel.sh $^ > loader.gel
+
+library-strings.c: loader.gel $(top_builddir)/src/genius
+	cd $(top_builddir)/lib && $(top_builddir)/src/genius --maxerrors=0 --gettext loader.gel > temp.c && mv -f temp.c library-strings.c
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

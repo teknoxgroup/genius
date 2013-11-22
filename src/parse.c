@@ -499,8 +499,8 @@ static const unsigned short yyrline[] =
      225,   226,   227,   228,   229,   230,   231,   232,   233,   234,
      235,   236,   238,   239,   240,   241,   243,   244,   246,   247,
      248,   250,   251,   252,   253,   254,   255,   256,   257,   258,
-     259,   261,   262,   265,   268,   274,   284,   285,   288,   293,
-     298,   308,   309,   312,   315,   316,   319,   320
+     259,   261,   262,   265,   268,   271,   281,   282,   285,   290,
+     295,   305,   306,   309,   312,   313,   316,   317
 };
 #endif
 
@@ -2252,7 +2252,7 @@ yyreduce:
 
   case 101:
 #line 261 "parse.y"
-    { PUSH_STRING(yyvsp[0].id); }
+    { PUSH_CONST_STRING(yyvsp[0].id); }
     break;
 
   case 102:
@@ -2267,14 +2267,11 @@ yyreduce:
 
   case 104:
 #line 268 "parse.y"
-    {
-				PUSH_IDENTIFIER(yyvsp[0].id);
-				g_free(yyvsp[0].id);
-					}
+    { PUSH_IDENTIFIER(yyvsp[0].id); }
     break;
 
   case 105:
-#line 274 "parse.y"
+#line 271 "parse.y"
     {
 			gp_prepare_push_param (FALSE);
 			PUSH_ACT (E_PARAMETER);
@@ -2282,7 +2279,7 @@ yyreduce:
     break;
 
   case 108:
-#line 288 "parse.y"
+#line 285 "parse.y"
     {
 			if ( ! gp_push_func (FALSE /* vararg */)) {
 				SYNTAX_ERROR;
@@ -2291,7 +2288,7 @@ yyreduce:
     break;
 
   case 109:
-#line 293 "parse.y"
+#line 290 "parse.y"
     {
 			if ( ! gp_push_func (TRUE /* vararg */)) {
 				SYNTAX_ERROR;
@@ -2300,7 +2297,7 @@ yyreduce:
     break;
 
   case 110:
-#line 298 "parse.y"
+#line 295 "parse.y"
     {
 			if ( ! gp_push_marker (EXPRLIST_START_NODE)) {
 				SYNTAX_ERROR;
@@ -2312,22 +2309,22 @@ yyreduce:
     break;
 
   case 112:
-#line 309 "parse.y"
+#line 306 "parse.y"
     { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 115:
-#line 316 "parse.y"
+#line 313 "parse.y"
     { if(!gp_push_marker(EXPRLIST_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
   case 116:
-#line 319 "parse.y"
+#line 316 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} }
     break;
 
   case 117:
-#line 320 "parse.y"
+#line 317 "parse.y"
     { if(!gp_push_matrix_row()) {SYNTAX_ERROR;} if(!gp_push_marker(MATRIX_START_NODE)) {SYNTAX_ERROR;} }
     break;
 
@@ -2335,7 +2332,7 @@ yyreduce:
     }
 
 /* Line 1000 of yacc.c.  */
-#line 2339 "y.tab.c"
+#line 2336 "y.tab.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -2560,6 +2557,6 @@ yyreturn:
 }
 
 
-#line 323 "parse.y"
+#line 320 "parse.y"
 
 

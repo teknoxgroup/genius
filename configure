@@ -463,7 +463,8 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE ACLOCAL_AMFLAGS MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_PROP_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XAM_RULE INTLTOOL_KBD_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_SCHEMAS_RULE INTLTOOL_THEME_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP LEX LEXLIB LEX_OUTPUT_ROOT build build_cpu build_vendor build_os host host_cpu host_vendor host_os LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL YACC WARN_CFLAGS GETTEXT_PACKAGE USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS GLIB_GENMARSHAL TERMCAP_LIB READLINE_LIB GMP_LIB MPFR_LIB PKG_CONFIG GENIUS_NOGUI_CFLAGS GENIUS_NOGUI_LIBS GENIUS_CFLAGS GENIUS_LIBS VICIOUS_GNOME_LIBS GTKEXTRA_LIBS GNOME_GENIUS GENIUS_READLINE_HELPER_FIFO GNOME_GENIUS_DESKTOP_IN VICIOUS_CFLAGS VICIOUS_LIBS POPT_LIBS EXTRA_WARNING_CFLAGS LIBOBJS LTLIBOBJS'
+ac_subdirs_all="$ac_subdirs_all mpfr"
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO SET_MAKE ACLOCAL_AMFLAGS MAINTAINER_MODE_TRUE MAINTAINER_MODE_FALSE MAINT INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_PROP_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XAM_RULE INTLTOOL_KBD_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_SCHEMAS_RULE INTLTOOL_THEME_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP LEX LEXLIB LEX_OUTPUT_ROOT build build_cpu build_vendor build_os host host_cpu host_vendor host_os LN_S ECHO AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CXX CXXFLAGS ac_ct_CXX CXXCPP F77 FFLAGS ac_ct_F77 LIBTOOL YACC WARN_CFLAGS GETTEXT_PACKAGE USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLLIBS PO_IN_DATADIR_TRUE PO_IN_DATADIR_FALSE POFILES POSUB MKINSTALLDIRS GLIB_GENMARSHAL TERMCAP_LIB READLINE_LIB GMP_LIB INTERNAL_MPFR_TRUE INTERNAL_MPFR_FALSE subdirs PKG_CONFIG GENIUS_NOGUI_CFLAGS GENIUS_NOGUI_LIBS GENIUS_CFLAGS GENIUS_LIBS VICIOUS_GNOME_LIBS GTKEXTRA_LIBS GNOME_GENIUS GENIUS_READLINE_HELPER_FIFO GNOME_GENIUS_DESKTOP_IN VICIOUS_CFLAGS VICIOUS_LIBS POPT_LIBS EXTRA_WARNING_CFLAGS SCROLLKEEPER_CONFIG LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1025,6 +1026,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-maintainer-mode enable make rules and dependencies not useful
                           (and sometimes confusing) to the casual installer
+  --disable-extra-gcc-optimization  Compile without extra GCC optimization (if using GCC)
   --enable-shared[=PKGS]
                           build shared libraries [default=yes]
   --enable-static[=PKGS]
@@ -1035,8 +1037,9 @@ Optional Features:
   --enable-compile-warnings=[no/minimum/yes/maximum/error]
                           Turn on compiler warnings
   --enable-iso-c          Try to warn if code is not ISO C
-  --disable-gtksourceview	Do not use GtkSourceView library even if detected
-  --disable-gnome	Compile without the GNOME frontend (no GUI, no plotting)
+  --enable-internal-mpfr=auto/no/yes  Use the internal version of MPFR default=auto
+  --disable-gtksourceview Do not use GtkSourceView library even if detected
+  --disable-gnome         Compile without the GNOME frontend (no GUI, no plotting)
   --enable-more-warnings  Maximum compiler warnings
 
 Optional Packages:
@@ -1701,7 +1704,7 @@ fi
 
 PACKAGE=genius
 
-VERSION=0.7.1
+VERSION=0.7.2
 
 if test "`cd $srcdir && pwd`" != "`pwd`" && test -f $srcdir/config.status; then
   { { echo "$as_me:$LINENO: error: source directory already configured; run \"make distclean\" there first" >&5
@@ -1978,6 +1981,13 @@ GLIB_REQUIRED=2.0.0
 GTKSOURCEVIEW_REQUIRED=0.3.0
 
 
+# Check whether --enable-extra-gcc-optimization or --disable-extra-gcc-optimization was given.
+if test "${enable_extra_gcc_optimization+set}" = set; then
+  enableval="$enable_extra_gcc_optimization"
+  use_extraopt="$enableval"
+else
+  use_extraopt=yes
+fi;
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2908,8 +2918,9 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-if test "x$GCC" = xyes ; then
-	CFLAGS="-O3 $CFLAGS"
+if test "x$GCC" = "xyes" -a "x$use_extraopt" = "xyes" ; then
+	echo "Turning on extra gcc flags -finline-functions -frename-registers"
+	CFLAGS="-finline-functions -frename-registers $CFLAGS"
 fi
 
 
@@ -4308,7 +4319,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4311 "configure"' > conftest.$ac_ext
+  echo '#line 4322 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5370,7 +5381,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:5373:" \
+echo "$as_me:5384:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -6404,11 +6415,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6407: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6418: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6411: \$? = $ac_status" >&5
+   echo "$as_me:6422: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6637,11 +6648,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6640: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6651: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:6644: \$? = $ac_status" >&5
+   echo "$as_me:6655: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -6697,11 +6708,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:6700: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:6711: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:6704: \$? = $ac_status" >&5
+   echo "$as_me:6715: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8031,7 +8042,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 8034 "configure"' > conftest.$ac_ext
+    echo '#line 8045 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -8902,7 +8913,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8905 "configure"
+#line 8916 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9000,7 +9011,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9003 "configure"
+#line 9014 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11179,11 +11190,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11182: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11193: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:11186: \$? = $ac_status" >&5
+   echo "$as_me:11197: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -11239,11 +11250,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:11242: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:11253: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:11246: \$? = $ac_status" >&5
+   echo "$as_me:11257: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -11750,7 +11761,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 11753 "configure"' > conftest.$ac_ext
+    echo '#line 11764 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -12621,7 +12632,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12624 "configure"
+#line 12635 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12719,7 +12730,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 12722 "configure"
+#line 12733 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13546,11 +13557,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13549: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13560: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:13553: \$? = $ac_status" >&5
+   echo "$as_me:13564: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -13606,11 +13617,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:13609: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:13620: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:13613: \$? = $ac_status" >&5
+   echo "$as_me:13624: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -14920,7 +14931,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 14923 "configure"' > conftest.$ac_ext
+    echo '#line 14934 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -15661,11 +15672,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15664: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15675: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15668: \$? = $ac_status" >&5
+   echo "$as_me:15679: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15894,11 +15905,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15897: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15908: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:15901: \$? = $ac_status" >&5
+   echo "$as_me:15912: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings
@@ -15954,11 +15965,11 @@ else
    -e 's:.*FLAGS}? :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:15957: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:15968: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:15961: \$? = $ac_status" >&5
+   echo "$as_me:15972: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -17288,7 +17299,7 @@ linux*)
   libsuff=
   case "$host_cpu" in
   x86_64*|s390x*|powerpc64*)
-    echo '#line 17291 "configure"' > conftest.$ac_ext
+    echo '#line 17302 "configure"' > conftest.$ac_ext
     if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -18159,7 +18170,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18162 "configure"
+#line 18173 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -18257,7 +18268,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 18260 "configure"
+#line 18271 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19564,7 +19575,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ko nl no pt pt_BR sq sr sr@Latn sv pl zh_CN"
+ALL_LINGUAS="az ca cs de el en_CA en_GB es fr ga hi hr it ja ko nl no pa pt pt_BR sq sr sr@Latn sv pl zh_CN"
 
 
 for ac_header in locale.h
@@ -19932,7 +19943,66 @@ if test $ac_cv_header_libintl_h = yes; then
       #
       # First check in libc
       #
-      echo "$as_me:$LINENO: checking for dgettext in libc" >&5
+      echo "$as_me:$LINENO: checking for ngettext in libc" >&5
+echo $ECHO_N "checking for ngettext in libc... $ECHO_C" >&6
+if test "${gt_cv_func_ngettext_libc+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <libintl.h>
+
+int
+main ()
+{
+return (int) ngettext ("","", 1)
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  gt_cv_func_ngettext_libc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+gt_cv_func_ngettext_libc=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $gt_cv_func_ngettext_libc" >&5
+echo "${ECHO_T}$gt_cv_func_ngettext_libc" >&6
+
+      if test "$gt_cv_func_ngettext_libc" = "yes" ; then
+	      echo "$as_me:$LINENO: checking for dgettext in libc" >&5
 echo $ECHO_N "checking for dgettext in libc... $ECHO_C" >&6
 if test "${gt_cv_func_dgettext_libc+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -19989,8 +20059,9 @@ rm -f conftest.err conftest.$ac_objext \
 fi
 echo "$as_me:$LINENO: result: $gt_cv_func_dgettext_libc" >&5
 echo "${ECHO_T}$gt_cv_func_dgettext_libc" >&6
+      fi
 
-      if test "$gt_cv_func_dgettext_libc" = "yes" ; then
+      if test "$gt_cv_func_ngettext_libc" = "yes" ; then
 
 for ac_func in bind_textdomain_codeset
 do
@@ -20099,6 +20170,7 @@ done
       # If we don't have everything we want, check in libintl
       #
       if test "$gt_cv_func_dgettext_libc" != "yes" \
+	 || test "$gt_cv_func_ngettext_libc" != "yes" \
          || test "$ac_cv_func_bind_textdomain_codeset" != "yes" ; then
 
         echo "$as_me:$LINENO: checking for bindtextdomain in -lintl" >&5
@@ -20166,6 +20238,71 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_intl_bindtextdomain" >&5
 echo "${ECHO_T}$ac_cv_lib_intl_bindtextdomain" >&6
 if test $ac_cv_lib_intl_bindtextdomain = yes; then
+  echo "$as_me:$LINENO: checking for ngettext in -lintl" >&5
+echo $ECHO_N "checking for ngettext in -lintl... $ECHO_C" >&6
+if test "${ac_cv_lib_intl_ngettext+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lintl  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char ngettext ();
+int
+main ()
+{
+ngettext ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_intl_ngettext=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_intl_ngettext=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_intl_ngettext" >&5
+echo "${ECHO_T}$ac_cv_lib_intl_ngettext" >&6
+if test $ac_cv_lib_intl_ngettext = yes; then
   echo "$as_me:$LINENO: checking for dgettext in -lintl" >&5
 echo $ECHO_N "checking for dgettext in -lintl... $ECHO_C" >&6
 if test "${ac_cv_lib_intl_dgettext+set}" = set; then
@@ -20236,13 +20373,80 @@ fi
 
 fi
 
+fi
+
 
 	if test "$gt_cv_func_dgettext_libintl" != "yes" ; then
 	  echo "$as_me:$LINENO: checking if -liconv is needed to use gettext" >&5
 echo $ECHO_N "checking if -liconv is needed to use gettext... $ECHO_C" >&6
 	  echo "$as_me:$LINENO: result: " >&5
 echo "${ECHO_T}" >&6
-          echo "$as_me:$LINENO: checking for dcgettext in -lintl" >&5
+  	  echo "$as_me:$LINENO: checking for ngettext in -lintl" >&5
+echo $ECHO_N "checking for ngettext in -lintl... $ECHO_C" >&6
+if test "${ac_cv_lib_intl_ngettext+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lintl -liconv $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char ngettext ();
+int
+main ()
+{
+ngettext ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_intl_ngettext=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_intl_ngettext=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_intl_ngettext" >&5
+echo "${ECHO_T}$ac_cv_lib_intl_ngettext" >&6
+if test $ac_cv_lib_intl_ngettext = yes; then
+  echo "$as_me:$LINENO: checking for dcgettext in -lintl" >&5
 echo $ECHO_N "checking for dcgettext in -lintl... $ECHO_C" >&6
 if test "${ac_cv_lib_intl_dcgettext+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -20313,12 +20517,16 @@ else
   :
 fi
 
+else
+  :
+fi
+
         fi
 
         #
         # If we found libintl, then check in it for bind_textdomain_codeset();
         # we'll prefer libc if neither have bind_textdomain_codeset(),
-        # and both have dgettext
+        # and both have dgettext and ngettext
         #
         if test "$gt_cv_func_dgettext_libintl" = "yes" ; then
           glib_save_LIBS="$LIBS"
@@ -20431,7 +20639,8 @@ done
           if test "$ac_cv_func_bind_textdomain_codeset" = "yes" ; then
             gt_cv_func_dgettext_libc=no
           else
-            if test "$gt_cv_func_dgettext_libc" = "yes"; then
+            if test "$gt_cv_func_dgettext_libc" = "yes" \
+		&& test "$gt_cv_func_ngettext_libc" = "yes"; then
               gt_cv_func_dgettext_libintl=no
             fi
           fi
@@ -21499,10 +21708,33 @@ fi
 
 
 
-MPFR_LIB=""
-echo "$as_me:$LINENO: checking for mpfr_init in -lmpfr" >&5
-echo $ECHO_N "checking for mpfr_init in -lmpfr... $ECHO_C" >&6
-if test "${ac_cv_lib_mpfr_mpfr_init+set}" = set; then
+# Check whether --enable-internal-mpfr or --disable-internal-mpfr was given.
+if test "${enable_internal_mpfr+set}" = set; then
+  enableval="$enable_internal_mpfr"
+
+else
+  enable_internal_mpfr=auto
+fi;
+
+USE_INTERNAL_MPFR="yes"
+
+if test "x$enable_internal_mpfr" = "xyes" ; then
+	USE_INTERNAL_MPFR="yes"
+	echo "Using internal MPFR"
+
+
+if true; then
+  INTERNAL_MPFR_TRUE=
+  INTERNAL_MPFR_FALSE='#'
+else
+  INTERNAL_MPFR_TRUE='#'
+  INTERNAL_MPFR_FALSE=
+fi
+else
+	GOT_MPFR="no"
+	echo "$as_me:$LINENO: checking for mpfr_cmd_d in -lmpfr" >&5
+echo $ECHO_N "checking for mpfr_cmd_d in -lmpfr... $ECHO_C" >&6
+if test "${ac_cv_lib_mpfr_mpfr_cmd_d+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -21520,11 +21752,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char mpfr_init ();
+char mpfr_cmd_d ();
 int
 main ()
 {
-mpfr_init ();
+mpfr_cmd_d ();
   ;
   return 0;
 }
@@ -21551,33 +21783,64 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_mpfr_mpfr_init=yes
+  ac_cv_lib_mpfr_mpfr_cmd_d=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_mpfr_mpfr_init=no
+ac_cv_lib_mpfr_mpfr_cmd_d=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_mpfr_mpfr_init" >&5
-echo "${ECHO_T}$ac_cv_lib_mpfr_mpfr_init" >&6
-if test $ac_cv_lib_mpfr_mpfr_init = yes; then
-
-	MPFR_LIB=-lmpfr
-	cat >>confdefs.h <<\_ACEOF
-#define HAVE_MPFR 1
-_ACEOF
-
+echo "$as_me:$LINENO: result: $ac_cv_lib_mpfr_mpfr_cmd_d" >&5
+echo "${ECHO_T}$ac_cv_lib_mpfr_mpfr_cmd_d" >&6
+if test $ac_cv_lib_mpfr_mpfr_cmd_d = yes; then
+  GOT_MPFR="yes"
 else
-
-	{ echo "$as_me:$LINENO: WARNING: *** MPFR Library not found ***" >&5
-echo "$as_me: WARNING: *** MPFR Library not found ***" >&2;}
+  GOT_MPFR="no"
 fi
 
+	if test "x$enable_internal_mpfr" = "xno" -a "x$GOT_MPFR" = "xno" ; then
+		{ { echo "$as_me:$LINENO: error: Internal MPFR not requested but I can't find a new enough external MPFR" >&5
+echo "$as_me: error: Internal MPFR not requested but I can't find a new enough external MPFR" >&2;}
+   { (exit 1); exit 1; }; }
+	fi
 
+	if test "x$GOT_MPFR" = "xno" ; then
+		echo "Using internal MPFR"
+		USE_INTERNAL_MPFR="yes"
+
+
+if true; then
+  INTERNAL_MPFR_TRUE=
+  INTERNAL_MPFR_FALSE='#'
+else
+  INTERNAL_MPFR_TRUE='#'
+  INTERNAL_MPFR_FALSE=
+fi
+	else
+		echo "Using external MPFR"
+		USE_INTERNAL_MPFR="no"
+
+
+if false; then
+  INTERNAL_MPFR_TRUE=
+  INTERNAL_MPFR_FALSE='#'
+else
+  INTERNAL_MPFR_TRUE='#'
+  INTERNAL_MPFR_FALSE=
+fi
+	fi
+fi
+
+if test "x$USE_INTERNAL_MPFR" = "xyes" ; then
+
+
+subdirs="$subdirs mpfr"
+
+fi
 
 # No schemas yet so ignore this section for now
 #AC_PATH_PROG(GCONFTOOL, gconftool-2)
@@ -22249,7 +22512,7 @@ echo $ECHO_N "checking for more warnings... $ECHO_C" >&6
 if test "$GCC" = "yes" -a "$set_more_warnings" != "no"; then
 	echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-	warning_flags="-Wall -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Werror"
+	warning_flags="-Wall -Wchar-subscripts -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wpointer-arith"
 	CFLAGS="$warning_flags $CFLAGS"
 
 	for option in -Wno-sign-compare; do
@@ -22317,8 +22580,7 @@ else
 echo "${ECHO_T}no" >&6
 fi
 CFLAGS="$realsave_CFLAGS"
-EXTRA_WARNING_CFLAGS=" \
-	$warning_flags"
+EXTRA_WARNING_CFLAGS="$warning_flags"
 #	-DG_DISABLE_DEPRECATED \
 #	-DGDK_PIXBUF_DISABLE_DEPRECATED \
 #	-DGDK_DISABLE_DEPRECATED \
@@ -22429,7 +22691,53 @@ fi
 
 
 
-                                                                                                                                                                          ac_config_files="$ac_config_files genius.spec Makefile src/Makefile doc/Makefile lib/Makefile lib/calculus/Makefile lib/combinatorics/Makefile lib/equation_solving/Makefile lib/functions/Makefile lib/linear_algebra/Makefile lib/misc/Makefile lib/sets/Makefile lib/number_theory/Makefile lib/statistics/Makefile vicious-extensions/Makefile gtkextra/Makefile po/Makefile.in"
+# Extract the first word of "scrollkeeper-config", so it can be a program name with args.
+set dummy scrollkeeper-config; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_SCROLLKEEPER_CONFIG+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $SCROLLKEEPER_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_SCROLLKEEPER_CONFIG="$SCROLLKEEPER_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_SCROLLKEEPER_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_SCROLLKEEPER_CONFIG" && ac_cv_path_SCROLLKEEPER_CONFIG="no"
+  ;;
+esac
+fi
+SCROLLKEEPER_CONFIG=$ac_cv_path_SCROLLKEEPER_CONFIG
+
+if test -n "$SCROLLKEEPER_CONFIG"; then
+  echo "$as_me:$LINENO: result: $SCROLLKEEPER_CONFIG" >&5
+echo "${ECHO_T}$SCROLLKEEPER_CONFIG" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test x$SCROLLKEEPER_CONFIG = xno; then
+  { { echo "$as_me:$LINENO: error: Couldn't find scrollkeeper-config. Please install the scrollkeeper package" >&5
+echo "$as_me: error: Couldn't find scrollkeeper-config. Please install the scrollkeeper package" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+                                                                                                                                                                                                                  ac_config_files="$ac_config_files genius.spec Makefile src/Makefile lib/Makefile lib/calculus/Makefile lib/combinatorics/Makefile lib/equation_solving/Makefile lib/functions/Makefile lib/linear_algebra/Makefile lib/misc/Makefile lib/sets/Makefile lib/number_theory/Makefile lib/statistics/Makefile vicious-extensions/Makefile gtkextra/Makefile pixmaps/Makefile pixmaps/32x32/Makefile pixmaps/48x48/Makefile po/Makefile.in help/Makefile help/C/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -22977,7 +23285,6 @@ do
   "genius.spec" ) CONFIG_FILES="$CONFIG_FILES genius.spec" ;;
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "src/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
-  "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
   "lib/calculus/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/calculus/Makefile" ;;
   "lib/combinatorics/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/combinatorics/Makefile" ;;
@@ -22990,7 +23297,12 @@ do
   "lib/statistics/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/statistics/Makefile" ;;
   "vicious-extensions/Makefile" ) CONFIG_FILES="$CONFIG_FILES vicious-extensions/Makefile" ;;
   "gtkextra/Makefile" ) CONFIG_FILES="$CONFIG_FILES gtkextra/Makefile" ;;
+  "pixmaps/Makefile" ) CONFIG_FILES="$CONFIG_FILES pixmaps/Makefile" ;;
+  "pixmaps/32x32/Makefile" ) CONFIG_FILES="$CONFIG_FILES pixmaps/32x32/Makefile" ;;
+  "pixmaps/48x48/Makefile" ) CONFIG_FILES="$CONFIG_FILES pixmaps/48x48/Makefile" ;;
   "po/Makefile.in" ) CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
+  "help/Makefile" ) CONFIG_FILES="$CONFIG_FILES help/Makefile" ;;
+  "help/C/Makefile" ) CONFIG_FILES="$CONFIG_FILES help/C/Makefile" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "default-2" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-2" ;;
   "default-3" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-3" ;;
@@ -23173,7 +23485,9 @@ s,@GLIB_GENMARSHAL@,$GLIB_GENMARSHAL,;t t
 s,@TERMCAP_LIB@,$TERMCAP_LIB,;t t
 s,@READLINE_LIB@,$READLINE_LIB,;t t
 s,@GMP_LIB@,$GMP_LIB,;t t
-s,@MPFR_LIB@,$MPFR_LIB,;t t
+s,@INTERNAL_MPFR_TRUE@,$INTERNAL_MPFR_TRUE,;t t
+s,@INTERNAL_MPFR_FALSE@,$INTERNAL_MPFR_FALSE,;t t
+s,@subdirs@,$subdirs,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GENIUS_NOGUI_CFLAGS@,$GENIUS_NOGUI_CFLAGS,;t t
 s,@GENIUS_NOGUI_LIBS@,$GENIUS_NOGUI_LIBS,;t t
@@ -23188,6 +23502,7 @@ s,@VICIOUS_CFLAGS@,$VICIOUS_CFLAGS,;t t
 s,@VICIOUS_LIBS@,$VICIOUS_LIBS,;t t
 s,@POPT_LIBS@,$POPT_LIBS,;t t
 s,@EXTRA_WARNING_CFLAGS@,$EXTRA_WARNING_CFLAGS,;t t
+s,@SCROLLKEEPER_CONFIG@,$SCROLLKEEPER_CONFIG,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF
@@ -23833,31 +24148,192 @@ if test "$no_create" != yes; then
   $ac_cs_success || { (exit 1); exit 1; }
 fi
 
+#
+# CONFIG_SUBDIRS section.
+#
+if test "$no_recursion" != yes; then
 
-if test "x$MPFR_LIB" = x; then
-   GOT_MPFR="no"
+  # Remove --cache-file and --srcdir arguments so they do not pile up.
+  ac_sub_configure_args=
+  ac_prev=
+  for ac_arg in $ac_configure_args; do
+    if test -n "$ac_prev"; then
+      ac_prev=
+      continue
+    fi
+    case $ac_arg in
+    -cache-file | --cache-file | --cache-fil | --cache-fi \
+    | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
+      ac_prev=cache_file ;;
+    -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
+    | --cache-f=* | --cache-=* | --cache=* | --cach=* | --cac=* | --ca=* \
+    | --c=*)
+      ;;
+    --config-cache | -C)
+      ;;
+    -srcdir | --srcdir | --srcdi | --srcd | --src | --sr)
+      ac_prev=srcdir ;;
+    -srcdir=* | --srcdir=* | --srcdi=* | --srcd=* | --src=* | --sr=*)
+      ;;
+    -prefix | --prefix | --prefi | --pref | --pre | --pr | --p)
+      ac_prev=prefix ;;
+    -prefix=* | --prefix=* | --prefi=* | --pref=* | --pre=* | --pr=* | --p=*)
+      ;;
+    *) ac_sub_configure_args="$ac_sub_configure_args $ac_arg" ;;
+    esac
+  done
+
+  # Always prepend --prefix to ensure using the same prefix
+  # in subdir configurations.
+  ac_sub_configure_args="--prefix=$prefix $ac_sub_configure_args"
+
+  ac_popdir=`pwd`
+  for ac_dir in : $subdirs; do test "x$ac_dir" = x: && continue
+
+    # Do not complain, so a configure script can configure whichever
+    # parts of a large source tree are present.
+    test -d $srcdir/$ac_dir || continue
+
+    { echo "$as_me:$LINENO: configuring in $ac_dir" >&5
+echo "$as_me: configuring in $ac_dir" >&6;}
+    { if $as_mkdir_p; then
+    mkdir -p "$ac_dir"
+  else
+    as_dir="$ac_dir"
+    as_dirs=
+    while test ! -d "$as_dir"; do
+      as_dirs="$as_dir $as_dirs"
+      as_dir=`(dirname "$as_dir") 2>/dev/null ||
+$as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$as_dir" : 'X\(//\)[^/]' \| \
+	 X"$as_dir" : 'X\(//\)$' \| \
+	 X"$as_dir" : 'X\(/\)' \| \
+	 .     : '\(.\)' 2>/dev/null ||
+echo X"$as_dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{ s//\1/; q; }
+  	  /^X\(\/\/\)[^/].*/{ s//\1/; q; }
+  	  /^X\(\/\/\)$/{ s//\1/; q; }
+  	  /^X\(\/\).*/{ s//\1/; q; }
+  	  s/.*/./; q'`
+    done
+    test ! -n "$as_dirs" || mkdir $as_dirs
+  fi || { { echo "$as_me:$LINENO: error: cannot create directory \"$ac_dir\"" >&5
+echo "$as_me: error: cannot create directory \"$ac_dir\"" >&2;}
+   { (exit 1); exit 1; }; }; }
+
+    ac_builddir=.
+
+if test "$ac_dir" != .; then
+  ac_dir_suffix=/`echo "$ac_dir" | sed 's,^\.[\\/],,'`
+  # A "../" for each directory in $ac_dir_suffix.
+  ac_top_builddir=`echo "$ac_dir_suffix" | sed 's,/[^\\/]*,../,g'`
 else
-   GOT_MPFR="yes"
+  ac_dir_suffix= ac_top_builddir=
 fi
+
+case $srcdir in
+  .)  # No --srcdir option.  We are building in place.
+    ac_srcdir=.
+    if test -z "$ac_top_builddir"; then
+       ac_top_srcdir=.
+    else
+       ac_top_srcdir=`echo $ac_top_builddir | sed 's,/$,,'`
+    fi ;;
+  [\\/]* | ?:[\\/]* )  # Absolute path.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir ;;
+  *) # Relative path.
+    ac_srcdir=$ac_top_builddir$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_builddir$srcdir ;;
+esac
+
+# Do not use `cd foo && pwd` to compute absolute paths, because
+# the directories may not exist.
+case `pwd` in
+.) ac_abs_builddir="$ac_dir";;
+*)
+  case "$ac_dir" in
+  .) ac_abs_builddir=`pwd`;;
+  [\\/]* | ?:[\\/]* ) ac_abs_builddir="$ac_dir";;
+  *) ac_abs_builddir=`pwd`/"$ac_dir";;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_top_builddir=${ac_top_builddir}.;;
+*)
+  case ${ac_top_builddir}. in
+  .) ac_abs_top_builddir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_top_builddir=${ac_top_builddir}.;;
+  *) ac_abs_top_builddir=$ac_abs_builddir/${ac_top_builddir}.;;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_srcdir=$ac_srcdir;;
+*)
+  case $ac_srcdir in
+  .) ac_abs_srcdir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_srcdir=$ac_srcdir;;
+  *) ac_abs_srcdir=$ac_abs_builddir/$ac_srcdir;;
+  esac;;
+esac
+case $ac_abs_builddir in
+.) ac_abs_top_srcdir=$ac_top_srcdir;;
+*)
+  case $ac_top_srcdir in
+  .) ac_abs_top_srcdir=$ac_abs_builddir;;
+  [\\/]* | ?:[\\/]* ) ac_abs_top_srcdir=$ac_top_srcdir;;
+  *) ac_abs_top_srcdir=$ac_abs_builddir/$ac_top_srcdir;;
+  esac;;
+esac
+
+
+    cd $ac_dir
+
+    # Check for guested configure; otherwise get Cygnus style configure.
+    if test -f $ac_srcdir/configure.gnu; then
+      ac_sub_configure="$SHELL '$ac_srcdir/configure.gnu'"
+    elif test -f $ac_srcdir/configure; then
+      ac_sub_configure="$SHELL '$ac_srcdir/configure'"
+    elif test -f $ac_srcdir/configure.in; then
+      ac_sub_configure=$ac_configure
+    else
+      { echo "$as_me:$LINENO: WARNING: no configuration information is in $ac_dir" >&5
+echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
+      ac_sub_configure=
+    fi
+
+    # The recursion is here.
+    if test -n "$ac_sub_configure"; then
+      # Make the cache file name correct relative to the subdirectory.
+      case $cache_file in
+      [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
+      *) # Relative path.
+	ac_sub_cache_file=$ac_top_builddir$cache_file ;;
+      esac
+
+      { echo "$as_me:$LINENO: running $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
+echo "$as_me: running $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
+      # The eval makes quoting arguments work.
+      eval $ac_sub_configure $ac_sub_configure_args \
+	   --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir ||
+	{ { echo "$as_me:$LINENO: error: $ac_sub_configure failed for $ac_dir" >&5
+echo "$as_me: error: $ac_sub_configure failed for $ac_dir" >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+
+    cd $ac_popdir
+  done
+fi
+
 
 echo "
 Configuration:
 
-	Source code location:	  ${srcdir}
-	Compiler:		  ${CC}
-	Using the MPFR library:   ${GOT_MPFR}
-	GNOME frontend:		  ${use_gnome}
-	Using GtkSourceView:	  ${use_gtksourceview}
+	Source code location:	     ${srcdir}
+	Compiler:		     ${CC}
+	Using internal MPFR library: ${USE_INTERNAL_MPFR}
+	GNOME frontend:		     ${use_gnome}
+	Using GtkSourceView:	     ${use_gtksourceview}
 
-	Extra Compiler Warnings:  ${EXTRA_WARNING_CFLAGS}
+	Extra Compiler Warnings:     ${EXTRA_WARNING_CFLAGS}
 "
-
-if test "x$MPFR_LIB" = x; then
-  echo "
-WARNING:
-     You are compiling without the MPFR library and genius will then use
-     it's own implementations for things like exp, ln, pow, sin, and such
-     but these are very slow.  Please use a gmp library compiled with
-     --enable-mpfr, or get and compile the mpfr library from www.mpfr.org
-"
-fi

@@ -129,7 +129,6 @@ LTLIB = @LTLIB@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MKINSTALLDIRS = @MKINSTALLDIRS@
-MPFR_LIB = @MPFR_LIB@
 MSGFMT = @MSGFMT@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
@@ -143,6 +142,7 @@ PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 RC = @RC@
 READLINE_LIB = @READLINE_LIB@
+SCROLLKEEPER_CONFIG = @SCROLLKEEPER_CONFIG@
 STRIP = @STRIP@
 TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
@@ -404,10 +404,11 @@ distdir: $(DISTFILES)
 gtkextra-marshal.o: gtkextra-marshal.c
 gtkextra.o: gtkextra.c
 gtkextratypebuiltins.o: gtkextratypebuiltins.c gtkextra.h gtkplot.h \
-	gtkplotpc.h gtkpsfont.h gtkplotpolar.h gtkplot3d.h \
+	gtkplotpc.h gtkpsfont.h gtkplotpolar.h gtkplot.h gtkplot3d.h \
 	gtkplotdata.h gtkplotsurface.h gtkplotdt.h gtkplotcsurface.h \
-	gtkplotcanvas.h gtkplotbar.h gtkplotbox.h gtkplotflux.h \
-	gtkplotpixmap.h gtkplotgdk.h gtkplotprint.h gtkplotps.h
+	gtkplotsurface.h gtkplotcanvas.h gtkplotbar.h gtkplotbox.h \
+	gtkplotdt.h gtkplotflux.h gtkplotpixmap.h gtkplotgdk.h \
+	gtkplotpc.h gtkplotprint.h gtkplotps.h gtkpsfont.h
 gtkplot.o: gtkplot.c gtkplot.h gtkplotpc.h gtkpsfont.h gtkplotdata.h \
 	gtkplotgdk.h gtkextra-marshal.h
 gtkplot3d.o: gtkplot3d.c gtkplot.h gtkplotpc.h gtkpsfont.h gtkplotdata.h \

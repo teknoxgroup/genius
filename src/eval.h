@@ -137,6 +137,7 @@ GelETree * gel_makenum_null(void);
 GelETree * gel_makenum_identifier (GelToken *id);
 GelETree * gel_makenum_string (const char *str);
 GelETree * gel_makenum_string_use (char *str);
+GelETree * gel_makenum_string_constant (const char *str);
 /* FIXME: implement GelETree * gel_makenum_polynomial (...); */
 GelETree * makeoperator(int oper, GSList **stack);
 
@@ -186,6 +187,9 @@ void try_to_do_precalc(GelETree *n);
 
 /* find an identifier */
 gboolean eval_find_identifier (GelETree *n, GelToken *tok);
+
+char * gel_similar_possible_ids (const char *id);
+
 
 /* return a list of used local functions (copies of) */
 GSList * gel_subst_local_vars (GSList *, GelETree *n);

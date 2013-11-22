@@ -79,6 +79,7 @@ calcstate_t curstate={
 	
 extern int parenth_depth;
 extern gboolean interrupted;
+extern const char *genius_toplevels[];
 
 GtkWidget *genius_window = NULL;
 
@@ -193,9 +194,11 @@ static void copy_as_troff (GtkWidget *menu_item, gpointer data);
 static void copy_as_mathml (GtkWidget *menu_item, gpointer data);
 static void setup_calc (GtkWidget *widget, gpointer data);
 static void run_program (GtkWidget *menu_item, gpointer data);
-static void manual_call (GtkWidget *widget, gpointer data);
 static void warranty_call (GtkWidget *widget, gpointer data);
 static void aboutcb (GtkWidget * widget, gpointer data);
+static void help_on_function (GtkWidget *menuitem, gpointer data);
+static void executing_warning (void);
+static void display_warning (GtkWidget *parent, const char *warn);
 
 static GnomeUIInfo file_menu[] = {
 	GNOMEUIINFO_MENU_NEW_ITEM(N_("_New Program"), N_("Create new program tab"), new_callback, NULL),
@@ -256,11 +259,10 @@ static GnomeUIInfo calc_menu[] = {
 };
 
 static GnomeUIInfo help_menu[] = {  
-	/* FIXME: no help 
-	 * GNOMEUIINFO_HELP("genius"),*/
-	GNOMEUIINFO_ITEM_STOCK (N_("_Manual"),
-				N_("Display the manual"),
-				manual_call,
+	GNOMEUIINFO_HELP("genius"),
+	GNOMEUIINFO_ITEM_STOCK (N_("_Help on Function"),
+				N_("Help on a function or a command"),
+				help_on_function,
 				GTK_STOCK_HELP),
 	GNOMEUIINFO_ITEM_STOCK (N_("_Warranty"),
 				N_("Display warranty information"),
@@ -296,6 +298,7 @@ static GnomeUIInfo toolbar[] = {
 	GNOMEUIINFO_ITEM_STOCK(N_("Interrupt"),N_("Interrupt current calculation"),genius_interrupt_calc,GTK_STOCK_STOP),
 #define TOOLBAR_RUN_ITEM 1
 	GNOMEUIINFO_ITEM_STOCK(N_("Run"),N_("Run current program"),run_program, GTK_STOCK_EXECUTE),
+	GNOMEUIINFO_ITEM_STOCK(N_("New"),N_("Create new program tab"), new_callback, GTK_STOCK_NEW),
 	GNOMEUIINFO_ITEM_STOCK(N_("Open"),N_("Open a GEL file for running"), open_callback, GTK_STOCK_OPEN),
 	GNOMEUIINFO_ITEM_STOCK(N_("Plot"), N_("Plot a function"), genius_plot_dialog, GNOME_STOCK_BOOK_OPEN),
 	GNOMEUIINFO_ITEM_STOCK(N_("Exit"),N_("Exit genius"), quitapp, GTK_STOCK_QUIT),
@@ -365,6 +368,89 @@ setup_term_color (void)
 	} else {
 		vte_terminal_set_default_colors (VTE_TERMINAL (term));
 	}
+}
+
+static void
+help_on_entry_activate (GtkWidget *e, gpointer data)
+{
+	GtkWidget *d = data;
+	gtk_dialog_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
+}
+
+static void
+help_on_function (GtkWidget *menuitem, gpointer data)
+{
+	GtkWidget *d;
+	GtkWidget *e;
+	int ret;
+
+	d = gtk_dialog_new_with_buttons
+		(_("Help on Function"),
+		 GTK_WINDOW (genius_window) /* parent */,
+		 0 /* flags */,
+		 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		 GTK_STOCK_OK, GTK_RESPONSE_OK,
+		 NULL);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (d), FALSE);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    gtk_label_new (_("Function or command name:")),
+			    FALSE, FALSE, 0);
+
+	e = gtk_entry_new ();
+	g_signal_connect (G_OBJECT (e), "activate",
+			  G_CALLBACK (help_on_entry_activate), d);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    e,
+			    FALSE, FALSE, 0);
+
+run_help_dlg_again:
+	gtk_widget_show_all (d);
+	ret = gtk_dialog_run (GTK_DIALOG (d));
+
+	if (ret == GTK_RESPONSE_OK) {
+		char *txt = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (e))));
+		GelHelp *help = get_help (txt, FALSE /* insert */);
+		gboolean found = FALSE;
+		int i;
+
+		for (i = 0; genius_toplevels[i] != NULL; i++) {
+			if (strcmp (txt, genius_toplevels[i]) == 0) {
+				gel_call_help (txt);
+				found = TRUE;
+				break;
+			}
+		}
+
+		if ( ! found && help == NULL) {
+			char *similar_ids = gel_similar_possible_ids (txt);
+			char *warn;
+			if (similar_ids == NULL) {
+				warn = g_strdup_printf
+					(_("<b>Help on %s not found</b>"),
+					 txt);
+			} else {
+				warn = g_strdup_printf
+					(_("<b>Help on %s not found</b>\n\n"
+					   "Perhaps you meant %s."),
+					 txt, similar_ids);
+				g_free (similar_ids);
+			}
+			display_warning (genius_window, warn);
+			g_free (warn);
+			goto run_help_dlg_again;
+		} else if ( ! found && help != NULL) {
+			if (help->aliasfor != NULL)
+				gel_call_help (help->aliasfor);
+			else
+				gel_call_help (txt);
+		}
+		g_free (txt);
+	}
+
+	gtk_widget_destroy (d);
 }
 
 /*display a message in a messagebox*/
@@ -526,6 +612,34 @@ gel_printout_infos (void)
 	}
 
 	printout_error_num_and_reset ();
+}
+
+void
+gel_call_help (const char *function)
+{
+	if (function == NULL) {
+		/* FIXME: errors */
+
+		gnome_help_display ("genius", NULL, NULL /* error */);
+	} else {
+		char *id = NULL;
+		int i;
+		for (i = 0; genius_toplevels[i] != NULL && id == NULL; i++) {
+			if (strcmp (function, genius_toplevels[i]) == 0) {
+				id = g_strdup_printf ("gel-command-%s",
+						      function);
+				break;
+			}
+		}
+		if (id == NULL) {
+			id = g_strdup_printf ("gel-function-%s",
+					      function);
+		}
+
+		/* FIXME: errors */
+
+		gnome_help_display ("genius", id, NULL /* error */);
+	}
 }
 
 
@@ -1141,22 +1255,6 @@ executing_warning (void)
 			 _("<b>Genius is currently executing something.</b>\n\n"
 			   "Please try again later or interrupt the current "
 			   "operation."));
-}
-
-static void
-manual_call (GtkWidget *widget, gpointer data)
-{
-	if (calc_running) {
-		executing_warning ();
-		return;
-	} else {
-		/* perhaps a bit ugly */
-		gboolean last = genius_setup.info_box;
-		genius_setup.info_box = TRUE;
-		gel_evalexp ("manual", NULL, main_out, NULL, TRUE, NULL);
-		gel_printout_infos ();
-		genius_setup.info_box = last;
-	}
 }
 
 static void
@@ -2693,10 +2791,6 @@ get_version_details (void)
 		return str->str;
 	str = g_string_new (NULL);
 
-#ifndef HAVE_MPFR
-	g_string_append (str, _("\nNote: Compiled without MPFR (some operations may be slow) "
-				"see www.mpfr.org"));
-#endif
 #ifndef HAVE_GTKSOURCEVIEW
 	g_string_append (str, _("\nNote: Compiled without GtkSourceView (better source editor)"));
 #endif
@@ -2768,6 +2862,7 @@ main (int argc, char *argv[])
 	program = gnome_program_init ("genius", VERSION, 
 				      LIBGNOMEUI_MODULE /* module_info */,
 				      argc, argv,
+				      GNOME_PARAM_APP_DATADIR, DATADIR,
 				      /* GNOME_PARAM_POPT_TABLE, options, */
 				      NULL);
 
