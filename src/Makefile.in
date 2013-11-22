@@ -103,6 +103,7 @@ INTLTOOL_SCHEMAS_RULE = @INTLTOOL_SCHEMAS_RULE@
 INTLTOOL_SERVER_RULE = @INTLTOOL_SERVER_RULE@
 INTLTOOL_SHEET_RULE = @INTLTOOL_SHEET_RULE@
 INTLTOOL_SOUNDLIST_RULE = @INTLTOOL_SOUNDLIST_RULE@
+INTLTOOL_THEME_RULE = @INTLTOOL_THEME_RULE@
 INTLTOOL_UI_RULE = @INTLTOOL_UI_RULE@
 INTLTOOL_UPDATE = @INTLTOOL_UPDATE@
 INTLTOOL_XML_RULE = @INTLTOOL_XML_RULE@
@@ -121,6 +122,8 @@ PKG_CONFIG = @PKG_CONFIG@
 POFILES = @POFILES@
 POPT_LIBS = @POPT_LIBS@
 POSUB = @POSUB@
+PO_IN_DATADIR_FALSE = @PO_IN_DATADIR_FALSE@
+PO_IN_DATADIR_TRUE = @PO_IN_DATADIR_TRUE@
 RANLIB = @RANLIB@
 READLINE_LIB = @READLINE_LIB@
 STRIP = @STRIP@
@@ -480,7 +483,7 @@ eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
 funclib.o: funclib.c ../config.h mpwrap.h eval.h structs.h dict.h \
 	funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
 geloutput.o: geloutput.c ../config.h structs.h mpwrap.h geloutput.h
-genius-readline-helper.o: genius-readline-helper.c ../config.h
+genius-readline-helper.o: genius-readline-helper.c
 genius.o: genius.c ../config.h calc.h structs.h mpwrap.h util.h dict.h \
 	inter.h geloutput.h lexer.h plugin.h
 genius_lists.o: genius_lists.c

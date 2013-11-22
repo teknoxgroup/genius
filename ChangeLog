@@ -1,3 +1,40 @@
+Fri Jan 03 11:23:38 2003  George Lebl <jirka@5z.com>
+
+	* configure.in: increase version and fixup
+
+	* src/matop.c: stop being confused about REF definition and make the
+	  pivots 1 again
+
+	* src/mpwrap.c: Fix two errors pointed out by Kai Arstila
+	  <Kai.Arstila@Helsinki.FI>.  First fix rounding when first digit
+	  is rounded.  Second fix arctan by using an implementation by
+	  Guillermo Ballester Valor <gbv@oxixares.com> which I found on the
+	  net.
+
+Thu Dec 19 15:12:49 2002  George Lebl <jirka@5z.com>
+
+	* src/eval.h, src/structs.h, src/eval.c, src/calc.c: start adding
+	  some polynomial handling code.  Not much though.
+
+Thu Dec 05 10:13:36 2002  George Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/linear_algebra.gel: add function for
+	  eigenvalues, currently only for 2x2 and for triangular
+	  matrices as special cases.
+
+Sat Nov 23 10:13:15 2002  George Lebl <jirka@5z.com>
+
+	* lib/linear_algebra/*.gel: add RaleighQuotient, and reverse the
+	  direction of the vandermonde matrix so that we fit with how
+	  we are doing polynomials
+
+	* src/eval.c: fix modular arithmetic on single values, and fix
+	  modular arithmetic on matrices
+
+	* src/funclib.c: cache identity matrices
+
+	* src/matop.c: fix REF by not reducing the pivots
+
 Fri Nov 01 17:20:38 2002  George Lebl <jirka@5z.com>
 
 	* Release 0.5.0

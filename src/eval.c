@@ -1661,6 +1661,23 @@ value_matrix_div_op(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 	return TRUE;
 }
 
+/*add, sub */
+static int
+polynomial_add_sub_op (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+{
+	if (l->type == VALUE_NODE) {
+		/* r->type == POLYNOMIAL_NODE */
+		/* FIXME implement */
+	} else if (r->type == VALUE_NODE) {
+		/* l->type == POLYNOMIAL_NODE */
+		/* FIXME implement */
+	} else {
+		/* FIXME implement */
+	}
+
+	return TRUE;
+}
+
 static void
 mod_node(GelETree *n, mpw_ptr mod)
 {
@@ -1842,6 +1859,8 @@ static const GelOper prim_table[E_OPER_LAST] = {
 			 (GelEvalFunc)string_concat},
 		 {{GO_STRING,GO_VALUE|GO_MATRIX|GO_FUNCTION|GO_STRING,0},
 			 (GelEvalFunc)string_concat},
+		 {{GO_VALUE|GO_POLYNOMIAL,GO_VALUE|GO_POLYNOMIAL,0},
+			 (GelEvalFunc)polynomial_add_sub_op},
 	 }},
 	/*E_MINUS*/
 	{{
@@ -1849,6 +1868,8 @@ static const GelOper prim_table[E_OPER_LAST] = {
 		 {{GO_MATRIX,GO_MATRIX,0},(GelEvalFunc)pure_matrix_eltbyelt_op},
 		 {{GO_VALUE|GO_MATRIX,GO_VALUE|GO_MATRIX,0},
 			 (GelEvalFunc)matrix_scalar_matrix_op},
+		 {{GO_VALUE|GO_POLYNOMIAL,GO_VALUE|GO_POLYNOMIAL,0},
+			 (GelEvalFunc)polynomial_add_sub_op},
 	 }},
 	/*E_MUL*/
 	{{
@@ -4307,9 +4328,9 @@ iter_get_arg_name(guint32 arg)
 	case GO_STRING: return gettext(string);
 	case GO_FUNCTION: return gettext(function);
 	default:
+		g_assert_not_reached();
+		return NULL;
 	}
-	g_assert_not_reached();
-	return NULL;
 }
 
 static char *
@@ -4755,7 +4776,10 @@ iter_operator_post(GelCtx *ctx)
 		break;
 
 	case E_MOD_CALC:
-		if (n->op.args->type == VALUE_NODE) {
+		/* FIXME: maybe we should always replace things here,
+		 * not just for values and matrices */
+		if (n->op.args->type == VALUE_NODE ||
+		    n->op.args->type == MATRIX_NODE) {
 			GelETree *t = n->op.args;
 			gel_freetree (n->op.args->any.next);
 			n->op.args = NULL;
@@ -4943,8 +4967,16 @@ iter_eval_etree(GelCtx *ctx)
 
 		switch(n->type) {
 		case NULL_NODE:
+			EDEBUG(" NULL NODE");
+			iter_pop_stack(ctx);
+			break;
+
 		case VALUE_NODE:
-			EDEBUG(" NULL/VALUE NODE");
+			EDEBUG(" VALUE NODE");
+
+			if (ctx->modulo != NULL)
+				mod_node (n, ctx->modulo);
+
 			iter_pop_stack(ctx);
 			break;
 		case MATRIX_NODE:
@@ -4956,6 +4988,8 @@ iter_eval_etree(GelCtx *ctx)
 				/*if in post mode expand the matrix */
 				if(!n->mat.quoted)
 					gel_expandmatrix (n);
+				if (ctx->modulo != NULL)
+					mod_node (n, ctx->modulo);
 				iter_pop_stack(ctx);
 			}
 			break;
