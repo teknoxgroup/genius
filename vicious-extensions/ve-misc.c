@@ -23,8 +23,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <locale.h>
-/* we include the include, but don't use it */
-#include <libgnome/libgnome.h>
+
+#include "ve-i18n.h"
 
 #include "ve-misc.h"
 
@@ -285,7 +285,7 @@ ve_filename_to_utf8 (const char *str)
 }
 
 char *
-ve_filenamelocale_from_utf8 (const char *str)
+ve_filename_from_utf8 (const char *str)
 {
 	char *ret = g_filename_from_utf8 (str, -1, NULL, NULL, NULL);
 	if (ret == NULL) {
@@ -360,6 +360,7 @@ ve_locale_exists (const char *loc)
  * Returns: %0 on success, %-1 on error
  * 
  **/
+#if ! GLIB_CHECK_VERSION(2,3,1)
 int
 ve_setenv (const char *name, const char *value, gboolean overwrite)
 {
@@ -380,6 +381,7 @@ ve_setenv (const char *name, const char *value, gboolean overwrite)
 	return putenv (string);
 #endif
 }
+#endif
 
 /**
  * ve_unsetenv:
@@ -391,6 +393,7 @@ ve_setenv (const char *name, const char *value, gboolean overwrite)
  * environment.
  * 
  **/
+#if ! GLIB_CHECK_VERSION(2,3,1)
 void
 ve_unsetenv (const char *name)
 {
@@ -417,6 +420,7 @@ ve_unsetenv (const char *name)
 	}
 #endif
 }
+#endif
 
 /**
  * ve_clearenv:

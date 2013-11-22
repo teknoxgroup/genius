@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include "ve-i18n.h"
+
 #include "ve-misc.h"
 #include "ve-signal.h"
 

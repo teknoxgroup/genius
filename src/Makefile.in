@@ -59,6 +59,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+ACLOCAL_AMFLAGS = @ACLOCAL_AMFLAGS@
 AR = @AR@
 AS = @AS@
 CATALOGS = @CATALOGS@
@@ -77,22 +78,22 @@ EXTRA_WARNING_CFLAGS = @EXTRA_WARNING_CFLAGS@
 F77 = @F77@
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
-GCONFTOOL = @GCONFTOOL@
-GCONF_CONFIG_SOURCE = @GCONF_CONFIG_SOURCE@
 GENCAT = @GENCAT@
 GENIUS_CFLAGS = @GENIUS_CFLAGS@
 GENIUS_LIBS = @GENIUS_LIBS@
+GENIUS_NOGUI_CFLAGS = @GENIUS_NOGUI_CFLAGS@
+GENIUS_NOGUI_LIBS = @GENIUS_NOGUI_LIBS@
+GENIUS_READLINE_HELPER_FIFO = @GENIUS_READLINE_HELPER_FIFO@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
+GNOME_GENIUS = @GNOME_GENIUS@
+GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
-GUI_CFLAGS = @GUI_CFLAGS@
-GUI_LIBS = @GUI_LIBS@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
-INSTALL_GCONF_CONFIG_SOURCE = @INSTALL_GCONF_CONFIG_SOURCE@
 INSTOBJEXT = @INSTOBJEXT@
 INTLDEPS = @INTLDEPS@
 INTLLIBS = @INTLLIBS@
@@ -143,6 +144,9 @@ TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+VICIOUS_CFLAGS = @VICIOUS_CFLAGS@
+VICIOUS_GNOME_LIBS = @VICIOUS_GNOME_LIBS@
+VICIOUS_LIBS = @VICIOUS_LIBS@
 WARN_CFLAGS = @WARN_CFLAGS@
 WARN_CXXFLAGS = @WARN_CXXFLAGS@
 YACC = @YACC@
@@ -162,11 +166,13 @@ YFLAGS =  -d -t
 INCLUDES =          -DGNOMELOCALEDIR=\""$(prefix)/$(DATADIRNAME)/locale"\"		-DG_LOG_DOMAIN=\"Genius\"					-DDATADIR=\""$(datadir)"\"					-DLIBEXECDIR=\""$(libexecdir)"\"				-DICONDIR=\""$(datadir)/pixmaps/genius"\"			-DLIBRARY_DIR=\""$(datadir)/genius/"\"				-I$(srcdir)							-I$(includedir)							-I$(top_srcdir)							-I$(top_srcdir)/vicious-extensions				-I$(top_builddir)						-I$(top_builddir)/vicious-extensions				$(GMP_INCLUDEDIR)						$(GENIUS_CFLAGS)						$(EXTRA_WARNING_CFLAGS)
 
 
-bin_PROGRAMS = gnome-genius genius
+bin_PROGRAMS = @GNOME_GENIUS@ genius
 
-libexec_PROGRAMS = genius-readline-helper-fifo
+libexec_PROGRAMS = @GENIUS_READLINE_HELPER_FIFO@
 
-gnome_genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			gnome-genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
+EXTRA_PROGRAMS = gnome-genius genius-readline-helper-fifo
+
+gnome_genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			gnome-genius.c		gnome-genius.h		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		lexer.l			lexer.h			parseutil.h		parseutil.c		inter.c			inter.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h		graphing.h		graphing.c
 
 
 gnome_genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lviciousui					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
@@ -176,16 +182,16 @@ genius_readline_helper_fifo_SOURCES =   	genius_lists.c				genius-readline-helpe
 
 
 # FIXME: no need for so many libs
-genius_readline_helper_fifo_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_readline_helper_fifo_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						$(GENIUS_NOGUI_LIBS)				@READLINE_LIB@					@TERMCAP_LIB@
 
 
-genius_SOURCES =  	calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
+genius_SOURCES =  	genius-i18n.h		calc.c			calc.h			eval.c			eval.h			genius.c		util.c			util.h			dict.c			dict.h			funclib.c		funclib.h		mpwrap.c		mpwrap.h		mpzextra.c		mpzextra.h		matrix.c		matrix.h		matrixw.c		matrixw.h		matop.c			matop.h			compil.c		compil.h		structs.h		parseutil.h		parseutil.c		inter.c			inter.h			lexer.l			lexer.h			plugin.c		plugin.h		plugread.c		plugread.h		plug_api.h		parse.h			parse.y		 	genius_lists.c	 	utype.c			utype.h			extra.h			geloutput.c		geloutput.h
 
 
-genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_LIBS)					@READLINE_LIB@					@TERMCAP_LIB@
+genius_LDADD =  	-L$(top_builddir)/vicious-extensions		-lvicious					-lm						@GMP_LIB@					@MPFR_LIB@					@LEXLIB@					$(GENIUS_NOGUI_LIBS)				@READLINE_LIB@					@TERMCAP_LIB@
 
 
-plugin_include_HEADERS =  	plug_api.h		geloutput.h		mpwrap.h		mpzextra.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			lexer.h			eval.h
+plugin_include_HEADERS =  	genius-i18n.h		plug_api.h		geloutput.h		mpwrap.h		mpzextra.h		structs.h		matrix.h		matrixw.h		matop.h			compil.h		utype.h			dict.h			lexer.h			eval.h
 
 
 plugin_LTLIBRARIES = libtestplugin.la
@@ -198,11 +204,11 @@ BUILT_SOURCES = parse.h parse.c lexer.c
 CLEANFILES =  $(BUILT_SOURCES)
 
 Desktopdir = $(datadir)/applications
-Desktop_in_files =  	gnome-genius.desktop.in	
+Desktop_in_files =  	@GNOME_GENIUS_DESKTOP_IN@	
 
 Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
-EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in 	genius.lang
+EXTRA_DIST =  	geniustest.pl 	geniustests.txt 	gnome-genius.desktop.in 	$(Desktop_in_files) 	$(Desktop_DATA) 	test.plugin.in 	genius.lang
 
 
 Plugindesc_DATA = test.plugin
@@ -219,8 +225,8 @@ LIBS = @LIBS@
 libtestplugin_la_LDFLAGS = 
 libtestplugin_la_LIBADD = 
 libtestplugin_la_OBJECTS =  testplugin.lo
-bin_PROGRAMS =  gnome-genius$(EXEEXT) genius$(EXEEXT)
-libexec_PROGRAMS =  genius-readline-helper-fifo$(EXEEXT)
+bin_PROGRAMS =  @GNOME_GENIUS@ genius$(EXEEXT)
+libexec_PROGRAMS =  @GENIUS_READLINE_HELPER_FIFO@
 PROGRAMS =  $(bin_PROGRAMS) $(libexec_PROGRAMS)
 
 gnome_genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) \
@@ -232,6 +238,10 @@ genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT) \
 graphing.$(OBJEXT)
 gnome_genius_DEPENDENCIES = 
 gnome_genius_LDFLAGS = 
+genius_readline_helper_fifo_OBJECTS =  genius_lists.$(OBJEXT) \
+genius-readline-helper.$(OBJEXT)
+genius_readline_helper_fifo_DEPENDENCIES = 
+genius_readline_helper_fifo_LDFLAGS = 
 genius_OBJECTS =  calc.$(OBJEXT) eval.$(OBJEXT) genius.$(OBJEXT) \
 util.$(OBJEXT) dict.$(OBJEXT) funclib.$(OBJEXT) mpwrap.$(OBJEXT) \
 mpzextra.$(OBJEXT) matrix.$(OBJEXT) matrixw.$(OBJEXT) matop.$(OBJEXT) \
@@ -240,10 +250,6 @@ plugin.$(OBJEXT) plugread.$(OBJEXT) parse.$(OBJEXT) \
 genius_lists.$(OBJEXT) utype.$(OBJEXT) geloutput.$(OBJEXT)
 genius_DEPENDENCIES = 
 genius_LDFLAGS = 
-genius_readline_helper_fifo_OBJECTS =  genius_lists.$(OBJEXT) \
-genius-readline-helper.$(OBJEXT)
-genius_readline_helper_fifo_DEPENDENCIES = 
-genius_readline_helper_fifo_LDFLAGS = 
 LEX_OUTPUT_ROOT = @LEX_OUTPUT_ROOT@
 LEXLIB = @LEXLIB@
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -261,8 +267,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_SOURCES) $(genius_readline_helper_fifo_SOURCES)
-OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_OBJECTS) $(genius_readline_helper_fifo_OBJECTS)
+SOURCES = $(libtestplugin_la_SOURCES) $(gnome_genius_SOURCES) $(genius_readline_helper_fifo_SOURCES) $(genius_SOURCES)
+OBJECTS = $(libtestplugin_la_OBJECTS) $(gnome_genius_OBJECTS) $(genius_readline_helper_fifo_OBJECTS) $(genius_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -401,13 +407,13 @@ gnome-genius$(EXEEXT): $(gnome_genius_OBJECTS) $(gnome_genius_DEPENDENCIES)
 	@rm -f gnome-genius$(EXEEXT)
 	$(LINK) $(gnome_genius_LDFLAGS) $(gnome_genius_OBJECTS) $(gnome_genius_LDADD) $(LIBS)
 
-genius$(EXEEXT): $(genius_OBJECTS) $(genius_DEPENDENCIES)
-	@rm -f genius$(EXEEXT)
-	$(LINK) $(genius_LDFLAGS) $(genius_OBJECTS) $(genius_LDADD) $(LIBS)
-
 genius-readline-helper-fifo$(EXEEXT): $(genius_readline_helper_fifo_OBJECTS) $(genius_readline_helper_fifo_DEPENDENCIES)
 	@rm -f genius-readline-helper-fifo$(EXEEXT)
 	$(LINK) $(genius_readline_helper_fifo_LDFLAGS) $(genius_readline_helper_fifo_OBJECTS) $(genius_readline_helper_fifo_LDADD) $(LIBS)
+
+genius$(EXEEXT): $(genius_OBJECTS) $(genius_DEPENDENCIES)
+	@rm -f genius$(EXEEXT)
+	$(LINK) $(genius_LDFLAGS) $(genius_OBJECTS) $(genius_LDADD) $(LIBS)
 .l.c:
 	$(LEX) $(AM_LFLAGS) $(LFLAGS) $< && mv $(LEX_OUTPUT_ROOT).c $@
 .y.c:
@@ -534,61 +540,72 @@ distdir: $(DISTFILES)
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-calc.o: calc.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h funclib.h matrixw.h matrix.h compil.h plugin.h \
-	geloutput.h lexer.h parse.h
-compil.o: compil.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h matrix.h matrixw.h compil.h
+calc.o: calc.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h util.h dict.h funclib.h matrixw.h matrix.h compil.h \
+	plugin.h geloutput.h lexer.h parse.h
+compil.o: compil.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h dict.h util.h matrix.h matrixw.h compil.h
 dict.o: dict.c ../config.h eval.h mpwrap.h structs.h dict.h util.h \
 	funclib.h compil.h
-eval.o: eval.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h matrix.h matrixw.h matop.h compil.h utype.h
-funclib.o: funclib.c ../config.h mpwrap.h mpzextra.h eval.h structs.h \
-	dict.h funclib.h calc.h matrix.h matrixw.h matop.h geloutput.h
+eval.o: eval.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h dict.h util.h matrix.h matrixw.h matop.h compil.h \
+	utype.h
+funclib.o: funclib.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	mpzextra.h eval.h dict.h funclib.h matrix.h matrixw.h matop.h \
+	geloutput.h
 geloutput.o: geloutput.c ../config.h structs.h mpwrap.h geloutput.h
 genius-readline-helper.o: genius-readline-helper.c
-genius.o: genius.c ../config.h calc.h structs.h mpwrap.h eval.h util.h \
-	dict.h inter.h geloutput.h lexer.h plugin.h
+genius.o: genius.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h util.h dict.h inter.h geloutput.h lexer.h plugin.h
 genius_lists.o: genius_lists.c
-gnome-genius.o: gnome-genius.c ../config.h calc.h structs.h mpwrap.h \
-	util.h dict.h eval.h lexer.h geloutput.h graphing.h plugin.h \
-	inter.h
-graphing.o: graphing.c ../config.h calc.h structs.h mpwrap.h eval.h \
-	util.h dict.h funclib.h matrixw.h matrix.h compil.h plugin.h \
-	geloutput.h graphing.h
-inter.o: inter.c ../config.h dict.h structs.h mpwrap.h calc.h plugin.h \
-	inter.h
+gnome-genius.o: gnome-genius.c ../config.h calc.h genius-i18n.h \
+	structs.h mpwrap.h util.h dict.h eval.h lexer.h geloutput.h \
+	graphing.h plugin.h inter.h gnome-genius.h
+graphing.o: graphing.c ../config.h ../vicious-extensions/vicious.h \
+	../vicious-extensions/ve-misc.h \
+	../vicious-extensions/ve-config.h \
+	../vicious-extensions/ve-signal.h calc.h genius-i18n.h \
+	structs.h mpwrap.h eval.h util.h dict.h funclib.h matrixw.h \
+	matrix.h compil.h plugin.h geloutput.h gnome-genius.h \
+	graphing.h
+inter.o: inter.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	dict.h plugin.h inter.h
 lexer.o: lexer.c ../config.h mpwrap.h eval.h structs.h dict.h calc.h \
-	parse.h util.h
-matop.o: matop.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h
+	genius-i18n.h parse.h util.h
+matop.o: matop.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h dict.h util.h funclib.h matrix.h matrixw.h matop.h
 matrix.o: matrix.c ../config.h matrix.h
 matrixw.o: matrixw.c ../config.h structs.h mpwrap.h eval.h matrix.h \
 	matrixw.h
-mpwrap.o: mpwrap.c ../config.h calc.h structs.h mpwrap.h util.h
-mpzextra.o: mpzextra.c ../config.h calc.h structs.h mpwrap.h mpzextra.h
+mpwrap.o: mpwrap.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	util.h
+mpzextra.o: mpzextra.c ../config.h calc.h genius-i18n.h structs.h \
+	mpwrap.h mpzextra.h
 parse.o: parse.c ../config.h structs.h mpwrap.h eval.h dict.h util.h \
-	calc.h matrix.h matrixw.h parseutil.h extra.h
+	calc.h genius-i18n.h matrix.h matrixw.h parseutil.h extra.h
 parseutil.o: parseutil.c ../config.h structs.h mpwrap.h eval.h dict.h \
-	util.h calc.h matrix.h matrixw.h parseutil.h extra.h
+	util.h calc.h genius-i18n.h matrix.h matrixw.h parseutil.h \
+	extra.h
 plugin.o: plugin.c ../config.h ../vicious-extensions/vicious.h \
 	../vicious-extensions/ve-misc.h \
 	../vicious-extensions/ve-config.h \
-	../vicious-extensions/ve-signal.h calc.h structs.h mpwrap.h \
-	eval.h util.h dict.h funclib.h matrixw.h matrix.h compil.h \
-	parse.h plug_api.h plugin.h plugread.h
+	../vicious-extensions/ve-signal.h calc.h genius-i18n.h \
+	structs.h mpwrap.h eval.h util.h dict.h funclib.h matrixw.h \
+	matrix.h compil.h parse.h plug_api.h plugin.h plugread.h
 plugread.o: plugread.c ../config.h ../vicious-extensions/vicious.h \
 	../vicious-extensions/ve-misc.h \
 	../vicious-extensions/ve-config.h \
-	../vicious-extensions/ve-signal.h calc.h structs.h mpwrap.h \
-	plugin.h plugread.h
+	../vicious-extensions/ve-signal.h calc.h genius-i18n.h \
+	structs.h mpwrap.h plugin.h plugread.h
 plugread_nongnome.o: plugread_nongnome.c ../config.h calc.h structs.h \
 	mpwrap.h plugin.h plugread.h
-testplugin.lo testplugin.o : testplugin.c ../config.h plug_api.h eval.h \
-	mpwrap.h structs.h calc.h dict.h geloutput.h
-util.o: util.c ../config.h util.h
-utype.o: utype.c ../config.h mpwrap.h eval.h structs.h calc.h dict.h \
-	util.h funclib.h matrix.h matrixw.h matop.h compil.h utype.h
+testplugin.lo testplugin.o : testplugin.c ../config.h calc.h \
+	genius-i18n.h structs.h mpwrap.h plug_api.h eval.h dict.h \
+	geloutput.h
+util.o: util.c ../config.h genius-i18n.h util.h
+utype.o: utype.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
+	eval.h dict.h util.h funclib.h matrix.h matrixw.h matop.h \
+	compil.h utype.h
 
 info-am:
 info: info-am

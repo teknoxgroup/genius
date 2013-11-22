@@ -1,3 +1,18 @@
+Thu Mar 25 16:49:31 2004  George Lebl <jirka@5z.com>
+
+	* ve-i18n.h, *.c, Makefile.am: make it possible to compile completely
+	  without requiring GNOME
+
+Thu Jan 15 13:02:07 2004  George Lebl <jirka@5z.com>
+
+	* ve-misc.[ch]: when glib is new use the glib setenv/unsetenv
+	  thingies.  Perhaps I should just whack it (except for clearenv
+	  which still isn't in glib)
+
+Tue Jan 06 17:44:00 2004  George Lebl <jirka@5z.com>
+
+	* ve-misc.c: export correct function name for ve_filename_from_utf8
+
 Fri Dec 19 11:49:08 2003  George Lebl <jirka@5z.com>
 
 	* ve-config.c, ve-misc.h, ve-nongnome.c:  Better testing and handling

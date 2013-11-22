@@ -12,11 +12,20 @@ Requirements:
 	- lex (tested under flex)
 	- yacc (tested under bison -y)
 	- gmp (relatively new one required, tested with 4.1)
-	- glib
-	- gtk+
+	  - mpfr (optional but highly recommended)
+                 (part of gmp, but must be enabled)
+	- glib 2.x
+And for the GNOME frontend you need:
+	- gtk+ 2.x (2.4 or greater is recommended, but any 2.x should work)
 	- gnome libs
+	- gtksourceview (optional but recommended)
 All except gmp seem to be pretty much standard or Linux systems, and even
 on most other platforms.
+
+If you want to compile without the GNOME frontend, try the
+  --disable-gnome
+argument to the ./configure script.  You will miss out on the GUI stuff
+(which includes the plotting) but you can use all the rest nicely.
 
 It's under GPL so read COPYING
 

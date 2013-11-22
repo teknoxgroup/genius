@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) George Lebl
+ * Copyright (C) 2004 George Lebl
  *
  * Author: George Lebl
  *
@@ -19,12 +19,22 @@
  * USA.
  */
 
-#ifndef GRAPHING_H_
-#define GRAPHING_H_
+#ifndef GNOME_GENIUS_H_
+#define GNOME_GENIUS_H_
 
-/* only doable in gui mode */
-void gel_add_graph_functions (void);
+typedef struct {
+	gboolean error_box;
+	gboolean info_box;
+	int scrollback;
+	char *font;
+} GeniusSetup;
 
-void genius_lineplot_dialog (void);
+extern GeniusSetup genius_setup;
+extern GtkWidget *genius_window;
+extern gboolean interrupted;
+extern GHashTable *uncompiled;
+extern calcstate_t calcstate;
 
-#endif /* GRAPHING_H_ */
+void genius_interrupt_calc (void);
+
+#endif /* GNOME_GENIUS_H_ */

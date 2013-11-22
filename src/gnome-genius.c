@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2003 George Lebl
+ * Copyright (C) 1997-2004 George Lebl
  *
  * Author: George Lebl
  *
@@ -55,8 +55,7 @@
 #include <gtksourceview/gtksourceprintjob.h>
 #endif
 
-/* FIXME: need header */
-void genius_interrupt_calc (void);
+#include "gnome-genius.h"
 
 /*Globals:*/
 
@@ -75,7 +74,7 @@ calcstate_t curstate={
 	};
 	
 extern int parenth_depth;
-extern int interrupted;
+extern gboolean interrupted;
 
 GtkWidget *genius_window = NULL;
 
@@ -94,14 +93,7 @@ static int errors_printed = 0;
 
 static char *last_dir = NULL;
 
-typedef struct {
-	gboolean error_box;
-	gboolean info_box;
-	int scrollback;
-	char *font;
-} geniussetup_t;
-
-geniussetup_t cursetup = {
+GeniusSetup genius_setup = {
 	FALSE,
 	TRUE,
 	1000,
@@ -173,11 +165,11 @@ static GnomeUIInfo file_menu[] = {
 #define FILE_SAVE_AS_ITEM 3
 	GNOMEUIINFO_MENU_SAVE_AS_ITEM (save_as_callback,NULL),
 #define FILE_RELOAD_ITEM 4
-	GNOMEUIINFO_ITEM_STOCK(N_("_Reload From Disk"),N_("Reload the selected program from disk"), reload_cb, GTK_STOCK_REVERT_TO_SAVED),
+	GNOMEUIINFO_ITEM_STOCK(N_("_Reload from Disk"),N_("Reload the selected program from disk"), reload_cb, GTK_STOCK_REVERT_TO_SAVED),
 #define FILE_CLOSE_ITEM 5
 	GNOMEUIINFO_MENU_CLOSE_ITEM (close_callback, NULL),
 	GNOMEUIINFO_SEPARATOR,
-	GNOMEUIINFO_ITEM_STOCK(N_("_Load and Run"),N_("Load and execute a file in genius"), load_cb, GTK_STOCK_OPEN),
+	GNOMEUIINFO_ITEM_STOCK(N_("_Load and Run..."),N_("Load and execute a file in genius"), load_cb, GTK_STOCK_OPEN),
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_MENU_EXIT_ITEM (quitapp,NULL),
 	GNOMEUIINFO_END,
@@ -218,6 +210,8 @@ static GnomeUIInfo calc_menu[] = {
 #define CALC_RUN_ITEM 0
 	GNOMEUIINFO_ITEM_STOCK(N_("_Run"),N_("Run current program"),run_program, GTK_STOCK_EXECUTE),
 	GNOMEUIINFO_ITEM_STOCK(N_("_Interrupt"),N_("Interrupt current calculation"),genius_interrupt_calc,GTK_STOCK_STOP),
+	GNOMEUIINFO_SEPARATOR,
+	GNOMEUIINFO_ITEM_STOCK (N_("_Plot"), N_("Plot a function"), genius_lineplot_dialog, GNOME_STOCK_BOOK_OPEN),
 	GNOMEUIINFO_END,
 };
 
@@ -263,6 +257,7 @@ static GnomeUIInfo toolbar[] = {
 #define TOOLBAR_RUN_ITEM 1
 	GNOMEUIINFO_ITEM_STOCK(N_("Run"),N_("Run current program"),run_program, GTK_STOCK_EXECUTE),
 	GNOMEUIINFO_ITEM_STOCK(N_("Open"),N_("Open a GEL file for running"), open_callback, GTK_STOCK_OPEN),
+	GNOMEUIINFO_ITEM_STOCK(N_("Plot"), N_("Plot a function"), genius_lineplot_dialog, GNOME_STOCK_BOOK_OPEN),
 	GNOMEUIINFO_ITEM_STOCK(N_("Exit"),N_("Exit genius"), quitapp, GTK_STOCK_QUIT),
 	GNOMEUIINFO_END,
 };
@@ -300,7 +295,6 @@ geniusbox (gboolean error,
 					     GTK_BUTTONS_OK,
 					     "%s",
 					     s);
-		gtk_dialog_set_has_separator (GTK_DIALOG (mb), FALSE);
 	} else {
 		GtkWidget *sw;
 		GtkWidget *tv;
@@ -359,7 +353,7 @@ geniusbox (gboolean error,
 static void
 printout_error_num_and_reset(void)
 {
-	if(cursetup.error_box) {
+	if(genius_setup.error_box) {
 		if(errors) {
 			if(errors_printed-curstate.max_errors > 0) {
 				g_string_append_printf (errors,
@@ -415,7 +409,7 @@ geniuserror(const char *s)
 	else
 		str = g_strdup(s);
 	
-	if(cursetup.error_box) {
+	if(genius_setup.error_box) {
 		if(errors) {
 			g_string_append_c(errors,'\n');
 			g_string_append(errors,str);
@@ -460,7 +454,7 @@ geniusinfo(const char *s)
 	else
 		str = g_strdup(s);
 	
-	if(cursetup.info_box) {
+	if(genius_setup.info_box) {
 		if(infos) {
 			g_string_append_c(infos,'\n');
 			g_string_append(infos,str);
@@ -482,11 +476,11 @@ aboutcb(GtkWidget * widget, gpointer data)
 {
 	static GtkWidget *about;
 	static const char *authors[] = {
-		"George Lebl (jirka@5z.com)",
+		"Jiri (George) Lebl (jirka@5z.com)",
 		NULL
 	};
 	static const char *documenters[] = {
-		"George Lebl (jirka@5z.com)",
+		"Jiri (George) Lebl (jirka@5z.com)",
 		NULL
 	};
 	const char *translators;
@@ -499,7 +493,7 @@ aboutcb(GtkWidget * widget, gpointer data)
 		translators = _("translator_credits-PLEASE_ADD_YOURSELF_HERE");
 
 		about = gnome_about_new
-			(_("GENIUS Calculator"),
+			(_("About Genius"),
 			 VERSION,
 			 COPYRIGHT_STRING,
 			 _("The Gnome calculator style edition of "
@@ -526,11 +520,12 @@ aboutcb(GtkWidget * widget, gpointer data)
 static void
 set_properties (void)
 {
-	gnome_config_set_string("/genius/properties/pango_font", cursetup.font?
-				cursetup.font:DEFAULT_FONT);
-	gnome_config_set_int("/genius/properties/scrollback", cursetup.scrollback);
-	gnome_config_set_bool("/genius/properties/error_box", cursetup.error_box);
-	gnome_config_set_bool("/genius/properties/info_box", cursetup.info_box);
+	gnome_config_set_string("/genius/properties/pango_font", genius_setup.font?
+				genius_setup.font:DEFAULT_FONT);
+	gnome_config_set_int("/genius/properties/scrollback", genius_setup.scrollback);
+	gnome_config_set_bool("/genius/properties/error_box", genius_setup.error_box);
+	gnome_config_set_bool("/genius/properties/info_box",
+			      genius_setup.info_box);
 	gnome_config_set_int("/genius/properties/max_digits", 
 			      curstate.max_digits);
 	gnome_config_set_bool("/genius/properties/results_as_floats",
@@ -562,7 +557,6 @@ display_error (GtkWidget *parent, const char *err)
 				    GTK_BUTTONS_CLOSE,
 				    "%s",
 				    err);
-	gtk_dialog_set_has_separator (GTK_DIALOG (w), FALSE);
 	gtk_label_set_use_markup
 		(GTK_LABEL (GTK_MESSAGE_DIALOG (w)->label), TRUE);
 
@@ -591,7 +585,6 @@ display_warning (GtkWidget *parent, const char *warn)
 				    GTK_BUTTONS_CLOSE,
 				    "%s",
 				    warn);
-	gtk_dialog_set_has_separator (GTK_DIALOG (w), FALSE);
 	gtk_label_set_use_markup
 		(GTK_LABEL (GTK_MESSAGE_DIALOG (w)->label), TRUE);
 
@@ -621,7 +614,6 @@ ask_question (GtkWidget *parent, const char *question)
 				      GTK_BUTTONS_YES_NO,
 				      "%s",
 				      question);
-	gtk_dialog_set_has_separator (GTK_DIALOG (req), FALSE);
 	gtk_label_set_use_markup
 		(GTK_LABEL (GTK_MESSAGE_DIALOG (req)->label), TRUE);
 
@@ -723,10 +715,10 @@ fontsetcb(GnomeFontPicker *gfp, gchar *font_name, char **font)
 
 
 static calcstate_t tmpstate={0};
-static geniussetup_t tmpsetup={0};
+static GeniusSetup tmpsetup={0};
 
 static calcstate_t cancelstate={0};
-static geniussetup_t cancelsetup={0};
+static GeniusSetup cancelsetup={0};
 
 static void
 setup_response (GtkWidget *widget, gint resp, gpointer data)
@@ -735,35 +727,29 @@ setup_response (GtkWidget *widget, gint resp, gpointer data)
 	    resp == GTK_RESPONSE_OK ||
 	    resp == GTK_RESPONSE_APPLY) {
 		if (resp == GTK_RESPONSE_CANCEL) {
-			g_free (cursetup.font);
-			cursetup = cancelsetup;
+			g_free (genius_setup.font);
+			genius_setup = cancelsetup;
 			if (cancelsetup.font)
-				cursetup.font = g_strdup (cancelsetup.font);
+				genius_setup.font = g_strdup (cancelsetup.font);
 			curstate = cancelstate;
 		} else {
-			g_free (cursetup.font);
-			cursetup = tmpsetup;
+			g_free (genius_setup.font);
+			genius_setup = tmpsetup;
 			if (tmpsetup.font)
-				cursetup.font = g_strdup (tmpsetup.font);
+				genius_setup.font = g_strdup (tmpsetup.font);
 			curstate = tmpstate;
 		}
 
 		set_new_calcstate (curstate);
 		vte_terminal_set_scrollback_lines (VTE_TERMINAL (term),
-						   cursetup.scrollback);
+						   genius_setup.scrollback);
 		vte_terminal_set_font_from_string (VTE_TERMINAL (term),
-						   cursetup.font ?
-						   cursetup.font : DEFAULT_FONT);
+						   genius_setup.font ?
+						   genius_setup.font : DEFAULT_FONT);
 		if (resp == GTK_RESPONSE_OK ||
 		    resp == GTK_RESPONSE_CANCEL)
 			gtk_widget_destroy (widget);
 	}
-}
-
-static void
-destroy_setup(GtkWidget *widget, gpointer data)
-{
-	setupdialog = NULL;
 }
 
 static void
@@ -782,18 +768,18 @@ setup_calc(GtkWidget *widget, gpointer data)
 
 	cancelstate = curstate;
 	g_free (tmpsetup.font);
-	cancelsetup = cursetup;
-	if (cursetup.font)
-		cancelsetup.font = g_strdup (cursetup.font);
+	cancelsetup = genius_setup;
+	if (genius_setup.font)
+		cancelsetup.font = g_strdup (genius_setup.font);
 	
 	tmpstate = curstate;
 	g_free (tmpsetup.font);
-	tmpsetup = cursetup;
-	if (cursetup.font)
-		tmpsetup.font = g_strdup (cursetup.font);
+	tmpsetup = genius_setup;
+	if (genius_setup.font)
+		tmpsetup.font = g_strdup (genius_setup.font);
 	
 	setupdialog = gtk_dialog_new_with_buttons
-		(_("GENIUS Calculator Setup"),
+		(_("Genius Setup"),
 		 GTK_WINDOW (genius_window) /* parent */,
 		 0 /* flags */,
 		 GTK_STOCK_APPLY, GTK_RESPONSE_APPLY,
@@ -1015,8 +1001,9 @@ setup_calc(GtkWidget *widget, gpointer data)
 	g_signal_connect (G_OBJECT (setupdialog), "response",
 			  G_CALLBACK (setup_response), NULL);	
 	g_signal_connect (G_OBJECT (setupdialog), "destroy",
-			  G_CALLBACK (destroy_setup), NULL);
-	gtk_widget_show_all(setupdialog);
+			  G_CALLBACK (gtk_widget_destroyed), 
+			  &setupdialog);
+	gtk_widget_show_all (setupdialog);
 }
 
 void
@@ -1045,11 +1032,11 @@ manual_call (GtkWidget *widget, gpointer data)
 		return;
 	} else {
 		/* perhaps a bit ugly */
-		gboolean last = cursetup.info_box;
-		cursetup.info_box = TRUE;
+		gboolean last = genius_setup.info_box;
+		genius_setup.info_box = TRUE;
 		gel_evalexp ("manual", NULL, main_out, NULL, TRUE, NULL);
 		gel_printout_infos ();
-		cursetup.info_box = last;
+		genius_setup.info_box = last;
 	}
 }
 
@@ -1061,14 +1048,15 @@ warranty_call (GtkWidget *widget, gpointer data)
 		return;
 	} else {
 		/* perhaps a bit ugly */
-		gboolean last = cursetup.info_box;
-		cursetup.info_box = TRUE;
+		gboolean last = genius_setup.info_box;
+		genius_setup.info_box = TRUE;
 		gel_evalexp ("warranty", NULL, main_out, NULL, TRUE, NULL);
 		gel_printout_infos ();
-		cursetup.info_box = last;
+		genius_setup.info_box = last;
 	}
 }
 
+#if ! GTK_CHECK_VERSION(2,3,5)
 static void
 setup_last_dir (const char *filename)
 {
@@ -1086,18 +1074,52 @@ setup_last_dir (const char *filename)
 	last_dir = g_strconcat (s, "/", NULL);
 	g_free (s);
 }
+#endif
 
+#if GTK_CHECK_VERSION(2,3,5)
 static void
-fs_destroy_cb(GtkWidget *w, GtkWidget **fs)
+add_filters (GtkFileChooser *fs)
 {
-	*fs = NULL;
-}
+	GtkFileFilter *filter_gel;
+	GtkFileFilter *filter_all;
 
+	filter_gel = gtk_file_filter_new ();
+	gtk_file_filter_set_name (filter_gel, _("GEL files"));
+	gtk_file_filter_add_pattern (filter_gel, "*.gel");
+	gtk_file_filter_add_pattern (filter_gel, "*.GEL");
+
+	filter_all = gtk_file_filter_new ();
+	gtk_file_filter_set_name (filter_all, _("All files"));
+	gtk_file_filter_add_pattern (filter_all, "*");
+
+	gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fs), filter_gel);
+	gtk_file_chooser_add_filter (GTK_FILE_CHOOSER (fs), filter_all);
+	gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (fs), filter_gel);
+
+}
+#endif
+
+#if GTK_CHECK_VERSION(2,3,5)
+static void
+really_load_cb (GtkFileChooser *fs, int response, gpointer data)
+#else
 static void
 really_load_cb (GtkWidget *w, GtkFileSelection *fs)
+#endif
 {
 	const char *s;
+#if GTK_CHECK_VERSION(2,3,5)
+	if (response != GTK_RESPONSE_OK) {
+		gtk_widget_destroy (GTK_WIDGET (fs));
+		return;
+	}
+#endif
+
+#if GTK_CHECK_VERSION(2,3,5)
+	s = gtk_file_chooser_get_filename (fs);
+#else
 	s = gtk_file_selection_get_filename (fs);
+#endif
 	if (s == NULL ||
 	    access (s, R_OK) != 0) {
 		display_error (GTK_WIDGET (fs),
@@ -1105,7 +1127,12 @@ really_load_cb (GtkWidget *w, GtkFileSelection *fs)
 		return;
 	}
 
+#if GTK_CHECK_VERSION(2,3,5)
+	g_free (last_dir);
+	last_dir = gtk_file_chooser_get_current_folder (fs);
+#else
 	setup_last_dir (s);
+#endif
 
 	gtk_widget_destroy (GTK_WIDGET (fs));
 
@@ -1119,18 +1146,36 @@ load_cb (GtkWidget *w)
 {
 	static GtkWidget *fs = NULL;
 	
-	if(fs) {
-		gtk_widget_show_now(fs);
-		gdk_window_raise(fs->window);
+	if (fs != NULL) {
+		gtk_window_present (GTK_WINDOW (fs));
 		return;
 	}
 
-	fs = gtk_file_selection_new(_("Load GEL file"));
+#if GTK_CHECK_VERSION(2,3,5)
+	fs = gtk_file_chooser_dialog_new (_("Load and Run"),
+					  GTK_WINDOW (genius_window),
+					  GTK_FILE_CHOOSER_ACTION_OPEN,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  _("_Load"), GTK_RESPONSE_OK,
+					  NULL);
+
+	add_filters (GTK_FILE_CHOOSER (fs));
+
+	g_signal_connect (G_OBJECT (fs), "destroy",
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
+	g_signal_connect (G_OBJECT (fs), "response",
+			  G_CALLBACK (really_load_cb), NULL);
+
+	if (last_dir != NULL)
+		gtk_file_chooser_set_current_folder
+			(GTK_FILE_CHOOSER (fs), last_dir);
+#else
+	fs = gtk_file_selection_new (_("Load and Run"));
 	
 	gtk_window_set_position (GTK_WINDOW (fs), GTK_WIN_POS_MOUSE);
 
 	g_signal_connect (G_OBJECT (fs), "destroy",
-			  G_CALLBACK (fs_destroy_cb), &fs);
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
 	
 	g_signal_connect (G_OBJECT (GTK_FILE_SELECTION (fs)->ok_button),
 			  "clicked", G_CALLBACK (really_load_cb),
@@ -1142,19 +1187,10 @@ load_cb (GtkWidget *w)
 	if (last_dir != NULL)
 		gtk_file_selection_set_filename
 			(GTK_FILE_SELECTION (fs), last_dir);
+#endif
 
 	gtk_widget_show (fs);
 }
-
-void            gtk_text_buffer_cut_clipboard           (GtkTextBuffer *buffer,
-							 GtkClipboard  *clipboard,
-                                                         gboolean       default_editable);
-void            gtk_text_buffer_copy_clipboard          (GtkTextBuffer *buffer,
-							 GtkClipboard  *clipboard);
-void            gtk_text_buffer_paste_clipboard         (GtkTextBuffer *buffer,
-							 GtkClipboard  *clipboard,
-							 GtkTextIter   *override_location,
-                                                         gboolean       default_editable);
 
 static void
 cut_callback (GtkWidget *menu_item, gpointer data)
@@ -1238,15 +1274,15 @@ copy_answer (void)
 	};
 	/* perhaps a bit ugly */
 	GelOutput *out = gel_output_new ();
-	gboolean last_info = cursetup.info_box;
-	gboolean last_error = cursetup.error_box;
-	cursetup.info_box = TRUE;
-	cursetup.error_box = TRUE;
+	gboolean last_info = genius_setup.info_box;
+	gboolean last_error = genius_setup.error_box;
+	genius_setup.info_box = TRUE;
+	genius_setup.error_box = TRUE;
 	gel_output_setup_string (out, 0, NULL);
 	gel_evalexp ("ans", NULL, out, NULL, TRUE, NULL);
 	gel_printout_infos ();
-	cursetup.info_box = last_info;
-	cursetup.error_box = last_error;
+	genius_setup.info_box = last_info;
+	genius_setup.error_box = last_error;
 
 	g_free (clipboard_str);
 	clipboard_str = gel_output_snarf_string (out);
@@ -1618,11 +1654,27 @@ new_callback (GtkWidget *menu_item, gpointer data)
 	new_program (NULL);
 }
 
+#if GTK_CHECK_VERSION(2,3,5)
+static void
+really_open_cb (GtkFileChooser *fs, int response, gpointer data)
+#else
 static void
 really_open_cb (GtkWidget *w, GtkFileSelection *fs)
+#endif
 {
 	const char *s;
+#if GTK_CHECK_VERSION(2,3,5)
+	if (response != GTK_RESPONSE_OK) {
+		gtk_widget_destroy (GTK_WIDGET (fs));
+		return;
+	}
+#endif
+
+#if GTK_CHECK_VERSION(2,3,5)
+	s = gtk_file_chooser_get_filename (fs);
+#else
 	s = gtk_file_selection_get_filename (fs);
+#endif
 	if (s == NULL ||
 	    access (s, R_OK) != 0) {
 		display_error (GTK_WIDGET (fs),
@@ -1630,7 +1682,12 @@ really_open_cb (GtkWidget *w, GtkFileSelection *fs)
 		return;
 	}
 
+#if GTK_CHECK_VERSION(2,3,5)
+	g_free (last_dir);
+	last_dir = gtk_file_chooser_get_current_folder (fs);
+#else
 	setup_last_dir (s);
+#endif
 
 	new_program (s);
 
@@ -1642,18 +1699,36 @@ open_callback (GtkWidget *w)
 {
 	static GtkWidget *fs = NULL;
 	
-	if(fs) {
-		gtk_widget_show_now(fs);
-		gdk_window_raise(fs->window);
+	if (fs != NULL) {
+		gtk_window_present (GTK_WINDOW (fs));
 		return;
 	}
 
-	fs = gtk_file_selection_new(_("Open GEL file"));
+#if GTK_CHECK_VERSION(2,3,5)
+	fs = gtk_file_chooser_dialog_new (_("Open..."),
+					  GTK_WINDOW (genius_window),
+					  GTK_FILE_CHOOSER_ACTION_OPEN,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  GTK_STOCK_OPEN, GTK_RESPONSE_OK,
+					  NULL);
+
+	add_filters (GTK_FILE_CHOOSER (fs));
+
+	g_signal_connect (G_OBJECT (fs), "destroy",
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
+	g_signal_connect (G_OBJECT (fs), "response",
+			  G_CALLBACK (really_open_cb), NULL);
+
+	if (last_dir != NULL)
+		gtk_file_chooser_set_current_folder
+			(GTK_FILE_CHOOSER (fs), last_dir);
+#else
+	fs = gtk_file_selection_new (_("Open..."));
 	
 	gtk_window_set_position (GTK_WINDOW (fs), GTK_WIN_POS_MOUSE);
 
 	g_signal_connect (G_OBJECT (fs), "destroy",
-			  G_CALLBACK (fs_destroy_cb), &fs);
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
 	
 	g_signal_connect (G_OBJECT (GTK_FILE_SELECTION (fs)->ok_button),
 			  "clicked", G_CALLBACK (really_open_cb),
@@ -1665,6 +1740,7 @@ open_callback (GtkWidget *w)
 	if (last_dir != NULL)
 		gtk_file_selection_set_filename
 			(GTK_FILE_SELECTION (fs), last_dir);
+#endif
 
 	gtk_widget_show (fs);
 }
@@ -1745,22 +1821,51 @@ save_callback (GtkWidget *w)
 	}
 }
 
+#if GTK_CHECK_VERSION(2,3,5)
+static void
+really_save_as_cb (GtkFileChooser *fs, int response, gpointer data)
+#else
 static void
 really_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
+#endif
 {
-	const char *s;
+	char *s;
+	char *base;
+#if GTK_CHECK_VERSION(2,3,5)
+	if (response != GTK_RESPONSE_OK) {
+		gtk_widget_destroy (GTK_WIDGET (fs));
+		/* FIXME: don't want to deal with modality issues right now */
+		gtk_widget_set_sensitive (genius_window, TRUE);
+		return;
+	}
+#endif
 
 	/* sanity */
 	if (selected_program == NULL)
 		return;
 
-	s = gtk_file_selection_get_filename (fs);
+#if GTK_CHECK_VERSION(2,3,5)
+	s = g_strdup (gtk_file_chooser_get_filename (fs));
+#else
+	s = g_strdup (gtk_file_selection_get_filename (fs));
+#endif
 	if (s == NULL)
 		return;
+	base = g_path_get_basename (s);
+	if (base != NULL && base[0] != '\0' &&
+	    strchr (base, '.') == NULL) {
+		char *n = g_strconcat (s, ".gel", NULL);
+		g_free (s);
+		s = n;
+	}
+	g_free (base);
+	
 	if (access (s, F_OK) == 0 &&
 	    ! ask_question (GTK_WIDGET (fs),
-			    _("File already exists.  Overwrite it?")))
+			    _("File already exists.  Overwrite it?"))) {
+		g_free (s);
 		return;
+	}
 
 	if ( ! save_program (selected_program, s /* new fname */)) {
 		char *err = g_strdup_printf (_("<b>Cannot save file</b>\n"
@@ -1768,16 +1873,25 @@ really_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
 					     g_strerror (errno));
 		display_error (GTK_WIDGET (fs), err);
 		g_free (err);
+		g_free (s);
 		return;
 	}
 
+#if GTK_CHECK_VERSION(2,3,5)
+	g_free (last_dir);
+	last_dir = gtk_file_chooser_get_current_folder (fs);
+#else
 	setup_last_dir (s);
+#endif
 
 	gtk_widget_destroy (GTK_WIDGET (fs));
 	/* FIXME: don't want to deal with modality issues right now */
 	gtk_widget_set_sensitive (genius_window, TRUE);
+
+	g_free (s);
 }
 
+#if ! GTK_CHECK_VERSION(2,3,5)
 static void
 really_cancel_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
 {
@@ -1785,6 +1899,7 @@ really_cancel_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
 	/* FIXME: don't want to deal with modality issues right now */
 	gtk_widget_set_sensitive (genius_window, TRUE);
 }
+#endif
 
 static void
 save_as_callback (GtkWidget *w)
@@ -1795,21 +1910,42 @@ save_as_callback (GtkWidget *w)
 	if (selected_program == NULL)
 		return;
 	
-	if (fs) {
-		gtk_widget_show_now(fs);
-		gdk_window_raise(fs->window);
+	if (fs != NULL) {
+		gtk_window_present (GTK_WINDOW (fs));
 		return;
 	}
 
 	/* FIXME: don't want to deal with modality issues right now */
 	gtk_widget_set_sensitive (genius_window, FALSE);
 
-	fs = gtk_file_selection_new(_("Open GEL file"));
+#if GTK_CHECK_VERSION(2,3,5)
+	fs = gtk_file_chooser_dialog_new (_("Save As..."),
+					  GTK_WINDOW (genius_window),
+					  GTK_FILE_CHOOSER_ACTION_SAVE,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  GTK_STOCK_SAVE, GTK_RESPONSE_OK,
+					  NULL);
+
+	add_filters (GTK_FILE_CHOOSER (fs));
+
+	g_signal_connect (G_OBJECT (fs), "destroy",
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
+	g_signal_connect (G_OBJECT (fs), "response",
+			  G_CALLBACK (really_save_as_cb), NULL);
+
+	if (last_dir != NULL) {
+		gtk_file_chooser_set_current_folder
+			(GTK_FILE_CHOOSER (fs), last_dir);
+	}
+	gtk_file_chooser_set_filename
+		(GTK_FILE_CHOOSER (fs), selected_program->name);
+#else
+	fs = gtk_file_selection_new(_("Save As..."));
 	
 	gtk_window_set_position (GTK_WINDOW (fs), GTK_WIN_POS_MOUSE);
 
 	g_signal_connect (G_OBJECT (fs), "destroy",
-			  G_CALLBACK (fs_destroy_cb), &fs);
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
 	
 	g_signal_connect (G_OBJECT (GTK_FILE_SELECTION (fs)->ok_button),
 			  "clicked", G_CALLBACK (really_save_as_cb),
@@ -1823,6 +1959,7 @@ save_as_callback (GtkWidget *w)
 			(GTK_FILE_SELECTION (fs), last_dir);
 	gtk_file_selection_set_filename
 		(GTK_FILE_SELECTION (fs), selected_program->name);
+#endif
 
 	gtk_widget_show (fs);
 }
@@ -1974,7 +2111,9 @@ static GtkWidget *
 create_main_window (void)
 {
 	GtkWidget *w;
-        w = gnome_app_new("gnome-genius", _("GENIUS Calculator"));
+	char *s = g_strdup_printf (_("Genius %s"), VERSION);
+        w = gnome_app_new("gnome-genius", s);
+	g_free (s);
 	gtk_window_set_wmclass (GTK_WINDOW (w), "gnome-genius", "gnome-genius");
 
         g_signal_connect (G_OBJECT (w), "delete_event",
@@ -1990,17 +2129,17 @@ get_properties (void)
 	gchar buf[256];
 
 	g_snprintf (buf, 256, "/genius/properties/pango_font=%s",
-		    cursetup.font ? cursetup.font : DEFAULT_FONT);
-	cursetup.font = gnome_config_get_string (buf);
+		    genius_setup.font ? genius_setup.font : DEFAULT_FONT);
+	genius_setup.font = gnome_config_get_string (buf);
 	g_snprintf(buf,256,"/genius/properties/scrollback=%d",
-		   cursetup.scrollback);
-	cursetup.scrollback = gnome_config_get_int(buf);
+		   genius_setup.scrollback);
+	genius_setup.scrollback = gnome_config_get_int(buf);
 	g_snprintf(buf,256,"/genius/properties/error_box=%s",
-		   (cursetup.error_box)?"true":"false");
-	cursetup.error_box = gnome_config_get_bool(buf);
+		   (genius_setup.error_box)?"true":"false");
+	genius_setup.error_box = gnome_config_get_bool(buf);
 	g_snprintf(buf,256,"/genius/properties/info_box=%s",
-		   (cursetup.info_box)?"true":"false");
-	cursetup.info_box = gnome_config_get_bool(buf);
+		   (genius_setup.info_box)?"true":"false");
+	genius_setup.info_box = gnome_config_get_bool(buf);
 	
 	g_snprintf(buf,256,"/genius/properties/max_digits=%d",
 		   curstate.max_digits);
@@ -2018,9 +2157,6 @@ get_properties (void)
 		   curstate.max_errors);
 	curstate.max_errors = gnome_config_get_int(buf);
 }
-
-static GArray *readbuf = NULL;
-static int readbufl = 0;
 
 static void
 feed_to_zvt_from_string (const char *str, int size)
@@ -2107,10 +2243,7 @@ catch_interrupts (GtkWidget *w, GdkEvent *e)
 	if (e->type == GDK_KEY_PRESS &&
 	    e->key.keyval == GDK_c &&
 	    e->key.state & GDK_CONTROL_MASK) {
-		interrupted = TRUE;
-		if (readbuf != NULL)
-			readbuf = g_array_set_size(readbuf,0);
-		readbufl = 0;
+		genius_interrupt_calc ();
 		return TRUE;
 	}
 	return FALSE;
@@ -2464,7 +2597,7 @@ main (int argc, char *argv[])
 
 	term = vte_terminal_new ();
 	vte_terminal_set_scrollback_lines (VTE_TERMINAL (term),
-					   cursetup.scrollback);
+					   genius_setup.scrollback);
 	vte_terminal_set_cursor_blinks (VTE_TERMINAL (term), TRUE);
 	vte_terminal_set_audible_bell (VTE_TERMINAL (term), TRUE);
 	vte_terminal_set_scroll_on_keystroke (VTE_TERMINAL (term), TRUE);
@@ -2562,8 +2695,8 @@ main (int argc, char *argv[])
 	 * or the "monospace 12" (or default terminal font or whatnot)
 	 * will get used */
 	vte_terminal_set_font_from_string (VTE_TERMINAL (term), 
-					   cursetup.font ?
-					   cursetup.font : DEFAULT_FONT);
+					   genius_setup.font ?
+					   genius_setup.font : DEFAULT_FONT);
 
 
 	gtk_widget_show_now (genius_window);
@@ -2666,4 +2799,3 @@ main (int argc, char *argv[])
 
 	return 0;
 }
-

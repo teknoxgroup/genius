@@ -29,7 +29,7 @@
 
 ## Release information
 my $PROGRAM = "intltool-update";
-my $VERSION = "0.28";
+my $VERSION = "0.30";
 my $PACKAGE = "intltool";
 
 ## Loaded modules
@@ -60,24 +60,25 @@ my %po_files_by_lang = ();
 
 my $xml_support =
 "xml(?:\\.in)*|".	# http://www.w3.org/XML/ (Note: .in is not required)
-"ui|".                  # Bonobo specific - User Interface desc. files
-"lang|".                # ?
+"ui|".			# Bonobo specific - User Interface desc. files
+"lang|".		# ?
 "glade2?(?:\\.in)*|".	# Glade specific - User Interface desc. files (Note: .in is not required)
 "scm(?:\\.in)*|".	# ? (Note: .in is not required)
-"oaf(?:\\.in)+|".        # DEPRECATED: Replaces by Bonobo .server files 
-"etspec|".              # ?
-"server(?:\\.in)+|".     # Bonobo specific
-"sheet(?:\\.in)+|".      # ?
-"schemas(?:\\.in)+|".    # GConf specific
-"pong(?:\\.in)+";        # DEPRECATED: PONG is not used [by GNOME] any longer.
+"oaf(?:\\.in)+|".	# DEPRECATED: Replaces by Bonobo .server files 
+"etspec|".		# ?
+"server(?:\\.in)+|".	# Bonobo specific
+"sheet(?:\\.in)+|".	# ?
+"schemas(?:\\.in)+|".	# GConf specific
+"pong(?:\\.in)+|".	# DEPRECATED: PONG is not used [by GNOME] any longer.
+"kbd(?:\\.in)+";	# GOK specific. 
 
 my $ini_support =
-"desktop(?:\\.in)+|".    # http://www.freedesktop.org/Standards/menu-spec
-"caves(?:\\.in)+|".      # GNOME Games specific
-"directory(?:\\.in)+|".  # http://www.freedesktop.org/Standards/menu-spec
-"soundlist(?:\\.in)+|".  # GNOME specific
-"keys(?:\\.in)+|".       # GNOME Mime database specific
-"theme(?:\\.in)+";       # http://www.freedesktop.org/Standards/icon-theme-spec
+"desktop(?:\\.in)+|".	# http://www.freedesktop.org/Standards/menu-spec
+"caves(?:\\.in)+|".	# GNOME Games specific
+"directory(?:\\.in)+|".	# http://www.freedesktop.org/Standards/menu-spec
+"soundlist(?:\\.in)+|".	# GNOME specific
+"keys(?:\\.in)+|".	# GNOME Mime database specific
+"theme(?:\\.in)+";	# http://www.freedesktop.org/Standards/icon-theme-spec
 
 my $buildin_gettext_support = 
 "c|y|cc|cpp|c\\+\\+|h|hh|gob|py";
@@ -107,8 +108,8 @@ GetOptions
  "output-file|o=s"     => \$OUTPUT_FILE,
  ) or &Console_WriteError_InvalidOption;
 
-&print_help if $HELP_ARG;
-&print_version if $VERSION_ARG;
+&Console_Write_IntltoolHelp if $HELP_ARG;
+&Console_Write_IntltoolVersion if $VERSION_ARG;
 
 my $arg_count = ($DIST_ARG > 0)
     + ($POT_ARG > 0)
@@ -116,7 +117,7 @@ my $arg_count = ($DIST_ARG > 0)
     + ($MAINTAIN_ARG > 0)
     + ($REPORT_ARG > 0);
 
-&print_help if $arg_count > 1;
+&Console_Write_IntltoolHelp if $arg_count > 1;
 
 # --version and --help don't require a module name
 my $MODULE = $GETTEXT_PACKAGE || &FindPackageName;
@@ -571,9 +572,11 @@ sub GenerateHeaders
 sub GeneratePOTemplate
 {
     my $XGETTEXT = `which xgettext 2>/dev/null`;
+    my $XGETTEXT_ARGS = '';
     chomp $XGETTEXT;
 
     $XGETTEXT = $ENV{"XGETTEXT"} if $ENV{"XGETTEXT"};
+    $XGETTEXT_ARGS = $ENV{"XGETTEXT_ARGS"} if $ENV{"XGETTEXT_ARGS"};
 
     if (! -x $XGETTEXT)
     {
@@ -678,15 +681,16 @@ sub GeneratePOTemplate
     my @xgettext_argument=("$XGETTEXT",
 			   "--add-comments",
 			   "--directory\=\.\.",
-			   "--keyword\=\_",
-			   "--keyword\=N\_",
-			   "--keyword\=U\_",
 			   "--output\=$MODULE\.pot",
 			   "--files-from\=\.\/POTFILES\.in\.temp");
+    my $XGETTEXT_KEYWORDS = &FindPOTKeywords;
+    push @xgettext_argument, $XGETTEXT_KEYWORDS;
     push @xgettext_argument, "--from-code\=$encoding" if ($gettext_support_nonascii);
+    push @xgettext_argument, $XGETTEXT_ARGS if $XGETTEXT_ARGS;
     my $xgettext_command = join ' ', @xgettext_argument;
 
     # intercept xgettext error message
+    print "Running $xgettext_command\n" if $VERBOSE;
     my $xgettext_error_msg = `$xgettext_command 2>\&1`;
     my $command_failed = $?;
 
@@ -937,4 +941,24 @@ sub FindPackageName
     $name = SubstituteVariable ($name);
 
     return $name if $name;
+}
+
+
+sub FindPOTKeywords
+{
+
+    my $keywords = "--keyword\=\_ --keyword\=N\_ --keyword\=U\_";
+    my $make_source; { 
+	local (*IN);
+	open (IN, "<Makefile.in.in") || return $keywords;
+	seek (IN, 0, 0);
+	local $/; # slurp mode
+	$make_source = <IN>;
+	close IN;
+    }
+
+    # \s makes this not work, why?
+    $keywords = $1 if $make_source =~ /^XGETTEXT_KEYWORDS[ ]*=\[?([^\n\]]+)/m;
+    
+    return $keywords;
 }

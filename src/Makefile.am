@@ -26,17 +26,21 @@ INCLUDES = \
 	$(GENIUS_CFLAGS)					\
 	$(EXTRA_WARNING_CFLAGS)
 
+bin_PROGRAMS = @GNOME_GENIUS@ genius
 
-bin_PROGRAMS = gnome-genius genius
+libexec_PROGRAMS = @GENIUS_READLINE_HELPER_FIFO@
 
-libexec_PROGRAMS = genius-readline-helper-fifo
+EXTRA_PROGRAMS = gnome-genius genius-readline-helper-fifo
+
 
 gnome_genius_SOURCES = 	\
+	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
 	eval.c		\
 	eval.h		\
 	gnome-genius.c	\
+	gnome-genius.h	\
 	util.c		\
 	util.h		\
 	dict.c		\
@@ -98,12 +102,13 @@ genius_readline_helper_fifo_LDADD = \
 	-L$(top_builddir)/vicious-extensions	\
 	-lvicious				\
 	-lm					\
-	$(GENIUS_LIBS)				\
+	$(GENIUS_NOGUI_LIBS)			\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
 
 genius_SOURCES = 	\
+	genius-i18n.h	\
 	calc.c		\
 	calc.h		\
 	eval.c		\
@@ -155,11 +160,12 @@ genius_LDADD = \
 	@GMP_LIB@				\
 	@MPFR_LIB@				\
 	@LEXLIB@				\
-	$(GENIUS_LIBS)				\
+	$(GENIUS_NOGUI_LIBS)			\
 	@READLINE_LIB@				\
 	@TERMCAP_LIB@
 
 plugin_include_HEADERS = \
+	genius-i18n.h	\
 	plug_api.h	\
 	geloutput.h	\
 	mpwrap.h	\
@@ -186,7 +192,7 @@ CLEANFILES += $(BUILT_SOURCES)
 
 Desktopdir = $(datadir)/applications
 Desktop_in_files = \
-	gnome-genius.desktop.in	
+	@GNOME_GENIUS_DESKTOP_IN@	
 Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 
 @INTLTOOL_DESKTOP_RULE@
@@ -194,6 +200,7 @@ Desktop_DATA = $(Desktop_in_files:.desktop.in=.desktop)
 EXTRA_DIST = \
 	geniustest.pl \
 	geniustests.txt \
+	gnome-genius.desktop.in \
 	$(Desktop_in_files) \
 	$(Desktop_DATA) \
 	test.plugin.in \

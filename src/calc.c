@@ -20,8 +20,6 @@
  */
 #include "config.h"
 
-#include <gnome.h>
-
 #include <stdlib.h>
 #include <dirent.h>
 #include <unistd.h>
@@ -107,7 +105,7 @@ void (*infoout)(const char *) = NULL;
 GelCommand gel_command = GEL_NO_COMMAND;
 char *gel_command_arg = NULL;
 
-int interrupted = FALSE;
+gboolean interrupted = FALSE;
 
 static GSList *curfile = NULL;
 static GSList *curline = NULL;
@@ -946,8 +944,11 @@ appendoper(GelOutput *gelo, GelETree *n)
 		case E_CALL:
 			GET_L(n,l);
 			gel_output_string(gelo,"(");
-			if(l->type==IDENTIFIER_NODE) {
-				gel_output_string(gelo,l->id.id->token);
+			if (l->type==IDENTIFIER_NODE) {
+				gel_output_string (gelo, l->id.id->token);
+			} else if (l->type == FUNCTION_NODE &&
+				   l->func.func->id != NULL) {
+				gel_output_string (gelo, l->func.func->id->token);
 			} else if(l->type == OPERATOR_NODE && l->op.oper == E_DEREFERENCE) {
 				GelETree *t;
 				GET_L(l,t);
@@ -959,9 +960,8 @@ appendoper(GelOutput *gelo, GelETree *n)
 				gel_output_string(gelo,"*");
 				gel_output_string(gelo,t->id.id->token);
 			} else {
-				gel_errorout (_("Bad identifier for function node!"));
-				gel_output_string(gelo,"?)");
-				break;
+				print_etree (gelo, l, FALSE);
+				gel_output_string (gelo, " call ");
 			}
 			gel_output_string(gelo,"(");
 			li = n->op.args->any.next;
@@ -987,6 +987,8 @@ appendoper(GelOutput *gelo, GelETree *n)
 			gel_output_string(gelo,"(break)"); break;
 		case E_MOD_CALC:
 			append_binaryoper(gelo," mod ",n); break;
+		case E_DEFEQUALS:
+			append_binaryoper (gelo, ":=", n); break;
 
 		default:
 			gel_errorout (_("Unexpected operator!"));
@@ -1489,87 +1491,76 @@ addparenth(char *s)
 	return s;
 }
 
-void
-gel_compile_all_user_funcs(FILE *outfile)
+static void
+compile_funcs_in_dict (FILE *outfile, GSList *dict, gboolean is_extra_dict)
 {
-	GSList *funcs;
-	GSList *li;
-	fprintf(outfile,"CGEL "VERSION"\n");
-	funcs = d_getcontext();
-	if(!funcs) return;
-	funcs = g_slist_reverse(g_slist_copy(funcs));
-	for(li=funcs;li;li=g_slist_next(li)) {
+	GSList *li, *l;
+	char fs, vs;
+
+	if (is_extra_dict) {
+		fs = 'f';
+		vs = 'v';
+	} else {
+		fs = 'F';
+		vs = 'V';
+	}
+
+	for (li = dict; li != NULL; li = li->next) {
 		GelEFunc *func = li->data;
 		GelHelp *help;
 		char *body;
-		GSList *l;
 
-		if((func->type!=GEL_USER_FUNC &&
-		    func->type!=GEL_VARIABLE_FUNC) ||
-		   !func->id ||
-		   !func->id->token ||
-		   strcmp(func->id->token,"Ans")==0)
+		if ((func->type != GEL_USER_FUNC &&
+		     func->type != GEL_VARIABLE_FUNC) ||
+		    func->id == NULL ||
+		    func->id->token == NULL ||
+		    (func->id->parameter &&
+		     func->id->built_in_parameter) ||
+		    ( ! is_extra_dict && strcmp (func->id->token, "Ans") == 0))
 			continue;
 
-		if(func->data.user) {
+		if (func->data.user) {
 			body = gel_compile_tree(func->data.user);
 		} else {
-			body = g_strdup(g_hash_table_lookup(uncompiled,func->id));
-			g_assert(body);
+			body = g_strdup (g_hash_table_lookup (uncompiled,
+							      func->id));
+			g_assert (body != NULL);
 		}
-		if(func->type==GEL_USER_FUNC) {
+		if (func->type == GEL_USER_FUNC) {
 			fprintf (outfile,
-				 "F;%d;%s;%d;%d",
-				(int)strlen (body),
-				func->id->token,
-				(int)func->nargs,
-				(int)func->vararg);
+				 "%c;%d;%s;%d;%d",
+				 fs,
+				 (int)strlen (body),
+				 func->id->token,
+				 (int)func->nargs,
+				 (int)func->vararg);
 			for (l = func->named_args; l != NULL; l = l->next) {
 				GelToken *tok = l->data;
-				fprintf(outfile,";%s",tok->token);
+				fprintf (outfile, ";%s", tok->token);
 			}
 		} else /*GEL_VARIABLE_FUNC*/ {
-			fprintf(outfile,"V;%d;%s",(int)strlen(body),func->id->token);
+			int param;
+			if (is_extra_dict)
+				param = 0;
+			else
+				param = (int)func->id->parameter;
+			fprintf (outfile, "%c;%d;%s;%d",
+				 vs,
+				 (int)strlen(body),
+				 func->id->token,
+				 param);
 		}
 
-		fprintf(outfile,"\n%s\n",body);
-		g_free(body);
+		fprintf (outfile, "\n%s\n", body);
+		g_free (body);
 
-		/* FIXME: ugly, make this into a subroutine */
-		for (l = func->extra_dict; l != NULL; l = l->next) {
-			GelEFunc *f = li->data;
-			GSList *nl;
+		/* extra dict only does this so far */
+		if (is_extra_dict)
+			continue;
 
-			if((f->type!=GEL_USER_FUNC &&
-			    f->type!=GEL_VARIABLE_FUNC) ||
-			   !f->id ||
-			   !f->id->token)
-				continue;
-
-			if(f->data.user) {
-				body = gel_compile_tree(f->data.user);
-			} else {
-				body = g_strdup(g_hash_table_lookup(uncompiled,f->id));
-				g_assert(body);
-			}
-			if(f->type==GEL_USER_FUNC) {
-				fprintf (outfile,
-					 "f;%d;%s;%d;%d",
-					 (int)strlen (body),
-					 f->id->token,
-					 (int)f->nargs,
-					 (int)f->vararg);
-				for (nl = f->named_args; nl != NULL; nl = nl->next) {
-					GelToken *tok = nl->data;
-					fprintf(outfile,";%s",tok->token);
-				}
-			} else /*GEL_VARIABLE_FUNC*/ {
-				fprintf(outfile,"v;%d;%s",(int)strlen(body),f->id->token);
-			}
-
-			fprintf(outfile,"\n%s\n",body);
-			g_free(body);
-		}
+		compile_funcs_in_dict (outfile,
+				       func->extra_dict,
+				       TRUE /* is_extra_dict */);
 
 		help = get_help (func->id->token, FALSE /* insert */);
 		if (help != NULL && help->aliasfor != NULL) {
@@ -1599,10 +1590,22 @@ gel_compile_all_user_funcs(FILE *outfile)
 				g_free (s);
 			}
 		}
-		if(func->id->protected)
-			fprintf(outfile,"P;%s\n",func->id->token);
+		if (func->id->protected)
+			fprintf (outfile,"P;%s\n",func->id->token);
 	}
-	g_slist_free(funcs);
+}
+
+void
+gel_compile_all_user_funcs (FILE *outfile)
+{
+	GSList *funcs;
+	fprintf (outfile, "CGEL "VERSION"\n");
+	funcs = d_getcontext();
+	if (funcs == NULL)
+		return;
+	funcs = g_slist_reverse (g_slist_copy (funcs));
+	compile_funcs_in_dict (outfile, funcs, FALSE /* is_extra_dict */);
+	g_slist_free (funcs);
 }
 
 static void
@@ -1619,6 +1622,7 @@ load_compiled_fp (const char *file, FILE *fp)
 		g_free (buf);
 		return;
 	}
+	/* compiled files are not in general compatible accross versions */
 	if G_UNLIKELY (strcmp (buf, "CGEL "VERSION"\n") != 0) {
 		g_free (buf);
 		gel_errorout (_("File '%s' is a wrong version of GEL"), file);
@@ -1643,6 +1647,7 @@ load_compiled_fp (const char *file, FILE *fp)
 		GelToken *tok;
 		int size, nargs, vararg;
 		gboolean extra_dict = FALSE;
+		gboolean parameter = FALSE;
 		int i;
 		GSList *li = NULL;
 		int type;
@@ -1788,7 +1793,7 @@ load_compiled_fp (const char *file, FILE *fp)
 		}
 		tok = d_intern(p);
 
-		if(type == GEL_USER_FUNC) {
+		if (type == GEL_USER_FUNC) {
 			/*nargs*/
 			p = strtok(NULL,";");
 			if G_UNLIKELY (!p) {
@@ -1826,7 +1831,21 @@ load_compiled_fp (const char *file, FILE *fp)
 				}
 				li = g_slist_append(li,d_intern(p));
 			}
+		} else {
+			/*parameter*/
+			p = strtok(NULL,";");
+			if G_UNLIKELY (!p) {
+				gel_errorout (_("Badly formed record"));
+				continue;
+			}
+			parameter = -1;
+			sscanf(p,"%d",&parameter);
+
+			/* FIXME: should this be an iff? */
+			if (parameter)
+				tok->parameter = 1;
 		}
+
 
 		/*the value*/
 		b2 = g_new(char,size+2);
@@ -2669,6 +2688,7 @@ gel_parseexp(const char *str, FILE *infile, gboolean exec_commands, gboolean tes
 		return NULL;
 	}
 	replace_equals (evalstack->data, FALSE /* in_expression */);
+	replace_exp (evalstack->data);
 	fixup_num_neg (evalstack->data);
 	evalstack->data = gather_comparisons (evalstack->data);
 	try_to_do_precalc (evalstack->data);

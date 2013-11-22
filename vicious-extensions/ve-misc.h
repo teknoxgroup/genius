@@ -82,8 +82,13 @@ pid_t ve_waitpid_no_signal (pid_t pid, int *status, int options);
 /* Testing for existance of a certain locale */
 gboolean ve_locale_exists (const char *loc);
 
+#if GLIB_CHECK_VERSION(2,3,1)
+#define ve_setenv g_setenv
+#define ve_unsetenv g_unsetenv
+#else
 int ve_setenv (const char *name, const char *value, gboolean overwrite);
 void ve_unsetenv (const char *name);
+#endif
 void ve_clearenv (void);
 
 /* just like gnome_i18n_get_language_list (in fact if you link to

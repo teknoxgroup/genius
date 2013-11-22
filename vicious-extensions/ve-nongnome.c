@@ -26,8 +26,7 @@
 #include <stdlib.h>
 #include <locale.h>
 
-/* we don't actually use libgnome, that's just for includes */
-#include <libgnome/libgnome.h>
+#include "ve-i18n.h"
 
 #include "ve-misc.h"
 

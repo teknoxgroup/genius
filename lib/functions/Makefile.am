@@ -1,13 +1,12 @@
 Librarydir = $(datadir)/genius/gel/functions
 SUBDIRS =
 
-GELFILES = delta.gel elementary.gel numerical.gel orthogonal_polynomials.gel
+GELFILES = delta.gel elementary.gel numerical.gel orthogonal_polynomials.gel kernels.gel
 
 EXTRA_DIST = $(GELFILES)
 
-Library_DATA = $(GELFILES)
+Library_DATA = $(GELFILES) loader.gel
 
-bin_SCRIPTS = loader.gel
 MOSTLYCLEANFILES = loader.gel
 
 loader.gel: $(GELFILES)

@@ -26,8 +26,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
-#include <libgnome/libgnome.h>
 
+#include "ve-i18n.h"
 #include "ve-misc.h"
 
 #include "ve-config.h"

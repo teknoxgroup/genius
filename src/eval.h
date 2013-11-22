@@ -30,7 +30,7 @@
 /* builtin primitives */
 enum {
 	E_SEPAR = 0,
-	E_EQUALS,
+	E_EQUALS, /* see E_DEFEQUALS (on the end not to break bincompat) */
 	E_PARAMETER,
 	E_ABS,
 	E_PLUS,
@@ -93,6 +93,7 @@ enum {
 	E_CONTINUE,
 	E_BREAK,
 	E_MOD_CALC,
+	E_DEFEQUALS,
 	E_OPER_LAST
 };
 
@@ -105,6 +106,7 @@ enum {
 	GO_STRING=1<<2,
 	GO_FUNCTION=1<<3,
 	GO_POLYNOMIAL=1<<4,
+	GO_IDENTIFIER=1<<5,
 };
 typedef gboolean (*GelEvalFunc)(GelCtx *ctx, GelETree *n, ...);
 /*primitive operations can be like this*/
@@ -113,7 +115,7 @@ struct _GelOperPrim {
 	guint32 arg[3]; /*bitmap of allowable types for arguments*/
 	GelEvalFunc evalfunc;
 };
-#define OP_TABLE_LEN 10
+#define OP_TABLE_LEN 9
 typedef struct _GelOper GelOper;
 struct _GelOper {
 	GelOperPrim prim[OP_TABLE_LEN];
@@ -164,9 +166,14 @@ int isnodetrue(GelETree *n, int *bad_node);
 GelETree * funccall(GelCtx *ctx, GelEFunc *func, GelETree **args, int nargs);
 void gel_expandmatrix (GelETree *n);
 
+/* func is a function taking one argument and l is a function/identifier */
+/* Note: a copy of the function is made */
+GelETree * function_from_function (GelEFunc *func, GelETree *l);
+
 /* Functions to fixup the parsed tree */
 GelETree * gather_comparisons(GelETree *n);
 void replace_equals (GelETree *n, gboolean in_expression);
+void replace_exp (GelETree *n);
 void fixup_num_neg (GelETree *n);
 void try_to_do_precalc(GelETree *n);
 

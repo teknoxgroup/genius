@@ -5,7 +5,7 @@ INCLUDES = \
  	-I.					\
 	-I..					\
 	-DGNOMELOCALEDIR=\""$(datadir)/locale"\" \
-	$(GUI_CFLAGS)
+	$(VICIOUS_CFLAGS)
 
 # Use these only really for checking for deprecated use, not all the time
 #	-DG_DISABLE_DEPRECATED			\
@@ -15,11 +15,26 @@ INCLUDES = \
 #	-DGNOME_DISABLE_DEPRECATED		\
 #
 
-noinst_LIBRARIES = libvicious.a libvicious-gnome.a libviciousui.a libviciousui-gnome.a libviciousui-minimal.a
+
+# For a gnome build set this in configure.in
+#  VICIOUS_GNOME_LIBS="libviciousui.a libviciousui-gnome.a \
+#       libviciousui-minimal.a libvicious-gnome.a"
+#  AC_SUBST(VICIOUS_GNOME_LIBS)
+
+noinst_LIBRARIES = \
+	@VICIOUS_GNOME_LIBS@ \
+	libvicious.a
+
+EXTRA_LIBRARIES = \
+	libviciousui.a		\
+	libviciousui-gnome.a	\
+	libviciousui-minimal.a	\
+	libvicious-gnome.a
 
 noinst_PROGRAMS = test-ve-config
 
 libvicious_a_SOURCES =	\
+	ve-i18n.h	\
 	ve-misc.c	\
 	ve-misc.h	\
 	ve-config.c	\
@@ -30,6 +45,7 @@ libvicious_a_SOURCES =	\
 	vicious.h
 
 libvicious_gnome_a_SOURCES = \
+	ve-i18n.h	\
 	ve-misc.c	\
 	ve-misc.h	\
 	ve-config.c	\
@@ -65,7 +81,7 @@ test_ve_config_SOURCES = \
 	test-ve-config.c
 
 test_ve_config_LDADD = \
-	$(GUI_LIBS)				\
+	$(VICIOUS_LIBS)				\
 	$(INTLLIBS)				\
 	-L$(top_builddir)/vicious-extensions	\
 	-lvicious

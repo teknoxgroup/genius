@@ -32,7 +32,7 @@
 ## Release information
 my $PROGRAM      = "intltool-extract";
 my $PACKAGE      = "intltool";
-my $VERSION      = "0.28";
+my $VERSION      = "0.30";
 
 ## Loaded modules
 use strict; 
@@ -54,6 +54,10 @@ my $OUTFILE;
 my $gettext_type = "";
 my $input;
 my %messages = ();
+my %loc = ();
+my %count = ();
+my %comments = ();
+my $strcount = 0;
 
 ## Use this instead of \w for XML files to handle more possible characters.
 my $w = "[-A-Za-z0-9._:]";
@@ -300,16 +304,31 @@ sub type_schemas {
 sub type_rfc822deb {
     ### For rfc822-style Debian configuration files ###
 
-    while ($input =~ /(?:^|\n)_[^:]+:\s*(.*?)(?=\n\S|$)/sg) {
-        my @str_list = rfc822deb_split($1);
-        for my $str (@str_list) {
-            #   As rfc822deb is for configuration files, duplicates
-            #   should never happen.  Developers must use the
-            #   [] construct to make msgid unique, see also intltool-merge
-            print STDERR "Warning: msgid multiply defined:\n  $str\n"
-                if defined($messages{$str});
-            $messages{$str} = [];
+    my $lineno = 1;
+    my $type = '';
+    while ($input =~ /\G(.*?)(^|\n)(_+)([^:]+):[ \t]*(.*?)(?=\n\S|$)/sg)
+    {
+        my ($pre, $newline, $underscore, $tag, $text) = ($1, $2, $3, $4, $5);
+        while ($pre =~ m/\n/g)
+        {
+            $lineno ++;
         }
+        $lineno += length($newline);
+        my @str_list = rfc822deb_split(length($underscore), $text);
+        for my $str (@str_list)
+        {
+            $strcount++;
+            $messages{$str} = [];
+            $loc{$str} = $lineno;
+            $count{$str} = $strcount;
+            my $usercomment = '';
+            while($pre =~ s/(^|\n)#([^\n]*)$//s)
+            {
+                $usercomment = "\n" . $2 . $usercomment;
+            }
+            $comments{$str} = $tag . $usercomment;
+        }
+        $lineno += ($text =~ s/\n//g);
     }
 }
 
@@ -321,28 +340,38 @@ sub rfc822deb_split {
     #       and paragraphs are separated by a single dot on a line
     # This routine returns an array of all paragraphs, and reformat
     # them.
+    # When first argument is 2, the string is a comma separated list of
+    # values.
+    my $type = shift;
     my $text = shift;
-    $text =~ s/^ //mg;
+    $text =~ s/^[ \t]//mg;
+    return (split(/, */, $text, 0)) if $type ne 1;
     return ($text) if $text !~ /\n/;
 
     $text =~ s/([^\n]*)\n//;
     my @list = ($1);
     my $str = '';
-    for my $line (split (/\n/, $text)) {
+    for my $line (split (/\n/, $text))
+    {
         chomp $line;
-        $line =~ /\s+$/;
-        if ($line =~ /^\.$/) {
+        if ($line =~ /^\.\s*$/)
+        {
             #  New paragraph
             $str =~ s/\s*$//;
             push(@list, $str);
             $str = '';
-        } elsif ($line =~ /^\s/) {
+        }
+        elsif ($line =~ /^\s/)
+        {
             #  Line which must not be reformatted
             $str .= "\n" if length ($str) && $str !~ /\n$/;
+            $line =~ s/\s+$//;
             $str .= $line."\n";
-        } else {
+        }
+        else
+        {
             #  Continuation line, remove newline
-            $str .= " " if length ($str) && $str !~ /[\n ]$/;
+            $str .= " " if length ($str) && $str !~ /\n$/;
             $str .= $line;
         }
     }
@@ -385,23 +414,53 @@ sub type_scheme {
 }
 
 sub msg_write {
-    for my $message (sort keys %messages) { 
+    my @msgids;
+    if (%count)
+    {
+        @msgids = sort { $count{$a} <=> $count{$b} } keys %count;
+    }
+    else
+    {
+        @msgids = sort keys %messages;
+    }
+    for my $message (@msgids)
+    {
+	my $offsetlines = 1;
+	$offsetlines++ if $message =~ /%/;
+	if (defined ($comments{$message}))
+	{
+		while ($comments{$message} =~ m/\n/g)
+		{
+		    $offsetlines++;
+		}
+	}
+	print OUT "# ".($loc{$message} - $offsetlines).  " \"$FILE\"\n"
+	        if defined $loc{$message};
+   	print OUT "/* ".$comments{$message}." */\n"
+                if defined $comments{$message};
    	print OUT "/* xgettext:no-c-format */\n" if $message =~ /%/;
         
     	my @lines = split (/\n/, $message, -1);
-    	for (my $n = 0; $n < @lines; $n++) {
-            if ($n == 0) { 
+    	for (my $n = 0; $n < @lines; $n++)
+	{
+            if ($n == 0)
+            {
  		print OUT "char *s = N_(\""; 
-            } else {  
- 		print OUT "             \""; 
-	    }
+            }
+            else
+            {  
+                print OUT "             \""; 
+            }
 
             print OUT escape($lines[$n]);
 
-            if ($n < @lines - 1) { 
-		print OUT "\\n\"\n"; 
- 	    } else { 
-		print OUT "\");\n";  
+            if ($n < @lines - 1)
+            {
+                print OUT "\\n\"\n"; 
+            }
+            else
+            {
+                print OUT "\");\n";  
 	    }
         }
     }

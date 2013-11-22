@@ -20,8 +20,9 @@
  * Boston, MA 02111-1307, USA.
  */
 #include <config.h>
-#include <libgnome/libgnome.h>
-#include <libgnomeui/libgnomeui.h>
+#include <gtk/gtk.h>
+
+#include "ve-i18n.h"
 
 #include "ve-misc.h"
 #include "ve-miscui.h"

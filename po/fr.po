@@ -1,226 +1,240 @@
-# gnome-utils fr.po
-# Copyright (C) 1998,1999 Free Software Foundation, Inc.
+# French translation of genius
+# Copyright (C) 1998-2004 Free Software Foundation, Inc.
+# This file is distributed under the same license as the genius package.
+#
 # Vincent Renardias <vincent@ldsol.com>, 1998-1999.
+# Sébastien Bacher <seb128@debian.org>, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome-utils VERSION\n"
-"POT-Creation-Date: 2003-12-31 14:47-0800\n"
-"PO-Revision-Date: 1998-02-28 19:57+0100\n"
-"Last-Translator: Vincent Renardias <vincent@ldsol.com>\n"
-"Language-Team: Vincent Renardias <vincent@ldsol.com>\n"
+"Project-Id-Version: genius 0.5.7.1\n"
+"POT-Creation-Date: 2004-03-30 15:06-0800\n"
+"PO-Revision-Date: 2004-01-24 13:37+0100\n"
+"Last-Translator: Sébastien Bacher <seb128@debian.org>\n"
+"Language-Team: GNOME French Team <gnomefr@traduc.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Report-Msgid-Bugs-To: \n"
 
-#: src/calc.c:189
+#: src/calc.c:187
 msgid "Uncategorized"
-msgstr ""
+msgstr "Non catégorisé"
 
-#: src/calc.c:354
+#: src/calc.c:352
 msgid "Trying to set an alias for an alias"
-msgstr ""
+msgstr "Tentative de définir un alias pour un alias"
 
-#: src/calc.c:955 src/calc.c:962
+#: src/calc.c:956
 msgid "Bad identifier for function node!"
-msgstr "Mauvais identificateur pour noeud de fonction!"
+msgstr "Mauvais identificateur pour noeud de fonction !"
 
-#: src/calc.c:992 src/eval.c:5090 src/eval.c:5273
+#: src/calc.c:994 src/eval.c:5442 src/eval.c:5626
 msgid "Unexpected operator!"
-msgstr "Op�rateur inattendu!"
+msgstr "Opérateur inattendu !"
 
 #. FIXME:
-#: src/calc.c:1165
+#: src/calc.c:1167
 msgid "Cannot currently print polynomials of more then 3 vars"
 msgstr ""
+"Impossible d'imprimer actuellement des polynômes de plus de 3 variables"
 
-#: src/calc.c:1238
+#: src/calc.c:1240
 msgid "NULL tree!"
-msgstr "Arbre NUL!"
+msgstr "Arbre NUL !"
 
-#: src/calc.c:1313
+#: src/calc.c:1315
 msgid "NULL function!"
-msgstr "Fonction NULLE!"
+msgstr "Fonction NULLE !"
 
 #. variable and reference functions should
 #. never be in the etree
-#: src/calc.c:1342
+#: src/calc.c:1344
 msgid "Unexpected function type!"
-msgstr "Type de fonction inattendue!"
+msgstr "Type de fonction inattendue !"
 
-#: src/calc.c:1351 src/eval.c:5447
+#: src/calc.c:1353 src/eval.c:5800
 msgid "Unexpected node!"
-msgstr "Noeud inattendu!"
+msgstr "Noeud inattendu !"
 
-#: src/calc.c:1624
+#: src/calc.c:1628
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
 msgstr "Le fichier '%s' est une mauvaise version de GEL"
 
-#: src/calc.c:1670 src/calc.c:1679 src/calc.c:1684 src/calc.c:1693
-#: src/calc.c:1698 src/calc.c:1707 src/calc.c:1712 src/calc.c:1721
-#: src/calc.c:1726 src/calc.c:1737 src/calc.c:1742 src/calc.c:1753
-#: src/calc.c:1760 src/calc.c:1773 src/calc.c:1779 src/calc.c:1786
-#: src/calc.c:1795 src/calc.c:1801 src/calc.c:1808 src/calc.c:1814
-#: src/calc.c:1823
+#: src/calc.c:1675 src/calc.c:1684 src/calc.c:1689 src/calc.c:1698
+#: src/calc.c:1703 src/calc.c:1712 src/calc.c:1717 src/calc.c:1726
+#: src/calc.c:1731 src/calc.c:1742 src/calc.c:1747 src/calc.c:1758
+#: src/calc.c:1765 src/calc.c:1778 src/calc.c:1784 src/calc.c:1791
+#: src/calc.c:1800 src/calc.c:1806 src/calc.c:1813 src/calc.c:1819
+#: src/calc.c:1828 src/calc.c:1838
 msgid "Badly formed record"
-msgstr "Enregistrement malform�"
+msgstr "Enregistrement malformé"
 
-#: src/calc.c:1673
+#: src/calc.c:1678
 msgid "Record out of place"
-msgstr "Enregistrement mal plac�"
+msgstr "Enregistrement mal placé"
 
-#: src/calc.c:1834
+#: src/calc.c:1853
 msgid "Missing value for function"
 msgstr "Valeur manquate pour la fonction"
 
-#: src/calc.c:1853
+#: src/calc.c:1872
 msgid "Extra dictionary for NULL function"
-msgstr ""
+msgstr "Dictionnaire additionnel pour la fonction NULL"
 
-#: src/calc.c:1893 src/calc.c:2308 src/calc.c:2342
+#: src/calc.c:1912 src/calc.c:2327 src/calc.c:2361
 #, c-format
 msgid "Can't open file: '%s'"
-msgstr "Impossible d'ouvrir le fichier '%s'"
+msgstr "Impossible d'ouvrir le fichier : '%s'"
 
-#: src/calc.c:2040
+#: src/calc.c:2059
 msgid "Load a file into the interpretor"
-msgstr ""
+msgstr "Charger un fichier dans l'interptréteur"
 
-#: src/calc.c:2043
+#: src/calc.c:2062
 msgid "Load a plugin"
-msgstr ""
+msgstr "Charger un greffon"
 
-#: src/calc.c:2046
+#: src/calc.c:2065
 msgid "List files in the current directory"
-msgstr ""
+msgstr "Lister les fichiers dans le répertoire courant"
 
-#: src/calc.c:2049
+#: src/calc.c:2068
 msgid "Change directory"
-msgstr ""
+msgstr "Changer de répertoire"
 
-#: src/calc.c:2052
+#: src/calc.c:2071
 msgid "Print current directory"
-msgstr ""
+msgstr "Afficher le répertoire courant"
 
-#: src/calc.c:2055
+#: src/calc.c:2074
 msgid "Print help (or help on a function/command)"
-msgstr ""
+msgstr "Afficher l'aide (ou l'aide d'une fonction/commande)"
 
-#: src/calc.c:2072
+#: src/calc.c:2091
 msgid ""
 "\n"
 "For a manual on using Genius and the GEL language type:\n"
 msgstr ""
+"\n"
+"Pour un manuel sur l'utilisation de Genius et du langage GEL :\n"
 
-#: src/calc.c:2074
+#: src/calc.c:2093
 msgid "  manual\n"
-msgstr ""
+msgstr "  manuel\n"
 
-#: src/calc.c:2078
+#: src/calc.c:2097
 msgid ""
 "\n"
 "For help on a specific function type:\n"
 msgstr ""
+"\n"
+"Pour l'aide sur une fonction spécifique :\n"
 
-#: src/calc.c:2080
+#: src/calc.c:2099
 msgid "  help FunctionName\n"
-msgstr ""
+msgstr "  help NomDeFonction\n"
 
-#: src/calc.c:2084
+#: src/calc.c:2103
 msgid ""
 "\n"
 "Commands:\n"
 msgstr ""
+"\n"
+"Commandes :\n"
 
-#: src/calc.c:2132
+#: src/calc.c:2151
 msgid ""
 "\n"
 "Undocumented:\n"
 msgstr ""
+"\n"
+"Non documentéÂ :\n"
 
 #. func
 #. aliasfor
 #. category
-#: src/calc.c:2175
-msgid "Not documented"
-msgstr ""
-
 #: src/calc.c:2194
+msgid "Not documented"
+msgstr "Non documenté"
+
+#: src/calc.c:2213
 #, c-format
 msgid "'%s' is not documented"
-msgstr ""
+msgstr "«Â %s Â» n'est pas documenté"
 
-#: src/calc.c:2201
+#: src/calc.c:2220
 #, c-format
 msgid "%s is an alias for %s\n"
-msgstr ""
+msgstr "%s est un alias pour %s\n"
 
-#: src/calc.c:2233
+#: src/calc.c:2252
 msgid "Aliases:"
-msgstr ""
+msgstr "Alias :"
 
-#: src/calc.c:2245
+#: src/calc.c:2264
 #, c-format
 msgid "Description: %s\n"
-msgstr ""
+msgstr "Description : %s\n"
 
-#: src/calc.c:2381 src/calc.c:2392
-#, fuzzy, c-format
+#: src/calc.c:2400 src/calc.c:2411
+#, c-format
 msgid "Can't expand '%s'"
-msgstr "Impossible d'ouvrir le fichier '%s'"
+msgstr "Impossible de développer '%s'"
 
-#: src/calc.c:2462
-#, fuzzy, c-format
+#: src/calc.c:2481
+#, c-format
 msgid "Cannot open plugin '%s'!"
-msgstr "Impossible d'ouvrir le fichier '%s'"
+msgstr "Impossible d'ouvrir le greffon '%s'"
 
-#: src/calc.c:2667
+#: src/calc.c:2686
 msgid "ERROR: Probably corrupt stack!"
-msgstr "ERREUR: La pile est probablement corrompue!"
+msgstr "ERREUR: La pile est probablement corrompue !"
 
-#: src/calc.c:2689
+#: src/calc.c:2709
 msgid "ERROR: Can't execute more things at once!"
-msgstr "ERREUR: Impossible d'�xecuter plus de choses � la fois!"
+msgstr "ERREUR: Impossible d'éxecuter plus de choses à la fois !"
 
-#: src/calc.c:2793
-#, fuzzy, c-format
+#: src/calc.c:2813
+#, c-format
 msgid "ERROR: %s before newline"
-msgstr " avant le retour � la ligne"
+msgstr "ERREUR : %s avant le retour à la ligne"
 
-#: src/calc.c:2795
-#, fuzzy, c-format
+#: src/calc.c:2815
+#, c-format
 msgid "ERROR: %s at end of input"
-msgstr " � la fin de l'entr�e"
+msgstr "ERREUR : %s à la fin de l'entrée"
 
-#: src/calc.c:2802
-#, fuzzy, c-format
+#: src/calc.c:2822
+#, c-format
 msgid "ERROR: %s before '%s'"
-msgstr " avant '"
+msgstr "ERREUR : %s avant '%s'"
 
-#: src/compil.c:426 src/compil.c:432
+#: src/compil.c:424 src/compil.c:430
 msgid "Bad tree record when decompiling"
-msgstr "Mauvais arbre lors de la d�compilation"
+msgstr "Mauvais arbre lors de la décompilation"
 
 #: src/eval.c:1185 src/eval.c:1222 src/eval.c:1236
 msgid "Cannot compare non value-only matrixes"
 msgstr ""
-"Impossible de comparer des matrices compos�es d'autre choses que de valeurs"
+"Impossible de comparer des matrices composées d'autre choses que de valeurs"
 
 #. also on rationals but as integers
 #: src/eval.c:1286 src/eval.c:1332
 msgid "Modulo arithmetic only works on integers"
-msgstr ""
+msgstr "Le module arithmétique ne marche qu'avec des entiers"
 
 #: src/eval.c:1536
 msgid "Can't add/subtract two matricies of different sizes"
-msgstr "Impossible d'ajouter/soustraire deux matrices de tailles diff�rentes"
+msgstr "Impossible d'ajouter/soustraire deux matrices de tailles différentes"
 
 #: src/eval.c:1538
-#, fuzzy
 msgid ""
 "Can't do element by element operations on two matricies of different sizes"
-msgstr "Impossible d'ajouter/soustraire deux matrices de tailles diff�rentes"
+msgstr ""
+"Impossible d'effectuer des opérations élément par élément sur deux matrices "
+"de tailles différentes"
 
 #: src/eval.c:1596
 msgid "Can't multiply matricies of wrong sizes"
@@ -228,389 +242,397 @@ msgstr "Impossible de multiplier des matrices de mauvaise taille"
 
 #: src/eval.c:1645
 msgid "Powers are defined on (square matrix)^(integer) only"
-msgstr "Les puissances sont d�finies seulement pour (matrice carr�)^(entier)"
+msgstr "Les puissances sont définies seulement pour (matrice carrée)^(entier)"
 
 #: src/eval.c:1651
 msgid "Powers on matrices in modulo mode are defined on integer matrices only"
 msgstr ""
+"Les puissances de matrices dans le mode modulo sont définies pour les "
+"matrices d'entiers seulement"
 
 #: src/eval.c:1659
-#, fuzzy
 msgid "Exponent too large"
-msgstr "I: le param�tre est trop grand"
+msgstr "L'exposant est trop grand"
 
 #: src/eval.c:1687 src/eval.c:1803 src/eval.c:1870
 msgid "Matrix appears singular and can't be inverted"
-msgstr "La matrice est singuli�re et ne peux �tre invers�es"
+msgstr "La matrice est singulière et ne peux être inversées"
 
 #: src/eval.c:1779
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr ""
-"Impossible de diviser des matrices de tailles diff�rentes ou non carr�s"
+"Impossible de diviser des matrices de tailles différentes ou non carrées"
 
 #: src/eval.c:1851
 msgid "Can't divide by a non-square matrix"
-msgstr "Impossible de diviser par une matrice non carr�"
+msgstr "Impossible de diviser par une matrice non carrée"
 
-#: src/eval.c:2506 src/eval.c:3571
+#: src/eval.c:2209 src/eval.c:2236 src/eval.c:2257 src/eval.c:2281
+#: src/eval.c:2326
+#, fuzzy
+msgid "Operations on functions with variable argument list not supported"
+msgstr "Fonction de référence rencontrée avec des paramètres !"
+
+#: src/eval.c:2214
+msgid ""
+"Operations on functions with different number of arguments not supported"
+msgstr ""
+
+#: src/eval.c:2331
+msgid "Function creation with wrong number of arguments"
+msgstr ""
+
+#: src/eval.c:2848 src/eval.c:3919
 msgid "Unevaluatable function type encountered!"
-msgstr "Fonction de type non �valuable rencontr�e!"
+msgstr "Fonction de type non évaluable rencontrée !"
 
-#: src/eval.c:2528 src/eval.c:2546 src/eval.c:3360
-#, fuzzy, c-format
+#: src/eval.c:2870 src/eval.c:2888 src/eval.c:3699
+#, c-format
 msgid "Variable '%s' used uninitialized"
-msgstr "Variable '%s' utilis�e sans �tre initialis�e"
+msgstr "Variable '%s' utilisée sans être initialisée"
 
-#: src/eval.c:2549 src/eval.c:3396
+#: src/eval.c:2891 src/eval.c:3744
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be %d)"
 msgstr ""
-"Appel de '%s' avec un mauvais nombre d'arguments!\n"
-"(devrait �tre %d)"
+"Appel de '%s' avec un mauvais nombre de paramètres !\n"
+"(devrait être %d)"
 
-#: src/eval.c:2552
+#: src/eval.c:2894
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
-msgstr "Tentative de d�r�f�rencer '%s' qui n'est pas une r�f�rence!\n"
+msgstr "Tentative de déréférencer '%s' qui n'est pas une référence !\n"
 
-#: src/eval.c:2557
+#: src/eval.c:2899
 msgid "NULL reference encountered!"
-msgstr "R�f�rence NULLE rencontr�e!"
+msgstr "Référence NULLE rencontrée !"
 
-#: src/eval.c:2677
+#: src/eval.c:3019
 msgid "Cannot compare matrixes"
 msgstr "Impossible de comparer des matrices"
 
-#: src/eval.c:2719
+#: src/eval.c:3061
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
-"Les primitives doivent recevoir des param�tres num�riques/matrices/cha�nes"
+"Les primitives doivent recevoir des paramètres numériques/matrices/chaînes"
 
-#: src/eval.c:2792
-#, fuzzy
+#: src/eval.c:3134
 msgid "Bad argument to modular operation"
-msgstr "I: le param�tre est trop grand"
+msgstr "Paramètre incorrect pour un opération modulaire"
 
-#: src/eval.c:3346
-#, fuzzy, c-format
+#: src/eval.c:3685
+#, c-format
 msgid "Function '%s' used uninitialized"
-msgstr "Fonction '%s' utilis�e sans �tre initialis�e"
+msgstr "Fonction '%s' utilisée sans être initialisée"
 
-#: src/eval.c:3366
+#: src/eval.c:3705
 #, c-format
 msgid "Can't dereference '%s'!"
-msgstr "Impossible de d�r�f�rencer '%s'!"
+msgstr "Impossible de déréférencer '%s' !"
 
-#: src/eval.c:3374
+#: src/eval.c:3713
 msgid "Can't call a non-function!"
-msgstr "Impossible d'appeler autre chose qu'une fonction!"
+msgstr "Impossible d'appeler autre chose qu'une fonction !"
 
-#: src/eval.c:3401
-#, fuzzy, c-format
+#: src/eval.c:3749
+#, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be greater then %d)"
 msgstr ""
-"Appel de '%s' avec un mauvais nombre d'arguments!\n"
-"(devrait �tre %d)"
+"Appel de '%s' avec un mauvais nombre de paramètres !\n"
+"(devrait être plus grand que %d)"
 
-#: src/eval.c:3440
-#, fuzzy, c-format
+#: src/eval.c:3788
+#, c-format
 msgid "Referencing an undefined variable %s!"
-msgstr "R�f�rencement d'une variable non d�finie!"
+msgstr "Référencement d'une variable non définie %s !"
 
-#: src/eval.c:3550
+#: src/eval.c:3898
 msgid "Reference function with arguments encountered!"
-msgstr "Fonction de r�f�rence rencontr�e avec des param�tres!"
+msgstr "Fonction de référence rencontrée avec des paramètres !"
 
-#: src/eval.c:3555
+#: src/eval.c:3903
 msgid "Unnamed reference function encountered!"
-msgstr "Fonction de r�f�rence sans nom rencontr�e!"
+msgstr "Fonction de référence sans nom rencontrée !"
 
-#: src/eval.c:3664
-#, fuzzy
+#: src/eval.c:4012
 msgid "Bad type for 'for/sum/prod' loop!"
-msgstr "Mauvais type pour une boucle 'for'!"
+msgstr "Mauvais type pour une boucle 'for/sum/prod' !"
 
-#: src/eval.c:3669
-#, fuzzy
+#: src/eval.c:4017
 msgid "'for/sum/prod' loop increment can't be 0"
-msgstr "L'incr�ment d'une boucle 'for' ne peut �tre 0"
+msgstr "L'incrément d'une boucle 'for/sum/prod' ne peut être 0"
 
-#: src/eval.c:3775
-#, fuzzy
+#: src/eval.c:4123
 msgid "Bad type for 'for in' loop!"
-msgstr "Mauvais type pour une boucle 'for'!"
+msgstr "Mauvais type pour une boucle 'for in' !"
 
-#: src/eval.c:3919 src/eval.c:3947
+#: src/eval.c:4267 src/eval.c:4295
 msgid "Continue or break outside a loop, assuming \"return null\""
-msgstr ""
+msgstr "Continuer ou sortir d'une bouble, en présumant «Â return null Â»"
 
-#: src/eval.c:3997
+#: src/eval.c:4345
 msgid "Wrong argument type as matrix index"
-msgstr "Mauvais type d'argument pour un index de matrice"
+msgstr "Mauvais type de paramètre pour un index de matrice"
 
-#: src/eval.c:4007
+#: src/eval.c:4355
 msgid "Matrix index too large"
 msgstr "Index de matrice trop grand"
 
-#: src/eval.c:4010
-#, fuzzy
+#: src/eval.c:4358
 msgid "Matrix index less than 1"
-msgstr "Index de matrice inf�rieur � 1"
+msgstr "Index de matrice inférieur à 1"
 
-#: src/eval.c:4033 src/eval.c:4048
+#: src/eval.c:4381 src/eval.c:4396
 msgid "Matrix index out of range"
 msgstr "Index de matrice hors intervalle"
 
-#: src/eval.c:4095 src/eval.c:4156 src/eval.c:4218 src/eval.c:4262
+#: src/eval.c:4443 src/eval.c:4504 src/eval.c:4566 src/eval.c:4610
 #, c-format
 msgid "Trying to set a protected id '%s'"
-msgstr ""
+msgstr "Tentative de définir une id protégée '%s'"
 
-#: src/eval.c:4113 src/eval.c:4152
+#: src/eval.c:4461 src/eval.c:4500
 msgid "Indexed Lvalue not user function"
-msgstr "La lvalue index�e n'est pas une fonction utilisateur"
+msgstr "La lvalue indexée n'est pas une fonction utilisateur"
 
-#: src/eval.c:4136 src/eval.c:4247
+#: src/eval.c:4484 src/eval.c:4595
 msgid "Dereference of non-identifier!"
-msgstr "D�r�f�rence d'un non-identificateur!"
+msgstr "Déréférence d'un non-identificateur !"
 
-#: src/eval.c:4142 src/eval.c:4253
+#: src/eval.c:4490 src/eval.c:4601
 msgid "Dereference of undefined variable!"
-msgstr "D�r�f�rence d'une variable non d�finie!"
+msgstr "Déréférence d'une variable non définie !"
 
-#: src/eval.c:4146 src/eval.c:4257
+#: src/eval.c:4494 src/eval.c:4605
 msgid "Dereference of non-reference!"
-msgstr "D�r�f�rence d'une non-r�f�rence!"
+msgstr "Déréférence d'une non-référence !"
 
-#: src/eval.c:4174
+#: src/eval.c:4522
 msgid "Indexed Lvalue not an identifier or a dereference"
-msgstr "La lvalue index�e n'est pas un identificateur ou une d�r�f�rence"
+msgstr "La lvalue indexée n'est pas un identificateur ou une déréférence"
 
-#: src/eval.c:4212
+#: src/eval.c:4560
 msgid "Lvalue not an identifier/dereference/matrix location!"
 msgstr ""
-"La lvalue n'est pas un emplacement d'identificateur/de d�r�f�rence/de "
+"La lvalue n'est pas un emplacement d'identificateur/de déréférence/de "
 "matrice!"
 
-#: src/eval.c:4234 src/eval.c:4274
+#: src/eval.c:4582 src/eval.c:4622
 msgid "Referencing an undefined variable!"
-msgstr "R�f�rencement d'une variable non d�finie!"
+msgstr "Référencement d'une variable non définie !"
 
-#: src/eval.c:4320 src/eval.c:4398 src/eval.c:4407
+#: src/eval.c:4668 src/eval.c:4746 src/eval.c:4755
 msgid "Wrong matrix dimensions when setting"
-msgstr ""
+msgstr "Mauvais paramètre de dimension de matrice"
 
-#: src/eval.c:4338 src/eval.c:4378 src/eval.c:4444 src/eval.c:4623
-#: src/eval.c:4676
-#, fuzzy
+#: src/eval.c:4686 src/eval.c:4726 src/eval.c:4792 src/eval.c:4971
+#: src/eval.c:5024
 msgid "Matrix index not an integer or a vector"
-msgstr "Index de matrice hors intervalle"
+msgstr "L'index de matrice n'est n'est pas un entier ou un vecteur"
 
-#: src/eval.c:4465
+#: src/eval.c:4813
 msgid "Parameters can only be created in the global context"
-msgstr ""
+msgstr "Les paramètres ne veulent être crées que dans un contexte global"
 
-#: src/eval.c:4518 src/eval.c:4560 src/eval.c:4635
+#: src/eval.c:4866 src/eval.c:4908 src/eval.c:4983
 msgid "Index works only on matricies"
 msgstr "L'index ne marche que sur des matrices"
 
-#: src/eval.c:4548
+#: src/eval.c:4896
 msgid "Vector index not an integer or a vector"
-msgstr ""
+msgstr "L'index de vecteur n'est par un entier ou un vecteur"
 
-#: src/eval.c:4695
-#, fuzzy
+#: src/eval.c:5045
 msgid "number"
-msgstr "Le nombre pi"
+msgstr "nombre"
 
-#: src/eval.c:4696
+#: src/eval.c:5046
 msgid "matrix"
-msgstr ""
+msgstr "matrice"
 
-#: src/eval.c:4697
+#: src/eval.c:5047
 msgid "string"
-msgstr ""
+msgstr "chaîne"
 
-#: src/eval.c:4698
-#, fuzzy
+#: src/eval.c:5048
 msgid "function"
-msgstr "Fonction NULLE!"
+msgstr "Fonction"
 
-#: src/eval.c:4721
+#: src/eval.c:5072
 msgid "Absolute value"
-msgstr ""
+msgstr "Valeur absolue"
 
-#: src/eval.c:4722
+#: src/eval.c:5073
 msgid "Addition"
-msgstr ""
+msgstr "Addition"
 
-#: src/eval.c:4723
+#: src/eval.c:5074
 msgid "Subtraction"
-msgstr ""
+msgstr "Soustraction"
 
-#: src/eval.c:4724
+#: src/eval.c:5075
 msgid "Multiplication"
-msgstr ""
+msgstr "Multiplication"
 
-#: src/eval.c:4725
+#: src/eval.c:5076
 msgid "Element by element multiplication"
-msgstr ""
+msgstr "Multiplication élément par élément"
 
-#: src/eval.c:4726
-#, fuzzy
+#: src/eval.c:5077
 msgid "Division"
-msgstr "Division par z�ro!"
+msgstr "Division"
 
-#: src/eval.c:4727
+#: src/eval.c:5078
 msgid "Element by element division"
-msgstr ""
+msgstr "Division élément par élément"
 
-#: src/eval.c:4728
+#: src/eval.c:5079
 msgid "Back division"
-msgstr ""
+msgstr "Impossible d'ouvrir le fichier"
 
-#: src/eval.c:4729
+#: src/eval.c:5080
 msgid "Element by element back division"
 msgstr ""
 
-#: src/eval.c:4730
+#: src/eval.c:5081
 msgid "Modulo"
-msgstr ""
+msgstr "Modulo"
 
-#: src/eval.c:4731
+#: src/eval.c:5082
 msgid "Element by element modulo"
-msgstr ""
+msgstr "Modulo élément par élément"
 
-#: src/eval.c:4732
+#: src/eval.c:5083
 msgid "Negation"
-msgstr ""
+msgstr "Opposé"
 
-#: src/eval.c:4733
+#: src/eval.c:5084
 msgid "Power"
-msgstr ""
+msgstr "Puissance"
 
-#: src/eval.c:4734
+#: src/eval.c:5085
 msgid "Element by element power"
-msgstr ""
+msgstr "Puissance élément par élément"
 
-#: src/eval.c:4735
+#: src/eval.c:5086
 msgid "Factorial"
-msgstr ""
+msgstr "Factorielle"
 
-#: src/eval.c:4736
+#: src/eval.c:5087
 msgid "Double factorial"
-msgstr ""
+msgstr "Double factorielle"
 
-#: src/eval.c:4737
+#: src/eval.c:5088
 msgid "Transpose"
-msgstr ""
+msgstr "Transposé"
 
-#: src/eval.c:4738
+#: src/eval.c:5089
 msgid "ConjugateTranspose"
 msgstr ""
 
-#: src/eval.c:4739
+#: src/eval.c:5090
 msgid "Comparison (<=>)"
-msgstr ""
+msgstr "Comparaison (<=>)"
 
-#: src/eval.c:4740
+#: src/eval.c:5091
 msgid "XOR"
-msgstr ""
+msgstr "XOR"
 
-#: src/eval.c:4741
+#: src/eval.c:5092
 msgid "NOT"
-msgstr ""
+msgstr "NOT"
 
-#: src/eval.c:4761
-#, fuzzy, c-format
+#: src/eval.c:5112
+#, c-format
 msgid "Bad types for '%s'"
-msgstr "Mauvais type pour une boucle 'for'!"
+msgstr "Mauvais types pour '%s'"
 
-#: src/eval.c:4772
+#: src/eval.c:5123
 #, c-format
 msgid "%s not defined on <%s> and <%s>"
-msgstr ""
+msgstr "%s non défini sur <%s> et <%s>"
 
-#: src/eval.c:4791
-#, fuzzy, c-format
+#: src/eval.c:5142
+#, c-format
 msgid "Bad type for '%s'"
-msgstr "Mauvais type pour une boucle 'for'!"
+msgstr "Mauvais type pour '%s'"
 
-#: src/eval.c:4801
+#: src/eval.c:5152
 #, c-format
 msgid "%s not defined on <%s>"
-msgstr ""
+msgstr "%s non défini sur <%s>"
 
-#: src/eval.c:4820 src/eval.c:4837
+#: src/eval.c:5171 src/eval.c:5188
 msgid "Vector building only works on numbers"
-msgstr ""
+msgstr "La construction de vecteur marche uniquement avec des nombres"
 
 #. FIXME: perhaps we should just return null like octave?
-#: src/eval.c:4830
+#: src/eval.c:5181
 msgid "Impossible arguments to vector building operator"
-msgstr ""
+msgstr "Paramètre incorrect pour l'opération de construction de vecteur"
 
-#: src/funclib.c:64
-#, fuzzy, c-format
+#: src/funclib.c:85
+#, c-format
 msgid "%s: argument number %d not an integer"
-msgstr "I: le param�tre n'est pas un entier"
+msgstr "%s : le paramètre numéro %d n'est pas un entier"
 
-#: src/funclib.c:77
-#, fuzzy, c-format
+#: src/funclib.c:98
+#, c-format
 msgid "%s: argument number %d not an integer or a matrix"
-msgstr "I: le param�tre n'est pas un entier"
-
-#: src/funclib.c:91
-#, fuzzy, c-format
-msgid "%s: argument number %d not a positive integer"
-msgstr "I: le param�tre n'est pas un entier"
-
-#: src/funclib.c:101 src/graphing.c:376
-#, fuzzy, c-format
-msgid "%s: argument number %d not a number"
-msgstr "cos: le param�tre n'est pas un nombre"
+msgstr "%s : le paramètre numéro %d n'est pas un entier ou une matrice"
 
 #: src/funclib.c:112
-#, fuzzy, c-format
-msgid "%s: argument number %d not a real number"
-msgstr "tan: le param�tre n'est pas un nombre r��l"
+#, c-format
+msgid "%s: argument number %d not a positive integer"
+msgstr "%s : le paramètre numéro %d n'est pas un entier positif"
 
-#: src/funclib.c:122
-#, fuzzy, c-format
-msgid "%s: argument number %d not a matrix"
-msgstr "rows: le param�tre n'est pas une matrice"
+#: src/funclib.c:122 src/graphing.c:820
+#, c-format
+msgid "%s: argument number %d not a number"
+msgstr "%s : le paramètre numéro %d n'est pas un entier"
 
 #: src/funclib.c:133
-#, fuzzy, c-format
+#, c-format
+msgid "%s: argument number %d not a real number"
+msgstr "%s : le paramètre numéro %d n'est pas un nombre réel"
+
+#: src/funclib.c:143
+#, c-format
+msgid "%s: argument number %d not a matrix"
+msgstr "%s : le paramètre numéro %d n'est pas une matrice"
+
+#: src/funclib.c:154
+#, c-format
 msgid "%s: argument number %d not a value only matrix"
 msgstr ""
-"ref: le param�tre n'est pas une matrice contenant seulement des valeurs"
+"%s : le paramètre numéro %d n'est pas une matrice constituée uniquement de "
+"nombres"
 
-#: src/funclib.c:143 src/funclib.c:154
-#, fuzzy, c-format
+#: src/funclib.c:164 src/funclib.c:175
+#, c-format
 msgid "%s: argument number %d not a string"
-msgstr "rows: le param�tre n'est pas une matrice"
+msgstr "%s : le paramètre numéro %d n'est pas une chaîne"
 
-#: src/funclib.c:183
-#, fuzzy, c-format
+#: src/funclib.c:204
+#, c-format
 msgid "%s: argument can't be negative or 0"
-msgstr "I: le param�tre ne peux �tre n�gatif ou nul"
+msgstr "%s : le paramètre ne peut être négatif ou égal à 0"
 
-#: src/funclib.c:187
-#, fuzzy, c-format
+#: src/funclib.c:208
+#, c-format
 msgid "%s: argument too large"
-msgstr "I: le param�tre est trop grand"
+msgstr "%s : paramètre trop grand"
 
-#: src/funclib.c:214
+#: src/funclib.c:235
 msgid "Cannot locate the manual"
-msgstr ""
+msgstr "Impossible de trouver le manuel"
 
-#: src/funclib.c:230
-#, fuzzy, c-format
+#: src/funclib.c:251
+#, c-format
 msgid ""
 "Genius %s\n"
 "%s\n"
@@ -631,7 +653,7 @@ msgid ""
 "    USA.\n"
 msgstr ""
 "Genius %s\n"
-"Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
+"%s\n"
 "\n"
 "    This program is free software; you can redistribute it and/or modify\n"
 "    it under the terms of the GNU General Public License as published by\n"
@@ -648,734 +670,739 @@ msgstr ""
 "    Foundation,  Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,\n"
 "    USA.\n"
 
-#: src/funclib.c:360
+#: src/funclib.c:381
 #, c-format
 msgid "%s: trying to set a protected id!"
-msgstr ""
+msgstr "%s : tentative de définition d'un id protégéÂ !"
 
 #. FIXME: fix this, this should just work too
-#: src/funclib.c:366
+#: src/funclib.c:387
 #, c-format
 msgid "%s: trying to set a parameter, use the equals sign"
-msgstr ""
+msgstr "%s : tentative de définition d'un paramètre, utilisez le signe égal"
 
-#: src/funclib.c:390 src/funclib.c:477
+#: src/funclib.c:411 src/funclib.c:498
 #, c-format
 msgid "%s: Too many arguments, should be at most %d"
-msgstr ""
+msgstr "%s : Trop de paramètres, le maximum est de %d"
 
-#: src/funclib.c:619
+#: src/funclib.c:640
 msgid "Cannot apply function to two differently sized matrixes"
 msgstr ""
-"Impossible d'appliquer la fonction � deux matrices de tailles differentes"
+"Impossible d'appliquer la fonction à deux matrices de tailles differentes"
 
-#: src/funclib.c:1347
+#: src/funclib.c:1453
 #, c-format
 msgid "%s: square root for composite moduli is not yet implemented"
 msgstr ""
+"%s : la racine carrée pour les modules composé n'est pas encore implémentée"
 
-#: src/funclib.c:1355
+#: src/funclib.c:1461
 #, c-format
 msgid "%s: Cannot find square root function for prime moduli"
 msgstr ""
+"%s : Impossible de trouver une fonction racine carrée pour les modules "
+"primaires"
 
-#: src/funclib.c:1383
-#, fuzzy, c-format
+#: src/funclib.c:1494
+#, c-format
 msgid "%s: matrix argument is not square"
-msgstr "prime: le param�tre est trop grand"
+msgstr "%s : la matrice paramètre n'est pas carrée"
 
-#: src/funclib.c:1496 src/funclib.c:1596
-#, fuzzy, c-format
+#: src/funclib.c:1622 src/funclib.c:1722
+#, c-format
 msgid "%s: matrix argument must be integer only"
-msgstr "max: les arguments doivent �tres des nombres"
+msgstr "%s : la matrice paramètre doit être constituée d'entiers uniquement"
 
-#: src/funclib.c:1518 src/funclib.c:1618
-#, fuzzy, c-format
+#: src/funclib.c:1644 src/funclib.c:1744
+#, c-format
 msgid "%s: argument must be an integer"
-msgstr "I: le param�tre n'est pas un entier"
+msgstr "%s : le paramètre doit être un entier"
 
-#: src/funclib.c:1853 src/funclib.c:1934
-#, fuzzy, c-format
+#: src/funclib.c:1979 src/funclib.c:2060
+#, c-format
 msgid "%s: matrix argument must be value only"
-msgstr "max: les arguments doivent �tres des nombres"
+msgstr "%s : les arguments doivent êtres des nombres"
 
-#: src/funclib.c:2048 src/funclib.c:2088 src/funclib.c:3103
+#: src/funclib.c:2174 src/funclib.c:2214 src/funclib.c:3229
 #, c-format
 msgid "%s: too many arguments"
-msgstr ""
+msgstr "%s : trop d'arguments"
 
-#: src/funclib.c:2211
-#, fuzzy, c-format
+#: src/funclib.c:2337
+#, c-format
 msgid "%s: vector argument not value only"
-msgstr ""
-"det: le param�tre n'est pas une matrice contenant seulement des valeurs"
+msgstr "%s : le vecteur paramètre n'est pas constitué de nombres uniquement"
 
-#: src/funclib.c:2222 src/funclib.c:2251
-#, fuzzy, c-format
+#: src/funclib.c:2348 src/funclib.c:2377
+#, c-format
 msgid "%s: vector argument has too large entries"
-msgstr "I: le param�tre est trop grand"
+msgstr "%s: le vecteur paramètre a des composantes trop grandes"
 
-#: src/funclib.c:2328 src/funclib.c:2334
+#: src/funclib.c:2454 src/funclib.c:2460
 #, c-format
 msgid "%s: %s not a reference"
-msgstr ""
+msgstr "%s : %s n'est pas une référence"
 
-#: src/funclib.c:2373
+#: src/funclib.c:2499
 #, c-format
 msgid "%s: matrices not of the same height"
-msgstr ""
+msgstr "%s : les matrices n'ont pas la même hauteur"
 
-#: src/funclib.c:2378
+#: src/funclib.c:2504
 msgid "third argument"
-msgstr ""
+msgstr "troisième paramètre"
 
-#: src/funclib.c:2383
+#: src/funclib.c:2509
 msgid "fourth argument"
-msgstr ""
+msgstr "quatrième paramètre"
 
-#: src/funclib.c:2666
-#, fuzzy, c-format
+#: src/funclib.c:2792
+#, c-format
 msgid "%s: argument must be greater then 2"
-msgstr "gcd: les arguments doivent �tres des nombres"
+msgstr "%s : les paramètres doivent être plus quand 2"
 
-#: src/funclib.c:2781
+#: src/funclib.c:2907
 #, c-format
 msgid "%s: arguments not horizontal vectors"
-msgstr "%s: les arguments ne sont pas des vecteurs horizontaux"
+msgstr "%s: les paramètres ne sont pas des vecteurs horizontaux"
 
-#: src/funclib.c:2790
+#: src/funclib.c:2916
 #, c-format
 msgid "%s: arguments not numeric only vectors"
-msgstr "%s: param�tres non num�riques seulement vecteurs"
+msgstr "%s: paramàtres non numériques seulement des vecteurs"
 
-#: src/funclib.c:3320 src/funclib.c:3409 src/funclib.c:3628 src/funclib.c:3683
-#, fuzzy, c-format
+#: src/funclib.c:3446 src/funclib.c:3535 src/funclib.c:3754 src/funclib.c:3809
+#, c-format
 msgid "%s: value out of range"
-msgstr "Index hors intervalle"
+msgstr "%s : valeur hors des limites"
 
-#: src/funclib.c:3786
-#, fuzzy, c-format
+#: src/funclib.c:3912
+#, c-format
 msgid "%s: undefined function"
-msgstr "Calcule la fonction sinus"
+msgstr "%s : fonction non définie"
 
-#: src/funclib.c:3792
-#, fuzzy, c-format
+#: src/funclib.c:3918
+#, c-format
 msgid "%s: flags argument must be a string"
-msgstr "display: le premier argument doit �tre une cha�ne!"
+msgstr "%s : le drapeau paramètre doit être une chaîne"
 
-#: src/funclib.c:3829 src/funclib.c:3865 src/funclib.c:4073
-#, fuzzy, c-format
+#: src/funclib.c:3955 src/funclib.c:3991 src/funclib.c:4199
+#, c-format
 msgid "%s: argument should be between %d and %d"
-msgstr "max_digits: le param�tre doit �tre compris entre 0 et 256"
+msgstr "%s : le paramètre doit être compris entre %d et %d"
 
-#: src/funclib.c:3975
+#: src/funclib.c:4101
 msgid "OutputStyle must be one of normal, troff, latex or mathml"
-msgstr ""
+msgstr "Le StyleSortie doit être normal, troff, latex ou mathml"
 
-#: src/funclib.c:4016
+#: src/funclib.c:4142
 #, c-format
 msgid "%s: argument should be larger or equal to 0"
-msgstr ""
+msgstr "%s : le paramètre doit être supérieur ou égal à 0"
 
-#: src/funclib.c:4123
+#: src/funclib.c:4249
 msgid "Basic"
-msgstr ""
+msgstr "Basic"
 
-#: src/funclib.c:4124
+#: src/funclib.c:4250
 msgid "Parameters"
-msgstr ""
+msgstr "Paramètres"
 
-#: src/funclib.c:4125
+#: src/funclib.c:4251
 msgid "Constants"
-msgstr ""
+msgstr "Constantes"
 
-#: src/funclib.c:4126
+#: src/funclib.c:4252
 msgid "Numeric"
-msgstr ""
+msgstr "Numérique"
 
-#: src/funclib.c:4127
+#: src/funclib.c:4253
 msgid "Trigonometry"
-msgstr ""
+msgstr "Trigonométrie"
 
-#: src/funclib.c:4128
+#: src/funclib.c:4254
 msgid "Number Theory"
-msgstr ""
+msgstr "Théorie des nombres"
 
-#: src/funclib.c:4129
+#: src/funclib.c:4255
 msgid "Matrix Manipulation"
-msgstr ""
+msgstr "Manipulations de matrices"
 
-#: src/funclib.c:4130
+#: src/funclib.c:4256
 msgid "Linear Algebra"
-msgstr ""
+msgstr "Algèbre linéraire"
 
-#: src/funclib.c:4131
+#: src/funclib.c:4257
 msgid "Combinatorics"
-msgstr ""
+msgstr "Combinatoires"
 
-#: src/funclib.c:4132
-#, fuzzy
+#: src/funclib.c:4258
 msgid "Calculus"
-msgstr "_Calculatrice"
+msgstr "Calculatoire"
 
-#: src/funclib.c:4133
-#, fuzzy
+#: src/funclib.c:4259
 msgid "Functions"
-msgstr "Fonction NULLE!"
+msgstr "Fonctions"
 
-#: src/funclib.c:4134
+#: src/funclib.c:4260
 msgid "Equation Solving"
-msgstr ""
+msgstr "Résolution d'équation"
 
-#: src/funclib.c:4135
+#: src/funclib.c:4261
 msgid "Statistics"
-msgstr ""
+msgstr "Statistiques"
 
-#: src/funclib.c:4136
+#: src/funclib.c:4262
 msgid "Polynomials"
-msgstr ""
+msgstr "Polynomiales"
 
-#: src/funclib.c:4137
+#: src/funclib.c:4263
 msgid "Set Theory"
-msgstr ""
+msgstr "Définir la théorie"
 
-#: src/funclib.c:4138
+#: src/funclib.c:4264
 msgid "Miscellaneous"
-msgstr ""
+msgstr "Divers"
 
 #. bogus value
-#: src/funclib.c:4171
+#: src/funclib.c:4297
 msgid "Displays the user manual"
-msgstr ""
+msgstr "Afficher la manuel utilisateur"
 
-#: src/funclib.c:4172
+#: src/funclib.c:4298
 msgid "Gives the warranty information"
 msgstr "Donne les informations sur la garantie"
 
-#: src/funclib.c:4173
+#: src/funclib.c:4299
 msgid "Exits the program"
 msgstr "Quitte le programme"
 
-#: src/funclib.c:4175
+#: src/funclib.c:4301
 msgid "Prints a string to the error stream"
-msgstr "Affiche une cha�ne dans le flux d'erreur"
+msgstr "Affiche une chaîne dans le flux d'erreur"
 
-#: src/funclib.c:4176
-#, fuzzy
+#: src/funclib.c:4302
 msgid "Prints an expression"
-msgstr "Imprime une expression"
+msgstr "Imprimer une expression"
 
-#: src/funclib.c:4177
+#: src/funclib.c:4303
 msgid "Changes current directory"
-msgstr ""
+msgstr "Changer le répertoire courant"
 
-#: src/funclib.c:4178
+#: src/funclib.c:4304
 msgid "Prints an expression without a trailing newline"
-msgstr "Imprime une expression sans le retour � la ligne final"
+msgstr "Imprime une expression sans le retour à la ligne final"
 
-#: src/funclib.c:4179
+#: src/funclib.c:4305
 msgid "Display a string and an expression"
-msgstr "Affiche une cha�ne et une expression"
+msgstr "Affiche une chaîne et une expression"
 
-#: src/funclib.c:4180
+#: src/funclib.c:4306
 msgid "Set a global variable"
-msgstr ""
+msgstr "Définir une variable globale"
 
-#: src/funclib.c:4182
+#: src/funclib.c:4308
 msgid "Set the category and help description line for a function"
 msgstr ""
+"Définir une catégorie et une ligne de description d'aide pour une fonction"
 
-#: src/funclib.c:4183
+#: src/funclib.c:4309
 msgid "Sets up a help alias"
-msgstr ""
+msgstr "Mettre en place un alias pour l'aide"
 
-#: src/funclib.c:4185
+#: src/funclib.c:4311
 msgid "Generate random float"
-msgstr ""
+msgstr "Générer un flottant aléatoire"
 
-#: src/funclib.c:4187
+#: src/funclib.c:4313
 msgid "Generate random integer"
-msgstr ""
+msgstr "Générer un entier aléatoire"
 
-#: src/funclib.c:4190 src/gnome-genius.c:925
+#: src/funclib.c:4316 src/gnome-genius.c:911
 msgid "Floating point precision"
-msgstr "Pr�cision en virgule flottante"
+msgstr "Précision en virgule flottante"
 
-#: src/funclib.c:4191
-#, fuzzy
+#: src/funclib.c:4317
 msgid "Maximum digits to display"
-msgstr "Nombre de chiffres a afficher (0=non limit�)"
+msgstr "Maximum de chiffres à afficher"
 
-#: src/funclib.c:4192
-#, fuzzy
+#: src/funclib.c:4318
 msgid "Maximum errors to display"
-msgstr "Nombre de chiffres a afficher (0=non limit�)"
+msgstr "Maximum d'erreurs à afficher"
 
-#: src/funclib.c:4193
+#: src/funclib.c:4319
 msgid "Output style: normal, latex or troff"
-msgstr ""
+msgstr "Style de sortie : normal, latex ou troff"
 
-#: src/funclib.c:4194
+#: src/funclib.c:4320
 msgid "Integer output base"
-msgstr ""
+msgstr "Base de sortie pour les entiers"
 
-#: src/funclib.c:4195
+#: src/funclib.c:4321
 msgid "If true, mixed fractions are printed"
-msgstr ""
+msgstr "Si vrai, les fractions mélangées sont affichées"
 
-#: src/funclib.c:4196
+#: src/funclib.c:4322
 msgid "Print full expressions, even if more then a line"
-msgstr ""
+msgstr "Imprimer les expressions complètes, même celles de plus qu'une ligne"
 
-#: src/funclib.c:4197
+#: src/funclib.c:4323
 msgid "Convert all results to floats before printing"
-msgstr ""
+msgstr "Convertir tous les résultats en flottant avant d'imprimer"
 
-#: src/funclib.c:4198
-#, fuzzy
+#: src/funclib.c:4324
 msgid "Use scientific notation"
-msgstr "Nombres flottants en notation scientifique"
+msgstr "Utiliser la notation scientifique"
 
-#: src/funclib.c:4200
+#: src/funclib.c:4326
 msgid ""
 "Number of extra Miller-Rabin tests to run on a number before declaring it a "
 "prime in IsPrime"
 msgstr ""
+"Nombre de tests supplémentaires de Miller-Rabin à lancer sur un nombre avant "
+"de le déclarer comme premier dans IsPrime"
 
-#: src/funclib.c:4206
+#: src/funclib.c:4332
 msgid "Expands a matrix just like we do on unquoted matrix input"
 msgstr ""
+"Développe une matrice de la même manière que pour les entrées de matrice non "
+"entre guillemets"
 
-#: src/funclib.c:4207
+#: src/funclib.c:4333
 msgid "Gets the rows of a matrix as a vertical vector"
-msgstr ""
+msgstr "Extrait les lignes de matrice comme une vecteur vertical"
 
-#: src/funclib.c:4208
-#, fuzzy
+#: src/funclib.c:4334
 msgid "Gets the columns of a matrix as a horizontal vector"
-msgstr "%s: les arguments ne sont pas des vecteurs horizontaux"
+msgstr "Extrait les colonnes de la matrice comme un vecteur horizontal"
 
-#: src/funclib.c:4209
-#, fuzzy
+#: src/funclib.c:4335
 msgid "Gets the diagonal entries of a matrix as a horizontal vector"
-msgstr "%s: les arguments ne sont pas des vecteurs horizontaux"
+msgstr ""
+"Extrait les données en diagonale de la matrice comme un vecteur horizontal"
 
-#: src/funclib.c:4211
-#, fuzzy
+#: src/funclib.c:4337
 msgid "Calculates the conjugate"
-msgstr "Calcule la foncion cosinus"
+msgstr "Calcule le conjugué"
 
-#: src/funclib.c:4215
+#: src/funclib.c:4342
 msgid "Calculates the sine function"
 msgstr "Calcule la fonction sinus"
 
-#: src/funclib.c:4216
-#, fuzzy
+#: src/funclib.c:4344
 msgid "Calculates the cossine function"
 msgstr "Calcule la foncion cosinus"
 
-#: src/funclib.c:4217
+#: src/funclib.c:4346
 msgid "Calculates the hyperbolic sine function"
 msgstr "Calcule la fonction sinus hyperbolique"
 
-#: src/funclib.c:4218
+#: src/funclib.c:4348
 msgid "Calculates the hyperbolic cosine function"
 msgstr "Calcule la fonction cosinus hyperbolique"
 
-#: src/funclib.c:4219
+#: src/funclib.c:4350
 msgid "Calculates the tan function"
 msgstr "Calcule la fonction tangente"
 
-#: src/funclib.c:4220
+#: src/funclib.c:4352
 msgid "Calculates the arctan function"
 msgstr "Calcule la fonction arctangente (argtan)"
 
-#: src/funclib.c:4223
+#: src/funclib.c:4356
 msgid "The number pi"
 msgstr "Le nombre pi"
 
-#: src/funclib.c:4224
+#: src/funclib.c:4357
 msgid "The natural number e"
 msgstr "Le nombre naturel e"
 
-#: src/funclib.c:4225
+#: src/funclib.c:4358
 msgid "The Golden Ratio"
-msgstr ""
+msgstr "Le nombre d'or"
 
-#: src/funclib.c:4226
+#: src/funclib.c:4359
 msgid "Free fall acceleration"
 msgstr ""
 
-#: src/funclib.c:4228
+#: src/funclib.c:4361
 msgid "Euler's Constant gamma good up to about precision of 9516 digits"
 msgstr ""
 
-#: src/funclib.c:4231
+#: src/funclib.c:4364
 msgid "The square root"
-msgstr "La racine carr�"
+msgstr "La racine carré"
 
-#: src/funclib.c:4234
+#: src/funclib.c:4368
 msgid "The exponential function"
 msgstr "La fonction exponentielle"
 
-#: src/funclib.c:4235
-#, fuzzy
+#: src/funclib.c:4370
 msgid "The natural logarithm"
-msgstr "La fonction logarithm naturel"
+msgstr "Le logarithme naturel"
 
-#: src/funclib.c:4236
+#: src/funclib.c:4372
 msgid "Logarithm of x base 2"
-msgstr ""
+msgstr "Logarithme base 2 de x"
 
-#: src/funclib.c:4238
+#: src/funclib.c:4375
 msgid "Logarithm of x base 10"
-msgstr ""
+msgstr "Logarithme base 10 de x"
 
-#: src/funclib.c:4239
-#, fuzzy
+#: src/funclib.c:4377
 msgid "Round a number"
-msgstr "round: le param�tre n'est pas un nombre"
+msgstr "Arrondir un nombre"
 
-#: src/funclib.c:4241
+#: src/funclib.c:4380
 msgid "Get the highest integer less then or equal to n"
-msgstr ""
+msgstr "Obtenir le plus grand entier inférieur ou égale à n"
 
-#: src/funclib.c:4243
+#: src/funclib.c:4383
 msgid "Get the lowest integer more then or equal to n"
-msgstr ""
+msgstr "Obtenir le petit entier supérieur ou égal à n"
 
-#: src/funclib.c:4245
+#: src/funclib.c:4386
 msgid "Truncate number to an integer (return the integer part)"
-msgstr ""
+msgstr "Tronque le nombre à un entier (retourne la partie entière)"
 
-#: src/funclib.c:4248
+#: src/funclib.c:4390
 msgid "Make number a float"
-msgstr ""
+msgstr "Faire du nombre un flottant"
 
-#: src/funclib.c:4249
-#, fuzzy
+#: src/funclib.c:4392
 msgid "Get the numerator of a rational number"
-msgstr "tan: le param�tre n'est pas un nombre r��l"
+msgstr "Obtenir le numérateur d'un nombre rationnel"
 
-#: src/funclib.c:4250
+#: src/funclib.c:4394
 msgid "Get the denominator of a rational number"
-msgstr ""
+msgstr "Obtenir le dénominateur d'un nombre rationnel"
 
-#: src/funclib.c:4252
+#: src/funclib.c:4397
 msgid "Greatest common divisor"
 msgstr "Plus grand diviseur commun (PGCD)"
 
-#: src/funclib.c:4254
+#: src/funclib.c:4399
 msgid "Least common multiplier"
 msgstr "Plus petit multiple commun (PPCM)"
 
-#: src/funclib.c:4256
+#: src/funclib.c:4401
 msgid "Check a number for being a perfect square"
-msgstr ""
+msgstr "Vérifier qu'un nombre est un carré parfait"
 
-#: src/funclib.c:4257
+#: src/funclib.c:4402
 msgid "Check a number for being any perfect power (a^b)"
-msgstr ""
+msgstr "Vérifier qu'un nombre est une puissance parfaite (a^b)"
 
-#: src/funclib.c:4258
+#: src/funclib.c:4403
 msgid "Return the n'th prime (up to a limit)"
-msgstr ""
+msgstr "Retourne le n-ième nombre premier (jusqu'à une limite) "
 
-#: src/funclib.c:4260
+#: src/funclib.c:4405
 msgid "Tests if an integer is even"
-msgstr ""
+msgstr "Teste si un entier est pair"
 
-#: src/funclib.c:4261
+#: src/funclib.c:4406
 msgid "Tests if an integer is odd"
-msgstr ""
+msgstr "Test si un entier est impair"
 
-#: src/funclib.c:4263
+#: src/funclib.c:4408
 msgid "Returns the least prime greater than n (if n is positive)"
-msgstr ""
+msgstr "Retourne le premier nombre premier supérieur à n (si n est positif)"
 
-#: src/funclib.c:4264
-#, fuzzy
+#: src/funclib.c:4409
 msgid "Returns the n'th Lucas number"
-msgstr "Re: le param�tre n'est pas un nombre"
+msgstr "Retourne le n-ième nombre de Lucas"
 
-#: src/funclib.c:4265
+#: src/funclib.c:4410
 msgid "Returns inverse of n mod m"
-msgstr ""
+msgstr "Retourne l'inverse de n mod m"
 
-#: src/funclib.c:4266
+#: src/funclib.c:4411
 msgid ""
 "Tests primality of integers, for numbers greater then 25*10^9 false positive "
 "is with low probability depending on IsPrimeMillerRabinReps"
 msgstr ""
+"Teste la primarité d'entiers, pour les nombres supérieur à 25*10^9 les faux "
+"positifs ont une probabilité dépendant de IsPrimeMillerRabinReps"
 
-#: src/funclib.c:4267
+#: src/funclib.c:4412
 msgid "Run the strong pseudoprime test base b on n"
-msgstr ""
+msgstr "Lancer le solide test de pseudo-primarité en base b sur n"
 
-#: src/funclib.c:4268
+#: src/funclib.c:4413
 msgid ""
 "Use the Miller-Rabin primality test on n, reps number of times.  The "
 "probability of false positive is (1/4)^reps"
 msgstr ""
+"Utiliser reps fois le test de primarité de Miller-Rabin sur n. La "
+"probabilité de faux positif est de (1/4)^reps"
 
-#: src/funclib.c:4269
+#: src/funclib.c:4414
 msgid ""
 "Use the Miller-Rabin primality test on n with enough bases that assuming the "
 "Generalized Reimann Hypothesis the result is deterministic"
 msgstr ""
 
-#: src/funclib.c:4270
+#: src/funclib.c:4415
 msgid "Return factorization of a number as a matrix"
-msgstr ""
+msgstr "Retourner la factorisation d'un nombre sous forme de matrice"
 
-#: src/funclib.c:4272
+#: src/funclib.c:4417
 msgid "Returns the maximum of arguments or matrix"
-msgstr ""
+msgstr "Retourne le maximum des paramètres ou matrices"
 
-#: src/funclib.c:4275
+#: src/funclib.c:4420
 msgid "Returns the minimum of arguments or matrix"
-msgstr ""
+msgstr "Retourne le minimum des paramètres ou matrices"
 
-#: src/funclib.c:4279
+#: src/funclib.c:4424
 msgid "Calculate the Jacobi symbol (a/b) (b should be odd)"
-msgstr ""
+msgstr "Calculer le symbole de Jacobi (a/b) (b doit être impair)"
 
-#: src/funclib.c:4281
+#: src/funclib.c:4426
 msgid ""
 "Calculate the Jacobi symbol (a/b) with the Kronecker extension (a/2)=(2/a) "
 "when a odd, or (a/2)=0 when a even"
 msgstr ""
+"Calculer le symbole de Jacobi (a/b) avec l'extension de Kronecker (a/2)=(2/"
+"a) si impair, ou (a/2)=0 si pair"
 
-#: src/funclib.c:4283
+#: src/funclib.c:4428
 msgid "Calculate the Legendre symbol (a/p)"
-msgstr ""
+msgstr "Calculer le symbole de Legendre (a/p)"
 
-#: src/funclib.c:4286
-#, fuzzy
+#: src/funclib.c:4431
 msgid "Get the real part of a complex number"
-msgstr "Impossible de d�terminer le type d'un nombre complexe"
+msgstr "Obtenir la partie réelle d'un nombre complexe"
 
-#: src/funclib.c:4288
-#, fuzzy
+#: src/funclib.c:4434
 msgid "Get the imaginary part of a complex number"
-msgstr "Impossible de d�terminer le type d'un nombre complexe"
+msgstr "Obtenir la partie imaginaire d'un nombre complexe"
 
-#: src/funclib.c:4291
+#: src/funclib.c:4438
 msgid "Make an identity matrix of a given size"
-msgstr ""
+msgstr "Faire une matrice identitée de la taille donnée"
 
-#: src/funclib.c:4294
+#: src/funclib.c:4441
 msgid "Make an matrix of all zeros (or a row vector)"
-msgstr ""
+msgstr "Faire une matrice de zéros (ou un vecteur ligne)"
 
-#: src/funclib.c:4296
+#: src/funclib.c:4443
 msgid "Make an matrix of all ones (or a row vector)"
-msgstr ""
+msgstr "Faire une matrice de uns (ou un vecteur ligne)"
 
-#: src/funclib.c:4299
+#: src/funclib.c:4446
 msgid "Get the number of rows of a matrix"
-msgstr ""
+msgstr "Obtenir le nombre de lignes d'une matrice"
 
-#: src/funclib.c:4300
+#: src/funclib.c:4447
 msgid "Get the number of columns of a matrix"
-msgstr ""
+msgstr "Obtenir le nombre de colonnes d'une matrice"
 
-#: src/funclib.c:4301
+#: src/funclib.c:4448
 msgid "Is a matrix square"
-msgstr ""
+msgstr "Est-ce que la matrice est carrée"
 
-#: src/funclib.c:4302
+#: src/funclib.c:4449
 msgid "Get the number of elements of a matrix"
-msgstr ""
+msgstr "Obtenir le nombre d'éléments d'une matrice"
 
-#: src/funclib.c:4304
+#: src/funclib.c:4451
 msgid "Get the row echelon form of a matrix"
 msgstr ""
 
-#: src/funclib.c:4308
+#: src/funclib.c:4455
 msgid "Get the reduced row echelon form of a matrix"
 msgstr ""
 
-#: src/funclib.c:4312
+#: src/funclib.c:4459
 msgid ""
 "Solve linear system Mx=V, return solution V if there is a unique solution, "
 "null otherwise.  Extra two reference parameters can optionally be used to "
 "get the reduced M and V."
 msgstr ""
+"Résoud le système linéraire Mx=V, retourne V s'il y a une solution unique ou "
+"rien sinon. Deux références de paramètres supplémentaires peuvent être "
+"utilisés pour recevoir les réductions de M et V."
 
-#: src/funclib.c:4315
+#: src/funclib.c:4462
 msgid "Get the determinant of a matrix"
-msgstr ""
+msgstr "Obtenir le déterminant d'une matrice"
 
-#: src/funclib.c:4318
+#: src/funclib.c:4465
 msgid "Make new matrix of given size from old one"
 msgstr ""
+"Faire une nouvelle matrice, de la taille donnée, à partir de l'ancienne"
 
-#: src/funclib.c:4319
+#: src/funclib.c:4466
 msgid "Return the index complement of a vector of indexes"
-msgstr ""
+msgstr "Retourne l'index complément d'une vecteur d'indexes"
 
-#: src/funclib.c:4321
+#: src/funclib.c:4468
 msgid "Check if a matrix is a matrix of numbers"
-msgstr ""
+msgstr "Vérifier si une matrice est constituée de nombres"
 
-#: src/funclib.c:4322
+#: src/funclib.c:4469
 msgid "Check if a matrix is an integer (non-complex) matrix"
-msgstr ""
+msgstr "Vérifier si une matrice est constituée d'entiers (non-complexes)"
 
-#: src/funclib.c:4323
+#: src/funclib.c:4470
 msgid "Check if a matrix is a rational (non-complex) matrix"
 msgstr ""
+"Vérifier si une matrice est constituée de nombres rationnels (non-complexes)"
 
-#: src/funclib.c:4324
+#: src/funclib.c:4471
 msgid "Check if a matrix is a real (non-complex) matrix"
-msgstr ""
+msgstr "Vérifier si une matrice est constituée de réels (non-complexes)"
 
-#: src/funclib.c:4326
-#, fuzzy
+#: src/funclib.c:4473
 msgid "Check if argument is a null"
-msgstr "ceil: le param�tre n'est pas un nombre"
+msgstr "Vérifier si le paramètre est nul"
 
-#: src/funclib.c:4327
-#, fuzzy
+#: src/funclib.c:4474
 msgid "Check if argument is a number"
-msgstr "ceil: le param�tre n'est pas un nombre"
+msgstr "Vérifier si le paramètre est un nombre"
 
-#: src/funclib.c:4328
-#, fuzzy
+#: src/funclib.c:4475
 msgid "Check if argument is a text string"
-msgstr "display: le premier argument doit �tre une cha�ne!"
+msgstr "Vérifier si le paramètre est un chaîne de texte"
 
-#: src/funclib.c:4329
-#, fuzzy
+#: src/funclib.c:4476
 msgid "Check if argument is a matrix"
-msgstr "rows: le param�tre n'est pas une matrice"
+msgstr "Vérifier si le paramètre est une matrice"
 
-#: src/funclib.c:4330
-#, fuzzy
+#: src/funclib.c:4477
 msgid "Check if argument is a function"
-msgstr "La fonction exponentielle"
+msgstr "Vérifier si l'argument est une fonction"
 
-#: src/funclib.c:4331
+#: src/funclib.c:4478
 msgid "Check if argument is a function reference"
-msgstr ""
+msgstr "Vérifier si l'argument est fonction de référence"
 
-#: src/funclib.c:4333
-#, fuzzy
+#: src/funclib.c:4480
 msgid "Check if argument is a complex (non-real) number"
-msgstr "tan: le param�tre n'est pas un nombre r��l"
+msgstr "Vérifier si l'argument est un nombre complexe (non-réel)"
 
-#: src/funclib.c:4334
-#, fuzzy
+#: src/funclib.c:4481
 msgid "Check if argument is a real number"
-msgstr "tan: le param�tre n'est pas un nombre r��l"
+msgstr "Vérifier si le paramètre est une nombre réel"
 
-#: src/funclib.c:4335
+#: src/funclib.c:4482
 msgid "Check if argument is an integer (non-complex)"
-msgstr ""
+msgstr "Vérifier si le paramètre est un entier (non-complexe)"
 
-#: src/funclib.c:4336
-#, fuzzy
+#: src/funclib.c:4483
 msgid "Check if argument is a positive real integer"
-msgstr "I: le param�tre n'est pas un entier"
+msgstr "Vérifier si le paramètre est un entier réel positif"
 
-#: src/funclib.c:4338
+#: src/funclib.c:4485
 msgid "Check if argument is a possibly complex integer"
-msgstr ""
+msgstr "Vérifier si le paramètre peut être un entier complexe"
 
-#: src/funclib.c:4340
+#: src/funclib.c:4487
 msgid "Check if argument is a rational number (non-complex)"
-msgstr ""
+msgstr "Vérifier si le paramètre est un nombre rationnel (non-complexe)"
 
-#: src/funclib.c:4341
+#: src/funclib.c:4488
 msgid "Check if argument is a possibly complex rational number"
-msgstr ""
+msgstr "Vérifier si le paramètre peut être un nombre complexe rationnel"
 
-#: src/funclib.c:4342
+#: src/funclib.c:4489
 msgid "Check if argument is a floating point number (non-complex)"
-msgstr ""
+msgstr "Vérifier si le paramètre est un nombre flottant (non-complexe)"
 
-#: src/funclib.c:4344
+#: src/funclib.c:4491
 msgid "Add two polynomials (vectors)"
-msgstr ""
+msgstr "Ajouter deux polynômes (vecteurs)"
 
-#: src/funclib.c:4345
+#: src/funclib.c:4492
 msgid "Subtract two polynomials (as vectors)"
-msgstr ""
+msgstr "Soustraire deux polynômes (comme vecteurs)"
 
-#: src/funclib.c:4346
+#: src/funclib.c:4493
 msgid "Multiply two polynomials (as vectors)"
-msgstr ""
+msgstr "Multiplier deux polynômes (comme vecteurs)"
 
-#: src/funclib.c:4347
+#: src/funclib.c:4494
 msgid "Take polynomial (as vector) derivative"
-msgstr ""
+msgstr "Prend la dérivée du polynôme (comme vecteur)"
 
-#: src/funclib.c:4348
+#: src/funclib.c:4495
 msgid "Take second polynomial (as vector) derivative"
-msgstr ""
+msgstr "Prend la dérivée seconde du polynôme (comme vecteur)"
 
-#: src/funclib.c:4349
+#: src/funclib.c:4496
 msgid "Trim zeros from a polynomial (as vector)"
 msgstr ""
 
-#: src/funclib.c:4350
+#: src/funclib.c:4497
 msgid "Check if a vector is usable as a polynomial"
-msgstr ""
+msgstr "Vérifier si un vecteur est utilisable comme polynôme"
 
-#: src/funclib.c:4351
+#: src/funclib.c:4498
 msgid "Make string out of a polynomial (as vector)"
-msgstr ""
+msgstr "Faire une chaîne à partir d'un polynôme (comme vecteur)"
 
-#: src/funclib.c:4352
+#: src/funclib.c:4499
 msgid "Make function out of a polynomial (as vector)"
-msgstr ""
+msgstr "Faire une fonction à partir d'un polynôme (comme vecteur)"
 
-#: src/funclib.c:4354
+#: src/funclib.c:4501
 msgid "Get all combinations of k numbers from 1 to n as a vector of vectors"
 msgstr ""
+"Obtenir toutes les combinaisons de k nombres de 1 à n comme un vecteur de "
+"vecteurs"
 
-#: src/funclib.c:4355
+#: src/funclib.c:4502
 msgid "Get all permutations of k numbers from 1 to n as a vector of vectors"
 msgstr ""
+"Obtenir tout les permutations de k nombres de 1 à n comme un vecteur de "
+"vecteurs"
 
-#: src/funclib.c:4357
+#: src/funclib.c:4504
 msgid "Convert a string to a vector of ASCII values"
-msgstr ""
+msgstr "Convertir une chaîne en vecteur de valeurs ASCII"
 
-#: src/funclib.c:4358
+#: src/funclib.c:4505
 msgid "Convert a vector of ASCII values to a string"
-msgstr ""
+msgstr "Convertir un vecteur de valeurs ASCII en une chaîne"
 
-#: src/funclib.c:4360
+#: src/funclib.c:4507
 msgid ""
 "Convert a string to a vector of 0-based alphabet values (positions in the "
 "alphabet string), -1's for unknown letters"
 msgstr ""
+"Convertir une chaîne en un vecteur de valeurs d'un alphabet basé sur 0 "
+"(chaîne des positions dans l'alphabet), -1 désigne les lettres inconnues"
 
-#: src/funclib.c:4361
+#: src/funclib.c:4508
 msgid ""
 "Convert a vector of 0-based alphabet values (positions in the alphabet "
 "string) to a string"
 msgstr ""
+"Convertir un vecteur de valeurs d'un alphabet basé sur 0 (chaîne des "
+"positions dans l'alphabet) en une chaîne"
 
-#: src/funclib.c:4363
+#: src/funclib.c:4510
 msgid "Protect a variable from being modified"
-msgstr ""
+msgstr "Protéger une variable des modifications"
 
-#: src/funclib.c:4364
+#: src/funclib.c:4511
 msgid "Unprotect a variable from being modified"
-msgstr ""
+msgstr "Déprotéger une variable des modifications"
 
-#: src/funclib.c:4365
+#: src/funclib.c:4512
 msgid ""
 "Set flags for a function, currently \"PropagateMod\" and \"NoModuloArguments"
 "\""
 msgstr ""
+"Positionner les drapeux pour une fonction, actuellement «Â PropagateMod Â» "
+"et «Â NoModuloArguments Â»"
 
-#: src/funclib.c:4366
+#: src/funclib.c:4513
 msgid "Get current modulo from the context outside the function"
-msgstr ""
+msgstr "Obtenir le module actuel du contexte en dehors de la fonction"
 
 #: src/genius.c:96
 #, c-format
@@ -1385,16 +1412,19 @@ msgstr "ligne %d: %s\n"
 #: src/genius.c:114
 #, c-format
 msgid "Too many errors! (%d followed)\n"
-msgstr ""
+msgstr "Trop d'erreurs ! (%d autorisées)\n"
 
-#: src/genius.c:179 src/gnome-genius.c:2371
+#: src/genius.c:179 src/gnome-genius.c:2504
 msgid ""
 "\n"
 "Note: Compiled without MPFR (some operations may be slow) see www.mpfr.org"
 msgstr ""
+"\n"
+"Note : Compilé sans MPFR (certaines opérations peuvent être lentes), voir "
+"www.mpfr.org"
 
 #: src/genius.c:255
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Genius %s usage:\n"
 "\n"
@@ -1418,19 +1448,23 @@ msgstr ""
 "\n"
 "genius [options] [fichiers]\n"
 "\n"
-"\t--precision=num   \tPr�cision en virgule flottante [256]\n"
+"\t--precision=num   \tPrécision en virgule flottante [256]\n"
 "\t--maxdigits=num   \tNombre maximun de chiffres a afficher (0=pas de "
 "limite) [0]\n"
-"\t--[no]floatresult \tTous les r�sultats sont flottants [OFF]\n"
-"\t--[no]scinot      \tR�sultats en notation scientifique [OFF]\n"
+"\t--[no]floatresult \tTous les résultats sont flottants [OFF]\n"
+"\t--[no]scinot      \tRésultats en notation scientifique [OFF]\n"
+"\t--[no]fullexp     \tToujours afficher les expressions complètes [OFF]\n"
+"\t--maxerrors=num   \tMaximum d'erreurs à afficher (0=pas de limite) [5]\n"
+"\t--[no]mixed       \tAfficher les fractions en format mixe\n"
+"\t--intoutbase=num  \tBase à utiliser pour afficher les entiers [10]\n"
 "\t--[no]readline    \tUtiliser readline si disponible [ON]\n"
 "\t--[no]compile     \tTout compiler et l'afficher sur stdout [OFF]\n"
-"\t--[no]quiet       \t�tre silencieux en mode non-interactif,\n"
-"\t                  \t(toujours activ� lors d'une compilation) [OFF]\n"
+"\t--[no]quiet       \tÊtre silencieux en mode non-interactif,\n"
+"\t                  \t(toujours activé lors d'une compilation) [OFF]\n"
 "\n"
 
 #: src/genius.c:296
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Genius %s\n"
 "%s\n"
@@ -1440,16 +1474,18 @@ msgid ""
 "\n"
 msgstr ""
 "Genius %s\n"
-"Copyright (c) 1997,1998,1999 Free Software Foundation, Inc.\n"
+"%s\n"
 "This is free software with ABSOLUTELY NO WARRANTY.\n"
-"For details type `warranty'.\n"
-"\n"
+"For license details type `warranty'.\n"
+"For help type 'manual' or 'help'.%s\n"
 
-#: src/genius.c:351 src/gnome-genius.c:2631
+#: src/genius.c:351 src/gnome-genius.c:2764
 msgid ""
 "The only thing that interferes with my learning is my education.  -- Albert "
 "Einstein"
 msgstr ""
+"La seule chose qui interfère avec mon apprentissage est mon éducation. -- "
+"Albert Einstein"
 
 #: src/genius.c:372 src/genius.c:432
 msgid "Can't open file"
@@ -1457,388 +1493,446 @@ msgstr "Impossible d'ouvrir le fichier"
 
 #: src/genius.lang.h:1
 msgid "Base-N Integers"
-msgstr ""
+msgstr "Entier en base-N"
 
 #: src/genius.lang.h:2
 msgid "Commands"
-msgstr ""
+msgstr "Commandes"
 
 #: src/genius.lang.h:3
 msgid "Decimal Integers"
-msgstr ""
+msgstr "Entiers décimaux"
 
 #: src/genius.lang.h:4
 msgid "Floats"
-msgstr ""
+msgstr "Flottants"
 
 #: src/genius.lang.h:5
 msgid "Genius"
-msgstr ""
+msgstr "Genius"
 
 #: src/genius.lang.h:6
 msgid "Keywords"
-msgstr ""
+msgstr "Mots clés"
 
 #: src/genius.lang.h:7
 msgid "Line Comment"
-msgstr ""
+msgstr "Ligne de commentaire"
 
 #: src/genius.lang.h:8
 msgid "Scripts"
-msgstr ""
+msgstr "Scripts"
 
 #: src/genius.lang.h:9
 msgid "String"
-msgstr ""
+msgstr "Chaîne"
 
-#: src/gnome-genius.c:169
+#: src/gnome-genius.c:161
 msgid "_New Program"
-msgstr ""
+msgstr "_Nouveau programme"
 
-#: src/gnome-genius.c:169
+#: src/gnome-genius.c:161
 msgid "Create new program tab"
-msgstr ""
+msgstr "Créer un nouvelle onglet de programme"
 
-#: src/gnome-genius.c:176
-msgid "_Reload From Disk"
-msgstr ""
+#: src/gnome-genius.c:168
+#, fuzzy
+msgid "_Reload from Disk"
+msgstr "_Recharger à partir du disque"
 
-#: src/gnome-genius.c:176
+#: src/gnome-genius.c:168
 msgid "Reload the selected program from disk"
-msgstr ""
+msgstr "Recharger le programme sélectionné à partir du disque"
 
-#: src/gnome-genius.c:180
-msgid "_Load and Run"
-msgstr ""
+#: src/gnome-genius.c:172
+#, fuzzy
+msgid "_Load and Run..."
+msgstr "_Charger et lancer"
 
-#: src/gnome-genius.c:180
+#: src/gnome-genius.c:172
 msgid "Load and execute a file in genius"
-msgstr "Charger et �xecuter un fichier dans genius"
+msgstr "Charger et éxecuter un fichier dans genius"
+
+#: src/gnome-genius.c:185
+msgid "Copy Answer As Plain _Text"
+msgstr "Copier la réponse comme du _texte brut"
+
+#: src/gnome-genius.c:186
+msgid "Copy last answer into the clipboard in plain text"
+msgstr "Copier la dernière réponse dans le presse-papiers comme du texte brut"
+
+#: src/gnome-genius.c:189
+msgid "Copy Answer As _LaTeX"
+msgstr "Copier la réponse comme du _LaTex"
+
+#: src/gnome-genius.c:190
+msgid "Copy last answer into the clipboard as LaTeX"
+msgstr "Copier la dernière réponse dans le presse-papiers comme du LaTex"
 
 #: src/gnome-genius.c:193
-msgid "Copy Answer As Plain _Text"
-msgstr ""
+msgid "Copy Answer As _MathML"
+msgstr "Copier la réponse comme du _MathML"
 
 #: src/gnome-genius.c:194
-msgid "Copy last answer into the clipboard in plain text"
-msgstr ""
+msgid "Copy last answer into the clipboard as MathML"
+msgstr "Copier la dernière réponse dans le presse-papiers comme du MathML"
 
 #: src/gnome-genius.c:197
-msgid "Copy Answer As _LaTeX"
-msgstr ""
+msgid "Copy Answer As T_roff"
+msgstr "Copier la réponse comme du T_roff"
 
 #: src/gnome-genius.c:198
-msgid "Copy last answer into the clipboard as LaTeX"
-msgstr ""
-
-#: src/gnome-genius.c:201
-msgid "Copy Answer As _MathML"
-msgstr ""
-
-#: src/gnome-genius.c:202
-msgid "Copy last answer into the clipboard as MathML"
-msgstr ""
-
-#: src/gnome-genius.c:205
-msgid "Copy Answer As T_roff"
-msgstr ""
-
-#: src/gnome-genius.c:206
 msgid "Copy last answer into the clipboard as Troff eqn"
 msgstr ""
+"Copier la dernière réponse dans le presse-papiers comme une équation Troff"
 
-#: src/gnome-genius.c:219
+#: src/gnome-genius.c:211
 msgid "_Run"
-msgstr ""
+msgstr "_Lancer"
 
-#: src/gnome-genius.c:219 src/gnome-genius.c:264
+#: src/gnome-genius.c:211 src/gnome-genius.c:258
 msgid "Run current program"
-msgstr ""
+msgstr "Lancer le programme courant"
 
-#: src/gnome-genius.c:220
+#: src/gnome-genius.c:212
 msgid "_Interrupt"
 msgstr "_Interrompre"
 
-#: src/gnome-genius.c:220 src/gnome-genius.c:262
+#: src/gnome-genius.c:212 src/gnome-genius.c:256
 msgid "Interrupt current calculation"
 msgstr "Interrompre le calcul courant"
 
+#. title
+#. parent
+#. flags
+#: src/gnome-genius.c:214 src/graphing.c:1329
+#, fuzzy
+msgid "_Plot"
+msgstr "Dessin"
+
+#: src/gnome-genius.c:214 src/gnome-genius.c:260
+#, fuzzy
+msgid "Plot a function"
+msgstr "Fonction"
+
 #. FIXME: no help
 #. * GNOMEUIINFO_HELP("genius"),
-#: src/gnome-genius.c:227
+#: src/gnome-genius.c:221
 msgid "_Manual"
-msgstr ""
+msgstr "_Manuel"
 
-#: src/gnome-genius.c:228
+#: src/gnome-genius.c:222
 msgid "Display the manual"
-msgstr ""
+msgstr "Afficher le manuel"
 
-#: src/gnome-genius.c:231
+#: src/gnome-genius.c:225
 msgid "_Warranty"
-msgstr ""
+msgstr "_Garantie"
 
-#: src/gnome-genius.c:232
-#, fuzzy
+#: src/gnome-genius.c:226
 msgid "Display warranty information"
 msgstr "Donne les informations sur la garantie"
 
-#: src/gnome-genius.c:250
+#: src/gnome-genius.c:244
 msgid "_Calculator"
 msgstr "_Calculatrice"
 
-#: src/gnome-genius.c:252
-#, fuzzy
+#: src/gnome-genius.c:246
 msgid "P_lugins"
-msgstr "_Plugins"
+msgstr "_Greffons"
 
-#: src/gnome-genius.c:254
+#: src/gnome-genius.c:248
 msgid "_Programs"
-msgstr ""
+msgstr "_Programmes"
 
-#: src/gnome-genius.c:262
+#: src/gnome-genius.c:256
 msgid "Interrupt"
 msgstr "Interrompre"
 
-#: src/gnome-genius.c:264
+#: src/gnome-genius.c:258
 msgid "Run"
-msgstr ""
+msgstr "Lancer"
 
-#: src/gnome-genius.c:265
+#: src/gnome-genius.c:259
 msgid "Open"
-msgstr ""
+msgstr "Ouvrir"
 
-#: src/gnome-genius.c:265
+#: src/gnome-genius.c:259
 msgid "Open a GEL file for running"
-msgstr ""
+msgstr "Ouvrir le fichier GEL pour le lancer"
 
-#: src/gnome-genius.c:266
+#: src/gnome-genius.c:260
+#, fuzzy
+msgid "Plot"
+msgstr "Dessin"
+
+#: src/gnome-genius.c:261
 msgid "Exit"
-msgstr ""
+msgstr "Quitter"
 
-#: src/gnome-genius.c:266
+#: src/gnome-genius.c:261
 msgid "Exit genius"
-msgstr ""
+msgstr "Quitter genius"
 
-#: src/gnome-genius.c:311
+#: src/gnome-genius.c:305
 msgid "Error"
-msgstr ""
+msgstr "Erreur"
 
-#: src/gnome-genius.c:311
+#: src/gnome-genius.c:305
 msgid "Information"
-msgstr ""
+msgstr "Information"
 
-#: src/gnome-genius.c:366
+#: src/gnome-genius.c:360
 #, c-format
 msgid ""
 "\n"
 "Too many errors! (%d followed)"
 msgstr ""
+"\n"
+"Trop d'erreurs ! (%d successives)"
 
-#: src/gnome-genius.c:376
+#: src/gnome-genius.c:370
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
-msgstr ""
+msgstr "\\e[01;31mTrop d'erreurs ! (%d successives)\\e[0m\n"
 
 #. Translators should localize the following string
 #. * which will give them credit in the About box.
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
-#: src/gnome-genius.c:499
+#: src/gnome-genius.c:493
 msgid "translator_credits-PLEASE_ADD_YOURSELF_HERE"
-msgstr ""
+msgstr "Sébastien Bacher <seb128@debian.org>"
 
-#: src/gnome-genius.c:502 src/gnome-genius.c:1977
+#: src/gnome-genius.c:496
 #, fuzzy
-msgid "GENIUS Calculator"
-msgstr "Calculatrice GnomENIUS"
+msgid "About Genius"
+msgstr "Genius"
 
-#: src/gnome-genius.c:505
+#: src/gnome-genius.c:499
 msgid ""
 "The Gnome calculator style edition of the genius calculator.  For license/"
 "warranty details, type 'warranty' into the console."
 msgstr ""
+"Le style d'édition de la calculatrice Gnome de la calculatrice genius. Pour "
+"les détails de licence/garantie, tappez «Â warranty Â» dans une console."
 
-#: src/gnome-genius.c:669
+#: src/gnome-genius.c:661
 msgid ""
 "Genius is executing something, and furthermore there are unsaved programs.\n"
 "Are you sure you wish to quit?"
 msgstr ""
+"Genius est entrain d'exécuter quelque chose, et il a également et "
+"probablement des programmes non enregistrés.\n"
+"Êtes-vous sûr de vouloir quitter ?"
 
-#: src/gnome-genius.c:677
+#: src/gnome-genius.c:669
 msgid "There are unsaved programs, are you sure you wish to quit?"
 msgstr ""
+"Il y a des programmes non enregistrés, êtes-vous sûr de vouloir quitter ?"
 
-#: src/gnome-genius.c:684
+#: src/gnome-genius.c:676
 msgid "Genius is executing something, are you sure you wish to quit?"
 msgstr ""
+"Genius est entrain d'exécuter quelque chose, êtes-vous sûr de vouloir "
+"quitter ?"
 
-#: src/gnome-genius.c:691
+#: src/gnome-genius.c:683
 msgid "Are you sure you wish to quit?"
-msgstr ""
+msgstr "Êtes-vous sûr de vouloir quitter ?"
 
-#: src/gnome-genius.c:796
+#: src/gnome-genius.c:782
 #, fuzzy
-msgid "GENIUS Calculator Setup"
-msgstr "Configuration de la Calculatrice GnomENIUS"
+msgid "Genius Setup"
+msgstr "Genius"
 
-#: src/gnome-genius.c:813
+#: src/gnome-genius.c:799
 msgid "Output"
 msgstr "Sortie"
 
-#: src/gnome-genius.c:816
-#, fuzzy
+#: src/gnome-genius.c:802
 msgid "Number/Expression output options"
-msgstr "Options pour la sortie des nombres"
+msgstr "Options pour la sortie des nombres/expressions"
 
-#: src/gnome-genius.c:826
+#: src/gnome-genius.c:812
 msgid "Maximum digits to output (0=unlimited)"
-msgstr "Nombre de chiffres a afficher (0=non limit�)"
+msgstr "Nombre de chiffres a afficher (0=non limité)"
 
-#: src/gnome-genius.c:846
+#: src/gnome-genius.c:832
 msgid "Results as floats"
-msgstr "R�sultats en nombres flottants"
+msgstr "Résultats en nombres flottants"
 
-#: src/gnome-genius.c:854
+#: src/gnome-genius.c:840
 msgid "Floats in scientific notation"
 msgstr "Nombres flottants en notation scientifique"
 
-#: src/gnome-genius.c:862
-#, fuzzy
+#: src/gnome-genius.c:848
 msgid "Always print full expressions"
-msgstr "Imprime une expression"
+msgstr "Toujours imprimer les expressions complètes"
 
-#: src/gnome-genius.c:871
+#: src/gnome-genius.c:857
 msgid "Error/Info output options"
 msgstr "Options de sortie Erreur/Informations"
 
-#: src/gnome-genius.c:879
+#: src/gnome-genius.c:865
 msgid "Display errors in a dialog"
-msgstr "Afficher les erreurs dans une bo�te de dialogue"
+msgstr "Afficher les erreurs dans une boîte de dialogue"
 
-#: src/gnome-genius.c:887
+#: src/gnome-genius.c:873
 msgid "Display information messages in a dialog"
-msgstr "Afficher les messages d'information dans une bo�te de dialogue"
+msgstr "Afficher les messages d'information dans une boîte de dialogue"
 
-#: src/gnome-genius.c:898
-#, fuzzy
+#: src/gnome-genius.c:884
 msgid "Maximum errors to display (0=unlimited)"
-msgstr "Nombre de chiffres a afficher (0=non limit�)"
+msgstr "Nombre maximum d'erreurs à afficher (0=non limité)"
 
-#: src/gnome-genius.c:922
+#: src/gnome-genius.c:908
 msgid "Precision"
-msgstr "Pr�cision"
+msgstr "Précision"
 
-#: src/gnome-genius.c:932
+#: src/gnome-genius.c:918
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
 "and new variables will be affected."
 msgstr ""
-"NOTE: La pr�cision en virgule flottante peux ne pas prendre effet\n"
-"imm�diatement pour tous les nombres, seuls les nouveaux nombres calcul�s\n"
-"et les nouvelles variables seront affect�es."
+"NOTE: La précision en virgule flottante peux ne pas prendre effet\n"
+"immédiatement pour tous les nombres, seuls les nouveaux nombres calculés\n"
+"et les nouvelles variables seront affectées."
 
-#: src/gnome-genius.c:941
+#: src/gnome-genius.c:927
 msgid "Floating point precision (bits)"
-msgstr "Pr�cision en virgule flottante (bits)"
+msgstr "Précision en virgule flottante (bits)"
 
-#: src/gnome-genius.c:965
+#: src/gnome-genius.c:951
 msgid "Terminal"
 msgstr "Terminal"
 
-#: src/gnome-genius.c:968
+#: src/gnome-genius.c:954
 msgid "Terminal options"
 msgstr "Options du Terminal"
 
-#: src/gnome-genius.c:977
+#: src/gnome-genius.c:963
 msgid "Scrollback lines"
 msgstr "Lignes d'historique"
 
-#: src/gnome-genius.c:1000
+#: src/gnome-genius.c:986
 msgid "Font:"
-msgstr "Police:"
+msgstr "Police :"
 
-#: src/gnome-genius.c:1035
+#: src/gnome-genius.c:1022
 msgid ""
 "<b>Genius is currently executing something.</b>\n"
 "\n"
 "Please try again later or interrupt the current operation."
 msgstr ""
+"<b>Genius est actuellement entrain d'exécuter quelque chose.</b>\n"
+"\n"
+"Veuillez essayer à nouveau plus tard ou interrompre l'opération courante."
 
-#: src/gnome-genius.c:1104 src/gnome-genius.c:1629
+#: src/gnome-genius.c:1087
 #, fuzzy
-msgid "Cannot open file!"
-msgstr "Impossible d'ouvrir le fichier!"
-
-#: src/gnome-genius.c:1128
-msgid "Load GEL file"
+msgid "GEL files"
 msgstr "Charger un fichier GEL"
 
-#: src/gnome-genius.c:1477
-#, fuzzy
-msgid "Cannot open file"
-msgstr "Impossible d'ouvrir le fichier!"
+#: src/gnome-genius.c:1092
+msgid "All files"
+msgstr ""
 
-#: src/gnome-genius.c:1509 src/gnome-genius.c:2356
-#, fuzzy, c-format
+#: src/gnome-genius.c:1126 src/gnome-genius.c:1681
+msgid "Cannot open file!"
+msgstr "Impossible d'ouvrir le fichier !"
+
+#: src/gnome-genius.c:1155 src/gnome-genius.c:1173
+#, fuzzy
+msgid "Load and Run"
+msgstr "_Charger et lancer"
+
+#: src/gnome-genius.c:1159
+msgid "_Load"
+msgstr "_Charger"
+
+#: src/gnome-genius.c:1513
+msgid "Cannot open file"
+msgstr "Impossible d'ouvrir le fichier"
+
+#: src/gnome-genius.c:1545 src/gnome-genius.c:2489
+#, c-format
 msgid "Line: %d"
-msgstr "ligne %d: %s\n"
+msgstr "Ligne : %d"
 
 #. the file name will have an underscore
-#: src/gnome-genius.c:1580
+#: src/gnome-genius.c:1616
 #, c-format
 msgid "Program_%d.gel"
-msgstr ""
+msgstr "Program_%d.gel"
 
-#: src/gnome-genius.c:1581
+#: src/gnome-genius.c:1617
 #, c-format
 msgid "Program %d"
-msgstr ""
+msgstr "Programme %d"
 
-#: src/gnome-genius.c:1597
-#, fuzzy, c-format
+#: src/gnome-genius.c:1633
+#, c-format
 msgid "Cannot open %s"
-msgstr "Impossible d'ouvrir le fichier!"
+msgstr "Impossible d'ouvrir %s"
 
-#: src/gnome-genius.c:1651 src/gnome-genius.c:1807
+#: src/gnome-genius.c:1708 src/gnome-genius.c:1726
 #, fuzzy
-msgid "Open GEL file"
-msgstr "Charger un fichier GEL"
+msgid "Open..."
+msgstr "Ouvrir"
 
 #. new fname
-#: src/gnome-genius.c:1740 src/gnome-genius.c:1766
+#: src/gnome-genius.c:1816 src/gnome-genius.c:1871
 #, c-format
 msgid ""
 "<b>Cannot save file</b>\n"
 "Details: %s"
 msgstr ""
+"<b>Impossible d'enregistrer le fichier</b>\n"
+"Détails : %s"
 
-#: src/gnome-genius.c:1762
+#: src/gnome-genius.c:1865
 msgid "File already exists.  Overwrite it?"
+msgstr "Le fichier existe déjà. L'écraser ?"
+
+#: src/gnome-genius.c:1922 src/gnome-genius.c:1943
+msgid "Save As..."
 msgstr ""
 
-#: src/gnome-genius.c:1880
+#: src/gnome-genius.c:2017
 msgid ""
 "<b>No program selected.</b>\n"
 "\n"
 "Create a new program, or select an existing tab in the notebook."
 msgstr ""
+"<b>Aucun programme sélectionné.</b>\n"
+"\n"
+"Créez un nouveau programme, ou sélectionnez un onglet existant dans le "
+"carnet."
 
-#: src/gnome-genius.c:2163
+#: src/gnome-genius.c:2114
+#, fuzzy, c-format
+msgid "Genius %s"
+msgstr "Genius"
+
+#: src/gnome-genius.c:2296
 msgid "Can't execute genius-readline-helper-fifo!\n"
-msgstr ""
+msgstr "Impossible d'exécuter genius-readline-helper-fifo !\n"
 
-#: src/gnome-genius.c:2375
+#: src/gnome-genius.c:2508
 msgid ""
 "\n"
 "Note: Compiled without GtkSourceView (better source editor)"
 msgstr ""
+"\n"
+"Note : compilé sans GtkSourceView (meilleur éditeur de source)"
 
-#: src/gnome-genius.c:2540
+#: src/gnome-genius.c:2673
 msgid "Console"
-msgstr ""
+msgstr "Console"
 
-#: src/gnome-genius.c:2572
+#: src/gnome-genius.c:2705
 #, c-format
 msgid ""
 "\\e[0;32mGenius %s\\e[0m\n"
@@ -1848,481 +1942,554 @@ msgid ""
 "For help type '\\e[01;36mmanual\\e[0m' or '\\e[01;36mhelp\\e[0m'.%s\n"
 "\n"
 msgstr ""
+"\\e[0;32mGenius %s\\e[0m\n"
+"%s\n"
+"This is free software with ABSOLUTELY NO WARRANTY.\n"
+"For license details type `\\e[01;36mwarranty\\e[0m'.\n"
+"For help type '\\e[01;36mmanual\\e[0m' or '\\e[01;36mhelp\\e[0m'.%s\n"
+"\n"
 
 #: src/gnome-genius.desktop.in.h:1
 msgid "Genius Math Tool"
-msgstr ""
+msgstr "Outil de maths Genius"
 
 #: src/gnome-genius.desktop.in.h:2
 msgid "Genius Mathematical Tool and Calculator"
-msgstr ""
+msgstr "Outil mathématique et calculatrice Genius"
 
-#: src/graphing.c:84
+#: src/graphing.c:308
 msgid "Genius Line Plot"
+msgstr "Dessin de ligne Genius"
+
+#. title
+#. parent
+#. flags
+#: src/graphing.c:311
+msgid "_Zoom out"
 msgstr ""
 
-#: src/graphing.c:357
+#: src/graphing.c:313
+msgid "_Fit Y Axis"
+msgstr ""
+
+#: src/graphing.c:801
 #, c-format
 msgid "Function #%d"
-msgstr ""
+msgstr "Fonction #%d"
 
-#: src/graphing.c:389
+#: src/graphing.c:833
 msgid "Graph limits not given as a 4-vector"
-msgstr ""
+msgstr "Limites du graphique non données comme un vecteur à 4 composantes"
 
-#: src/graphing.c:395 src/graphing.c:401 src/graphing.c:407 src/graphing.c:413
+#: src/graphing.c:839 src/graphing.c:845 src/graphing.c:851 src/graphing.c:857
 msgid "Graph limits not given as numbers"
+msgstr "Limites du graphique non données comme des nombres"
+
+#: src/graphing.c:1002
+#, fuzzy
+msgid "Function line plot"
+msgstr "Fonction #%d"
+
+#: src/graphing.c:1004
+#, fuzzy
+msgid "Function/Expressions"
+msgstr "Fonctions"
+
+#: src/graphing.c:1009
+msgid ""
+"Type in function names or expressions involving the x variable in the boxes "
+"below to graph them"
 msgstr ""
 
-#: src/graphing.c:487
+#: src/graphing.c:1027
+#, fuzzy
+msgid "Plot Window"
+msgstr "Dessin"
+
+#: src/graphing.c:1038
+msgid "X from:"
+msgstr ""
+
+#: src/graphing.c:1055 src/graphing.c:1094
+msgid "to:"
+msgstr ""
+
+#: src/graphing.c:1077
+msgid "Y from:"
+msgstr ""
+
+#: src/graphing.c:1237
+msgid "No functions to plot or no functions could be parsed"
+msgstr ""
+
+#: src/graphing.c:1259
+msgid "Invalid X range"
+msgstr ""
+
+#: src/graphing.c:1264
+msgid "Invalid Y range"
+msgstr ""
+
+#: src/graphing.c:1326
+#, fuzzy
+msgid "Create Line Plot"
+msgstr "Dessin de ligne Genius"
+
+#: src/graphing.c:1373
 #, c-format
 msgid "%s: only up to 10 functions supported"
-msgstr ""
+msgstr "%s : seulement jusqu'à 10 fonctions supportées"
 
-#: src/graphing.c:492
-#, fuzzy, c-format
+#: src/graphing.c:1378
+#, c-format
 msgid "%s: argument not a function"
-msgstr "rows: le param�tre n'est pas une matrice"
+msgstr "%s : le paramètre n'est pas une fonction"
 
-#: src/graphing.c:592
+#: src/graphing.c:1429
+#, fuzzy, c-format
+msgid "%s: invalid X range"
+msgstr "%s : valeur hors des limites"
+
+#: src/graphing.c:1434
+#, fuzzy, c-format
+msgid "%s: invalid Y range"
+msgstr "%s : valeur hors des limites"
+
+#: src/graphing.c:1496
 msgid "Plotting"
-msgstr ""
+msgstr "Dessin"
 
 #. bogus value
-#: src/graphing.c:624
+#: src/graphing.c:1528
 msgid ""
 "Plot a function with a line (very rudimentary).  First come the functions "
 "(up to 10) then optionally limits as x1,x2,y1,y2"
 msgstr ""
+"Dessine une fonction avec une ligne (vraiment rudimentaire). D'abord "
+"viennent les fonctions (jusqu'à 10) et après les limites optionnelles comme "
+"x1,x2,y1,y2"
 
-#: src/graphing.c:626
+#: src/graphing.c:1530
 msgid "Plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"
 msgstr ""
+"Fenêtre de dessin (limites) comme un vecteur à 4 composantes sous la forme "
+"[x1,x2,y1,y2]"
 
-#: src/matop.c:487
+#: src/matop.c:485
 msgid "Determinant of a non-square matrix is undefined"
-msgstr "le d�terminant d'une matrice non carr� n'est pas d�fini"
+msgstr "le déterminant d'une matrice non carré n'est pas défini"
 
-#: src/mpwrap.c:826
+#: src/mpwrap.c:902
 msgid "Number too large to compute exponential!"
-msgstr "Nombre trop grand pour en calculer l'exponentielle!"
+msgstr "Nombre trop grand pour en calculer l'exponentielle !"
 
-#: src/mpwrap.c:1217
-#, fuzzy
+#: src/mpwrap.c:1293
 msgid "Integer exponent too large to compute"
-msgstr "Entier trop large pour cette op�ration"
+msgstr "Exposant entier trop large pour cette opération"
 
-#: src/mpwrap.c:2365
+#: src/mpwrap.c:2105
 msgid "Can't do modulo of floats or rationals!"
-msgstr "Impossible de calculer le modulo de nombres flottants ou rationnels!"
+msgstr "Impossible de calculer le modulo de nombres flottants ou rationnels !"
 
-#: src/mpwrap.c:2404
+#: src/mpwrap.c:2122
 msgid "Can't do GCD of floats or rationals!"
-msgstr "Impossible de calculer le PGCD de nombres flottants ou rationnels!"
+msgstr "Impossible de calculer le PGCD de nombres flottants ou rationnels !"
 
-#: src/mpwrap.c:2443
-#, fuzzy
+#: src/mpwrap.c:2148
 msgid "Can't modulo invert non integers!"
-msgstr "Impossible de calculer la factorielle de nombres n�gatifs!"
+msgstr "Impossible de calculer le module inverse de non entiers !"
 
-#: src/mpwrap.c:2476
+#: src/mpwrap.c:2169
 msgid "Can't get jacobi symbols of floats or rationals!"
 msgstr ""
 "Impossible d'obtenir le nombre de Jacobi pour les flottants ou les "
-"rationnels!"
+"rationnels !"
 
-#: src/mpwrap.c:2507
+#: src/mpwrap.c:2188
 msgid "Can't get legendre symbols of floats or rationals!"
 msgstr ""
 "Impossible d'obtenir le symbole de Legendre pour les flottants ou les "
-"rationnels!"
+"rationnels !"
 
-#: src/mpwrap.c:2538
-#, fuzzy
+#: src/mpwrap.c:2207
 msgid ""
 "Can't get jacobi symbol with Kronecker extension of floats or rationals!"
 msgstr ""
-"Impossible d'obtenir le nombre de Jacobi pour les flottants ou les "
-"rationnels!"
+"Impossible d'obtenir le symbole de Jacobi avec l'extension de Kronecker des "
+"flottants ou des rationnels !"
 
-#: src/mpwrap.c:2547
+#: src/mpwrap.c:2216
 msgid "Lucas must get an integer argument!"
-msgstr ""
+msgstr "Lucas doit recevoir un argument entier !"
 
-#: src/mpwrap.c:2553
-#, fuzzy
+#: src/mpwrap.c:2222
 msgid "Number too large to compute lucas number!"
-msgstr "Nombre trop grand pour en calculer la factorielle!"
+msgstr "Nombre trop grand pour en calculer le nombre de lucas !"
 
-#: src/mpwrap.c:2558 src/mpwrap.c:2569
-#, fuzzy
+#: src/mpwrap.c:2227
 msgid "No such thing as negative lucas numbers!"
-msgstr "Impossible de calculer la factorielle de nombres n�gatifs!"
+msgstr ""
+"Impossible de trouver quelque chose d'équivalent dans les nombres négatif de "
+"lucas !"
 
-#: src/mpwrap.c:2585
-#, fuzzy
+#: src/mpwrap.c:2242
 msgid "Cannot get next prime after non-integer!"
-msgstr "Impossible de convertir un nombre r��l en entier"
+msgstr "Impossible d'obtenir le nombre premier suivant le non-entier !"
 
-#: src/mpwrap.c:2623
-msgid "perfect_square: can't work on non-integers!"
-msgstr "perfect_square: ne marche que sur les entiers!"
+#: src/mpwrap.c:2262 src/mpwrap.c:2275 src/mpwrap.c:2288 src/mpwrap.c:2301
+#, fuzzy, c-format
+msgid "%s: can't work on non-integers!"
+msgstr "odd_p : ne marche que sur les entiers !"
 
-#: src/mpwrap.c:2642
-#, fuzzy
-msgid "perfect_power: can't work on non-integers!"
-msgstr "perfect_square: ne marche que sur les entiers!"
-
-#: src/mpwrap.c:2659
-#, fuzzy
-msgid "even_p: can't work on non-integers!"
-msgstr "perfect_square: ne marche que sur les entiers!"
-
-#: src/mpwrap.c:2676
-#, fuzzy
-msgid "odd_p: can't work on non-integers!"
-msgstr "perfect_square: ne marche que sur les entiers!"
-
-#: src/mpwrap.c:2720 src/mpwrap.c:2768
+#: src/mpwrap.c:2343 src/mpwrap.c:2383
 msgid "Can't do factorials of rationals or floats!"
-msgstr "Impossible de calculer la factorielle de rationnels ou flottants!"
+msgstr "Impossible de calculer la factorielle de rationnels ou flottants !"
 
-#: src/mpwrap.c:2726 src/mpwrap.c:2774
+#: src/mpwrap.c:2349 src/mpwrap.c:2389
 msgid "Number too large to compute factorial!"
-msgstr "Nombre trop grand pour en calculer la factorielle!"
+msgstr "Nombre trop grand pour en calculer la factorielle !"
 
-#: src/mpwrap.c:2731 src/mpwrap.c:2738 src/mpwrap.c:2779 src/mpwrap.c:2786
+#: src/mpwrap.c:2354 src/mpwrap.c:2394
 msgid "Can't do factorials of negative numbers!"
-msgstr "Impossible de calculer la factorielle de nombres n�gatifs!"
+msgstr "Impossible de calculer la factorielle de nombres négatifs !"
 
-#: src/mpwrap.c:3166 src/mpwrap.c:3254 src/mpwrap.c:5162 src/mpwrap.c:5178
-#, fuzzy
-msgid "powm: Bad types for mod power"
-msgstr "Mauvais type pour une boucle 'for'!"
+#: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4658 src/mpwrap.c:4675
+#, fuzzy, c-format
+msgid "%s: Bad types for mod power"
+msgstr "powm : mauvais type pour une puissance mod"
 
-#: src/mpwrap.c:3201 src/mpwrap.c:3224
-msgid "Can't invert in powm"
-msgstr ""
+#: src/mpwrap.c:2764
+#, fuzzy, c-format
+msgid "Can't invert %s modulo %s in %s"
+msgstr "Impossible d'inverser in powm"
 
-#: src/mpwrap.c:3553
-#, fuzzy
+#: src/mpwrap.c:3084
 msgid "Can't make random integer from a non-integer"
-msgstr "Impossible de calculer la factorielle de nombres n�gatifs!"
+msgstr "Impossible de calculer un nombre aléatoire à partir d'un non-entier"
 
-#: src/mpwrap.c:3558
+#: src/mpwrap.c:3089
 msgid "Range for random integer must be positive"
-msgstr ""
+msgstr "La plage pour les entiers aléatoires doit être positive"
 
-#: src/mpwrap.c:3743 src/mpwrap.c:3770
+#: src/mpwrap.c:3284 src/mpwrap.c:3310
 msgid "Can't get numerator of floating types"
-msgstr ""
+msgstr "Impossible d'obtenir le numérateur des types flottants"
 
-#: src/mpwrap.c:4558 src/mpwrap.c:5759 src/mpwrap.c:5771
+#: src/mpwrap.c:4039 src/mpwrap.c:5260 src/mpwrap.c:5272
 msgid "Can't compare complex numbers"
 msgstr "Impossible de comparer des nombres complexes"
 
-#: src/mpwrap.c:4767 src/mpwrap.c:4782 src/mpwrap.c:4833 src/mpwrap.c:4856
-#: src/mpwrap.c:4869 src/mpwrap.c:4914
+#: src/mpwrap.c:4248 src/mpwrap.c:4263 src/mpwrap.c:4314 src/mpwrap.c:4337
+#: src/mpwrap.c:4350 src/mpwrap.c:4395
 msgid "Division by zero!"
-msgstr "Division par z�ro!"
+msgstr "Division par zéro !"
 
-#: src/mpwrap.c:4923
+#: src/mpwrap.c:4404
 msgid "Can't modulo complex numbers"
 msgstr "Impossible de calculer le modulo de nombres complexes"
 
-#. FIXME: give the numbers
-#: src/mpwrap.c:4936
-msgid "No modulo inverse found!"
+#: src/mpwrap.c:4423
+#, c-format
+msgid "Inverse of %s modulo %s not found!"
 msgstr ""
 
-#: src/mpwrap.c:4940
-#, fuzzy
+#: src/mpwrap.c:4432
 msgid "Can't do modulo invert on complex numbers"
-msgstr "Impossible de calculer le modulo de nombres complexes"
+msgstr "Impossible de calculer le modulo inverse de nombres complexes"
 
-#: src/mpwrap.c:4953
+#: src/mpwrap.c:4445
 msgid "Can't GCD complex numbers"
 msgstr "Impossible de calculer le PGCD de nombres complexes"
 
-#: src/mpwrap.c:4976
-#, fuzzy
+#: src/mpwrap.c:4468
 msgid "Can't LCM complex numbers"
-msgstr "Impossible de calculer le PGCD de nombres complexes"
+msgstr "Impossible de calculer le PPCM de nombres complexes"
 
-#: src/mpwrap.c:4989
+#: src/mpwrap.c:4481
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr "Impossible de calculer le symbole de Jacobi pour un nombre complexe"
 
-#: src/mpwrap.c:5001
+#: src/mpwrap.c:4493
 msgid "Can't get legendre symbols complex numbers"
 msgstr "Impossible de calculer le symbole de Legendre pour un nombre complexe"
 
-#: src/mpwrap.c:5013
-#, fuzzy
+#: src/mpwrap.c:4505
 msgid "Can't get jacobi symbol with Kronecker extension for complex numbers"
-msgstr "Impossible de calculer le symbole de Jacobi pour un nombre complexe"
+msgstr ""
+"Impossible d'obtenir le symbole de Jacobi avec les extensions pour les "
+"nombres complexes de Kronecker"
 
-#: src/mpwrap.c:5025
-#, fuzzy
+#: src/mpwrap.c:4517
 msgid "Can't get lucas number for complex numbers"
-msgstr "Impossible de calculer le symbole de Jacobi pour un nombre complexe"
+msgstr "Impossible de calculer le nombre de lucas pour les nombres complexes"
 
-#: src/mpwrap.c:5037
-#, fuzzy
+#: src/mpwrap.c:4529
 msgid "Can't get next prime for complex numbers"
-msgstr "Impossible de calculer le symbole de Legendre pour un nombre complexe"
+msgstr ""
+"Impossible d'obtenir le nombre premier suivant pour des nombres complexes"
 
-#: src/mpwrap.c:5047
-msgid "perfect_square: can't work on complex numbers"
-msgstr "perfect_square: ne marche pas sur les nombres complexes"
+#: src/mpwrap.c:4539 src/mpwrap.c:4551 src/mpwrap.c:4563 src/mpwrap.c:4575
+#, fuzzy, c-format
+msgid "%s: can't work on complex numbers"
+msgstr "odd_p : ne marche pas sur les nombres complexes"
 
-#: src/mpwrap.c:5058
-#, fuzzy
-msgid "perfect_power: can't work on complex numbers"
-msgstr "perfect_square: ne marche pas sur les nombres complexes"
+#: src/mpwrap.c:4749 src/mpwrap.c:4820 src/mpwrap.c:4887
+#, fuzzy, c-format
+msgid "%s: can't take logarithm of 0"
+msgstr "ln : impossible de calculer le logarithme de 0"
 
-#: src/mpwrap.c:5069
-#, fuzzy
-msgid "even_p: can't work on complex numbers"
-msgstr "perfect_square: ne marche pas sur les nombres complexes"
-
-#: src/mpwrap.c:5080
-#, fuzzy
-msgid "odd_p: can't work on complex numbers"
-msgstr "perfect_square: ne marche pas sur les nombres complexes"
-
-#: src/mpwrap.c:5251
-msgid "ln: can't take logarithm of 0"
-msgstr "ln: impossible de calculer le logarithme de 0"
-
-#: src/mpwrap.c:5321
-#, fuzzy
-msgid "log2: can't take logarithm of 0"
-msgstr "ln: impossible de calculer le logarithme de 0"
-
-#: src/mpwrap.c:5387
-#, fuzzy
-msgid "log10: can't take logarithm of 0"
-msgstr "ln: impossible de calculer le logarithme de 0"
-
-#: src/mpwrap.c:5688
-#, fuzzy
+#: src/mpwrap.c:5189
 msgid "Can't make random integer out of a complex number"
-msgstr "Impossible de d�terminer le type d'un nombre complexe"
+msgstr "Impossible de faire un entier aléatoire à partir d'un nombre complexe"
 
-#: src/mpwrap.c:5809 src/mpwrap.c:5822
+#: src/mpwrap.c:5310 src/mpwrap.c:5323
 msgid "Can't make factorials of complex numbers"
 msgstr "Impossible de calculer la factorielle d'un nombre complexe"
 
-#: src/mpwrap.c:6104 src/mpwrap.c:6126 src/mpwrap.c:6148
+#: src/mpwrap.c:5605 src/mpwrap.c:5627 src/mpwrap.c:5649
 msgid "Can't determine type of a complex number"
-msgstr "Impossible de d�terminer le type d'un nombre complexe"
+msgstr "Impossible de déterminer le type d'un nombre complexe"
 
-#: src/mpwrap.c:6240 src/mpwrap.c:6263
+#: src/mpwrap.c:5741 src/mpwrap.c:5764
 msgid "Can't convert complex number into integer"
 msgstr "Impossible de convertir un nombre complexe en entier"
 
-#: src/mpwrap.c:6246
+#: src/mpwrap.c:5747
 msgid "Can't convert real number to integer"
-msgstr "Impossible de convertir un nombre r��l en entier"
+msgstr "Impossible de convertir un nombre réel en entier"
 
-#: src/mpwrap.c:6250
+#: src/mpwrap.c:5751
 msgid "Integer too large for this operation"
-msgstr "Entier trop large pour cette op�ration"
+msgstr "Entier trop grand pour cette opération"
 
-#: src/mpwrap.c:6272
-#, fuzzy
+#: src/mpwrap.c:5773
 msgid "Can't convert real number to double"
-msgstr "Impossible de convertir un nombre r��l en entier"
+msgstr "Impossible de convertir un nombre réel en double"
 
-#: src/mpwrap.c:6278
-#, fuzzy
+#: src/mpwrap.c:5779
 msgid "Number too large for this operation"
-msgstr "Entier trop large pour cette op�ration"
+msgstr "Nombre trop grand pour cette opération"
 
-#: src/plugin.c:130
-#, fuzzy
+#: src/plugin.c:128
 msgid "Can't open plugin!"
-msgstr "Impossible d'ouvrir le fichier '%s'"
+msgstr "Impossible d'ouvrir le greffon !"
 
-#: src/plugin.c:142
+#: src/plugin.c:140
 msgid "Can't initialize plugin!"
-msgstr ""
+msgstr "Impossible d'initialiser le greffon !"
 
-#: src/testplugin.c:14
+#: src/testplugin.c:13
 msgid "This is the test-plugin function\n"
-msgstr ""
+msgstr "Ceci est la fonction de test-greffon\n"
 
-#: src/testplugin.c:25
+#: src/testplugin.c:24
 msgid ""
 "You have opened test plugin!\n"
 "\n"
 "Will evaluate 2+2 as a demonstration\n"
 "2+2 = "
 msgstr ""
+"Vous avez ouvert le greffon de test !\n"
+"\n"
+"Il va évaluer 2+2 comme démonstration\n"
+"2+2 = "
 
-#: src/testplugin.c:31
+#: src/testplugin.c:30
 msgid ""
 "For my next trick I will add a function named TestPluginFunction\n"
 "\n"
 msgstr ""
+"Pour mon prochain tour je vais ajouter une fonction nommée "
+"TestPluginFunction\n"
+"\n"
 
-#: src/testplugin.c:42
+#: src/testplugin.c:41
 msgid ""
 "That's it, isn't this fun\n"
 "\n"
 msgstr ""
+"Ca y est, n'est-ce pas amusant\n"
+"\n"
 
 #: src/util.c:116
 msgid "Stack underflow!"
 msgstr "Pile vide!"
 
-#~ msgid "The Gnome calculator style edition of genius"
-#~ msgstr "L'�dition GNOME de la calculatrice genius"
+#~ msgid "GENIUS Calculator"
+#~ msgstr "Calculatrice GENIUS"
 
-#~ msgid "_Load"
-#~ msgstr "_Charger"
+#~ msgid "GENIUS Calculator Setup"
+#~ msgstr "Configuration de la Calculatrice GENIUS"
+
+#~ msgid "Open GEL file"
+#~ msgstr "Ouvrir un fichier GEL"
+
+#~ msgid "perfect_square: can't work on non-integers!"
+#~ msgstr "perfect_square: ne marche que sur les entiers!"
+
+#~ msgid "perfect_power: can't work on non-integers!"
+#~ msgstr "perfect_power : ne marche que sur les entiers !"
+
+#~ msgid "even_p: can't work on non-integers!"
+#~ msgstr "even_p : ne marche que sur les entiers !"
+
+#~ msgid "No modulo inverse found!"
+#~ msgstr "Aucun module inverse trouvéÂ !"
+
+#~ msgid "perfect_square: can't work on complex numbers"
+#~ msgstr "perfect_square: ne marche pas sur les nombres complexes"
+
+#~ msgid "perfect_power: can't work on complex numbers"
+#~ msgstr "perfect_power : ne marche pas sur les nombres complexes"
+
+#~ msgid "even_p: can't work on complex numbers"
+#~ msgstr "even_p : ne marche pas sur les nombres complexes"
+
+#~ msgid "log2: can't take logarithm of 0"
+#~ msgstr "log2 : impossible de calculer le logarithme de 0"
+
+#~ msgid "log10: can't take logarithm of 0"
+#~ msgstr "log10 : impossible de calculer le logarithme de 0"
+
+#~ msgid "The Gnome calculator style edition of genius"
+#~ msgstr "L'édition GNOME de la calculatrice genius"
 
 #~ msgid "Matrix 'to' index less then 'from' index"
 #~ msgstr "Index 'vers' de la matrice plus petit que l'index 'de'"
 
 #~ msgid "Can't set a region to a region of a different size"
-#~ msgstr "Impossible de d�finir une r�gion en une r�gion de taille diff�rente"
+#~ msgstr "Impossible de définir une région en une région de taille différente"
 
 #~ msgid "Extraneous return value!"
 #~ msgstr "Valeur de retour en trop!"
 
 #~ msgid "Unnamed reference function encountered"
-#~ msgstr "Fonction de r�f�rence non nomm�e rencontr�e"
+#~ msgstr "Fonction de référence non nommée rencontrée"
 
 #~ msgid "Variable '%s' used unitialized"
-#~ msgstr "Variable '%s' utilis�e sans �tre initialis�e"
+#~ msgstr "Variable '%s' utilisée sans être initialisée"
 
 #~ msgid "Logical and can only operate on numeric/string data"
 #~ msgstr ""
-#~ "Logique et ne peux seulement op�rer sur des donn�es num�riques ou cha�nes"
+#~ "Logique et ne peux seulement opérer sur des données numériques ou chaînes"
 
 #~ msgid "Can't operate on a non value-only matrix"
 #~ msgstr ""
-#~ "Impossible d'op�rer sur une matrice contenant autre chose que des valeurs"
+#~ "Impossible d'opérer sur une matrice contenant autre chose que des valeurs"
 
 #~ msgid "Can't transpose non-matrix"
 #~ msgstr "Impossible de transposer autre chose qu'une matrice"
 
 #~ msgid "Can't evaluate return value!"
-#~ msgstr "Impossible d'�valuer la valeur de retour!"
+#~ msgstr "Impossible d'évaluer la valeur de retour!"
 
 #~ msgid "Called 'continue' outside of a loop"
-#~ msgstr "'continue' appel� en dehors d'une boucle"
+#~ msgstr "'continue' appelé en dehors d'une boucle"
 
 #~ msgid "Called 'break' outside of a loop"
-#~ msgstr "'break' appel� en dehors d'une boucle"
-
-#, fuzzy
-#~ msgid "Can't do mod by non-numbers!"
-#~ msgstr "Impossible de calculer le modulo de nombres complexes"
+#~ msgstr "'break' appelé en dehors d'une boucle"
 
 #~ msgid "Could not evaluate predicate into a numeric boolean value!"
-#~ msgstr "Impossible d'�valuer le pr�dicat en une valeur bool�enne!"
+#~ msgstr "Impossible d'évaluer le prédicat en une valeur booléenne!"
 
 #~ msgid "ERROR: "
 #~ msgstr "ERREUR: "
 
 #~ msgid "0^0 is undefined"
-#~ msgstr "0^0 n'est pas d�fini"
+#~ msgstr "0^0 n'est pas défini"
 
 #~ msgid "sin: argument not a number"
-#~ msgstr "sin: le param�tre n'est pas un nombre"
+#~ msgstr "sin: le paramétre n'est pas un nombre"
 
 #~ msgid "sinh: argument not a number"
-#~ msgstr "sinh: le param�tre n'est pas un nombre"
+#~ msgstr "sinh: le paramétre n'est pas un nombre"
 
 #~ msgid "cosh: argument not a number"
-#~ msgstr "cosh: le param�tre n'est pas un nombre"
+#~ msgstr "cosh: le paramétre n'est pas un nombre"
 
 #~ msgid "atan: argument not a number"
-#~ msgstr "atan: le param�tre n'est pas un nombre"
+#~ msgstr "atan: le paramétre n'est pas un nombre"
 
 #~ msgid "trunc: argument not a number"
-#~ msgstr "trunc: le param�tre n'est pas un nombre"
+#~ msgstr "trunc: le paramétre n'est pas un nombre"
 
 #~ msgid "floor: argument not a number"
-#~ msgstr "floor: le param�tre n'est pas un nombre"
+#~ msgstr "floor: le paramétre n'est pas un nombre"
 
 #~ msgid "float: argument not a number"
-#~ msgstr "float: le param�tre n'est pas un nombre"
+#~ msgstr "float: le paramétre n'est pas un nombre"
 
 #~ msgid "Im: argument not a number"
-#~ msgstr "Im: le param�tre n'est pas un nombre"
+#~ msgstr "Im: le paramétre n'est pas un nombre"
 
 #~ msgid "sqrt: argument not a number"
-#~ msgstr "sqrt: le param�tre n'est pas un nombre"
+#~ msgstr "sqrt: le paramétre n'est pas un nombre"
 
 #~ msgid "exp: argument not a number"
-#~ msgstr "exp: le param�tre n'est pas un nombre"
+#~ msgstr "exp: le paramétre n'est pas un nombre"
 
 #~ msgid "ln: argument not a number"
-#~ msgstr "ln: le param�tre n'est pas un nombre"
+#~ msgstr "ln: le paramétre n'est pas un nombre"
 
 #~ msgid "lcm: arguments must be numbers"
-#~ msgstr "lcm: les arguments doivent �tres des nombres"
+#~ msgstr "lcm: les arguments doivent êtres des nombres"
 
 #~ msgid "jacobi: arguments must be numbers"
-#~ msgstr "jacobi: les arguments doivent �tres des nombres"
+#~ msgstr "jacobi: les arguments doivent êtres des nombres"
 
 #~ msgid "legendre: arguments must be numbers"
-#~ msgstr "legendre: les arguments doivent �tres des nombres"
+#~ msgstr "legendre: les arguments doivent êtres des nombres"
 
 #~ msgid "perfect_square: argument must be a number"
-#~ msgstr "perfect_square: le param�tre n'est pas un nombre"
+#~ msgstr "perfect_square: le paramétre n'est pas un nombre"
 
 #~ msgid "min: arguments must be numbers"
-#~ msgstr "min: les arguments doivent �tres des nombres"
+#~ msgstr "min: les arguments doivent êtres des nombres"
 
 #~ msgid "is_value_only: argument not a matrix"
-#~ msgstr "is_value_only: le param�tre doit �tre une matrice"
+#~ msgstr "is_value_only: le paramétre doit être une matrice"
 
 #~ msgid "columns: argument not a matrix"
-#~ msgstr "columns: le param�tre n'est pas une matrice"
+#~ msgstr "columns: le paramétre n'est pas une matrice"
 
 #~ msgid "set_size: wrong argument type"
 #~ msgstr "set_size: mauvais type d'argument"
 
 #~ msgid "set_size: rows/columns negative or 0"
-#~ msgstr "set_size: lignes/colonnes n�gatifs ou nuls"
+#~ msgstr "set_size: lignes/colonnes négatifs ou nuls"
 
 #~ msgid "set_size: rows/columns too large"
 #~ msgstr "set_size: lignes/colonnes trop grands"
 
 #~ msgid "rref: argument not a value only matrix"
 #~ msgstr ""
-#~ "rref: le param�tre n'est pas une matrice contenant seulement des valeurs"
+#~ "rref: le paramétre n'est pas une matrice contenant seulement des valeurs"
 
 #~ msgid "prime: argument not an integer"
 #~ msgstr "prime: l'argement n'est pas un entier"
 
 #~ msgid "prime: argument can't be negative or 0"
-#~ msgstr "prime: le param�tre ne doit pas �tre n�gatif ou nul"
+#~ msgstr "prime: le paramétre ne doit pas être négatif ou nul"
 
 #~ msgid "polytostring: 2nd argument not a string"
-#~ msgstr "polytostring: le 2�me argument n'est pas une cha�ne"
+#~ msgstr "polytostring: le 2ème argument n'est pas une chaîne"
 
 #~ msgid "sethelp: arguments must be strings (function name,help text)"
 #~ msgstr ""
-#~ "sethelp: les param�tres doivent �tre des cha�nes (nom de fonction, texte "
+#~ "sethelp: les paramétres doivent être des chaînes (nom de fonction, texte "
 #~ "d'aide)"
 
 #~ msgid "float_prec: argument not an integer"
-#~ msgstr "float_prec: le param�tre n'est pas un entier"
+#~ msgstr "float_prec: le paramétre n'est pas un entier"
 
 #~ msgid "float_prec: argument should be between 60 and 16384"
-#~ msgstr "float_prec: le param�tre doit �tre compris entre 60 et 16384"
+#~ msgstr "float_prec: le paramétre doit être compris entre 60 et 16384"
 
 #~ msgid "max_digits: argument not an integer"
-#~ msgstr "max_digits: le param�tre n'est pas un entier"
+#~ msgstr "max_digits: le paramétre n'est pas un entier"
 
 #~ msgid "results_as_floats: argument not a value"
-#~ msgstr "results_as_floats: le param�tre n'est pas une valeur"
+#~ msgstr "results_as_floats: le paramétre n'est pas une valeur"
 
 #~ msgid "scientific_notation: argument not a value"
-#~ msgstr "scientific_notation: le param�tre n'est pas une valeur"
+#~ msgstr "scientific_notation: le paramétre n'est pas une valeur"

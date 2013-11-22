@@ -25,9 +25,10 @@
 /* For clist */
 #undef GTK_DISABLE_DEPRECATED
 
-#include <libgnome/libgnome.h>
-#include <libgnomeui/libgnomeui.h>
+#include <gtk/gtk.h>
 #include <glade/glade.h>
+
+#include "ve-i18n.h"
 
 #include "ve-misc.h"
 #include "ve-miscui.h"

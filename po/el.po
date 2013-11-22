@@ -1,17 +1,22 @@
-# gnome-genius de.po file.
-# Copyright (C) 1999 Free Software Foundation, Inc.
-# Matthias Warkus <mawa@iname.com>, 1999.
+# translation of el.po to Greek
+# Greek Translation of Genius.
+# Copyright (C) 2004.
+# This file is distributed under the same license as the Genius package.
+# Velonis Petros <velonis@freemail.gr>, 2004.
+# Kostas Papadimas <pkst@gnome.org>, 2004.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gnome-genius 0.4.3\n"
+"Project-Id-Version: el\n"
 "POT-Creation-Date: 2004-03-30 15:06-0800\n"
-"PO-Revision-Date: 1999-06-21 22:59+02:00\n"
-"Last-Translator: Matthias Warkus <mawa@iname.com>\n"
-"Language-Team: my private German Idaho <mawa@iname.com>\n"
+"PO-Revision-Date: 2004-03-28 10:24+0300\n"
+"Last-Translator: Kostas Papadimas <pkst@gnome.org>\n"
+"Language-Team: Greek <nls@tux.hellug.gr>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Report-Msgid-Bugs-To: \n"
+"X-Generator: KBabel 1.0.2\n"
 
 #: src/calc.c:187
 msgid "Uncategorized"
@@ -23,39 +28,46 @@ msgstr ""
 
 #: src/calc.c:956
 msgid "Bad identifier for function node!"
-msgstr "Falscher Bezeichner f�r Funktionsknoten!"
+msgstr ""
 
 #: src/calc.c:994 src/eval.c:5442 src/eval.c:5626
+#, fuzzy
 msgid "Unexpected operator!"
-msgstr "Unerwarteter Operator!"
+msgstr "Γραμματοσειρά μαθηματικών συμβόλων:"
 
+#  FIXME:
 #. FIXME:
 #: src/calc.c:1167
 msgid "Cannot currently print polynomials of more then 3 vars"
 msgstr ""
 
 #: src/calc.c:1240
+#, fuzzy
 msgid "NULL tree!"
-msgstr "NULL-Baum!"
+msgstr "δένδρο-πίνακα"
 
 #: src/calc.c:1315
+#, fuzzy
 msgid "NULL function!"
-msgstr "NULL-Funktion!"
+msgstr "&Συνάρτηση:"
 
+#  variable and reference functions should
+#  never be in the etree
 #. variable and reference functions should
 #. never be in the etree
 #: src/calc.c:1344
 msgid "Unexpected function type!"
-msgstr "Unerwarteter Funktionstyp!"
+msgstr ""
 
 #: src/calc.c:1353 src/eval.c:5800
+#, fuzzy
 msgid "Unexpected node!"
-msgstr "Unerwarteter Knoten!"
+msgstr "Ιδιότητες κόμβων"
 
 #: src/calc.c:1628
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
-msgstr "Datei `%s' benutzt eine falsche Version von GEL"
+msgstr "Το αρχείο '%s' είναι λανθασμένη έκδοση του GEL"
 
 #: src/calc.c:1675 src/calc.c:1684 src/calc.c:1689 src/calc.c:1698
 #: src/calc.c:1703 src/calc.c:1712 src/calc.c:1717 src/calc.c:1726
@@ -64,15 +76,15 @@ msgstr "Datei `%s' benutzt eine falsche Version von GEL"
 #: src/calc.c:1800 src/calc.c:1806 src/calc.c:1813 src/calc.c:1819
 #: src/calc.c:1828 src/calc.c:1838
 msgid "Badly formed record"
-msgstr "Mi�gebildeter Datensatz"
+msgstr ""
 
 #: src/calc.c:1678
 msgid "Record out of place"
-msgstr "Datensatz am falschen Ort"
+msgstr ""
 
 #: src/calc.c:1853
 msgid "Missing value for function"
-msgstr "Fehlender Wert f�r Funktion"
+msgstr "Λείπει τιμή για συνάρτηση"
 
 #: src/calc.c:1872
 msgid "Extra dictionary for NULL function"
@@ -81,7 +93,7 @@ msgstr ""
 #: src/calc.c:1912 src/calc.c:2327 src/calc.c:2361
 #, c-format
 msgid "Can't open file: '%s'"
-msgstr "Kann Datei `%s' nicht �ffnen"
+msgstr "Αδύνατο το άνοιγμα αρχείου: '%s'"
 
 #: src/calc.c:2059
 msgid "Load a file into the interpretor"
@@ -89,23 +101,23 @@ msgstr ""
 
 #: src/calc.c:2062
 msgid "Load a plugin"
-msgstr ""
+msgstr "Φόρτωση επιπρόσθετης λειτουργίας"
 
 #: src/calc.c:2065
 msgid "List files in the current directory"
-msgstr ""
+msgstr "Εμφάνιση αρχείων του τρέχοντος καταλόγου"
 
 #: src/calc.c:2068
 msgid "Change directory"
-msgstr ""
+msgstr "Αλλαγή καταλόγου"
 
 #: src/calc.c:2071
 msgid "Print current directory"
-msgstr ""
+msgstr "Εκτύπωση τωρινού καταλόγου"
 
 #: src/calc.c:2074
 msgid "Print help (or help on a function/command)"
-msgstr ""
+msgstr "Εμφάνιση βοήθειας (ή βοήθεια σε μια συνάρτηση/εντολής)"
 
 #: src/calc.c:2091
 msgid ""
@@ -114,24 +126,30 @@ msgid ""
 msgstr ""
 
 #: src/calc.c:2093
+#, fuzzy
 msgid "  manual\n"
-msgstr ""
+msgstr "&Χειροκίνητα"
 
 #: src/calc.c:2097
 msgid ""
 "\n"
 "For help on a specific function type:\n"
 msgstr ""
+"\n"
+"Για βοήθεια σε μια ειδική συνάρτηση πληκτρολογήστε:\n"
 
 #: src/calc.c:2099
+#, fuzzy
 msgid "  help FunctionName\n"
-msgstr ""
+msgstr "Πλήκτρο Βοήθειας"
 
 #: src/calc.c:2103
 msgid ""
 "\n"
 "Commands:\n"
 msgstr ""
+"\n"
+"Εντολές:\n"
 
 #: src/calc.c:2151
 msgid ""
@@ -139,73 +157,79 @@ msgid ""
 "Undocumented:\n"
 msgstr ""
 
+#  func
+#  aliasfor
+#  category
 #. func
 #. aliasfor
 #. category
 #: src/calc.c:2194
+#, fuzzy
 msgid "Not documented"
-msgstr ""
+msgstr "Τεκμηριώθηκε από"
 
 #: src/calc.c:2213
-#, c-format
+#, fuzzy, c-format
 msgid "'%s' is not documented"
-msgstr ""
+msgstr "  %s ο συντηρητής του είναι ο %s και όχι ο %s\n"
 
 #: src/calc.c:2220
-#, c-format
+#, fuzzy, c-format
 msgid "%s is an alias for %s\n"
-msgstr ""
+msgstr "Είναι το εξ ορισμού για το \"%s\"."
 
 #: src/calc.c:2252
+#, fuzzy
 msgid "Aliases:"
-msgstr ""
+msgstr "Ψευδώνυμα:"
 
 #: src/calc.c:2264
 #, c-format
 msgid "Description: %s\n"
-msgstr ""
+msgstr "Περιγραφή: %s\n"
 
 #: src/calc.c:2400 src/calc.c:2411
 #, fuzzy, c-format
 msgid "Can't expand '%s'"
-msgstr "Kann Datei `%s' nicht �ffnen"
+msgstr "Ανάπτυξη ψευδωνύμων"
 
 #: src/calc.c:2481
 #, c-format
 msgid "Cannot open plugin '%s'!"
-msgstr "Kann Plugin `%s' nicht �ffnen!"
+msgstr "Αδύνατο το άνοιγμα της επιπρ.λειτουργίας '%s'!"
 
 #: src/calc.c:2686
 msgid "ERROR: Probably corrupt stack!"
-msgstr "FEHLER: Vermutlich geschrotteter Stack!"
+msgstr ""
 
 #: src/calc.c:2709
 msgid "ERROR: Can't execute more things at once!"
-msgstr "FEHLER: Kann nicht mehr Dinge auf einmal ausf�hren!"
+msgstr ""
 
 #: src/calc.c:2813
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: %s before newline"
-msgstr " vor Zeilenende"
+msgstr ""
 
 #: src/calc.c:2815
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: %s at end of input"
-msgstr "am Ende der Eingabe"
+msgstr ""
 
 #: src/calc.c:2822
-#, fuzzy, c-format
+#, c-format
 msgid "ERROR: %s before '%s'"
-msgstr " vor '"
+msgstr "ΣΦΑΛΜΑ: %s πριν '%s'"
 
 #: src/compil.c:424 src/compil.c:430
 msgid "Bad tree record when decompiling"
-msgstr "Falscher Baumdatensatz beim Dekompilieren"
+msgstr ""
 
 #: src/eval.c:1185 src/eval.c:1222 src/eval.c:1236
 msgid "Cannot compare non value-only matrixes"
-msgstr "Kann keine Nicht-Nur-Wert-Matrizen vergleichen"
+msgstr ""
 
+#  also on rationals but as integers
 #. also on rationals but as integers
 #: src/eval.c:1286 src/eval.c:1332
 msgid "Modulo arithmetic only works on integers"
@@ -214,22 +238,19 @@ msgstr ""
 #: src/eval.c:1536
 msgid "Can't add/subtract two matricies of different sizes"
 msgstr ""
-"Kann keine zwei Matrizen unterschiedlicher Gr��e addieren oder subtrahieren"
 
 #: src/eval.c:1538
-#, fuzzy
 msgid ""
 "Can't do element by element operations on two matricies of different sizes"
 msgstr ""
-"Kann keine zwei Matrizen unterschiedlicher Gr��e addieren oder subtrahieren"
 
 #: src/eval.c:1596
 msgid "Can't multiply matricies of wrong sizes"
-msgstr "Kann Matrizen falscher Gr��e nicht multiplizieren"
+msgstr ""
 
 #: src/eval.c:1645
 msgid "Powers are defined on (square matrix)^(integer) only"
-msgstr "Potenzen sind nur auf (Quadratmatrix)^(Ganzzahl) definiert"
+msgstr ""
 
 #: src/eval.c:1651
 msgid "Powers on matrices in modulo mode are defined on integer matrices only"
@@ -238,27 +259,24 @@ msgstr ""
 #: src/eval.c:1659
 #, fuzzy
 msgid "Exponent too large"
-msgstr "Matrixindex zu gro�"
+msgstr "Πολύ μεγάλη περιοχή!"
 
 #: src/eval.c:1687 src/eval.c:1803 src/eval.c:1870
 msgid "Matrix appears singular and can't be inverted"
-msgstr "Matrix scheint singul�r zu seint und kann nicht invertiert werden"
+msgstr ""
 
 #: src/eval.c:1779
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr ""
-"Kann keine Matrizen verschiedener Gr��e oder nichtquadratische Matrizen "
-"dividieren"
 
 #: src/eval.c:1851
 msgid "Can't divide by a non-square matrix"
-msgstr "Kann nicht durch eine nichtquadratische Matrix dividieren"
+msgstr ""
 
 #: src/eval.c:2209 src/eval.c:2236 src/eval.c:2257 src/eval.c:2281
 #: src/eval.c:2326
-#, fuzzy
 msgid "Operations on functions with variable argument list not supported"
-msgstr "Referenzfunktion mit Argumenten ist aufgetaucht!"
+msgstr ""
 
 #: src/eval.c:2214
 msgid ""
@@ -271,12 +289,12 @@ msgstr ""
 
 #: src/eval.c:2848 src/eval.c:3919
 msgid "Unevaluatable function type encountered!"
-msgstr "Nichtauswertbarer Funktionstyp ist aufgetaucht!"
+msgstr ""
 
 #: src/eval.c:2870 src/eval.c:2888 src/eval.c:3699
-#, fuzzy, c-format
+#, c-format
 msgid "Variable '%s' used uninitialized"
-msgstr "Variable `%s' uninitialisiert benutzt"
+msgstr ""
 
 #: src/eval.c:2891 src/eval.c:3744
 #, c-format
@@ -284,80 +302,73 @@ msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be %d)"
 msgstr ""
-"Aufruf von `%s' mit der falschen Anzahl Argumente!\n"
-"(sollte %d sein)"
 
 #: src/eval.c:2894
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
-msgstr "Versuche, `%s' zu dereferenzieren, was keine Referenz ist!\n"
+msgstr ""
 
 #: src/eval.c:2899
 msgid "NULL reference encountered!"
-msgstr "NULL-Referenz ist aufgetaucht!"
+msgstr ""
 
 #: src/eval.c:3019
 msgid "Cannot compare matrixes"
-msgstr "Kann Matrizen nicht vergleichen"
+msgstr "Αδύνατη η σύγκριση των πινάκων"
 
 #: src/eval.c:3061
 msgid "Primitives must get numeric/matrix/string arguments"
-msgstr "Primitive m�ssen Zahlen-/Matrix-/oder Zeichenkettenargumente erhalten"
+msgstr ""
 
 #: src/eval.c:3134
 msgid "Bad argument to modular operation"
 msgstr ""
 
 #: src/eval.c:3685
-#, fuzzy, c-format
+#, c-format
 msgid "Function '%s' used uninitialized"
-msgstr "Funktion `%s' uninitialisiert benutzt"
+msgstr ""
 
 #: src/eval.c:3705
-#, c-format
+#, fuzzy, c-format
 msgid "Can't dereference '%s'!"
-msgstr "Kann `%s' nicht dereferenzieren!"
+msgstr "[-- Αδυναμία εκτέλεσης %s. --]\n"
 
 #: src/eval.c:3713
 msgid "Can't call a non-function!"
-msgstr "Kann keine Nichtfunktion aufrufen!"
+msgstr ""
 
 #: src/eval.c:3749
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
 "(should be greater then %d)"
 msgstr ""
-"Aufruf von `%s' mit der falschen Anzahl Argumente!\n"
-"(sollte %d sein)"
 
 #: src/eval.c:3788
 #, fuzzy, c-format
 msgid "Referencing an undefined variable %s!"
-msgstr "Referenziere eine undefinierte Variable!"
+msgstr "E121: Απροσδιόριστη μεταβλητή: %s"
 
 #: src/eval.c:3898
 msgid "Reference function with arguments encountered!"
-msgstr "Referenzfunktion mit Argumenten ist aufgetaucht!"
+msgstr ""
 
 #: src/eval.c:3903
 msgid "Unnamed reference function encountered!"
-msgstr "Namenlose Referenzfunktion ist aufgetaucht!"
+msgstr ""
 
 #: src/eval.c:4012
-#, fuzzy
 msgid "Bad type for 'for/sum/prod' loop!"
-msgstr "Falscher Typ f�r `for'-Schleife!"
+msgstr ""
 
 #: src/eval.c:4017
-#, fuzzy
 msgid "'for/sum/prod' loop increment can't be 0"
-msgstr "`for'-Schleifeninkrement kann nicht 0 sein"
+msgstr ""
 
 #: src/eval.c:4123
-#, fuzzy
 msgid "Bad type for 'for in' loop!"
-msgstr "Falscher Typ f�r `for'-Schleife!"
+msgstr "Κακός τύπος για βρόγχο 'for in'!"
 
 #: src/eval.c:4267 src/eval.c:4295
 msgid "Continue or break outside a loop, assuming \"return null\""
@@ -365,20 +376,19 @@ msgstr ""
 
 #: src/eval.c:4345
 msgid "Wrong argument type as matrix index"
-msgstr "Falscher Argumenttyp als Matrixindex"
+msgstr ""
 
 #: src/eval.c:4355
 msgid "Matrix index too large"
-msgstr "Matrixindex zu gro�"
+msgstr "Το ευρετήριο του πίνακα είναι πολύ μεγάλο"
 
 #: src/eval.c:4358
-#, fuzzy
 msgid "Matrix index less than 1"
-msgstr "Matrixindex kleiner als 1"
+msgstr ""
 
 #: src/eval.c:4381 src/eval.c:4396
 msgid "Matrix index out of range"
-msgstr "Matrixindex jenseits der Grenzen"
+msgstr ""
 
 #: src/eval.c:4443 src/eval.c:4504 src/eval.c:4566 src/eval.c:4610
 #, c-format
@@ -387,31 +397,33 @@ msgstr ""
 
 #: src/eval.c:4461 src/eval.c:4500
 msgid "Indexed Lvalue not user function"
-msgstr "Indizierter Lvalue keine Benutzerfunktion"
+msgstr ""
 
 #: src/eval.c:4484 src/eval.c:4595
 msgid "Dereference of non-identifier!"
-msgstr "Dereferenz eines Nicht-Bezeichners!"
+msgstr ""
 
 #: src/eval.c:4490 src/eval.c:4601
+#, fuzzy
 msgid "Dereference of undefined variable!"
-msgstr "Dereferenz einer undefinierten Variable!"
+msgstr "E121: Απροσδιόριστη μεταβλητή: %s"
 
 #: src/eval.c:4494 src/eval.c:4605
 msgid "Dereference of non-reference!"
-msgstr "Dereferenz einer Nichtreferenz!"
+msgstr ""
 
 #: src/eval.c:4522
 msgid "Indexed Lvalue not an identifier or a dereference"
-msgstr "Indizierter Lvalue kein Bezeichner oder eine Dereferenz"
+msgstr ""
 
 #: src/eval.c:4560
 msgid "Lvalue not an identifier/dereference/matrix location!"
-msgstr "Lvalue weder Bezeichner noch Dereferenz noch Matrixort!"
+msgstr ""
 
 #: src/eval.c:4582 src/eval.c:4622
+#, fuzzy
 msgid "Referencing an undefined variable!"
-msgstr "Referenziere eine undefinierte Variable!"
+msgstr "E121: Απροσδιόριστη μεταβλητή: %s"
 
 #: src/eval.c:4668 src/eval.c:4746 src/eval.c:4755
 msgid "Wrong matrix dimensions when setting"
@@ -419,9 +431,8 @@ msgstr ""
 
 #: src/eval.c:4686 src/eval.c:4726 src/eval.c:4792 src/eval.c:4971
 #: src/eval.c:5024
-#, fuzzy
 msgid "Matrix index not an integer or a vector"
-msgstr "Matrixindex jenseits der Grenzen"
+msgstr ""
 
 #: src/eval.c:4813
 msgid "Parameters can only be created in the global context"
@@ -429,7 +440,7 @@ msgstr ""
 
 #: src/eval.c:4866 src/eval.c:4908 src/eval.c:4983
 msgid "Index works only on matricies"
-msgstr "Index arbeitet nur auf Matrizen"
+msgstr ""
 
 #: src/eval.c:4896
 msgid "Vector index not an integer or a vector"
@@ -437,53 +448,53 @@ msgstr ""
 
 #: src/eval.c:5045
 msgid "number"
-msgstr ""
+msgstr "αριθμός"
 
 #: src/eval.c:5046
 msgid "matrix"
-msgstr ""
+msgstr "πίνακας"
 
 #: src/eval.c:5047
 msgid "string"
-msgstr ""
+msgstr "αλφαριθμητικό"
 
 #: src/eval.c:5048
-#, fuzzy
 msgid "function"
-msgstr "NULL-Funktion!"
+msgstr "συνάρτηση"
 
 #: src/eval.c:5072
 msgid "Absolute value"
-msgstr ""
+msgstr "Απόλυτη τιμή"
 
 #: src/eval.c:5073
 msgid "Addition"
-msgstr ""
+msgstr "Προσθήκη"
 
 #: src/eval.c:5074
 msgid "Subtraction"
-msgstr ""
+msgstr "Αφαίρεση"
 
 #: src/eval.c:5075
 msgid "Multiplication"
-msgstr ""
+msgstr "Πολλαπλασιασμός"
 
 #: src/eval.c:5076
 msgid "Element by element multiplication"
 msgstr ""
 
 #: src/eval.c:5077
-#, fuzzy
 msgid "Division"
-msgstr "Division durch null!"
+msgstr "Διαίρεση"
 
 #: src/eval.c:5078
+#, fuzzy
 msgid "Element by element division"
-msgstr ""
+msgstr "Διαίρεση με το 0"
 
 #: src/eval.c:5079
+#, fuzzy
 msgid "Back division"
-msgstr ""
+msgstr "&Πίσω"
 
 #: src/eval.c:5080
 msgid "Element by element back division"
@@ -491,7 +502,7 @@ msgstr ""
 
 #: src/eval.c:5081
 msgid "Modulo"
-msgstr ""
+msgstr "Ακέραια Διαίρεση"
 
 #: src/eval.c:5082
 msgid "Element by element modulo"
@@ -503,7 +514,7 @@ msgstr ""
 
 #: src/eval.c:5084
 msgid "Power"
-msgstr ""
+msgstr "Δύναμη"
 
 #: src/eval.c:5085
 msgid "Element by element power"
@@ -511,15 +522,17 @@ msgstr ""
 
 #: src/eval.c:5086
 msgid "Factorial"
-msgstr ""
+msgstr "Παραγοντικό"
 
 #: src/eval.c:5087
+#, fuzzy
 msgid "Double factorial"
-msgstr ""
+msgstr "Διπλή ταχυδρομική κάρτα"
 
 #: src/eval.c:5088
+#, fuzzy
 msgid "Transpose"
-msgstr ""
+msgstr "Ανάστροφος πίνακας"
 
 #: src/eval.c:5089
 msgid "ConjugateTranspose"
@@ -527,40 +540,41 @@ msgstr ""
 
 #: src/eval.c:5090
 msgid "Comparison (<=>)"
-msgstr ""
+msgstr "Σύγκριση (<=>)"
 
 #: src/eval.c:5091
 msgid "XOR"
-msgstr ""
+msgstr "XOR"
 
 #: src/eval.c:5092
 msgid "NOT"
-msgstr ""
+msgstr "NOT"
 
 #: src/eval.c:5112
 #, fuzzy, c-format
 msgid "Bad types for '%s'"
-msgstr "Falscher Typ f�r `for'-Schleife!"
+msgstr "αδύνατη η ανάγνωση του καταλόγου `%.250s' για μεθόδους ανάγνωσης"
 
 #: src/eval.c:5123
 #, c-format
 msgid "%s not defined on <%s> and <%s>"
-msgstr ""
+msgstr "το %s δεν ορίστικε στο <%s> και στο <%s>"
 
 #: src/eval.c:5142
-#, fuzzy, c-format
+#, c-format
 msgid "Bad type for '%s'"
-msgstr "Falscher Typ f�r `for'-Schleife!"
+msgstr "Κακός τύπος για '%s'"
 
 #: src/eval.c:5152
 #, c-format
 msgid "%s not defined on <%s>"
-msgstr ""
+msgstr "το %s δεν προσδιορίστικε στο <%s>"
 
 #: src/eval.c:5171 src/eval.c:5188
 msgid "Vector building only works on numbers"
 msgstr ""
 
+#  FIXME: perhaps we should just return null like octave?
 #. FIXME: perhaps we should just return null like octave?
 #: src/eval.c:5181
 msgid "Impossible arguments to vector building operator"
@@ -569,56 +583,56 @@ msgstr ""
 #: src/funclib.c:85
 #, c-format
 msgid "%s: argument number %d not an integer"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι ακέραιος"
 
 #: src/funclib.c:98
 #, c-format
 msgid "%s: argument number %d not an integer or a matrix"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι ακέραιος ή πίνακας"
 
 #: src/funclib.c:112
 #, c-format
 msgid "%s: argument number %d not a positive integer"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι θετικός ακέραιος"
 
 #: src/funclib.c:122 src/graphing.c:820
 #, c-format
 msgid "%s: argument number %d not a number"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι αριθμός"
 
 #: src/funclib.c:133
 #, c-format
 msgid "%s: argument number %d not a real number"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι πραγματικός αριθμός"
 
 #: src/funclib.c:143
 #, c-format
 msgid "%s: argument number %d not a matrix"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι πίνακας"
 
 #: src/funclib.c:154
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument number %d not a value only matrix"
-msgstr "Kann nicht auf einer Nicht-Nur-Wert-Matrix operieren"
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι τιμή αλλά πίνακας"
 
 #: src/funclib.c:164 src/funclib.c:175
 #, c-format
 msgid "%s: argument number %d not a string"
-msgstr ""
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι συμβολοσειρά"
 
 #: src/funclib.c:204
 #, c-format
 msgid "%s: argument can't be negative or 0"
-msgstr ""
+msgstr "%s: το όρισμα δε μπορεί να είναι αρνητικός ή 0"
 
 #: src/funclib.c:208
 #, c-format
 msgid "%s: argument too large"
-msgstr ""
+msgstr "%s: πολύ μεγάλο όρισμα"
 
 #: src/funclib.c:235
 msgid "Cannot locate the manual"
-msgstr ""
+msgstr "Δεν εντοπίστηκε το εγχειρίδιο"
 
 #: src/funclib.c:251
 #, c-format
@@ -647,6 +661,7 @@ msgstr ""
 msgid "%s: trying to set a protected id!"
 msgstr ""
 
+#  FIXME: fix this, this should just work too
 #. FIXME: fix this, this should just work too
 #: src/funclib.c:387
 #, c-format
@@ -675,27 +690,27 @@ msgstr ""
 #: src/funclib.c:1494
 #, c-format
 msgid "%s: matrix argument is not square"
-msgstr ""
+msgstr "%s: το όρισμα πίνακα δεν είναι τετράγωνο"
 
 #: src/funclib.c:1622 src/funclib.c:1722
 #, c-format
 msgid "%s: matrix argument must be integer only"
-msgstr ""
+msgstr "%s: το όρισμα πίνακα πρέπει να είναι μόνο ακέραιος"
 
 #: src/funclib.c:1644 src/funclib.c:1744
 #, c-format
 msgid "%s: argument must be an integer"
-msgstr ""
+msgstr "%s: το όρισμα πρέπει να είναι ακέραιος"
 
 #: src/funclib.c:1979 src/funclib.c:2060
 #, c-format
 msgid "%s: matrix argument must be value only"
-msgstr ""
+msgstr "%s: το όρισμα πίνακα πρέπει να είναι μόνο τιμή"
 
 #: src/funclib.c:2174 src/funclib.c:2214 src/funclib.c:3229
 #, c-format
 msgid "%s: too many arguments"
-msgstr ""
+msgstr "%s: πάρα πολλά ορίσματα"
 
 #: src/funclib.c:2337
 #, c-format
@@ -708,32 +723,32 @@ msgid "%s: vector argument has too large entries"
 msgstr ""
 
 #: src/funclib.c:2454 src/funclib.c:2460
-#, c-format
+#, fuzzy, c-format
 msgid "%s: %s not a reference"
-msgstr ""
+msgstr "Σφάλμα αναφοράς"
 
 #: src/funclib.c:2499
 #, c-format
 msgid "%s: matrices not of the same height"
-msgstr ""
+msgstr "%s: πίνακες όχι του ίδιου ύψους"
 
 #: src/funclib.c:2504
 msgid "third argument"
-msgstr ""
+msgstr "τρίτο όρισμα"
 
 #: src/funclib.c:2509
 msgid "fourth argument"
-msgstr ""
+msgstr "τέταρτο όρισμα"
 
 #: src/funclib.c:2792
 #, c-format
 msgid "%s: argument must be greater then 2"
-msgstr ""
+msgstr "%s: το όρισμα πρέπει να είναι μεγαλύτερο από το 2"
 
 #: src/funclib.c:2907
 #, c-format
 msgid "%s: arguments not horizontal vectors"
-msgstr ""
+msgstr "%s: ορίσματα όχι οριζόντια διανύσματα"
 
 #: src/funclib.c:2916
 #, c-format
@@ -743,12 +758,12 @@ msgstr ""
 #: src/funclib.c:3446 src/funclib.c:3535 src/funclib.c:3754 src/funclib.c:3809
 #, fuzzy, c-format
 msgid "%s: value out of range"
-msgstr "Index jenseits der Grenzen"
+msgstr "η τιμή %s είναι εκτός του %s εύρους %s..%s"
 
 #: src/funclib.c:3912
-#, c-format
+#, fuzzy, c-format
 msgid "%s: undefined function"
-msgstr ""
+msgstr "E123: Απροσδιόριστη συνάρτηση: %s"
 
 #: src/funclib.c:3918
 #, c-format
@@ -758,7 +773,7 @@ msgstr ""
 #: src/funclib.c:3955 src/funclib.c:3991 src/funclib.c:4199
 #, c-format
 msgid "%s: argument should be between %d and %d"
-msgstr ""
+msgstr "%s: το όρισμα πρέπει να είναι ανάμεσα στο %d και %d"
 
 #: src/funclib.c:4101
 msgid "OutputStyle must be one of normal, troff, latex or mathml"
@@ -767,78 +782,78 @@ msgstr ""
 #: src/funclib.c:4142
 #, c-format
 msgid "%s: argument should be larger or equal to 0"
-msgstr ""
+msgstr "%s: το όρισμα πρέπει να είναι μεγαλύτερο ή ίσο του 0"
 
 #: src/funclib.c:4249
 msgid "Basic"
-msgstr ""
+msgstr "Βασικό"
 
 #: src/funclib.c:4250
 msgid "Parameters"
-msgstr ""
+msgstr "Παράμετροι"
 
 #: src/funclib.c:4251
 msgid "Constants"
-msgstr ""
+msgstr "Σταθερές"
 
 #: src/funclib.c:4252
 msgid "Numeric"
-msgstr ""
+msgstr "Αριθμητικό"
 
 #: src/funclib.c:4253
 msgid "Trigonometry"
-msgstr ""
+msgstr "Τριγωνομετρία"
 
 #: src/funclib.c:4254
 msgid "Number Theory"
-msgstr ""
+msgstr "Θεωρία Αριθμών"
 
 #: src/funclib.c:4255
+#, fuzzy
 msgid "Matrix Manipulation"
-msgstr ""
+msgstr "Διαχείριση σελιδοδεικτών"
 
 #: src/funclib.c:4256
 msgid "Linear Algebra"
-msgstr ""
+msgstr "Γραμμική Άλγεβρα"
 
 #: src/funclib.c:4257
 msgid "Combinatorics"
-msgstr ""
+msgstr "Συνδυαστική Ανάλυση"
 
 #: src/funclib.c:4258
-#, fuzzy
 msgid "Calculus"
-msgstr "Re_chner"
+msgstr "Μαθηματική Ανάλυση"
 
 #: src/funclib.c:4259
-#, fuzzy
 msgid "Functions"
-msgstr "NULL-Funktion!"
+msgstr "Συναρτήσεις"
 
 #: src/funclib.c:4260
 msgid "Equation Solving"
-msgstr ""
+msgstr "Επίλυση Εξίσωσης"
 
 #: src/funclib.c:4261
 msgid "Statistics"
-msgstr ""
+msgstr "Στατιστική"
 
 #: src/funclib.c:4262
 msgid "Polynomials"
-msgstr ""
+msgstr "Πολυώνυμα"
 
 #: src/funclib.c:4263
 msgid "Set Theory"
-msgstr ""
+msgstr "Ορισμός Θεωρίας"
 
 #: src/funclib.c:4264
 msgid "Miscellaneous"
-msgstr ""
+msgstr "Διάφορα"
 
+#  bogus value
 #. bogus value
 #: src/funclib.c:4297
 msgid "Displays the user manual"
-msgstr ""
+msgstr "Εμφανίζει το εγχειρίδιο χρήστη"
 
 #: src/funclib.c:4298
 msgid "Gives the warranty information"
@@ -846,19 +861,21 @@ msgstr ""
 
 #: src/funclib.c:4299
 msgid "Exits the program"
-msgstr ""
+msgstr "Έξοδος από το πρόγραμμα"
 
 #: src/funclib.c:4301
 msgid "Prints a string to the error stream"
 msgstr ""
 
 #: src/funclib.c:4302
+#, fuzzy
 msgid "Prints an expression"
-msgstr ""
+msgstr "Κανονική Έκφραση"
 
 #: src/funclib.c:4303
+#, fuzzy
 msgid "Changes current directory"
-msgstr ""
+msgstr "Κατάλογος τρέχοντος εγγράφου"
 
 #: src/funclib.c:4304
 msgid "Prints an expression without a trailing newline"
@@ -870,7 +887,7 @@ msgstr ""
 
 #: src/funclib.c:4306
 msgid "Set a global variable"
-msgstr ""
+msgstr "Ορισμός καθολικής μεταβλητής"
 
 #: src/funclib.c:4308
 msgid "Set the category and help description line for a function"
@@ -886,21 +903,23 @@ msgstr ""
 
 #: src/funclib.c:4313
 msgid "Generate random integer"
-msgstr ""
+msgstr "Δημιουργία τυχαίου ακέραιου"
 
 #: src/funclib.c:4316 src/gnome-genius.c:911
+#, fuzzy
 msgid "Floating point precision"
-msgstr "Gleitkommagenauigkeit"
+msgstr "Μια τιμή κινητής υποδιαστολής"
 
 #: src/funclib.c:4317
-#, fuzzy
 msgid "Maximum digits to display"
-msgstr "Maximale Anzahl Ziffern der Ausgabe (0=unbegrenzt)"
+msgstr ""
 
 #: src/funclib.c:4318
 #, fuzzy
 msgid "Maximum errors to display"
-msgstr "Maximale Anzahl Ziffern der Ausgabe (0=unbegrenzt)"
+msgstr ""
+"\n"
+"...Πάρα πολλά λόθη για εμφάνιση..."
 
 #: src/funclib.c:4319
 msgid "Output style: normal, latex or troff"
@@ -923,9 +942,8 @@ msgid "Convert all results to floats before printing"
 msgstr ""
 
 #: src/funclib.c:4324
-#, fuzzy
 msgid "Use scientific notation"
-msgstr "Gleitkommazahlen in wissenschaftlicher Schreibweise"
+msgstr ""
 
 #: src/funclib.c:4326
 msgid ""
@@ -939,28 +957,28 @@ msgstr ""
 
 #: src/funclib.c:4333
 msgid "Gets the rows of a matrix as a vertical vector"
-msgstr ""
+msgstr "Λήψη των γραμμών ενός πίνακα ως κάθετο διάνυσμα"
 
 #: src/funclib.c:4334
 msgid "Gets the columns of a matrix as a horizontal vector"
-msgstr ""
+msgstr "Λήψη των στηλών ενός πίνακα ως οριζόντιο διάνυσμα"
 
 #: src/funclib.c:4335
 msgid "Gets the diagonal entries of a matrix as a horizontal vector"
-msgstr ""
+msgstr "Λήψη των διαγώνιων στοιχείων ενός πίνακα ως οριζόντιο διάνυσμα"
 
 #: src/funclib.c:4337
+#, fuzzy
 msgid "Calculates the conjugate"
-msgstr ""
+msgstr "Εκτός χρήσης/τοπικό"
 
 #: src/funclib.c:4342
-#, fuzzy
 msgid "Calculates the sine function"
-msgstr "Indizierter Lvalue keine Benutzerfunktion"
+msgstr "Υπολογίζει τη συνάρτηση του ημιτόνου"
 
 #: src/funclib.c:4344
 msgid "Calculates the cossine function"
-msgstr ""
+msgstr "Υπολογίζει τη συνάρτηση του συνημιτόνου"
 
 #: src/funclib.c:4346
 msgid "Calculates the hyperbolic sine function"
@@ -972,23 +990,25 @@ msgstr ""
 
 #: src/funclib.c:4350
 msgid "Calculates the tan function"
-msgstr ""
+msgstr "Υπολογίζει τη συνάρτηση της εφαπτομένης"
 
 #: src/funclib.c:4352
+#, fuzzy
 msgid "Calculates the arctan function"
-msgstr ""
+msgstr "Εκτός χρήσης/τοπικό"
 
 #: src/funclib.c:4356
 msgid "The number pi"
-msgstr ""
+msgstr "Ο αριθμός π"
 
 #: src/funclib.c:4357
 msgid "The natural number e"
-msgstr ""
+msgstr "Ο φυσικός αριθμός e"
 
 #: src/funclib.c:4358
+#, fuzzy
 msgid "The Golden Ratio"
-msgstr ""
+msgstr "%1 %"
 
 #: src/funclib.c:4359
 msgid "Free fall acceleration"
@@ -1000,35 +1020,35 @@ msgstr ""
 
 #: src/funclib.c:4364
 msgid "The square root"
-msgstr ""
+msgstr "Τετραγωνική ρίζα"
 
 #: src/funclib.c:4368
 msgid "The exponential function"
-msgstr ""
+msgstr "Η εκθετική συνάρτηση"
 
 #: src/funclib.c:4370
 msgid "The natural logarithm"
-msgstr ""
+msgstr "Ο φυσικός λογάριθμος"
 
 #: src/funclib.c:4372
 msgid "Logarithm of x base 2"
-msgstr ""
+msgstr "Λογάριθμος του x με βάση το 2"
 
 #: src/funclib.c:4375
 msgid "Logarithm of x base 10"
-msgstr ""
+msgstr "Λογάριθμος του x με βάση το 10"
 
 #: src/funclib.c:4377
 msgid "Round a number"
-msgstr ""
+msgstr "Στρογυλλοποίηση αριθμού"
 
 #: src/funclib.c:4380
 msgid "Get the highest integer less then or equal to n"
-msgstr ""
+msgstr "Λήψη του μεγαλύτερου ακεραίου μικρότερου ή ίσου με το n"
 
 #: src/funclib.c:4383
 msgid "Get the lowest integer more then or equal to n"
-msgstr ""
+msgstr "Λήψη του χαμηλότερου ακεραίου μεγαλύτερου ή ίσου με το n"
 
 #: src/funclib.c:4386
 msgid "Truncate number to an integer (return the integer part)"
@@ -1048,11 +1068,11 @@ msgstr ""
 
 #: src/funclib.c:4397
 msgid "Greatest common divisor"
-msgstr ""
+msgstr "Μεγαλύτερος κοινός διαιρέτης"
 
 #: src/funclib.c:4399
 msgid "Least common multiplier"
-msgstr ""
+msgstr "Ελάχιστο κοινό πολλαπλάσιο"
 
 #: src/funclib.c:4401
 msgid "Check a number for being a perfect square"
@@ -1068,11 +1088,11 @@ msgstr ""
 
 #: src/funclib.c:4405
 msgid "Tests if an integer is even"
-msgstr ""
+msgstr "Έλεγχος αν ο ακέραιος είναι άρτιος (ζυγός)"
 
 #: src/funclib.c:4406
 msgid "Tests if an integer is odd"
-msgstr ""
+msgstr "Έλεγχος αν ο ακέραιος είναι περιττός (μονός)"
 
 #: src/funclib.c:4408
 msgid "Returns the least prime greater than n (if n is positive)"
@@ -1083,8 +1103,9 @@ msgid "Returns the n'th Lucas number"
 msgstr ""
 
 #: src/funclib.c:4410
+#, fuzzy
 msgid "Returns inverse of n mod m"
-msgstr ""
+msgstr "MOD(12;5) επιστρέφει 2"
 
 #: src/funclib.c:4411
 msgid ""
@@ -1135,14 +1156,12 @@ msgid "Calculate the Legendre symbol (a/p)"
 msgstr ""
 
 #: src/funclib.c:4431
-#, fuzzy
 msgid "Get the real part of a complex number"
-msgstr "Kann den Typen einer komplexen Zahl nicht bestimmen"
+msgstr ""
 
 #: src/funclib.c:4434
-#, fuzzy
 msgid "Get the imaginary part of a complex number"
-msgstr "Kann den Typen einer komplexen Zahl nicht bestimmen"
+msgstr ""
 
 #: src/funclib.c:4438
 msgid "Make an identity matrix of a given size"
@@ -1201,7 +1220,7 @@ msgstr ""
 
 #: src/funclib.c:4468
 msgid "Check if a matrix is a matrix of numbers"
-msgstr ""
+msgstr "Έλεγχος αν ένας πίνακας είναι πίνακας αριθμών"
 
 #: src/funclib.c:4469
 msgid "Check if a matrix is an integer (non-complex) matrix"
@@ -1216,24 +1235,25 @@ msgid "Check if a matrix is a real (non-complex) matrix"
 msgstr ""
 
 #: src/funclib.c:4473
+#, fuzzy
 msgid "Check if argument is a null"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι αριθμός"
 
 #: src/funclib.c:4474
 msgid "Check if argument is a number"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι αριθμός"
 
 #: src/funclib.c:4475
 msgid "Check if argument is a text string"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι μια συμβολοσειρά κειμένου"
 
 #: src/funclib.c:4476
 msgid "Check if argument is a matrix"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι πίνακας"
 
 #: src/funclib.c:4477
 msgid "Check if argument is a function"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι συνάρτηση"
 
 #: src/funclib.c:4478
 msgid "Check if argument is a function reference"
@@ -1245,7 +1265,7 @@ msgstr ""
 
 #: src/funclib.c:4481
 msgid "Check if argument is a real number"
-msgstr ""
+msgstr "Έλεγχος αν το όρισμα είναι πραγματικός αριθμός"
 
 #: src/funclib.c:4482
 msgid "Check if argument is an integer (non-complex)"
@@ -1273,15 +1293,15 @@ msgstr ""
 
 #: src/funclib.c:4491
 msgid "Add two polynomials (vectors)"
-msgstr ""
+msgstr "Προσθήκη δύο πολυωνύμων (διανύσματα)"
 
 #: src/funclib.c:4492
 msgid "Subtract two polynomials (as vectors)"
-msgstr ""
+msgstr "Αφαίρεση δύο πολυωνύμων (ως διανύσματα)"
 
 #: src/funclib.c:4493
 msgid "Multiply two polynomials (as vectors)"
-msgstr ""
+msgstr "Πολλαπλασιασμός δύο πολυωνύμων (ως διανύσματα)"
 
 #: src/funclib.c:4494
 msgid "Take polynomial (as vector) derivative"
@@ -1297,15 +1317,15 @@ msgstr ""
 
 #: src/funclib.c:4497
 msgid "Check if a vector is usable as a polynomial"
-msgstr ""
+msgstr "Έλεγχος αν ένα διάνυσμα μπορεί να χρησιμοποιηθεί ως πολυώνυμο"
 
 #: src/funclib.c:4498
 msgid "Make string out of a polynomial (as vector)"
-msgstr ""
+msgstr "Δημιουργία συμβολοσειράς από ένα πολυώνυμο (ως διάνυσμα)"
 
 #: src/funclib.c:4499
 msgid "Make function out of a polynomial (as vector)"
-msgstr ""
+msgstr "Δημιουργία συνάρτησης από ένα πολυώνυμο (ως διάνυσμα)"
 
 #: src/funclib.c:4501
 msgid "Get all combinations of k numbers from 1 to n as a vector of vectors"
@@ -1356,12 +1376,12 @@ msgstr ""
 #: src/genius.c:96
 #, c-format
 msgid "line %d: %s\n"
-msgstr "Zeile %d: %s\n"
+msgstr "γραμμή %d: %s\n"
 
 #: src/genius.c:114
 #, c-format
 msgid "Too many errors! (%d followed)\n"
-msgstr ""
+msgstr "Πάρα πολλά σφάλματα! (ακολούθησαν %d)\n"
 
 #: src/genius.c:179 src/gnome-genius.c:2504
 msgid ""
@@ -1370,7 +1390,7 @@ msgid ""
 msgstr ""
 
 #: src/genius.c:255
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Genius %s usage:\n"
 "\n"
@@ -1390,23 +1410,9 @@ msgid ""
 "\t                  \t(always on when compiling) [OFF]\n"
 "\n"
 msgstr ""
-"Genius %s; Verwendung:\n"
-"\n"
-"genius [Optionen] [Dateien]\n"
-"\n"
-"\t--precision=zahl  \tGleitkommagenauigkeit [256]\n"
-"\t--maxdigits=zahl  \tMaximal anzuzeigende Anzahl Ziffern (0=unbegrenzt) "
-"[0]\n"
-"\t--[no]floatresult \tAlle Ergebnisse mit Gleitkomma [AUS]\n"
-"\t--[no]scinot      \tErgebnisse in Potenzschreibweise [AUS]\n"
-"\t--[no]readline    \treadline verwenden, wenn m�glich [AN]\n"
-"\t--[no]compile     \tAlles compilieren und auf stdout ausgeben [AUS]\n"
-"\t--[no]quiet       \tIm nichtinteraktiven Modus still sein\n"
-"                      (Beim Compilieren immer) [AUS]\n"
-"\n"
 
 #: src/genius.c:296
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Genius %s\n"
 "%s\n"
@@ -1415,11 +1421,6 @@ msgid ""
 "For help type 'manual' or 'help'.%s\n"
 "\n"
 msgstr ""
-"Genius %s\n"
-"Copyright (C) 1997, 1998, 1999 Free Software Foundation, Inc.\n"
-"Dies ist freie Software OHNE JEDE GARANTIE.\n"
-"F�r Details, geben Sie `warranty' ein.\n"
-"\n"
 
 #: src/genius.c:351 src/gnome-genius.c:2764
 msgid ""
@@ -1429,19 +1430,19 @@ msgstr ""
 
 #: src/genius.c:372 src/genius.c:432
 msgid "Can't open file"
-msgstr "Kann Datei nicht �ffnen"
+msgstr "Αδύνατο το άνοιγμα αρχείου"
 
 #: src/genius.lang.h:1
 msgid "Base-N Integers"
-msgstr ""
+msgstr "Ακέραιος με βάση Ν"
 
 #: src/genius.lang.h:2
 msgid "Commands"
-msgstr ""
+msgstr "Εντολές"
 
 #: src/genius.lang.h:3
 msgid "Decimal Integers"
-msgstr ""
+msgstr "Δεκαδικοί Ακέραιοι"
 
 #: src/genius.lang.h:4
 msgid "Floats"
@@ -1449,47 +1450,50 @@ msgstr ""
 
 #: src/genius.lang.h:5
 msgid "Genius"
-msgstr ""
+msgstr "Genius"
 
 #: src/genius.lang.h:6
 msgid "Keywords"
-msgstr ""
+msgstr "Λέξεις κλειδιά"
 
 #: src/genius.lang.h:7
+#, fuzzy
 msgid "Line Comment"
-msgstr ""
+msgstr "Σχόλιο Γραμμής"
 
 #: src/genius.lang.h:8
 msgid "Scripts"
-msgstr ""
+msgstr "Δέσμες ενεργειών"
 
 #: src/genius.lang.h:9
 msgid "String"
-msgstr ""
+msgstr "Αλφαριθμητικό"
 
 #: src/gnome-genius.c:161
 msgid "_New Program"
-msgstr ""
+msgstr "_Νέο Πρόγραμμα"
 
 #: src/gnome-genius.c:161
 msgid "Create new program tab"
 msgstr ""
 
 #: src/gnome-genius.c:168
+#, fuzzy
 msgid "_Reload from Disk"
-msgstr ""
+msgstr "Επα_ναφόρτωση από το δίσκο"
 
 #: src/gnome-genius.c:168
 msgid "Reload the selected program from disk"
 msgstr ""
 
 #: src/gnome-genius.c:172
+#, fuzzy
 msgid "_Load and Run..."
-msgstr ""
+msgstr "_Φόρτωση και Εκτέλεση"
 
 #: src/gnome-genius.c:172
 msgid "Load and execute a file in genius"
-msgstr "Eine Datei in genius laden und ausf�hren"
+msgstr "Φόρτωση και εκτέλεση ενός αρχείου στο genius"
 
 #: src/gnome-genius.c:185
 msgid "Copy Answer As Plain _Text"
@@ -1525,19 +1529,20 @@ msgstr ""
 
 #: src/gnome-genius.c:211
 msgid "_Run"
-msgstr ""
+msgstr "_Εκτέλεση"
 
 #: src/gnome-genius.c:211 src/gnome-genius.c:258
 msgid "Run current program"
-msgstr ""
+msgstr "Εκτέλεση τωρινού προγράμματος"
 
 #: src/gnome-genius.c:212
+#, fuzzy
 msgid "_Interrupt"
-msgstr "Unterbrechen"
+msgstr "Διακοπή"
 
 #: src/gnome-genius.c:212 src/gnome-genius.c:256
 msgid "Interrupt current calculation"
-msgstr "Die momentane Berechnung abbrechen"
+msgstr ""
 
 #. title
 #. parent
@@ -1549,54 +1554,57 @@ msgstr ""
 #: src/gnome-genius.c:214 src/gnome-genius.c:260
 #, fuzzy
 msgid "Plot a function"
-msgstr "NULL-Funktion!"
+msgstr "συνάρτηση"
 
+#  FIXME: no help
+#  * GNOMEUIINFO_HELP("genius"),
 #. FIXME: no help
 #. * GNOMEUIINFO_HELP("genius"),
 #: src/gnome-genius.c:221
+#, fuzzy
 msgid "_Manual"
-msgstr ""
+msgstr "_Χειροκόνητος"
 
 #: src/gnome-genius.c:222
 msgid "Display the manual"
-msgstr ""
+msgstr "Εμφάνιση εγχειριδίου"
 
 #: src/gnome-genius.c:225
 msgid "_Warranty"
 msgstr ""
 
 #: src/gnome-genius.c:226
+#, fuzzy
 msgid "Display warranty information"
-msgstr ""
+msgstr "Εμφάνιση πληροφοριών SSL"
 
 #: src/gnome-genius.c:244
 msgid "_Calculator"
-msgstr "Re_chner"
+msgstr "Αριθ_μομηχανή"
 
 #: src/gnome-genius.c:246
-#, fuzzy
 msgid "P_lugins"
-msgstr "_Plugins"
+msgstr "Επιπ_ρόσθετες λειτουργίες"
 
 #: src/gnome-genius.c:248
 msgid "_Programs"
-msgstr ""
+msgstr "_Προγράμματα"
 
 #: src/gnome-genius.c:256
 msgid "Interrupt"
-msgstr "Unterbrechen"
+msgstr "Διακοπή"
 
 #: src/gnome-genius.c:258
 msgid "Run"
-msgstr ""
+msgstr "Εκτέλεση"
 
 #: src/gnome-genius.c:259
 msgid "Open"
-msgstr ""
+msgstr "Άνοιγμα"
 
 #: src/gnome-genius.c:259
 msgid "Open a GEL file for running"
-msgstr ""
+msgstr "Άνοιγμα ενός αρχείου GEL για εκτέλεση"
 
 #: src/gnome-genius.c:260
 msgid "Plot"
@@ -1604,19 +1612,19 @@ msgstr ""
 
 #: src/gnome-genius.c:261
 msgid "Exit"
-msgstr ""
+msgstr "Έξοδος"
 
 #: src/gnome-genius.c:261
 msgid "Exit genius"
-msgstr ""
+msgstr "Έξοδος Genius"
 
 #: src/gnome-genius.c:305
 msgid "Error"
-msgstr ""
+msgstr "Σφάλμα"
 
 #: src/gnome-genius.c:305
 msgid "Information"
-msgstr ""
+msgstr "Πληροφορίες"
 
 #: src/gnome-genius.c:360
 #, c-format
@@ -1624,23 +1632,29 @@ msgid ""
 "\n"
 "Too many errors! (%d followed)"
 msgstr ""
+"\n"
+"Πάρα πολλά σφάλματα! (ακολούθησαν %d)"
 
 #: src/gnome-genius.c:370
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
-msgstr ""
+msgstr "\\e[01;31mΠάρα πολλά σφάλματα! (ακολούθησαν %d)\\e[0m\n"
 
+#  Translators should localize the following string
+#  * which will give them credit in the About box.
+#  * E.g. "Fulano de Tal <fulano@detal.com>"
 #. Translators should localize the following string
 #. * which will give them credit in the About box.
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
 #: src/gnome-genius.c:493
 msgid "translator_credits-PLEASE_ADD_YOURSELF_HERE"
-msgstr ""
+msgstr "Μεταφραστής: Βελώνης Πέτρος"
 
 #: src/gnome-genius.c:496
+#, fuzzy
 msgid "About Genius"
-msgstr ""
+msgstr "Genius"
 
 #: src/gnome-genius.c:499
 msgid ""
@@ -1660,36 +1674,37 @@ msgstr ""
 
 #: src/gnome-genius.c:676
 msgid "Genius is executing something, are you sure you wish to quit?"
-msgstr ""
+msgstr "Το Genius εκτελεί κάτι, σίγουρα θέλετε να φύγετε;"
 
 #: src/gnome-genius.c:683
 msgid "Are you sure you wish to quit?"
-msgstr ""
+msgstr "Σίγουρα θέλετε να φύγετε από το πρόγραμμα;"
 
 #: src/gnome-genius.c:782
+#, fuzzy
 msgid "Genius Setup"
-msgstr ""
+msgstr "Genius"
 
 #: src/gnome-genius.c:799
 msgid "Output"
-msgstr "Ausgabe"
+msgstr "Έξοδος"
 
 #: src/gnome-genius.c:802
-#, fuzzy
 msgid "Number/Expression output options"
-msgstr "Zahlenausgabeoptionen"
+msgstr ""
 
 #: src/gnome-genius.c:812
 msgid "Maximum digits to output (0=unlimited)"
-msgstr "Maximale Anzahl Ziffern der Ausgabe (0=unbegrenzt)"
+msgstr ""
 
 #: src/gnome-genius.c:832
+#, fuzzy
 msgid "Results as floats"
-msgstr "Ergebnisse als Gleitkommazahlen"
+msgstr "Αποθήκευση αποτελεσμάτων ως"
 
 #: src/gnome-genius.c:840
 msgid "Floats in scientific notation"
-msgstr "Gleitkommazahlen in wissenschaftlicher Schreibweise"
+msgstr ""
 
 #: src/gnome-genius.c:848
 msgid "Always print full expressions"
@@ -1697,24 +1712,23 @@ msgstr ""
 
 #: src/gnome-genius.c:857
 msgid "Error/Info output options"
-msgstr "Fehler-/Info-Ausgabeoptionen"
+msgstr ""
 
 #: src/gnome-genius.c:865
 msgid "Display errors in a dialog"
-msgstr "Fehler in einem Dialogfeld anzeigen"
+msgstr "Εμφάνιση σφαλμάτων σε διάλογο"
 
 #: src/gnome-genius.c:873
 msgid "Display information messages in a dialog"
-msgstr "Informationsmeldungen in einem Dialogfeld anzeigen"
+msgstr ""
 
 #: src/gnome-genius.c:884
-#, fuzzy
 msgid "Maximum errors to display (0=unlimited)"
-msgstr "Maximale Anzahl Ziffern der Ausgabe (0=unbegrenzt)"
+msgstr ""
 
 #: src/gnome-genius.c:908
 msgid "Precision"
-msgstr "Genauigkeit"
+msgstr "Ακρίβεια"
 
 #: src/gnome-genius.c:918
 msgid ""
@@ -1722,29 +1736,27 @@ msgid ""
 "for all numbers immediately, only new numbers calculated\n"
 "and new variables will be affected."
 msgstr ""
-"NB: Die Gleitkommagenauigkeit wird eventuell nicht gleich\n"
-"f�r alle Zahlen wirksam werden, nur neuberechnete Nummern\n"
-"und neue Variablen werden betroffen sein."
 
 #: src/gnome-genius.c:927
 msgid "Floating point precision (bits)"
-msgstr "Gleitkommagenauigkeit (Bits)"
+msgstr ""
 
 #: src/gnome-genius.c:951
 msgid "Terminal"
-msgstr "Terminal"
+msgstr "Τερματικό"
 
 #: src/gnome-genius.c:954
 msgid "Terminal options"
-msgstr "Terminaloptionen"
+msgstr "Επιλογές τερματικού"
 
 #: src/gnome-genius.c:963
+#, fuzzy
 msgid "Scrollback lines"
-msgstr "Zeilen an Scrollback"
+msgstr "&Αριθμός γραμμών: "
 
 #: src/gnome-genius.c:986
 msgid "Font:"
-msgstr "Schriftart:"
+msgstr "Γραμματοσειρά:"
 
 #: src/gnome-genius.c:1022
 msgid ""
@@ -1756,55 +1768,56 @@ msgstr ""
 #: src/gnome-genius.c:1087
 #, fuzzy
 msgid "GEL files"
-msgstr "Lade GEL-Datei"
+msgstr "Φόρτωση αρχείου GEL"
 
 #: src/gnome-genius.c:1092
 msgid "All files"
 msgstr ""
 
 #: src/gnome-genius.c:1126 src/gnome-genius.c:1681
-#, fuzzy
 msgid "Cannot open file!"
-msgstr "Kann Datei nicht �ffnen!"
+msgstr "Αδύνατο το άνοιγμα του αρχείου!"
 
 #: src/gnome-genius.c:1155 src/gnome-genius.c:1173
+#, fuzzy
 msgid "Load and Run"
-msgstr ""
+msgstr "_Φόρτωση και Εκτέλεση"
 
 #: src/gnome-genius.c:1159
 msgid "_Load"
-msgstr "_Laden"
+msgstr ""
 
 #: src/gnome-genius.c:1513
-#, fuzzy
 msgid "Cannot open file"
-msgstr "Kann Datei nicht �ffnen!"
+msgstr "Αδυναμία ανοίγματος αρχείου"
 
 #: src/gnome-genius.c:1545 src/gnome-genius.c:2489
-#, fuzzy, c-format
+#, c-format
 msgid "Line: %d"
-msgstr "Zeile %d: %s\n"
+msgstr "Γραμμή: %d"
 
 #. the file name will have an underscore
 #: src/gnome-genius.c:1616
-#, c-format
+#, fuzzy, c-format
 msgid "Program_%d.gel"
-msgstr ""
+msgstr "Εκτέλεση του προγράμματος"
 
 #: src/gnome-genius.c:1617
 #, c-format
 msgid "Program %d"
-msgstr ""
+msgstr "Πρόγραμμα %d"
 
 #: src/gnome-genius.c:1633
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot open %s"
-msgstr "Kann Datei nicht �ffnen!"
+msgstr "δεν ανοίγει το %s"
 
 #: src/gnome-genius.c:1708 src/gnome-genius.c:1726
+#, fuzzy
 msgid "Open..."
-msgstr ""
+msgstr "Άνοιγμα"
 
+#  new fname
 #. new fname
 #: src/gnome-genius.c:1816 src/gnome-genius.c:1871
 #, c-format
@@ -1812,10 +1825,12 @@ msgid ""
 "<b>Cannot save file</b>\n"
 "Details: %s"
 msgstr ""
+"<b>Αδυναμία αποθήκευσης αρχείου</b>\n"
+"Λεπτομέρειες: %s"
 
 #: src/gnome-genius.c:1865
 msgid "File already exists.  Overwrite it?"
-msgstr ""
+msgstr "Το αρχείο υπάρχει ήδη. Να αντικατασταθεί;"
 
 #: src/gnome-genius.c:1922 src/gnome-genius.c:1943
 msgid "Save As..."
@@ -1829,9 +1844,9 @@ msgid ""
 msgstr ""
 
 #: src/gnome-genius.c:2114
-#, c-format
+#, fuzzy, c-format
 msgid "Genius %s"
-msgstr ""
+msgstr "Genius"
 
 #: src/gnome-genius.c:2296
 msgid "Can't execute genius-readline-helper-fifo!\n"
@@ -1845,7 +1860,7 @@ msgstr ""
 
 #: src/gnome-genius.c:2673
 msgid "Console"
-msgstr ""
+msgstr "Κονσόλα"
 
 #: src/gnome-genius.c:2705
 #, c-format
@@ -1884,7 +1899,7 @@ msgstr ""
 #: src/graphing.c:801
 #, c-format
 msgid "Function #%d"
-msgstr ""
+msgstr "Συνάρτηση #%d"
 
 #: src/graphing.c:833
 msgid "Graph limits not given as a 4-vector"
@@ -1895,12 +1910,14 @@ msgid "Graph limits not given as numbers"
 msgstr ""
 
 #: src/graphing.c:1002
+#, fuzzy
 msgid "Function line plot"
-msgstr ""
+msgstr "Συνάρτηση #%d"
 
 #: src/graphing.c:1004
+#, fuzzy
 msgid "Function/Expressions"
-msgstr ""
+msgstr "Συναρτήσεις"
 
 #: src/graphing.c:1009
 msgid ""
@@ -1929,14 +1946,12 @@ msgid "No functions to plot or no functions could be parsed"
 msgstr ""
 
 #: src/graphing.c:1259
-#, fuzzy
 msgid "Invalid X range"
-msgstr "Index jenseits der Grenzen"
+msgstr ""
 
 #: src/graphing.c:1264
-#, fuzzy
 msgid "Invalid Y range"
-msgstr "Index jenseits der Grenzen"
+msgstr ""
 
 #: src/graphing.c:1326
 msgid "Create Line Plot"
@@ -1948,19 +1963,19 @@ msgid "%s: only up to 10 functions supported"
 msgstr ""
 
 #: src/graphing.c:1378
-#, fuzzy, c-format
+#, c-format
 msgid "%s: argument not a function"
-msgstr "Indizierter Lvalue keine Benutzerfunktion"
+msgstr "%s: το όρισμα δεν είναι συνάρτηση"
 
 #: src/graphing.c:1429
-#, c-format
+#, fuzzy, c-format
 msgid "%s: invalid X range"
-msgstr ""
+msgstr "η τιμή %s είναι εκτός του %s εύρους %s..%s"
 
 #: src/graphing.c:1434
-#, c-format
+#, fuzzy, c-format
 msgid "%s: invalid Y range"
-msgstr ""
+msgstr "η τιμή %s είναι εκτός του %s εύρους %s..%s"
 
 #: src/graphing.c:1496
 msgid "Plotting"
@@ -1979,88 +1994,78 @@ msgstr ""
 
 #: src/matop.c:485
 msgid "Determinant of a non-square matrix is undefined"
-msgstr "Determinante einer nichtquadratischen Matrix ist undefiniert"
+msgstr ""
 
 #: src/mpwrap.c:902
 msgid "Number too large to compute exponential!"
-msgstr "Zahl zu gro�, um Exponential zu berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:1293
-#, fuzzy
 msgid "Integer exponent too large to compute"
-msgstr "Ganzzahl zu gro� f�r diese Operation"
+msgstr ""
 
 #: src/mpwrap.c:2105
 msgid "Can't do modulo of floats or rationals!"
-msgstr "Kann kein Modulo von Gleitkomma- oder rationalen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2122
 msgid "Can't do GCD of floats or rationals!"
-msgstr "Kann keinen ggT von Gleitkomma- oder rationalen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2148
-#, fuzzy
 msgid "Can't modulo invert non integers!"
-msgstr "Kann kein Modulo von gebrochenen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2169
 msgid "Can't get jacobi symbols of floats or rationals!"
 msgstr ""
-"Kann keine Jacobisymbole von Gleitkomma- oder rationalen Zahlen ermitteln!"
 
 #: src/mpwrap.c:2188
 msgid "Can't get legendre symbols of floats or rationals!"
 msgstr ""
-"Kann keine Legendresymbole von Gleitkomma- oder rationalen Zahlen ermitteln!"
 
 #: src/mpwrap.c:2207
-#, fuzzy
 msgid ""
 "Can't get jacobi symbol with Kronecker extension of floats or rationals!"
 msgstr ""
-"Kann keine Jacobisymbole von Gleitkomma- oder rationalen Zahlen ermitteln!"
 
 #: src/mpwrap.c:2216
 msgid "Lucas must get an integer argument!"
 msgstr ""
 
 #: src/mpwrap.c:2222
-#, fuzzy
 msgid "Number too large to compute lucas number!"
-msgstr "Zahl zu gro�, um Fakult�t zu berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2227
-#, fuzzy
 msgid "No such thing as negative lucas numbers!"
-msgstr "Kann keine Fakult�t von negativen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2242
-#, fuzzy
 msgid "Cannot get next prime after non-integer!"
-msgstr "Kann keine reelle Zahl in eine Ganzzahl umwandeln"
+msgstr ""
 
 #: src/mpwrap.c:2262 src/mpwrap.c:2275 src/mpwrap.c:2288 src/mpwrap.c:2301
 #, fuzzy, c-format
 msgid "%s: can't work on non-integers!"
-msgstr "perfect_square: kann keine Nicht-Ganzzahlen verarbeiten!"
+msgstr "%s: ο αριθμός ορίσματος %d δεν είναι ακέραιος"
 
 #: src/mpwrap.c:2343 src/mpwrap.c:2383
 msgid "Can't do factorials of rationals or floats!"
 msgstr ""
-"Kann keine Fakult�ten von Gleitkomma- oder rationalen Zahlen berechnen!"
 
 #: src/mpwrap.c:2349 src/mpwrap.c:2389
 msgid "Number too large to compute factorial!"
-msgstr "Zahl zu gro�, um Fakult�t zu berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2354 src/mpwrap.c:2394
 msgid "Can't do factorials of negative numbers!"
-msgstr "Kann keine Fakult�t von negativen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4658 src/mpwrap.c:4675
 #, fuzzy, c-format
 msgid "%s: Bad types for mod power"
-msgstr "Falscher Typ f�r `for'-Schleife!"
+msgstr "αδύνατη η ανάγνωση του καταλόγου `%.250s' για μεθόδους ανάγνωσης"
 
 #: src/mpwrap.c:2764
 #, c-format
@@ -2068,9 +2073,8 @@ msgid "Can't invert %s modulo %s in %s"
 msgstr ""
 
 #: src/mpwrap.c:3084
-#, fuzzy
 msgid "Can't make random integer from a non-integer"
-msgstr "Kann kein Modulo von gebrochenen Zahlen berechnen!"
+msgstr ""
 
 #: src/mpwrap.c:3089
 msgid "Range for random integer must be positive"
@@ -2082,16 +2086,16 @@ msgstr ""
 
 #: src/mpwrap.c:4039 src/mpwrap.c:5260 src/mpwrap.c:5272
 msgid "Can't compare complex numbers"
-msgstr "Kann keine komplexen Zahlen vergleichen"
+msgstr ""
 
 #: src/mpwrap.c:4248 src/mpwrap.c:4263 src/mpwrap.c:4314 src/mpwrap.c:4337
 #: src/mpwrap.c:4350 src/mpwrap.c:4395
 msgid "Division by zero!"
-msgstr "Division durch null!"
+msgstr "Διαίρεση με το 0!"
 
 #: src/mpwrap.c:4404
 msgid "Can't modulo complex numbers"
-msgstr "Kann kein Modulo von komplexen Zahlen berechnen"
+msgstr ""
 
 #: src/mpwrap.c:4423
 #, c-format
@@ -2099,95 +2103,86 @@ msgid "Inverse of %s modulo %s not found!"
 msgstr ""
 
 #: src/mpwrap.c:4432
-#, fuzzy
 msgid "Can't do modulo invert on complex numbers"
-msgstr "Kann kein Modulo von komplexen Zahlen berechnen"
+msgstr ""
 
 #: src/mpwrap.c:4445
 msgid "Can't GCD complex numbers"
-msgstr "Kann keinen ggT von komplexen Zahlen berechnen"
+msgstr ""
 
 #: src/mpwrap.c:4468
-#, fuzzy
 msgid "Can't LCM complex numbers"
-msgstr "Kann keinen ggT von komplexen Zahlen berechnen"
+msgstr ""
 
 #: src/mpwrap.c:4481
 msgid "Can't get jacobi symbols of complex numbers"
-msgstr "Kann keine Jacobisymbole von komplexen Zahlen ermitteln"
+msgstr ""
 
 #: src/mpwrap.c:4493
 msgid "Can't get legendre symbols complex numbers"
-msgstr "Kann keine Legendresymbole von komplexen Zahlen ermitteln"
+msgstr ""
 
 #: src/mpwrap.c:4505
-#, fuzzy
 msgid "Can't get jacobi symbol with Kronecker extension for complex numbers"
-msgstr "Kann keine Jacobisymbole von komplexen Zahlen ermitteln"
+msgstr ""
 
 #: src/mpwrap.c:4517
-#, fuzzy
 msgid "Can't get lucas number for complex numbers"
-msgstr "Kann keine Jacobisymbole von komplexen Zahlen ermitteln"
+msgstr ""
 
 #: src/mpwrap.c:4529
-#, fuzzy
 msgid "Can't get next prime for complex numbers"
-msgstr "Kann keine Legendresymbole von komplexen Zahlen ermitteln"
+msgstr ""
 
 #: src/mpwrap.c:4539 src/mpwrap.c:4551 src/mpwrap.c:4563 src/mpwrap.c:4575
-#, fuzzy, c-format
+#, c-format
 msgid "%s: can't work on complex numbers"
-msgstr "perfect_square: kann keine komplexen Zahlen verarbeiten"
+msgstr ""
 
 #: src/mpwrap.c:4749 src/mpwrap.c:4820 src/mpwrap.c:4887
-#, fuzzy, c-format
+#, c-format
 msgid "%s: can't take logarithm of 0"
-msgstr "ln: kann keinen Logarithmus von 0 berechnen"
+msgstr ""
 
 #: src/mpwrap.c:5189
-#, fuzzy
 msgid "Can't make random integer out of a complex number"
-msgstr "Kann den Typen einer komplexen Zahl nicht bestimmen"
+msgstr ""
 
 #: src/mpwrap.c:5310 src/mpwrap.c:5323
 msgid "Can't make factorials of complex numbers"
-msgstr "Kann keine Fakult�ten von komplexen Zahlen berechnen"
+msgstr ""
 
 #: src/mpwrap.c:5605 src/mpwrap.c:5627 src/mpwrap.c:5649
 msgid "Can't determine type of a complex number"
-msgstr "Kann den Typen einer komplexen Zahl nicht bestimmen"
+msgstr ""
 
 #: src/mpwrap.c:5741 src/mpwrap.c:5764
 msgid "Can't convert complex number into integer"
-msgstr "Kann keine komplexe Zahl in eine Ganzzahl umwandeln"
+msgstr ""
 
 #: src/mpwrap.c:5747
 msgid "Can't convert real number to integer"
-msgstr "Kann keine reelle Zahl in eine Ganzzahl umwandeln"
+msgstr ""
 
 #: src/mpwrap.c:5751
 msgid "Integer too large for this operation"
-msgstr "Ganzzahl zu gro� f�r diese Operation"
+msgstr ""
 
 #: src/mpwrap.c:5773
-#, fuzzy
 msgid "Can't convert real number to double"
-msgstr "Kann keine reelle Zahl in eine Ganzzahl umwandeln"
+msgstr ""
 
 #: src/mpwrap.c:5779
-#, fuzzy
 msgid "Number too large for this operation"
-msgstr "Ganzzahl zu gro� f�r diese Operation"
+msgstr ""
 
 #: src/plugin.c:128
-#, fuzzy
 msgid "Can't open plugin!"
-msgstr "Kann Plugin `%s' nicht �ffnen!"
+msgstr "Αδύνατο το άνοιγμα της επιπρ. λειτουργίας!"
 
 #: src/plugin.c:140
 msgid "Can't initialize plugin!"
-msgstr ""
+msgstr "Αδυναμία αρχικοποίησης επιπρ. λειτουργίας!"
 
 #: src/testplugin.c:13
 msgid "This is the test-plugin function\n"
@@ -2214,57 +2209,15 @@ msgid ""
 msgstr ""
 
 #: src/util.c:116
+#, fuzzy
 msgid "Stack underflow!"
-msgstr "Stackunterlauf!"
+msgstr "Κατακόρυφη Στοίβα"
 
-#~ msgid "GnomENIUS Calculator"
-#~ msgstr "GnomENIUS, der Rechner"
+#~ msgid "GENIUS Calculator"
+#~ msgstr "Αριθμομηχανή GENIUS"
 
-#~ msgid "The Gnome calculator style edition of genius"
-#~ msgstr "genius in seiner Ausgabe als Gnome-Rechner"
+#~ msgid "GENIUS Calculator Setup"
+#~ msgstr "Εγκατάσταση Αριθμομηχανής GENIUS"
 
-#~ msgid "GnomENIUS Calculator setup"
-#~ msgstr "GnomENIUS-Rechnereinstellungen"
-
-#~ msgid "Matrix 'to' index less then 'from' index"
-#~ msgstr "Matrix-`to'-Index kleiner als `from'-Index"
-
-#~ msgid "Can't set a region to a region of a different size"
-#~ msgstr "Kann eine Region keiner Region verschiedener Gr��e zuweisen"
-
-#~ msgid "Extraneous return value!"
-#~ msgstr "�bersch�ssiger R�ckgabewert!"
-
-#~ msgid "Unnamed reference function encountered"
-#~ msgstr "Namenlose Referenzfunktion ist aufgetaucht"
-
-#~ msgid "Variable '%s' used unitialized"
-#~ msgstr "Variable `%s' uninitialisiert benutzt"
-
-#~ msgid "Logical and can only operate on numeric/string data"
-#~ msgstr "Logisches Und kann nur auf Zahlen oder Zeichenkettendaten operieren"
-
-#~ msgid "Can't transpose non-matrix"
-#~ msgstr "Kann Nichtmatrix nicht transponieren"
-
-#~ msgid "Can't evaluate return value!"
-#~ msgstr "Kann R�ckgabewert nicht auswerten!"
-
-#~ msgid "Called 'continue' outside of a loop"
-#~ msgstr "`continue' au�erhalb einer Schleife aufgerufen"
-
-#~ msgid "Called 'break' outside of a loop"
-#~ msgstr "`break' au�erhalb einer Schleife aufgerufen"
-
-#~ msgid "Can't do mod by non-numbers!"
-#~ msgstr "Kann kein Modulo durch nicht-Zahlen berechnen"
-
-#~ msgid "Could not evaluate predicate into a numeric boolean value!"
-#~ msgstr ""
-#~ "Kann Pr�dikat nicht zu einem zahlenm��igen Boolschen Wert auswerten!"
-
-#~ msgid "ERROR: "
-#~ msgstr "FEHLER: "
-
-#~ msgid "0^0 is undefined"
-#~ msgstr "0^0 ist undefiniert"
+#~ msgid "Open GEL file"
+#~ msgstr "Άνοιγμα αρχείου GEL"

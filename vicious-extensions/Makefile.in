@@ -59,6 +59,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 host_alias = @host_alias@
 host_triplet = @host@
+ACLOCAL_AMFLAGS = @ACLOCAL_AMFLAGS@
 AR = @AR@
 AS = @AS@
 CATALOGS = @CATALOGS@
@@ -77,22 +78,22 @@ EXTRA_WARNING_CFLAGS = @EXTRA_WARNING_CFLAGS@
 F77 = @F77@
 GCJ = @GCJ@
 GCJFLAGS = @GCJFLAGS@
-GCONFTOOL = @GCONFTOOL@
-GCONF_CONFIG_SOURCE = @GCONF_CONFIG_SOURCE@
 GENCAT = @GENCAT@
 GENIUS_CFLAGS = @GENIUS_CFLAGS@
 GENIUS_LIBS = @GENIUS_LIBS@
+GENIUS_NOGUI_CFLAGS = @GENIUS_NOGUI_CFLAGS@
+GENIUS_NOGUI_LIBS = @GENIUS_NOGUI_LIBS@
+GENIUS_READLINE_HELPER_FIFO = @GENIUS_READLINE_HELPER_FIFO@
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 GLIB_GENMARSHAL = @GLIB_GENMARSHAL@
 GMOFILES = @GMOFILES@
 GMP_LIB = @GMP_LIB@
 GMSGFMT = @GMSGFMT@
+GNOME_GENIUS = @GNOME_GENIUS@
+GNOME_GENIUS_DESKTOP_IN = @GNOME_GENIUS_DESKTOP_IN@
 GT_NO = @GT_NO@
 GT_YES = @GT_YES@
-GUI_CFLAGS = @GUI_CFLAGS@
-GUI_LIBS = @GUI_LIBS@
 INCLUDE_LOCALE_H = @INCLUDE_LOCALE_H@
-INSTALL_GCONF_CONFIG_SOURCE = @INSTALL_GCONF_CONFIG_SOURCE@
 INSTOBJEXT = @INSTOBJEXT@
 INTLDEPS = @INTLDEPS@
 INTLLIBS = @INTLLIBS@
@@ -143,6 +144,9 @@ TERMCAP_LIB = @TERMCAP_LIB@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+VICIOUS_CFLAGS = @VICIOUS_CFLAGS@
+VICIOUS_GNOME_LIBS = @VICIOUS_GNOME_LIBS@
+VICIOUS_LIBS = @VICIOUS_LIBS@
 WARN_CFLAGS = @WARN_CFLAGS@
 WARN_CXXFLAGS = @WARN_CXXFLAGS@
 YACC = @YACC@
@@ -150,7 +154,7 @@ l = @l@
 
 SUBDIRS = .
 
-INCLUDES =   	-I.						-I..						-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	$(GUI_CFLAGS)
+INCLUDES =   	-I.						-I..						-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	$(VICIOUS_CFLAGS)
 
 
 # Use these only really for checking for deprecated use, not all the time
@@ -161,14 +165,23 @@ INCLUDES =   	-I.						-I..						-DGNOMELOCALEDIR=\""$(datadir)/locale"\" 	$(GUI
 #	-DGNOME_DISABLE_DEPRECATED		\
 #
 
-noinst_LIBRARIES = libvicious.a libvicious-gnome.a libviciousui.a libviciousui-gnome.a libviciousui-minimal.a
+# For a gnome build set this in configure.in
+#  VICIOUS_GNOME_LIBS="libviciousui.a libviciousui-gnome.a \
+#       libviciousui-minimal.a libvicious-gnome.a"
+#  AC_SUBST(VICIOUS_GNOME_LIBS)
+
+noinst_LIBRARIES =  	@VICIOUS_GNOME_LIBS@ 	libvicious.a
+
+
+EXTRA_LIBRARIES =  	libviciousui.a			libviciousui-gnome.a		libviciousui-minimal.a		libvicious-gnome.a
+
 
 noinst_PROGRAMS = test-ve-config
 
-libvicious_a_SOURCES =  	ve-misc.c		ve-misc.h		ve-config.c		ve-config.h		ve-signal.c		ve-signal.h		ve-nongnome.c		vicious.h
+libvicious_a_SOURCES =  	ve-i18n.h		ve-misc.c		ve-misc.h		ve-config.c		ve-config.h		ve-signal.c		ve-signal.h		ve-nongnome.c		vicious.h
 
 
-libvicious_gnome_a_SOURCES =  	ve-misc.c		ve-misc.h		ve-config.c		ve-config.h		ve-signal.c		ve-signal.h		ve-gnome.c		vicious.h
+libvicious_gnome_a_SOURCES =  	ve-i18n.h		ve-misc.c		ve-misc.h		ve-config.c		ve-config.h		ve-signal.c		ve-signal.h		ve-gnome.c		vicious.h
 
 
 libviciousui_a_SOURCES =  	$(libvicious_a_SOURCES) 	glade-helper.c		glade-helper.h		ve-miscui.c		ve-miscui.h		viciousui.h
@@ -183,7 +196,7 @@ libviciousui_minimal_a_SOURCES =  	$(libvicious_a_SOURCES) 	ve-miscui.c		ve-misc
 test_ve_config_SOURCES =  	test-ve-config.c
 
 
-test_ve_config_LDADD =  	$(GUI_LIBS)					$(INTLLIBS)					-L$(top_builddir)/vicious-extensions		-lvicious
+test_ve_config_LDADD =  	$(VICIOUS_LIBS)					$(INTLLIBS)					-L$(top_builddir)/vicious-extensions		-lvicious
 
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../config.h
@@ -193,12 +206,6 @@ LIBRARIES =  $(noinst_LIBRARIES)
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I..
 LIBS = @LIBS@
-libvicious_a_LIBADD = 
-libvicious_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
-ve-signal.$(OBJEXT) ve-nongnome.$(OBJEXT)
-libvicious_gnome_a_LIBADD = 
-libvicious_gnome_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
-ve-signal.$(OBJEXT) ve-gnome.$(OBJEXT)
 libviciousui_a_LIBADD = 
 libviciousui_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
 ve-signal.$(OBJEXT) ve-nongnome.$(OBJEXT) glade-helper.$(OBJEXT) \
@@ -210,6 +217,12 @@ ve-miscui.$(OBJEXT)
 libviciousui_minimal_a_LIBADD = 
 libviciousui_minimal_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
 ve-signal.$(OBJEXT) ve-nongnome.$(OBJEXT) ve-miscui.$(OBJEXT)
+libvicious_gnome_a_LIBADD = 
+libvicious_gnome_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
+ve-signal.$(OBJEXT) ve-gnome.$(OBJEXT)
+libvicious_a_LIBADD = 
+libvicious_a_OBJECTS =  ve-misc.$(OBJEXT) ve-config.$(OBJEXT) \
+ve-signal.$(OBJEXT) ve-nongnome.$(OBJEXT)
 noinst_PROGRAMS =  test-ve-config$(EXEEXT)
 PROGRAMS =  $(noinst_PROGRAMS)
 
@@ -227,8 +240,8 @@ DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
 TAR = gtar
 GZIP_ENV = --best
-SOURCES = $(libvicious_a_SOURCES) $(libvicious_gnome_a_SOURCES) $(libviciousui_a_SOURCES) $(libviciousui_gnome_a_SOURCES) $(libviciousui_minimal_a_SOURCES) $(test_ve_config_SOURCES)
-OBJECTS = $(libvicious_a_OBJECTS) $(libvicious_gnome_a_OBJECTS) $(libviciousui_a_OBJECTS) $(libviciousui_gnome_a_OBJECTS) $(libviciousui_minimal_a_OBJECTS) $(test_ve_config_OBJECTS)
+SOURCES = $(libviciousui_a_SOURCES) $(libviciousui_gnome_a_SOURCES) $(libviciousui_minimal_a_SOURCES) $(libvicious_gnome_a_SOURCES) $(libvicious_a_SOURCES) $(test_ve_config_SOURCES)
+OBJECTS = $(libviciousui_a_OBJECTS) $(libviciousui_gnome_a_OBJECTS) $(libviciousui_minimal_a_OBJECTS) $(libvicious_gnome_a_OBJECTS) $(libvicious_a_OBJECTS) $(test_ve_config_OBJECTS)
 
 all: all-redirect
 .SUFFIXES:
@@ -294,16 +307,6 @@ distclean-libtool:
 
 maintainer-clean-libtool:
 
-libvicious.a: $(libvicious_a_OBJECTS) $(libvicious_a_DEPENDENCIES)
-	-rm -f libvicious.a
-	$(AR) cru libvicious.a $(libvicious_a_OBJECTS) $(libvicious_a_LIBADD)
-	$(RANLIB) libvicious.a
-
-libvicious-gnome.a: $(libvicious_gnome_a_OBJECTS) $(libvicious_gnome_a_DEPENDENCIES)
-	-rm -f libvicious-gnome.a
-	$(AR) cru libvicious-gnome.a $(libvicious_gnome_a_OBJECTS) $(libvicious_gnome_a_LIBADD)
-	$(RANLIB) libvicious-gnome.a
-
 libviciousui.a: $(libviciousui_a_OBJECTS) $(libviciousui_a_DEPENDENCIES)
 	-rm -f libviciousui.a
 	$(AR) cru libviciousui.a $(libviciousui_a_OBJECTS) $(libviciousui_a_LIBADD)
@@ -318,6 +321,16 @@ libviciousui-minimal.a: $(libviciousui_minimal_a_OBJECTS) $(libviciousui_minimal
 	-rm -f libviciousui-minimal.a
 	$(AR) cru libviciousui-minimal.a $(libviciousui_minimal_a_OBJECTS) $(libviciousui_minimal_a_LIBADD)
 	$(RANLIB) libviciousui-minimal.a
+
+libvicious-gnome.a: $(libvicious_gnome_a_OBJECTS) $(libvicious_gnome_a_DEPENDENCIES)
+	-rm -f libvicious-gnome.a
+	$(AR) cru libvicious-gnome.a $(libvicious_gnome_a_OBJECTS) $(libvicious_gnome_a_LIBADD)
+	$(RANLIB) libvicious-gnome.a
+
+libvicious.a: $(libvicious_a_OBJECTS) $(libvicious_a_DEPENDENCIES)
+	-rm -f libvicious.a
+	$(AR) cru libvicious.a $(libvicious_a_OBJECTS) $(libvicious_a_LIBADD)
+	$(RANLIB) libvicious.a
 
 mostlyclean-noinstPROGRAMS:
 
@@ -446,15 +459,15 @@ distdir: $(DISTFILES)
 	      || exit 1; \
 	  fi; \
 	done
-glade-helper.o: glade-helper.c ../config.h ve-misc.h ve-miscui.h \
-	glade-helper.h
+glade-helper.o: glade-helper.c ../config.h ve-i18n.h ve-misc.h \
+	ve-miscui.h glade-helper.h
 test-ve-config.o: test-ve-config.c ../config.h ve-config.h
-ve-config.o: ve-config.c ../config.h ve-misc.h ve-config.h
+ve-config.o: ve-config.c ../config.h ve-i18n.h ve-misc.h ve-config.h
 ve-gnome.o: ve-gnome.c ../config.h ve-misc.h
-ve-misc.o: ve-misc.c ../config.h ve-misc.h
-ve-miscui.o: ve-miscui.c ../config.h ve-misc.h ve-miscui.h
-ve-nongnome.o: ve-nongnome.c ../config.h ve-misc.h
-ve-signal.o: ve-signal.c ../config.h ve-misc.h ve-signal.h
+ve-misc.o: ve-misc.c ../config.h ve-i18n.h ve-misc.h
+ve-miscui.o: ve-miscui.c ../config.h ve-i18n.h ve-misc.h ve-miscui.h
+ve-nongnome.o: ve-nongnome.c ../config.h ve-i18n.h ve-misc.h
+ve-signal.o: ve-signal.c ../config.h ve-i18n.h ve-misc.h ve-signal.h
 
 info-am:
 info: info-recursive

@@ -34,29 +34,13 @@
 ## Release information
 my $PROGRAM = "intltool-merge";
 my $PACKAGE = "intltool";
-my $VERSION = "0.28";
+my $VERSION = "0.30";
 
 ## Loaded modules
 use strict; 
 use Getopt::Long;
 use Text::Wrap;
 use File::Basename;
-
-my $ret = eval 'require XML::Parser';
-if(!$ret) {
-    die "You must have XML::Parser installed to run $0\n\n";
-} 
-
-## Add dir to own perl modules
-my $dir = dirname($0);
-push @INC, "/gnome/head/INSTALL/share/intltool";
-push @INC, "$dir/modules";
-push @INC, "$dir/intltool-modules";
-
-$ret = eval 'require XML::Parser::Style::OrigTree';
-if(!$ret) {
-    die "The OrigTree module doesn't seem to be properly installed $0\n\n";
-}
 
 my $must_end_tag      = -1;
 my $last_depth        = -1;
@@ -778,10 +762,17 @@ sub parseTree
             foreach my $e (reverse(keys %{ $sub })) {
                 my $key    = $e;
                 my $string = $sub->{$e};
+                my $quote = '"';
 
-                $string =~ s/\s+/ /g;
-                $string =~ s/^ //;
-                $string =~ s/ $//;
+                $string =~ s/^[\s]+//;
+                $string =~ s/[\s]+$//;
+
+                if ($string =~ /^'.*'$/)
+                {
+                   $quote = "'";
+                }
+                $string =~ s/^['"]//g;
+                $string =~ s/['"]$//g;
 
                 if ($key =~ /^_/) {
                     $key =~ s|^_||g;
@@ -799,7 +790,7 @@ sub parseTree
                     }
                 }
 
-                print $fh " $key=\"$string\"";
+                print $fh " $key=$quote$string$quote";
             }
 
         } else {
@@ -858,9 +849,8 @@ sub parseTree
                 #
                 my $string = $sub;
 
-                $string =~ s/\s+/ /g;
-                $string =~ s/^ //;
-                $string =~ s/ $//;
+                $string =~ s/^[\s]+//;
+                $string =~ s/[\s]+$//;
 
                 push(@translation_strings, $string);
 
@@ -884,6 +874,70 @@ sub parseTree
     }
 }
 
+sub intltool_tree_char
+{
+    my $expat = shift;
+    my $text  = shift;
+    my $clist = $expat->{Curlist};
+    my $pos   = $#$clist;
+
+    # Use original_string so that we retain escaped entities
+    # in CDATA sections.
+    #
+    if ($pos > 0 and $clist->[$pos - 1] eq '0') {
+        $clist->[$pos] .= $expat->original_string();
+    } else {
+        push @$clist, 0 => $expat->original_string();
+    }
+}
+
+sub intltool_tree_start
+{
+    my $expat    = shift;
+    my $tag      = shift;
+    my @origlist = ();
+
+    # Use original_string so that we retain escaped entities
+    # in attribute values.  We must convert the string to an
+    # @origlist array to conform to the structure of the Tree
+    # Style.
+    #
+    my @original_array = split /\x/, $expat->original_string();
+    my $source         = $expat->original_string();
+
+    # Remove leading tag.
+    #
+    $source =~ s|^\s*<\s*(\S+)||s;
+
+    # Grab attribute key/value pairs and push onto @origlist array.
+    #
+    while ($source)
+    {
+       if ($source =~ /^\s*([\w:-]+)\s*[=]\s*["]/)
+       {
+           $source =~ s|^\s*([\w:-]+)\s*[=]\s*["]([^"]*)["]||s;
+           push @origlist, $1;
+           push @origlist, '"' . $2 . '"';
+       }
+       elsif ($source =~ /^\s*([\w:-]+)\s*[=]\s*[']/)
+       {
+           $source =~ s|^\s*([\w:-]+)\s*[=]\s*[']([^']*)[']||s;
+           push @origlist, $1;
+           push @origlist, "'" . $2 . "'";
+       }
+       else
+       {
+           last;
+       }
+    }
+
+    my $ol = [ { @origlist } ];
+
+    push @{ $expat->{Lists} }, $expat->{Curlist};
+    push @{ $expat->{Curlist} }, $tag => $ol;
+    $expat->{Curlist} = $ol;
+}
+
 sub readXml
 {
     my $filename = shift || return;
@@ -891,7 +945,13 @@ sub readXml
         die "ERROR Cannot find filename: $filename\n";
     }
 
-    my $xp = new XML::Parser(Style => 'XML::Parser::Style::OrigTree');
+    my $ret = eval 'require XML::Parser';
+    if(!$ret) {
+        die "You must have XML::Parser installed to run $0\n\n";
+    } 
+    my $xp = new XML::Parser(Style => 'Tree');
+    $xp->setHandlers(Char => \&intltool_tree_char);
+    $xp->setHandlers(Start => \&intltool_tree_start);
     my $tree = $xp->parsefile($filename);
 
 # <foo><head id="a">Hello <em>there</em></head><bar>Howdy<ref/></bar>do</foo>
@@ -900,6 +960,33 @@ sub readXml
 # 0, "Howdy",  ref, [{}]], 0, "do" ] ]
 
     return $tree;
+}
+
+sub print_header
+{
+    my $infile = shift;
+    my $fh = shift;
+    my $source;
+
+    if(!-f $infile) {
+        die "ERROR Cannot find filename: $infile\n";
+    }
+
+    print $fh qq{<?xml version="1.0" encoding="UTF-8"?>\n};
+    {
+        local $/;
+        open DOCINPUT, "<${FILE}" or die;
+        $source = <DOCINPUT>;
+        close DOCINPUT;
+    }
+    if ($source =~ /(<!DOCTYPE.*\[.*\]\s*>)/s)
+    {
+        print $fh "$1\n";
+    }
+    elsif ($source =~ /(<!DOCTYPE[^>]*>)/s)
+    {
+        print $fh "$1\n";
+    }
 }
 
 sub xml_merge_output
@@ -913,7 +1000,7 @@ sub xml_merge_output
             }
             open OUTPUT, ">$lang/$OUTFILE" or die "Cannot open $lang/$OUTFILE: $!\n";
             my $tree = readXml($FILE);
-            print OUTPUT qq{<?xml version="1.0" encoding="UTF-8"?>\n};
+            print_header($FILE, \*OUTPUT);
             parseTree(\*OUTPUT, $tree, 0, $lang);
             close OUTPUT;
             print "CREATED $lang/$OUTFILE\n" unless $QUIET_ARG;
@@ -921,7 +1008,7 @@ sub xml_merge_output
     } 
     open OUTPUT, ">$OUTFILE" or die "Cannot open $OUTFILE: $!\n";
     my $tree = readXml($FILE);
-    print OUTPUT qq{<?xml version="1.0" encoding="UTF-8"?>\n};
+    print_header($FILE, \*OUTPUT);
     parseTree(\*OUTPUT, $tree, 0);
     close OUTPUT;
     print "CREATED $OUTFILE\n" unless $QUIET_ARG;
@@ -1037,8 +1124,6 @@ sub schemas_merge_translations
 	my $short_string = $9 ? $9 : '';
 	my $long_string = $12 ? $12 : '';
 
-	$c_default_block =~ s/default>\[.*?\]/default>/s;
-        
 	print OUTPUT "$locale_start_spaces$c_default_block";
 
         $default_string =~ s/\s+/ /g;
@@ -1094,9 +1179,15 @@ sub schemas_merge_translations
 
 sub rfc822deb_merge_translations
 {
+    my %encodings = ();
+    for my $lang (keys %po_files_by_lang) {
+        $encodings{$lang} = ($UTF8_ARG ? 'UTF-8' : get_po_encoding($po_files_by_lang{$lang}));
+    }
+
     my $source;
 
     $Text::Wrap::huge = 'overflow';
+    $Text::Wrap::break = qr/\n|\s(?=\S)/;
 
     {
        local $/; # slurp mode
@@ -1107,22 +1198,25 @@ sub rfc822deb_merge_translations
 
     open OUTPUT, ">${OUTFILE}" or die;
 
-    while ($source =~ /(^|\n+)(_)?([^:_\n]+)(:\s*)(.*?)(?=\n[\S\n]|$)/sg) 
+    while ($source =~ /(^|\n+)(_*)([^:\s]+)(:[ \t]*)(.*?)(?=\n[\S\n]|$)/sg)
     {
 	    my $sep = $1;
 	    my $non_translated_line = $3.$4;
 	    my $string = $5;
-	    my $is_translatable = defined($2);
+	    my $underscore = length($2);
+	    next if $underscore eq 0 && $non_translated_line =~ /^#/;
 	    #  Remove [] dummy strings
-	    $string =~ s/\[\s[^\[\]]*\]$//;
-            $non_translated_line .= $string;
+	    my $stripped = $string;
+	    $stripped =~ s/\[\s[^\[\]]*\],/,/g if $underscore eq 2;
+	    $stripped =~ s/\[\s[^\[\]]*\]$//;
+	    $non_translated_line .= $stripped;
 
-            print OUTPUT $sep.$non_translated_line;
+	    print OUTPUT $sep.$non_translated_line;
     
-            if ($is_translatable) 
-            {
-                my @str_list = rfc822deb_split($string);
-           
+	    if ($underscore) 
+	    {
+	        my @str_list = rfc822deb_split($underscore, $string);
+
 	        for my $lang (sort keys %po_files_by_lang) 
                 {
                     my $is_translated = 1;
@@ -1145,15 +1239,29 @@ sub rfc822deb_merge_translations
                         
                         if ($first) 
                         {
-                            $str_translated .=
-                                Text::Tabs::expand($translation) .
-                                "\n";
+                            if ($underscore eq 2)
+                            {
+                                $str_translated .= $translation;
+                            }
+                            else
+                            {
+                                $str_translated .=
+                                    Text::Tabs::expand($translation) .
+                                    "\n";
+                            }
                         } 
                         else 
                         {
-                            $str_translated .= Text::Tabs::expand(
-                                Text::Wrap::wrap(' ', ' ', $translation)) .
-                                "\n .\n";
+                            if ($underscore eq 2)
+                            {
+                                $str_translated .= ', ' . $translation;
+                            }
+                            else
+                            {
+                                $str_translated .= Text::Tabs::expand(
+                                    Text::Wrap::wrap(' ', ' ', $translation)) .
+                                    "\n .\n";
+                            }
                         }
                         $first = 0;
 
@@ -1166,10 +1274,10 @@ sub rfc822deb_merge_translations
                     $str_translated =~ s/\s+$//;
 
                     $_ = $non_translated_line;
-                    s/^(\w+):\s*.*/$sep${1}-$lang: $str_translated/s;
+                    s/^(\w+):\s*.*/$sep${1}-$lang.$encodings{$lang}: $str_translated/s;
                     print OUTPUT;
                 }
-            }
+	    }
     }
     print OUTPUT "\n";
 
@@ -1186,8 +1294,12 @@ sub rfc822deb_split
     #       and paragraphs are separated by a single dot on a line
     # This routine returns an array of all paragraphs, and reformat
     # them.
+    # When first argument is 2, the string is a comma separated list of
+    # values.
+    my $type = shift;
     my $text = shift;
-    $text =~ s/^ //mg;
+    $text =~ s/^[ \t]//mg;
+    return (split(/, */, $text, 0)) if $type ne 1;
     return ($text) if $text !~ /\n/;
 
     $text =~ s/([^\n]*)\n//;
@@ -1197,9 +1309,7 @@ sub rfc822deb_split
     for my $line (split (/\n/, $text)) 
     {
         chomp $line;
-        $line =~ /\s+$/;
-    
-        if ($line =~ /^\.$/) 
+        if ($line =~ /^\.\s*$/)
         {
             #  New paragraph
             $str =~ s/\s*$//;
@@ -1210,12 +1320,13 @@ sub rfc822deb_split
         {
             #  Line which must not be reformatted
             $str .= "\n" if length ($str) && $str !~ /\n$/;
+            $line =~ s/\s+$//;
             $str .= $line."\n";
         } 
         else 
         {
             #  Continuation line, remove newline
-            $str .= " " if length ($str) && $str !~ /[\n ]$/;
+            $str .= " " if length ($str) && $str !~ /\n$/;
             $str .= $line;
         }
     }
