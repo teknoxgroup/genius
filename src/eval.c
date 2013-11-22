@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2004 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1156,19 +1156,20 @@ static gboolean
 eqstring(GelETree *a, GelETree *b)
 {
 	int r = 0;
-	if(a->type == STRING_NODE &&
-	   b->type == STRING_NODE) {
-		r=strcmp(a->str.str, b->str.str)==0;
-	} else if(a->type == STRING_NODE) {
-		char *s = string_print_etree(b);
-		r = strcmp(a->str.str, s)==0;
-		g_free(s);
-	} else if(b->type == STRING_NODE) {
-		char *s = string_print_etree(a);
-		r = strcmp(b->str.str, s)==0;
-		g_free(s);
-	} else
+	if (a->type == STRING_NODE &&
+	    b->type == STRING_NODE) {
+		r = (strcmp (a->str.str, b->str.str) == 0);
+	} else if (a->type == STRING_NODE) {
+		char *s = gel_string_print_etree (b);
+		r = (strcmp (a->str.str, s) == 0);
+		g_free (s);
+	} else if (b->type == STRING_NODE) {
+		char *s = gel_string_print_etree (a);
+		r = (strcmp (b->str.str, s) == 0);
+		g_free (s);
+	} else {
 		g_assert_not_reached();
+	}
 
 	return r;
 }
@@ -1249,32 +1250,38 @@ static int
 cmpstring(GelETree *a, GelETree *b)
 {
 	int r = 0;
-	if(a->type == STRING_NODE &&
-	   b->type == STRING_NODE) {
-		r=strcmp(a->str.str, b->str.str);
-	} else if(a->type == STRING_NODE) {
-		char *s = string_print_etree(b);
-		r = strcmp(a->str.str, s);
-		g_free(s);
-	} else if(b->type == STRING_NODE) {
-		char *s = string_print_etree(b);
-		r = strcmp(b->str.str, s);
-		g_free(s);
-	} else
+	if (a->type == STRING_NODE &&
+	    b->type == STRING_NODE) {
+		r = strcmp (a->str.str, b->str.str);
+	} else if (a->type == STRING_NODE) {
+		char *s = gel_string_print_etree (b);
+		r = strcmp (a->str.str, s);
+		g_free (s);
+	} else if (b->type == STRING_NODE) {
+		char *s = gel_string_print_etree (a);
+		r = strcmp (s, b->str.str);
+		g_free (s);
+	} else {
 		g_assert_not_reached();
+	}
 
 	return r;
 }
 
 static int
-cmpstringop(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+cmpstringop (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	int ret;
-	ret = cmpstring(l,r);
-	freetree_full(n,TRUE,FALSE);
-	if(ret>0) gel_makenum_ui_from(n,1);
-	else if(ret<0) gel_makenum_si_from(n,-1);
-	else gel_makenum_ui_from(n,0);
+	ret = cmpstring (l, r);
+
+	freetree_full (n, TRUE, FALSE);
+
+	if (ret > 0)
+		gel_makenum_ui_from (n, 1);
+	else if (ret <0 )
+		gel_makenum_si_from (n, -1);
+	else
+		gel_makenum_ui_from (n, 0);
 	return TRUE;
 }
 
@@ -2007,25 +2014,26 @@ conjugate_transpose_matrix (GelCtx *ctx, GelETree *n, GelETree *l)
 }
 
 static gboolean
-string_concat(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
+string_concat (GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 {
 	char *s = NULL;
 	
-	if(l->type == STRING_NODE &&
-	   r->type == STRING_NODE) {
-		s = g_strconcat(l->str.str, r->str.str, NULL);
+	if (l->type == STRING_NODE &&
+	    r->type == STRING_NODE) {
+		s = g_strconcat (l->str.str, r->str.str, NULL);
 	} else if(l->type == STRING_NODE) {
-		char *t = string_print_etree(r);
-		s = g_strconcat(l->str.str, t, NULL);
-		g_free(t);
+		char *t = gel_string_print_etree (r);
+		s = g_strconcat (l->str.str, t, NULL);
+		g_free (t);
 	} else if(r->type == STRING_NODE) {
-		char *t = string_print_etree(l);
-		s = g_strconcat(t,r->str.str,NULL);
-		g_free(t);
-	} else
+		char *t = gel_string_print_etree (l);
+		s = g_strconcat (t, r->str.str, NULL);
+		g_free (t);
+	} else {
 		g_assert_not_reached();
+	}
 	
-	freetree_full(n, TRUE, FALSE);
+	freetree_full (n, TRUE, FALSE);
 	n->type = STRING_NODE;
 	n->str.str = s;
 
@@ -2035,9 +2043,9 @@ string_concat(GelCtx *ctx, GelETree *n, GelETree *l, GelETree *r)
 
 /*for numbers*/
 static void
-my_mpw_back_div(mpw_ptr rop,mpw_ptr op1, mpw_ptr op2)
+my_mpw_back_div (mpw_ptr rop, mpw_ptr op1, mpw_ptr op2)
 {
-	mpw_div(rop,op2,op1);
+	mpw_div (rop, op2, op1);
 }
 
 
@@ -2849,6 +2857,39 @@ iter_do_var(GelCtx *ctx, GelETree *n, GelEFunc *f)
 	return TRUE;
 }
 
+static char *
+similar_possible_ids (const char *id)
+{
+	GSList *similar, *li;
+	GString *sim;
+
+	similar = d_find_similar_globals (id);
+
+	if (similar == NULL)
+		return NULL;
+
+	sim = g_string_new ("'");
+
+	for (li = similar; li != NULL; li = li->next) {
+		const char *id = li->data;
+
+		if (li->next == NULL &&
+		    li != similar)
+			g_string_append (sim, _("' or '"));
+		else if (li != similar)
+			g_string_append (sim, "', '");
+
+		g_string_append (sim, id);
+
+		li->data = NULL; /* paranoia */
+	}
+	g_slist_free (similar);
+
+	g_string_append (sim, "'");
+
+	return g_string_free (sim, FALSE);
+}
+
 static inline gboolean
 iter_variableop(GelCtx *ctx, GelETree *n)
 {
@@ -2867,8 +2908,24 @@ iter_variableop(GelCtx *ctx, GelETree *n)
 	
 	f = d_lookup_global(n->id.id);
 	if G_UNLIKELY (f == NULL) {
-		gel_errorout (_("Variable '%s' used uninitialized"),
-			      n->id.id->token);
+		char *similar;
+		if (strcmp (n->id.id->token, "i") == 0) {
+			gel_errorout (_("Variable 'i' used uninitialized.  "
+					"Perhaps you meant to write '1i' for "
+					"the imaginary number (square root of "
+					"-1)."));
+		} else if ((similar = similar_possible_ids (n->id.id->token))
+			       != NULL) {
+			gel_errorout (_("Variable '%s' used uninitialized, "
+					"perhaps you meant %s."),
+				      n->id.id->token,
+				      similar);
+
+			g_free (similar);
+		} else {
+			gel_errorout (_("Variable '%s' used uninitialized"),
+				      n->id.id->token);
+		}
 		return TRUE;
 	} else {
 		return iter_do_var(ctx,n,f);
@@ -2885,8 +2942,18 @@ iter_derefvarop(GelCtx *ctx, GelETree *n)
 	
 	f = d_lookup_global(l->id.id);
 	if G_UNLIKELY (f == NULL) {
-		gel_errorout (_("Variable '%s' used uninitialized"),
-			      l->id.id->token);
+		char *similar = similar_possible_ids (l->id.id->token);
+		if (similar != NULL) {
+			gel_errorout (_("Variable '%s' used uninitialized, "
+					"perhaps you meant %s."),
+				      l->id.id->token,
+				      similar);
+
+			g_free (similar);
+		} else {
+			gel_errorout (_("Variable '%s' used uninitialized"),
+				      l->id.id->token);
+		}
 	} else if G_UNLIKELY (f->nargs != 0) {
 		gel_errorout (_("Call of '%s' with the wrong number of arguments!\n"
 				"(should be %d)"), f->id ? f->id->token : "anonymous", f->nargs);
@@ -3633,7 +3700,7 @@ matrix_to_be_evaluated(GelMatrixW *m)
 	return FALSE;
 }
 
-/*when a matrix contains other things then NULLs, VALUEs, and STRINGs,
+/*when a matrix contains other things than NULLs, VALUEs, and STRINGs,
   make a copy of it and evaluate it's nodes*/
 static inline void
 iter_push_matrix(GelCtx *ctx, GelETree *n, GelMatrixW *m)
@@ -3682,8 +3749,19 @@ get_func_from (GelETree *l, gboolean silent)
 		f = d_lookup_global(l->id.id);
 		if (f == NULL) {
 			if G_UNLIKELY ( ! silent) {
-				gel_errorout (_("Function '%s' used uninitialized"),
-					      l->id.id->token);
+				char * similar =
+					similar_possible_ids (l->id.id->token);
+				if (similar != NULL) {
+					gel_errorout (_("Function '%s' used uninitialized, "
+							"perhaps you meant %s."),
+						      l->id.id->token,
+						      similar);
+
+					g_free (similar);
+				} else {
+					gel_errorout (_("Function '%s' used uninitialized"),
+						      l->id.id->token);
+				}
 			}
 			return NULL;
 		}
@@ -3747,7 +3825,7 @@ iter_funccallop(GelCtx *ctx, GelETree *n)
 				      f->nargs);
 		else
 			gel_errorout (_("Call of '%s' with the wrong number of arguments!\n"
-				      "(should be greater then %d)"),
+				      "(should be greater than %d)"),
 				    f->id != NULL ? f->id->token : "anonymous",
 				    f->nargs-2);
 	} else if(f->type == GEL_USER_FUNC ||
@@ -5661,7 +5739,7 @@ gel_subst_local_vars (GSList *funclist, GelETree *n)
 		funclist = gel_subst_local_vars (funclist, n->sp.arg);
 	} else if(n->type == OPERATOR_NODE) {
 		/* special case to avoid more work
-		 * then needed */
+		 * than needed */
 		if ((n->op.oper == E_EQUALS || n->op.oper == E_DEFEQUALS) &&
 		    n->op.args->type == IDENTIFIER_NODE) {
 			funclist = gel_subst_local_vars (funclist, n->op.args->any.next);

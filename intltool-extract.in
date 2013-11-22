@@ -270,14 +270,15 @@ sub type_xml {
         $messages{entity_decode_minimal($1)} = [];
     }
 
-    while ($input =~ /<_($w+)(?: xml:space="($w+)")?>(.+?)<\/_\1>/sg) {
-        $_ = $3;
-        if (!defined($2) || $2 ne "preserve") {
+    while ($input =~ /(?:<!--([^>]*?)-->\s*)?<_($w+)(?: xml:space="($w+)")?>(.+?)<\/_\2>/sg) {
+        $_ = $4;
+        if (!defined($3) || $3 ne "preserve") {
             s/\s+/ /g;
             s/^ //;
             s/ $//;
         }
         $messages{entity_decode_minimal($_)} = [];
+        $comments{entity_decode_minimal($_)} = $1 if (defined($1));
     }
 }
 
@@ -287,16 +288,19 @@ sub type_schemas {
     # FIXME: We should handle escaped < (less than)
     while ($input =~ /
                       <locale\ name="C">\s*
-                          (<default>\s*(.*?)\s*<\/default>\s*)?
-                          (<short>\s*(.*?)\s*<\/short>\s*)?
-                          (<long>\s*(.*?)\s*<\/long>\s*)?
+                          (<default>\s*(?:<!--([^>]*?)-->\s*)?(.*?)\s*<\/default>\s*)?
+                          (<short>\s*(?:<!--([^>]*?)-->\s*)?(.*?)\s*<\/short>\s*)?
+                          (<long>\s*(?:<!--([^>]*?)-->\s*)?(.*?)\s*<\/long>\s*)?
                       <\/locale>
                      /sgx) {
-        my @totranslate = ($2,$4,$6);
+        my @totranslate = ($3,$6,$9);
+        my @eachcomment = ($2,$5,$8);
         foreach (@totranslate) {
+            my $currentcomment = shift @eachcomment;
             next if !$_;
-        s/\s+/ /g;
-        $messages{entity_decode_minimal($_)} = [];
+            s/\s+/ /g;
+            $messages{entity_decode_minimal($_)} = [];
+            $comments{entity_decode_minimal($_)} = $currentcomment if (defined($currentcomment));
         }
     }
 }

@@ -81,7 +81,7 @@ my $ini_support =
 "theme(?:\\.in)+";	# http://www.freedesktop.org/Standards/icon-theme-spec
 
 my $buildin_gettext_support = 
-"c|y|cc|cpp|c\\+\\+|h|hh|gob|py";
+"c|y|cs|cc|cpp|c\\+\\+|h|hh|gob|py";
 
 ## Always flush buffer when printing
 $| = 1;
@@ -393,6 +393,13 @@ sub FindLeftoutFiles
 		    }
 		}
 	    }	    
+
+	    if (/\.GetString ?\(QUOTEDTEXT/)
+	    {
+		## Remove the first 3 chars and add newline
+		push @buf_allfiles, unpack("x3 A*", $file) . "\n";
+		last;
+	    }
 
 	    if (/_\(QUOTEDTEXT/)
 	    {
@@ -770,7 +777,7 @@ sub GatherPOFiles
 {
     my @po_files = glob ("./*.po");
 
-    @languages = map (&GetLanguageFromPOFile, @po_files);
+    @languages = map (&POFile_GetLanguage, @po_files);
 
     foreach my $lang (@languages) 
     {
@@ -823,7 +830,7 @@ sub SubstituteVariable
     # variables elsewhere.
     while (<CONF>)
     {
-	if (/^(\w+)=(\S+)/)
+	if (/^(\w+)=(.*)$/)
 	{
 	    $varhash{$1} = $2;
 	}
@@ -918,16 +925,19 @@ sub FindPackageName
     if ($conf_source =~ /^AM_INIT_AUTOMAKE\(([^,\)]+),([^,\)]+)/m)
     {
 	($name, $version) = ($1, $2);
-	$name =~ s/[\[\]\s]//g;
+	($varhash{"AC_PACKAGE_NAME"} = $name) =~ s/[\[\]\s]//g;
+	($varhash{"PACKAGE"} = $name) =~ s/[\[\]\s]//g;
 	($varhash{"AC_PACKAGE_VERSION"} = $version) =~ s/[\[\]\s]//g;
-    }
+ 	($varhash{"VERSION"} = $version) =~ s/[\[\]\s]//g;
+   }
     
     if ($conf_source =~ /^AC_INIT\(([^,\)]+),([^,\)]+)/m) 
     {
 	($name, $version) = ($1, $2);
-	$name=~ s/[\[\]\s]//g;
-	$varhash{"AC_PACKAGE_NAME"} = $name;
+	($varhash{"AC_PACKAGE_NAME"} = $name) =~ s/[\[\]\s]//g;
+	($varhash{"PACKAGE"} = $name) =~ s/[\[\]\s]//g;
 	($varhash{"AC_PACKAGE_VERSION"} = $version) =~ s/[\[\]\s]//g;
+ 	($varhash{"VERSION"} = $version) =~ s/[\[\]\s]//g;
     }
 
     # \s makes this not work, why?

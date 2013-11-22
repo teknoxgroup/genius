@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius\n"
-"POT-Creation-Date: 2004-03-30 15:06-0800\n"
+"POT-Creation-Date: 2004-06-14 10:48-0700\n"
 "PO-Revision-Date: 2003-08-30 14:23+0800\n"
 "Last-Translator: Mai Hao Hui <mhh@ricetons.com>\n"
 "Language-Team: zh_CN <i18n-translation@lists.linux.net.cn>\n"
@@ -23,103 +23,104 @@ msgstr "未分类的"
 msgid "Trying to set an alias for an alias"
 msgstr "试图给一个别名设置别名"
 
-#: src/calc.c:956
+#: src/calc.c:939
 msgid "Bad identifier for function node!"
 msgstr ""
 
-#: src/calc.c:994 src/eval.c:5442 src/eval.c:5626
+#: src/calc.c:977 src/eval.c:5520 src/eval.c:5704
 msgid "Unexpected operator!"
 msgstr "异常的操作符"
 
 #. FIXME:
-#: src/calc.c:1167
-msgid "Cannot currently print polynomials of more then 3 vars"
+#: src/calc.c:1166
+#, fuzzy
+msgid "Cannot currently print polynomials of more than 3 vars"
 msgstr "当前不能打印超过3个变量的多项式"
 
-#: src/calc.c:1240
+#: src/calc.c:1241
 msgid "NULL tree!"
 msgstr "空树！"
 
-#: src/calc.c:1315
+#: src/calc.c:1316
 msgid "NULL function!"
 msgstr "空函数！"
 
 #. variable and reference functions should
 #. never be in the etree
-#: src/calc.c:1344
+#: src/calc.c:1345
 msgid "Unexpected function type!"
 msgstr "异常的函数类型！"
 
-#: src/calc.c:1353 src/eval.c:5800
+#: src/calc.c:1354 src/eval.c:5878
 msgid "Unexpected node!"
 msgstr "异常的节点！"
 
-#: src/calc.c:1628
+#: src/calc.c:1762
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
 msgstr "文件 ‘%s’的GEL版本错误"
 
-#: src/calc.c:1675 src/calc.c:1684 src/calc.c:1689 src/calc.c:1698
-#: src/calc.c:1703 src/calc.c:1712 src/calc.c:1717 src/calc.c:1726
-#: src/calc.c:1731 src/calc.c:1742 src/calc.c:1747 src/calc.c:1758
-#: src/calc.c:1765 src/calc.c:1778 src/calc.c:1784 src/calc.c:1791
-#: src/calc.c:1800 src/calc.c:1806 src/calc.c:1813 src/calc.c:1819
-#: src/calc.c:1828 src/calc.c:1838
+#: src/calc.c:1809 src/calc.c:1818 src/calc.c:1823 src/calc.c:1832
+#: src/calc.c:1837 src/calc.c:1846 src/calc.c:1851 src/calc.c:1860
+#: src/calc.c:1865 src/calc.c:1876 src/calc.c:1881 src/calc.c:1892
+#: src/calc.c:1899 src/calc.c:1912 src/calc.c:1918 src/calc.c:1925
+#: src/calc.c:1934 src/calc.c:1940 src/calc.c:1947 src/calc.c:1953
+#: src/calc.c:1962 src/calc.c:1972
 msgid "Badly formed record"
 msgstr "错误格式的记录"
 
-#: src/calc.c:1678
+#: src/calc.c:1812
 msgid "Record out of place"
 msgstr "记录位置不正确"
 
-#: src/calc.c:1853
+#: src/calc.c:1987
 msgid "Missing value for function"
 msgstr ""
 
-#: src/calc.c:1872
+#: src/calc.c:2006
 msgid "Extra dictionary for NULL function"
 msgstr "空函数的额外字典"
 
-#: src/calc.c:1912 src/calc.c:2327 src/calc.c:2361
+#: src/calc.c:2046 src/calc.c:2461 src/calc.c:2495
 #, c-format
 msgid "Can't open file: '%s'"
 msgstr "无法打开文件：“%s”"
 
-#: src/calc.c:2059
+#: src/calc.c:2193
 msgid "Load a file into the interpretor"
 msgstr "把文件载入解释器"
 
-#: src/calc.c:2062
+#: src/calc.c:2196
 msgid "Load a plugin"
 msgstr "载入一个插件"
 
-#: src/calc.c:2065
+#: src/calc.c:2199
 msgid "List files in the current directory"
 msgstr "列出当前目录的文件"
 
-#: src/calc.c:2068
+#: src/calc.c:2202
 msgid "Change directory"
 msgstr "改变目录"
 
-#: src/calc.c:2071
+#: src/calc.c:2205
 msgid "Print current directory"
 msgstr "打印当前目录"
 
-#: src/calc.c:2074
+#: src/calc.c:2208
 msgid "Print help (or help on a function/command)"
 msgstr "打印帮助(或函数/命令的帮助)"
 
-#: src/calc.c:2091
+#: src/calc.c:2225
 msgid ""
 "\n"
 "For a manual on using Genius and the GEL language type:\n"
 msgstr ""
 
-#: src/calc.c:2093
+#: src/calc.c:2227
 msgid "  manual\n"
 msgstr "  手册\n"
 
-#: src/calc.c:2097
+#: src/calc.c:2231
 msgid ""
 "\n"
 "For help on a specific function type:\n"
@@ -127,11 +128,11 @@ msgstr ""
 "\n"
 "指定函数类型的帮助：\n"
 
-#: src/calc.c:2099
+#: src/calc.c:2233
 msgid "  help FunctionName\n"
 msgstr "  帮助 函数名\n"
 
-#: src/calc.c:2103
+#: src/calc.c:2237
 msgid ""
 "\n"
 "Commands:\n"
@@ -139,7 +140,7 @@ msgstr ""
 "\n"
 "命令：\n"
 
-#: src/calc.c:2151
+#: src/calc.c:2285
 msgid ""
 "\n"
 "Undocumented:\n"
@@ -150,58 +151,58 @@ msgstr ""
 #. func
 #. aliasfor
 #. category
-#: src/calc.c:2194
+#: src/calc.c:2328
 msgid "Not documented"
 msgstr "没有文档的"
 
-#: src/calc.c:2213
+#: src/calc.c:2347
 #, c-format
 msgid "'%s' is not documented"
 msgstr "‘%s’没有文档"
 
-#: src/calc.c:2220
+#: src/calc.c:2354
 #, c-format
 msgid "%s is an alias for %s\n"
 msgstr "%s 是 %s 的别名\n"
 
-#: src/calc.c:2252
+#: src/calc.c:2386
 msgid "Aliases:"
 msgstr "别名："
 
-#: src/calc.c:2264
+#: src/calc.c:2398
 #, c-format
 msgid "Description: %s\n"
 msgstr "描述：%s\n"
 
-#: src/calc.c:2400 src/calc.c:2411
+#: src/calc.c:2534 src/calc.c:2545
 #, c-format
 msgid "Can't expand '%s'"
 msgstr "不能扩展 ‘%s’"
 
-#: src/calc.c:2481
+#: src/calc.c:2615
 #, c-format
 msgid "Cannot open plugin '%s'!"
 msgstr "不能打开插件‘%s’！"
 
-#: src/calc.c:2686
+#: src/calc.c:2820
 msgid "ERROR: Probably corrupt stack!"
 msgstr "错误：也许是堆栈错误！"
 
-#: src/calc.c:2709
+#: src/calc.c:2843
 msgid "ERROR: Can't execute more things at once!"
 msgstr "错误：现在不能执行更多的事情！"
 
-#: src/calc.c:2813
+#: src/calc.c:2947
 #, fuzzy, c-format
 msgid "ERROR: %s before newline"
 msgstr " 在新行之前"
 
-#: src/calc.c:2815
+#: src/calc.c:2949
 #, fuzzy, c-format
 msgid "ERROR: %s at end of input"
 msgstr " 在输入的结尾"
 
-#: src/calc.c:2822
+#: src/calc.c:2956
 #, fuzzy, c-format
 msgid "ERROR: %s before '%s'"
 msgstr " 之前 '"
@@ -210,77 +211,92 @@ msgstr " 之前 '"
 msgid "Bad tree record when decompiling"
 msgstr "反编译时出现坏的树记录"
 
-#: src/eval.c:1185 src/eval.c:1222 src/eval.c:1236
+#: src/eval.c:1186 src/eval.c:1223 src/eval.c:1237
 msgid "Cannot compare non value-only matrixes"
 msgstr "无法比较有非值元素的矩阵"
 
 #. also on rationals but as integers
-#: src/eval.c:1286 src/eval.c:1332
+#: src/eval.c:1293 src/eval.c:1339
 msgid "Modulo arithmetic only works on integers"
 msgstr "余算法只能在整数上使用"
 
-#: src/eval.c:1536
+#: src/eval.c:1543
 msgid "Can't add/subtract two matricies of different sizes"
 msgstr "不能对两个不同大小的矩阵进行加减"
 
-#: src/eval.c:1538
+#: src/eval.c:1545
 #, fuzzy
 msgid ""
 "Can't do element by element operations on two matricies of different sizes"
 msgstr "不能对两个不同大小的矩阵进行集合操作"
 
-#: src/eval.c:1596
+#: src/eval.c:1603
 msgid "Can't multiply matricies of wrong sizes"
 msgstr "不能对大小错误的矩阵进行相乘"
 
-#: src/eval.c:1645
+#: src/eval.c:1652
 msgid "Powers are defined on (square matrix)^(integer) only"
 msgstr "幂运算只在（方阵）^（整数）有定义"
 
-#: src/eval.c:1651
+#: src/eval.c:1658
 msgid "Powers on matrices in modulo mode are defined on integer matrices only"
 msgstr ""
 
-#: src/eval.c:1659
+#: src/eval.c:1666
 msgid "Exponent too large"
 msgstr "指数太大"
 
-#: src/eval.c:1687 src/eval.c:1803 src/eval.c:1870
+#: src/eval.c:1694 src/eval.c:1810 src/eval.c:1877
 msgid "Matrix appears singular and can't be inverted"
 msgstr ""
 
-#: src/eval.c:1779
+#: src/eval.c:1786
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr "不能对非方阵或不同大小的矩阵做除法"
 
-#: src/eval.c:1851
+#: src/eval.c:1858
 msgid "Can't divide by a non-square matrix"
 msgstr "不能用非方阵做除法"
 
-#: src/eval.c:2209 src/eval.c:2236 src/eval.c:2257 src/eval.c:2281
-#: src/eval.c:2326
+#: src/eval.c:2217 src/eval.c:2244 src/eval.c:2265 src/eval.c:2289
+#: src/eval.c:2334
 msgid "Operations on functions with variable argument list not supported"
 msgstr ""
 
-#: src/eval.c:2214
+#: src/eval.c:2222
 msgid ""
 "Operations on functions with different number of arguments not supported"
 msgstr ""
 
-#: src/eval.c:2331
+#: src/eval.c:2339
 msgid "Function creation with wrong number of arguments"
 msgstr ""
 
-#: src/eval.c:2848 src/eval.c:3919
+#: src/eval.c:2856 src/eval.c:3997
 msgid "Unevaluatable function type encountered!"
 msgstr ""
 
-#: src/eval.c:2870 src/eval.c:2888 src/eval.c:3699
+#: src/eval.c:2878
+msgid "' or '"
+msgstr ""
+
+#: src/eval.c:2913
+msgid ""
+"Variable 'i' used uninitialized.  Perhaps you meant to write '1i' for the "
+"imaginary number (square root of -1)."
+msgstr ""
+
+#: src/eval.c:2919 src/eval.c:2947
+#, fuzzy, c-format
+msgid "Variable '%s' used uninitialized, perhaps you meant %s."
+msgstr "使用的变量‘%s’未经初始化"
+
+#: src/eval.c:2926 src/eval.c:2954 src/eval.c:3777
 #, c-format
 msgid "Variable '%s' used uninitialized"
 msgstr "使用的变量‘%s’未经初始化"
 
-#: src/eval.c:2891 src/eval.c:3744
+#: src/eval.c:2958 src/eval.c:3822
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
@@ -289,276 +305,281 @@ msgstr ""
 "调用‘%s’时参数的个数不正确！\n"
 "（应该是子%d 个）"
 
-#: src/eval.c:2894
+#: src/eval.c:2961
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr ""
 
-#: src/eval.c:2899
+#: src/eval.c:2966
 msgid "NULL reference encountered!"
 msgstr ""
 
-#: src/eval.c:3019
+#: src/eval.c:3086
 msgid "Cannot compare matrixes"
 msgstr "不能比较矩阵"
 
-#: src/eval.c:3061
+#: src/eval.c:3128
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
 
-#: src/eval.c:3134
+#: src/eval.c:3201
 msgid "Bad argument to modular operation"
 msgstr ""
 
-#: src/eval.c:3685
+#: src/eval.c:3755
+#, fuzzy, c-format
+msgid "Function '%s' used uninitialized, perhaps you meant %s."
+msgstr "已使用的函数 ‘%s’未经初始化"
+
+#: src/eval.c:3762
 #, c-format
 msgid "Function '%s' used uninitialized"
 msgstr "已使用的函数 ‘%s’未经初始化"
 
-#: src/eval.c:3705
+#: src/eval.c:3783
 #, c-format
 msgid "Can't dereference '%s'!"
 msgstr ""
 
-#: src/eval.c:3713
+#: src/eval.c:3791
 msgid "Can't call a non-function!"
 msgstr "不能调用一个非函数！"
 
-#: src/eval.c:3749
-#, c-format
+#: src/eval.c:3827
+#, fuzzy, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
-"(should be greater then %d)"
+"(should be greater than %d)"
 msgstr ""
 "调用‘%s’时参数的个数不正确！\n"
 "（应该要多于 %d 个）"
 
-#: src/eval.c:3788
+#: src/eval.c:3866
 #, c-format
 msgid "Referencing an undefined variable %s!"
 msgstr ""
 
-#: src/eval.c:3898
+#: src/eval.c:3976
 msgid "Reference function with arguments encountered!"
 msgstr ""
 
-#: src/eval.c:3903
+#: src/eval.c:3981
 msgid "Unnamed reference function encountered!"
 msgstr ""
 
-#: src/eval.c:4012
+#: src/eval.c:4090
 msgid "Bad type for 'for/sum/prod' loop!"
 msgstr ""
 
-#: src/eval.c:4017
+#: src/eval.c:4095
 msgid "'for/sum/prod' loop increment can't be 0"
 msgstr "‘for/sum/prod’循环的增量不能为0"
 
-#: src/eval.c:4123
+#: src/eval.c:4201
 msgid "Bad type for 'for in' loop!"
 msgstr ""
 
-#: src/eval.c:4267 src/eval.c:4295
+#: src/eval.c:4345 src/eval.c:4373
 msgid "Continue or break outside a loop, assuming \"return null\""
 msgstr ""
 
-#: src/eval.c:4345
+#: src/eval.c:4423
 msgid "Wrong argument type as matrix index"
 msgstr "用作矩阵索引的参数类型错误"
 
-#: src/eval.c:4355
+#: src/eval.c:4433
 msgid "Matrix index too large"
 msgstr "矩阵索引太大"
 
-#: src/eval.c:4358
+#: src/eval.c:4436
 msgid "Matrix index less than 1"
 msgstr "矩阵索引不能小于1"
 
-#: src/eval.c:4381 src/eval.c:4396
+#: src/eval.c:4459 src/eval.c:4474
 msgid "Matrix index out of range"
 msgstr "矩阵索引越界"
 
-#: src/eval.c:4443 src/eval.c:4504 src/eval.c:4566 src/eval.c:4610
+#: src/eval.c:4521 src/eval.c:4582 src/eval.c:4644 src/eval.c:4688
 #, c-format
 msgid "Trying to set a protected id '%s'"
 msgstr "尝试设置一个已保护的 id ‘%s’"
 
-#: src/eval.c:4461 src/eval.c:4500
+#: src/eval.c:4539 src/eval.c:4578
 msgid "Indexed Lvalue not user function"
 msgstr ""
 
-#: src/eval.c:4484 src/eval.c:4595
+#: src/eval.c:4562 src/eval.c:4673
 msgid "Dereference of non-identifier!"
 msgstr ""
 
-#: src/eval.c:4490 src/eval.c:4601
+#: src/eval.c:4568 src/eval.c:4679
 msgid "Dereference of undefined variable!"
 msgstr ""
 
-#: src/eval.c:4494 src/eval.c:4605
+#: src/eval.c:4572 src/eval.c:4683
 msgid "Dereference of non-reference!"
 msgstr ""
 
-#: src/eval.c:4522
+#: src/eval.c:4600
 msgid "Indexed Lvalue not an identifier or a dereference"
 msgstr ""
 
-#: src/eval.c:4560
+#: src/eval.c:4638
 msgid "Lvalue not an identifier/dereference/matrix location!"
 msgstr ""
 
-#: src/eval.c:4582 src/eval.c:4622
+#: src/eval.c:4660 src/eval.c:4700
 msgid "Referencing an undefined variable!"
 msgstr ""
 
-#: src/eval.c:4668 src/eval.c:4746 src/eval.c:4755
+#: src/eval.c:4746 src/eval.c:4824 src/eval.c:4833
 msgid "Wrong matrix dimensions when setting"
 msgstr "设置了错误的矩阵维数"
 
-#: src/eval.c:4686 src/eval.c:4726 src/eval.c:4792 src/eval.c:4971
-#: src/eval.c:5024
+#: src/eval.c:4764 src/eval.c:4804 src/eval.c:4870 src/eval.c:5049
+#: src/eval.c:5102
 msgid "Matrix index not an integer or a vector"
 msgstr "矩阵索引不是一个整数或向量"
 
-#: src/eval.c:4813
+#: src/eval.c:4891
 msgid "Parameters can only be created in the global context"
 msgstr ""
 
-#: src/eval.c:4866 src/eval.c:4908 src/eval.c:4983
+#: src/eval.c:4944 src/eval.c:4986 src/eval.c:5061
 msgid "Index works only on matricies"
 msgstr "索引只能用在矩阵中"
 
-#: src/eval.c:4896
+#: src/eval.c:4974
 msgid "Vector index not an integer or a vector"
 msgstr "向量索引不是一个整数或向量"
 
-#: src/eval.c:5045
+#: src/eval.c:5123
 msgid "number"
 msgstr "数"
 
-#: src/eval.c:5046
+#: src/eval.c:5124
 msgid "matrix"
 msgstr "矩阵"
 
-#: src/eval.c:5047
+#: src/eval.c:5125
 msgid "string"
 msgstr "字符串"
 
-#: src/eval.c:5048
+#: src/eval.c:5126
 msgid "function"
 msgstr "函数"
 
-#: src/eval.c:5072
+#: src/eval.c:5150
 msgid "Absolute value"
 msgstr "绝对值"
 
-#: src/eval.c:5073
+#: src/eval.c:5151
 msgid "Addition"
 msgstr "加法"
 
-#: src/eval.c:5074
+#: src/eval.c:5152
 msgid "Subtraction"
 msgstr "减法"
 
-#: src/eval.c:5075
+#: src/eval.c:5153
 msgid "Multiplication"
 msgstr "乘法"
 
-#: src/eval.c:5076
+#: src/eval.c:5154
 msgid "Element by element multiplication"
 msgstr ""
 
-#: src/eval.c:5077
+#: src/eval.c:5155
 msgid "Division"
 msgstr "除法"
 
-#: src/eval.c:5078
+#: src/eval.c:5156
 msgid "Element by element division"
 msgstr ""
 
-#: src/eval.c:5079
+#: src/eval.c:5157
 msgid "Back division"
 msgstr ""
 
-#: src/eval.c:5080
+#: src/eval.c:5158
 msgid "Element by element back division"
 msgstr ""
 
-#: src/eval.c:5081
+#: src/eval.c:5159
 msgid "Modulo"
 msgstr "余"
 
-#: src/eval.c:5082
+#: src/eval.c:5160
 msgid "Element by element modulo"
 msgstr ""
 
-#: src/eval.c:5083
+#: src/eval.c:5161
 msgid "Negation"
 msgstr ""
 
-#: src/eval.c:5084
+#: src/eval.c:5162
 msgid "Power"
 msgstr "幂"
 
-#: src/eval.c:5085
+#: src/eval.c:5163
 msgid "Element by element power"
 msgstr ""
 
-#: src/eval.c:5086
+#: src/eval.c:5164
 msgid "Factorial"
 msgstr "阶乘"
 
-#: src/eval.c:5087
+#: src/eval.c:5165
 #, fuzzy
 msgid "Double factorial"
 msgstr "半阶乘"
 
-#: src/eval.c:5088
+#: src/eval.c:5166
 msgid "Transpose"
 msgstr "转置"
 
-#: src/eval.c:5089
+#: src/eval.c:5167
 msgid "ConjugateTranspose"
 msgstr ""
 
-#: src/eval.c:5090
+#: src/eval.c:5168
 msgid "Comparison (<=>)"
 msgstr "比较（<=>）"
 
-#: src/eval.c:5091
+#: src/eval.c:5169
 msgid "XOR"
 msgstr "异或"
 
-#: src/eval.c:5092
+#: src/eval.c:5170
 msgid "NOT"
 msgstr "非"
 
-#: src/eval.c:5112
+#: src/eval.c:5190
 #, c-format
 msgid "Bad types for '%s'"
 msgstr ""
 
-#: src/eval.c:5123
+#: src/eval.c:5201
 #, c-format
 msgid "%s not defined on <%s> and <%s>"
 msgstr ""
 
-#: src/eval.c:5142
+#: src/eval.c:5220
 #, c-format
 msgid "Bad type for '%s'"
 msgstr ""
 
-#: src/eval.c:5152
+#: src/eval.c:5230
 #, c-format
 msgid "%s not defined on <%s>"
 msgstr ""
 
-#: src/eval.c:5171 src/eval.c:5188
+#: src/eval.c:5249 src/eval.c:5266
 msgid "Vector building only works on numbers"
 msgstr ""
 
 #. FIXME: perhaps we should just return null like octave?
-#: src/eval.c:5181
+#: src/eval.c:5259
 msgid "Impossible arguments to vector building operator"
 msgstr ""
 
@@ -722,9 +743,9 @@ msgid "fourth argument"
 msgstr ""
 
 #: src/funclib.c:2792
-#, c-format
-msgid "%s: argument must be greater then 2"
-msgstr ""
+#, fuzzy, c-format
+msgid "%s: argument must be greater than 2"
+msgstr "lcm：参数只能是整数"
 
 #: src/funclib.c:2907
 #, c-format
@@ -882,7 +903,7 @@ msgstr "产生随机浮点数"
 msgid "Generate random integer"
 msgstr "产生随机整数"
 
-#: src/funclib.c:4316 src/gnome-genius.c:911
+#: src/funclib.c:4316 src/gnome-genius.c:989
 msgid "Floating point precision"
 msgstr "浮点精度"
 
@@ -907,7 +928,8 @@ msgid "If true, mixed fractions are printed"
 msgstr "如果为真，打印带分数"
 
 #: src/funclib.c:4322
-msgid "Print full expressions, even if more then a line"
+#, fuzzy
+msgid "Print full expressions, even if more than a line"
 msgstr "打印完整表达式，即使多于一行"
 
 #: src/funclib.c:4323
@@ -949,7 +971,8 @@ msgid "Calculates the sine function"
 msgstr "计算正弦函数"
 
 #: src/funclib.c:4344
-msgid "Calculates the cossine function"
+#, fuzzy
+msgid "Calculates the cosine function"
 msgstr "计算余弦函数"
 
 #: src/funclib.c:4346
@@ -1013,11 +1036,13 @@ msgid "Round a number"
 msgstr "四舍五入"
 
 #: src/funclib.c:4380
-msgid "Get the highest integer less then or equal to n"
+#, fuzzy
+msgid "Get the highest integer less than or equal to n"
 msgstr "获得不大于n的最大整数"
 
 #: src/funclib.c:4383
-msgid "Get the lowest integer more then or equal to n"
+#, fuzzy
+msgid "Get the lowest integer more than or equal to n"
 msgstr "获得不小于n的最小整数"
 
 #: src/funclib.c:4386
@@ -1078,7 +1103,7 @@ msgstr ""
 
 #: src/funclib.c:4411
 msgid ""
-"Tests primality of integers, for numbers greater then 25*10^9 false positive "
+"Tests primality of integers, for numbers greater than 25*10^9 false positive "
 "is with low probability depending on IsPrimeMillerRabinReps"
 msgstr ""
 
@@ -1352,13 +1377,13 @@ msgstr "行 %d：%s\n"
 msgid "Too many errors! (%d followed)\n"
 msgstr "错误太多！（还有 %d 个）\n"
 
-#: src/genius.c:179 src/gnome-genius.c:2504
+#: src/genius.c:179 src/gnome-genius.c:2665
 msgid ""
 "\n"
 "Note: Compiled without MPFR (some operations may be slow) see www.mpfr.org"
 msgstr ""
 
-#: src/genius.c:255
+#: src/genius.c:259
 #, c-format
 msgid ""
 "Genius %s usage:\n"
@@ -1380,7 +1405,7 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/genius.c:296
+#: src/genius.c:300
 #, c-format
 msgid ""
 "Genius %s\n"
@@ -1391,13 +1416,13 @@ msgid ""
 "\n"
 msgstr ""
 
-#: src/genius.c:351 src/gnome-genius.c:2764
+#: src/genius.c:355 src/gnome-genius.c:2979
 msgid ""
 "The only thing that interferes with my learning is my education.  -- Albert "
 "Einstein"
 msgstr "唯一干扰我学习的是我的教育。―― 爱因斯坦"
 
-#: src/genius.c:372 src/genius.c:432
+#: src/genius.c:376 src/genius.c:436
 msgid "Can't open file"
 msgstr "不能打开文件"
 
@@ -1437,161 +1462,158 @@ msgstr "脚本"
 msgid "String"
 msgstr "字符串"
 
-#: src/gnome-genius.c:161
+#: src/gnome-genius.c:201
 msgid "_New Program"
 msgstr "新程序(_N)"
 
-#: src/gnome-genius.c:161
+#: src/gnome-genius.c:201
 msgid "Create new program tab"
 msgstr ""
 
-#: src/gnome-genius.c:168
+#: src/gnome-genius.c:208
 #, fuzzy
 msgid "_Reload from Disk"
 msgstr "从磁盘重新载入(_R)"
 
-#: src/gnome-genius.c:168
+#: src/gnome-genius.c:208
 msgid "Reload the selected program from disk"
 msgstr "从磁盘重新载入选择的程序"
 
-#: src/gnome-genius.c:172
+#: src/gnome-genius.c:212
 #, fuzzy
 msgid "_Load and Run..."
 msgstr "载入并运行(_L)"
 
-#: src/gnome-genius.c:172
+#: src/gnome-genius.c:212
 msgid "Load and execute a file in genius"
 msgstr "在Genius 载入并运行文件"
 
-#: src/gnome-genius.c:185
+#: src/gnome-genius.c:225
 msgid "Copy Answer As Plain _Text"
 msgstr "将结果拷贝为纯文本(_T)"
 
-#: src/gnome-genius.c:186
+#: src/gnome-genius.c:226
 msgid "Copy last answer into the clipboard in plain text"
 msgstr "将最新的结果以纯文本格式拷贝到剪贴板"
 
-#: src/gnome-genius.c:189
+#: src/gnome-genius.c:229
 msgid "Copy Answer As _LaTeX"
 msgstr "将结果拷贝为_LaTeX"
 
-#: src/gnome-genius.c:190
+#: src/gnome-genius.c:230
 msgid "Copy last answer into the clipboard as LaTeX"
 msgstr "将最新的结果以LaTeX格式拷贝到剪贴板"
 
-#: src/gnome-genius.c:193
+#: src/gnome-genius.c:233
 msgid "Copy Answer As _MathML"
 msgstr "将结果拷贝为_MathML"
 
-#: src/gnome-genius.c:194
+#: src/gnome-genius.c:234
 msgid "Copy last answer into the clipboard as MathML"
 msgstr "将最新的结果以MathML格式拷贝到剪贴板"
 
-#: src/gnome-genius.c:197
+#: src/gnome-genius.c:237
 msgid "Copy Answer As T_roff"
 msgstr "将结果拷贝为T_roff"
 
-#: src/gnome-genius.c:198
+#: src/gnome-genius.c:238
 msgid "Copy last answer into the clipboard as Troff eqn"
 msgstr "将最新的结果以Troff eqn格式拷贝到剪贴板"
 
-#: src/gnome-genius.c:211
+#: src/gnome-genius.c:251
 msgid "_Run"
 msgstr "运行(_R)"
 
-#: src/gnome-genius.c:211 src/gnome-genius.c:258
+#: src/gnome-genius.c:251 src/gnome-genius.c:298
 msgid "Run current program"
 msgstr "运行当前程序"
 
-#: src/gnome-genius.c:212
+#: src/gnome-genius.c:252
 msgid "_Interrupt"
 msgstr "中断(_I)"
 
-#: src/gnome-genius.c:212 src/gnome-genius.c:256
+#: src/gnome-genius.c:252 src/gnome-genius.c:296
 msgid "Interrupt current calculation"
 msgstr "中断当前计算"
 
-#. title
-#. parent
-#. flags
-#: src/gnome-genius.c:214 src/graphing.c:1329
+#: src/gnome-genius.c:254 src/graphing.c:1336
 #, fuzzy
 msgid "_Plot"
 msgstr "绘图"
 
-#: src/gnome-genius.c:214 src/gnome-genius.c:260
+#: src/gnome-genius.c:254 src/gnome-genius.c:300
 #, fuzzy
 msgid "Plot a function"
 msgstr "函数"
 
 #. FIXME: no help
 #. * GNOMEUIINFO_HELP("genius"),
-#: src/gnome-genius.c:221
+#: src/gnome-genius.c:261
 msgid "_Manual"
 msgstr "手册(_M)"
 
-#: src/gnome-genius.c:222
+#: src/gnome-genius.c:262
 msgid "Display the manual"
 msgstr "显示手册"
 
-#: src/gnome-genius.c:225
+#: src/gnome-genius.c:265
 msgid "_Warranty"
 msgstr ""
 
-#: src/gnome-genius.c:226
+#: src/gnome-genius.c:266
 msgid "Display warranty information"
 msgstr ""
 
-#: src/gnome-genius.c:244
+#: src/gnome-genius.c:284
 msgid "_Calculator"
 msgstr "计算器(_C)"
 
-#: src/gnome-genius.c:246
+#: src/gnome-genius.c:286
 msgid "P_lugins"
 msgstr "插件(_l)"
 
-#: src/gnome-genius.c:248
+#: src/gnome-genius.c:288
 msgid "_Programs"
 msgstr "程序(_P)"
 
-#: src/gnome-genius.c:256
+#: src/gnome-genius.c:296
 msgid "Interrupt"
 msgstr "中断"
 
-#: src/gnome-genius.c:258
+#: src/gnome-genius.c:298
 msgid "Run"
 msgstr "运行"
 
-#: src/gnome-genius.c:259
+#: src/gnome-genius.c:299
 msgid "Open"
 msgstr "打开"
 
-#: src/gnome-genius.c:259
+#: src/gnome-genius.c:299
 msgid "Open a GEL file for running"
 msgstr "打开一个GEL文件来运行"
 
-#: src/gnome-genius.c:260
+#: src/gnome-genius.c:300
 #, fuzzy
 msgid "Plot"
 msgstr "绘图"
 
-#: src/gnome-genius.c:261
+#: src/gnome-genius.c:301
 msgid "Exit"
 msgstr "退出"
 
-#: src/gnome-genius.c:261
+#: src/gnome-genius.c:301
 msgid "Exit genius"
 msgstr "退出 genius"
 
-#: src/gnome-genius.c:305
+#: src/gnome-genius.c:378
 msgid "Error"
 msgstr "错误"
 
-#: src/gnome-genius.c:305
+#: src/gnome-genius.c:378
 msgid "Information"
 msgstr "信息"
 
-#: src/gnome-genius.c:360
+#: src/gnome-genius.c:433
 #, c-format
 msgid ""
 "\n"
@@ -1600,7 +1622,7 @@ msgstr ""
 "\n"
 "太多错误！（还有 %d 个）"
 
-#: src/gnome-genius.c:370
+#: src/gnome-genius.c:443
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
 msgstr "\\e[01;31m太多错误！（还有 %d 个）\\e[0m\n"
@@ -1609,22 +1631,22 @@ msgstr "\\e[01;31m太多错误！（还有 %d 个）\\e[0m\n"
 #. * which will give them credit in the About box.
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
-#: src/gnome-genius.c:493
+#: src/gnome-genius.c:566
 msgid "translator_credits-PLEASE_ADD_YOURSELF_HERE"
 msgstr "Mai Haohui <maihaohui@hotmail.com>"
 
-#: src/gnome-genius.c:496
+#: src/gnome-genius.c:569
 #, fuzzy
 msgid "About Genius"
 msgstr "Genius"
 
-#: src/gnome-genius.c:499
+#: src/gnome-genius.c:572
 msgid ""
 "The Gnome calculator style edition of the genius calculator.  For license/"
 "warranty details, type 'warranty' into the console."
 msgstr ""
 
-#: src/gnome-genius.c:661
+#: src/gnome-genius.c:735
 msgid ""
 "Genius is executing something, and furthermore there are unsaved programs.\n"
 "Are you sure you wish to quit?"
@@ -1632,68 +1654,68 @@ msgstr ""
 "Genius 正在执行程序，并且还有没有保存的程序。\n"
 "您真的要退出吗？"
 
-#: src/gnome-genius.c:669
+#: src/gnome-genius.c:743
 msgid "There are unsaved programs, are you sure you wish to quit?"
 msgstr "有没有保存的程序。您真的要退出吗？"
 
-#: src/gnome-genius.c:676
+#: src/gnome-genius.c:750
 msgid "Genius is executing something, are you sure you wish to quit?"
 msgstr "Genius 正在执行程序，您真的要退出吗？"
 
-#: src/gnome-genius.c:683
+#: src/gnome-genius.c:757
 msgid "Are you sure you wish to quit?"
 msgstr "您真的要退出吗？"
 
-#: src/gnome-genius.c:782
+#: src/gnome-genius.c:860
 #, fuzzy
 msgid "Genius Setup"
 msgstr "Genius"
 
-#: src/gnome-genius.c:799
+#: src/gnome-genius.c:877
 msgid "Output"
 msgstr "输出"
 
-#: src/gnome-genius.c:802
+#: src/gnome-genius.c:880
 msgid "Number/Expression output options"
 msgstr "数字/表达式 输出设置"
 
-#: src/gnome-genius.c:812
+#: src/gnome-genius.c:890
 msgid "Maximum digits to output (0=unlimited)"
 msgstr ""
 
-#: src/gnome-genius.c:832
+#: src/gnome-genius.c:910
 msgid "Results as floats"
 msgstr "以浮点数输出"
 
-#: src/gnome-genius.c:840
+#: src/gnome-genius.c:918
 msgid "Floats in scientific notation"
 msgstr "以科学记数法显示浮点数"
 
-#: src/gnome-genius.c:848
+#: src/gnome-genius.c:926
 msgid "Always print full expressions"
 msgstr "总是打印完整的表达式"
 
-#: src/gnome-genius.c:857
+#: src/gnome-genius.c:935
 msgid "Error/Info output options"
 msgstr "错误/消息 输出设置"
 
-#: src/gnome-genius.c:865
+#: src/gnome-genius.c:943
 msgid "Display errors in a dialog"
 msgstr "在对话框内显示错误信息"
 
-#: src/gnome-genius.c:873
+#: src/gnome-genius.c:951
 msgid "Display information messages in a dialog"
 msgstr "在对话框内显示错误消息"
 
-#: src/gnome-genius.c:884
+#: src/gnome-genius.c:962
 msgid "Maximum errors to display (0=unlimited)"
 msgstr "显示的最多错误 （0=不限制）"
 
-#: src/gnome-genius.c:908
+#: src/gnome-genius.c:986
 msgid "Precision"
 msgstr "精度"
 
-#: src/gnome-genius.c:918
+#: src/gnome-genius.c:996
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
@@ -1702,27 +1724,31 @@ msgstr ""
 "注意：浮点精度设置也许不会立刻影响所有数字，\n"
 "只会影响新的计算和新的变量。"
 
-#: src/gnome-genius.c:927
+#: src/gnome-genius.c:1005
 msgid "Floating point precision (bits)"
 msgstr "浮点精度 （比特）"
 
-#: src/gnome-genius.c:951
+#: src/gnome-genius.c:1029
 msgid "Terminal"
 msgstr "终端"
 
-#: src/gnome-genius.c:954
+#: src/gnome-genius.c:1032
 msgid "Terminal options"
 msgstr "终端属性"
 
-#: src/gnome-genius.c:963
+#: src/gnome-genius.c:1041
 msgid "Scrollback lines"
 msgstr ""
 
-#: src/gnome-genius.c:986
+#: src/gnome-genius.c:1064
 msgid "Font:"
 msgstr "字体："
 
-#: src/gnome-genius.c:1022
+#: src/gnome-genius.c:1079
+msgid "Black on white"
+msgstr ""
+
+#: src/gnome-genius.c:1109
 msgid ""
 "<b>Genius is currently executing something.</b>\n"
 "\n"
@@ -1732,60 +1758,60 @@ msgstr ""
 "\n"
 "请稍后重试或中断当前操作。"
 
-#: src/gnome-genius.c:1087
+#: src/gnome-genius.c:1174
 #, fuzzy
 msgid "GEL files"
 msgstr "载入 GEL 文件"
 
-#: src/gnome-genius.c:1092
+#: src/gnome-genius.c:1179
 msgid "All files"
 msgstr ""
 
-#: src/gnome-genius.c:1126 src/gnome-genius.c:1681
+#: src/gnome-genius.c:1213 src/gnome-genius.c:1838
 msgid "Cannot open file!"
 msgstr "不能打开文件！"
 
-#: src/gnome-genius.c:1155 src/gnome-genius.c:1173
+#: src/gnome-genius.c:1242 src/gnome-genius.c:1260
 #, fuzzy
 msgid "Load and Run"
 msgstr "载入并运行(_L)"
 
-#: src/gnome-genius.c:1159
+#: src/gnome-genius.c:1246
 msgid "_Load"
 msgstr ""
 
-#: src/gnome-genius.c:1513
+#: src/gnome-genius.c:1672
 msgid "Cannot open file"
 msgstr "不能打开文件"
 
-#: src/gnome-genius.c:1545 src/gnome-genius.c:2489
+#: src/gnome-genius.c:1704 src/gnome-genius.c:2650
 #, c-format
 msgid "Line: %d"
 msgstr "行：%d"
 
 #. the file name will have an underscore
-#: src/gnome-genius.c:1616
+#: src/gnome-genius.c:1775
 #, c-format
 msgid "Program_%d.gel"
 msgstr "程序_%d.gel"
 
-#: src/gnome-genius.c:1617
+#: src/gnome-genius.c:1776
 #, c-format
 msgid "Program %d"
 msgstr "程序 %d"
 
-#: src/gnome-genius.c:1633
+#: src/gnome-genius.c:1789
 #, c-format
 msgid "Cannot open %s"
 msgstr "不能打开 %s"
 
-#: src/gnome-genius.c:1708 src/gnome-genius.c:1726
+#: src/gnome-genius.c:1865 src/gnome-genius.c:1884
 #, fuzzy
 msgid "Open..."
 msgstr "打开"
 
 #. new fname
-#: src/gnome-genius.c:1816 src/gnome-genius.c:1871
+#: src/gnome-genius.c:1959 src/gnome-genius.c:2014
 #, c-format
 msgid ""
 "<b>Cannot save file</b>\n"
@@ -1794,31 +1820,31 @@ msgstr ""
 "<b>不能保存文件</b>\n"
 "详情：%s"
 
-#: src/gnome-genius.c:1865
+#: src/gnome-genius.c:2008
 msgid "File already exists.  Overwrite it?"
 msgstr "文件已存在，覆盖它吗？"
 
-#: src/gnome-genius.c:1922 src/gnome-genius.c:1943
+#: src/gnome-genius.c:2065 src/gnome-genius.c:2087
 msgid "Save As..."
 msgstr ""
 
-#: src/gnome-genius.c:2017
+#: src/gnome-genius.c:2161
 msgid ""
 "<b>No program selected.</b>\n"
 "\n"
 "Create a new program, or select an existing tab in the notebook."
 msgstr ""
 
-#: src/gnome-genius.c:2114
+#: src/gnome-genius.c:2258
 #, fuzzy, c-format
 msgid "Genius %s"
 msgstr "Genius"
 
-#: src/gnome-genius.c:2296
+#: src/gnome-genius.c:2444
 msgid "Can't execute genius-readline-helper-fifo!\n"
 msgstr ""
 
-#: src/gnome-genius.c:2508
+#: src/gnome-genius.c:2669
 msgid ""
 "\n"
 "Note: Compiled without GtkSourceView (better source editor)"
@@ -1826,18 +1852,18 @@ msgstr ""
 "\n"
 "注意：不用 GtkSourceView (更好的源代码编辑器) 编译"
 
-#: src/gnome-genius.c:2673
+#: src/gnome-genius.c:2867
 msgid "Console"
 msgstr "控制台"
 
-#: src/gnome-genius.c:2705
+#: src/gnome-genius.c:2912
 #, c-format
 msgid ""
-"\\e[0;32mGenius %s\\e[0m\n"
+"%sGenius %s%s\n"
 "%s\n"
 "This is free software with ABSOLUTELY NO WARRANTY.\n"
-"For license details type `\\e[01;36mwarranty\\e[0m'.\n"
-"For help type '\\e[01;36mmanual\\e[0m' or '\\e[01;36mhelp\\e[0m'.%s\n"
+"For license details type `%swarranty%s'.\n"
+"For help type '%smanual%s' or '%shelp%s'.%s\n"
 "\n"
 msgstr ""
 
@@ -1910,54 +1936,54 @@ msgstr ""
 msgid "Y from:"
 msgstr ""
 
-#: src/graphing.c:1237
+#: src/graphing.c:1238
 msgid "No functions to plot or no functions could be parsed"
 msgstr ""
 
-#: src/graphing.c:1259
+#: src/graphing.c:1261
 msgid "Invalid X range"
 msgstr ""
 
-#: src/graphing.c:1264
+#: src/graphing.c:1266
 msgid "Invalid Y range"
 msgstr ""
 
-#: src/graphing.c:1326
+#: src/graphing.c:1331
 msgid "Create Line Plot"
 msgstr ""
 
-#: src/graphing.c:1373
+#: src/graphing.c:1378
 #, fuzzy, c-format
 msgid "%s: only up to 10 functions supported"
 msgstr "LinePlot：最多只支持10个函数"
 
-#: src/graphing.c:1378
+#: src/graphing.c:1383
 #, fuzzy, c-format
 msgid "%s: argument not a function"
 msgstr "LinePlot：参数不是一个函数"
 
-#: src/graphing.c:1429
+#: src/graphing.c:1434
 #, fuzzy, c-format
 msgid "%s: invalid X range"
 msgstr "ASCIIToString：值越界"
 
-#: src/graphing.c:1434
+#: src/graphing.c:1439
 #, fuzzy, c-format
 msgid "%s: invalid Y range"
 msgstr "ASCIIToString：值越界"
 
-#: src/graphing.c:1496
+#: src/graphing.c:1501
 msgid "Plotting"
 msgstr "绘图"
 
 #. bogus value
-#: src/graphing.c:1528
+#: src/graphing.c:1533
 msgid ""
 "Plot a function with a line (very rudimentary).  First come the functions "
 "(up to 10) then optionally limits as x1,x2,y1,y2"
 msgstr ""
 
-#: src/graphing.c:1530
+#: src/graphing.c:1535
 msgid "Plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"
 msgstr ""
 
@@ -2031,7 +2057,7 @@ msgstr "计算阶乘的数太大了！"
 msgid "Can't do factorials of negative numbers!"
 msgstr "不能对负数求阶乘！"
 
-#: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4658 src/mpwrap.c:4675
+#: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4657 src/mpwrap.c:4674
 #, c-format
 msgid "%s: Bad types for mod power"
 msgstr ""
@@ -2053,95 +2079,95 @@ msgstr "随机整数的范围必须是正的"
 msgid "Can't get numerator of floating types"
 msgstr "不能对浮点类型求分子"
 
-#: src/mpwrap.c:4039 src/mpwrap.c:5260 src/mpwrap.c:5272
+#: src/mpwrap.c:4038 src/mpwrap.c:5259 src/mpwrap.c:5271
 msgid "Can't compare complex numbers"
 msgstr "不能比较复数"
 
-#: src/mpwrap.c:4248 src/mpwrap.c:4263 src/mpwrap.c:4314 src/mpwrap.c:4337
-#: src/mpwrap.c:4350 src/mpwrap.c:4395
+#: src/mpwrap.c:4247 src/mpwrap.c:4262 src/mpwrap.c:4313 src/mpwrap.c:4336
+#: src/mpwrap.c:4349 src/mpwrap.c:4394
 msgid "Division by zero!"
 msgstr "零除错误！"
 
-#: src/mpwrap.c:4404
+#: src/mpwrap.c:4403
 msgid "Can't modulo complex numbers"
 msgstr "不能对复数求余"
 
-#: src/mpwrap.c:4423
+#: src/mpwrap.c:4422
 #, c-format
 msgid "Inverse of %s modulo %s not found!"
 msgstr ""
 
-#: src/mpwrap.c:4432
+#: src/mpwrap.c:4431
 msgid "Can't do modulo invert on complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4445
+#: src/mpwrap.c:4444
 msgid "Can't GCD complex numbers"
 msgstr "不能对复数求最大公约数"
 
-#: src/mpwrap.c:4468
+#: src/mpwrap.c:4467
 msgid "Can't LCM complex numbers"
 msgstr "不能对复数求最小公倍数"
 
-#: src/mpwrap.c:4481
+#: src/mpwrap.c:4480
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4493
+#: src/mpwrap.c:4492
 msgid "Can't get legendre symbols complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4505
+#: src/mpwrap.c:4504
 msgid "Can't get jacobi symbol with Kronecker extension for complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4517
+#: src/mpwrap.c:4516
 msgid "Can't get lucas number for complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4529
+#: src/mpwrap.c:4528
 msgid "Can't get next prime for complex numbers"
 msgstr ""
 
-#: src/mpwrap.c:4539 src/mpwrap.c:4551 src/mpwrap.c:4563 src/mpwrap.c:4575
+#: src/mpwrap.c:4538 src/mpwrap.c:4550 src/mpwrap.c:4562 src/mpwrap.c:4574
 #, fuzzy, c-format
 msgid "%s: can't work on complex numbers"
 msgstr "even_p：不能作用于复数！"
 
-#: src/mpwrap.c:4749 src/mpwrap.c:4820 src/mpwrap.c:4887
+#: src/mpwrap.c:4748 src/mpwrap.c:4819 src/mpwrap.c:4886
 #, fuzzy, c-format
 msgid "%s: can't take logarithm of 0"
 msgstr "ln：不能对0求对数"
 
-#: src/mpwrap.c:5189
+#: src/mpwrap.c:5188
 msgid "Can't make random integer out of a complex number"
 msgstr "不能从一个复数中生成随机整数"
 
-#: src/mpwrap.c:5310 src/mpwrap.c:5323
+#: src/mpwrap.c:5309 src/mpwrap.c:5322
 msgid "Can't make factorials of complex numbers"
 msgstr "不能对复数求阶乘"
 
-#: src/mpwrap.c:5605 src/mpwrap.c:5627 src/mpwrap.c:5649
+#: src/mpwrap.c:5603 src/mpwrap.c:5625 src/mpwrap.c:5647
 msgid "Can't determine type of a complex number"
 msgstr "不能判断复数的类型"
 
-#: src/mpwrap.c:5741 src/mpwrap.c:5764
+#: src/mpwrap.c:5739 src/mpwrap.c:5762
 msgid "Can't convert complex number into integer"
 msgstr "不能将复数转换为整数"
 
-#: src/mpwrap.c:5747
+#: src/mpwrap.c:5745
 msgid "Can't convert real number to integer"
 msgstr "不能将实数转换为整数"
 
-#: src/mpwrap.c:5751
+#: src/mpwrap.c:5749
 msgid "Integer too large for this operation"
 msgstr ""
 
-#: src/mpwrap.c:5773
+#: src/mpwrap.c:5771
 msgid "Can't convert real number to double"
 msgstr "不能把实数转换为双精度"
 
-#: src/mpwrap.c:5779
+#: src/mpwrap.c:5777
 msgid "Number too large for this operation"
 msgstr ""
 
@@ -2185,7 +2211,7 @@ msgstr ""
 "这就是了，有趣吗？\n"
 "\n"
 
-#: src/util.c:116
+#: src/util.c:96
 msgid "Stack underflow!"
 msgstr "堆栈溢出！"
 

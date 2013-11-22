@@ -1,3 +1,140 @@
+Mon Jun 14 10:27:59 2004  George Lebl <jirka@5z.com>
+
+	* Release 0.6.1
+
+	* genius.spec.in: fix
+
+Mon Jun 14 10:20:26 2004  George Lebl <jirka@5z.com>
+
+	* src/calc.c: do the nice fraction printing for mixed fractions
+
+	* src/mpwrap.c: minor cleanup
+
+Fri Jun 11 18:06:54 2004  George Lebl <jirka@5z.com>
+
+	* src/dict.[ch], src/eval.c: add suggestion logic on undefined
+	  identifiers, a little screwy code, but somewhat works.
+
+	* src/calc.c: when we don't do mixed fractions try to be nice about
+	  printing larger fractions.  Kind of on crack, we should do it
+	  in more cases.
+
+Fri May 28 10:02:19 2004  George Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: The default font size for the console
+	  is now deduced from the window for size.  Also unless the
+	  font is actually set, the change is not written to preferences.
+	  The console is set to UTF-8 always since we always feed it utf-8
+	  strings which fixes non-utf-8 locales.  Plus a small amount of
+	  cleanup.
+
+Thu May 27 16:11:07 2004  George Lebl <jirka@5z.com>
+
+	* genius.xml, Makefile.am: add genius to the shared mime info db
+
+Thu May 27 15:39:48 2004  George Lebl <jirka@5z.com>
+
+	* src/genius-readline-helper.c, src/gnome-genius.[ch]:  Add
+	  Black on white mode for those that don't see white on black too
+	  well.  Start using vfs, but we still don't use it for "loading",
+	  nor do we setup the filechooser or whatnot, must figure out how to
+	  do that.  Accept file drops on the window and open those files.
+
+	* Makefile.am, genius.keys, genius.mime: temporary placeholders, need
+	  to add this to the shared mime info stuff or whatnot.
+
+Wed Apr 21 21:18:00 2004  Evandro Fernandes Giovanini  <evandrofg@ig.com.br>
+
+	* configure.in(ALL_LINGUAS): Added "pt_BR" (Brazilian Portuguese).
+
+Thu Apr 15 20:43:00 2004  Adam Weinberger <adamw@gnome.org>
+
+	* configure.in: Added en_CA to ALL_LINGUAS.
+
+Thu Apr 15 14:19:40 2004  George Lebl <jirka@5z.com>
+
+	* lib/combinatorics/factorial.gel, lib/combinatorics/misc.gel,
+	  lib/linear_algebra/linear_algebra.gel,
+	  lib/number_theory/factoring.gel, lib/number_theory/modulus.gel,
+	  lib/number_theory/primes.gel,
+	  src/calc.c, src/eval.c, src/funclib.c, src/gnome-genius.c,
+	  src/matrixw.c, src/mpzextra.c: fix some typos in strings.  Mostly
+	  s/then/than/.
+
+Tue Apr 13 11:17:34 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: move the plot dialog buttons to be in HIGgy order
+
+Fri Apr 09 18:34:58 2004  George Lebl <jirka@5z.com>
+
+	* INSTALL.MacOSX: Mac OS X install instructions from Linc Davis
+	  <ld-temp-spe8@pobox.com>
+
+	* configure.in: Changed help for --enable-gnome and
+	  --enable-gtksourceview (changed to --disable-* since they're
+	  on by default)
+
+Tue Apr 06 15:41:18 2004  George Lebl <jirka@5z.com>
+
+	* src/util.[ch], src/mpwrap.c: whack the custom mem-allocation cruft
+	  and let gmp use its own allocation.  Doesn't seem to improve speed
+	  by much at all, but reduces cruft.
+
+Sun Apr 04 22:30:12 2004  George Lebl <jirka@5z.com>
+
+	* src/geniustests.txt: added some tests that went wrong at some
+	  point long time ago
+
+Sun Apr 04 17:39:55 2004  George Lebl <jirka@5z.com>
+
+	* lib/functions/complex_numbers.gel: add cis function.  Also fix
+	  the MoebiusMapping* definitions
+
+	* lib/functions/Makefile.am: forgot to include complex_numbers.gel
+	  in the library DOH! this actually adds all those functions promised
+	  in 0.6.0.  Affects: Argument, arg, Arg, MoebiusDiskMapping,
+	  MoebiusMapping, MoebiusMappingInftyToOne, MoebiusMappingInftyToZero,
+	  MoebiusMappingInftyToInfty.
+
+Sun Apr 04 17:27:33 2004  George Lebl <jirka@5z.com>
+
+	* src/graphing.c: when parsing errors occur print them before saying
+	  we couldn't parse anything.
+
+Sun Apr 04 17:19:08 2004  George Lebl <jirka@5z.com>
+
+	* src/eval.c: when 'i' is used uninitialized then suggest using '1i'
+	  instead
+
+Sun Apr 04 16:35:38 2004  George Lebl <jirka@5z.com>
+
+	* src/genius.c, src/gnome-genius.c: Make the console version be
+	  translated though there are still utf-8 issues.  Also the welcome
+	  string is now slightly different since gettext seemed to have a fit
+	  with the escapes and all that.
+
+Sun Apr 04 15:52:00 2004  George Lebl <jirka@5z.com>
+
+	* src/calc.[ch], eval.c, src/funclib.c, src/graphing.c, src/matop.c,
+	  src/mpwrap.[ch], src/plugin.c:  Cleanup and update the copyright
+	  strings, add "gel_" to the print_etree functions.
+
+	* src/eval.c: fix "number <=> string" which was returning completely
+	  wrong answers
+
+	* src/geniustests.txt: add tests for comparison
+
+2004-04-03  Gareth Owen  <gowen72@yahoo.com>
+
+	* configure.in: Added en_GB to ALL_LINGUAS
+
+Tue Mar 30 15:08:05 2004  George Lebl <jirka@5z.com>
+
+	* Release 0.6.0
+
+	* src/mpwrap.c: define G_MAXINT32 if not defined to allow compilation
+	  with older glib
+
 Tue Mar 30 14:56:27 2004  George Lebl <jirka@5z.com>
 
 	* src/mpwrap.c: further optimization of the mp* free lists gets some

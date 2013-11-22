@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2003 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -531,13 +531,13 @@ append_anal_binaryoper(GelOutput *gelo, char *p, GelETree *n)
 		gel_output_string(gelo, "((");
 	else
 		gel_output_string(gelo, "(");
-	print_etree(gelo, l, FALSE);
+	gel_print_etree (gelo, l, FALSE);
 	if (extra_param1)
 		gel_output_string(gelo, ")");
 	gel_output_string(gelo, p);
 	if (extra_param2)
 		gel_output_string(gelo, "(");
-	print_etree(gelo, r, FALSE);
+	gel_print_etree (gelo, r, FALSE);
 	if (extra_param2)
 		gel_output_string(gelo, "))");
 	else
@@ -550,9 +550,9 @@ append_binaryoper(GelOutput *gelo, char *p, GelETree *n)
 	GelETree *l,*r;
 	GET_LR(n,l,r);
 	gel_output_string(gelo, "(");
-	print_etree(gelo, l, FALSE);
+	gel_print_etree (gelo, l, FALSE);
 	gel_output_string(gelo, p);
-	print_etree(gelo, r, FALSE);
+	gel_print_etree (gelo, r, FALSE);
 	gel_output_string(gelo, ")");
 }
 
@@ -560,17 +560,18 @@ static void
 append_unaryoper(GelOutput *gelo, char *p, GelETree *n)
 {
 	GelETree *l;
-	GET_L(n,l);
-	gel_output_string(gelo, "(");
-	gel_output_string(gelo, p);
-	print_etree(gelo, l, FALSE);
-	gel_output_string(gelo, ")");
+	GET_L (n, l);
+	gel_output_string (gelo, "(");
+	gel_output_string (gelo, p);
+	gel_print_etree (gelo, l, FALSE);
+	gel_output_string (gelo, ")");
 }
 
 static void
 appendoper(GelOutput *gelo, GelETree *n)
 {
-	GelETree *l,*r,*rr;
+	GelETree *l, *r, *rr;
+	GelETree *a, *b, *c, *d, *e;
 	GelETree *li;
 
 	switch(n->op.oper) {
@@ -582,24 +583,24 @@ appendoper(GelOutput *gelo, GelETree *n)
 			GET_LRR(n,l,r,rr);
 			if (l->type != NULL_NODE) {
 				gel_output_string(gelo,"(parameter (");
-				print_etree(gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 				gel_output_string(gelo,") ");
-				print_etree(gelo, r, FALSE);
+				gel_print_etree (gelo, r, FALSE);
 				gel_output_string(gelo," = ");
-				print_etree(gelo, rr, FALSE);
+				gel_print_etree (gelo, rr, FALSE);
 				gel_output_string(gelo,")");
 			} else {
 				gel_output_string(gelo,"(parameter ");
-				print_etree(gelo, r, FALSE);
+				gel_print_etree (gelo, r, FALSE);
 				gel_output_string(gelo," = ");
-				print_etree(gelo, rr, FALSE);
+				gel_print_etree (gelo, rr, FALSE);
 				gel_output_string(gelo,")");
 			}
 			break;
 		case E_ABS:
 			GET_L(n,l);
 			gel_output_string(gelo,"(|");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree(gelo, l, FALSE);
 			gel_output_string(gelo,"|)");
 			break;
 		case E_PLUS:
@@ -646,10 +647,10 @@ appendoper(GelOutput *gelo, GelETree *n)
 			     mpw_sgn (l->val.value) < 0 ||
 			     mpw_is_rational (l->val.value))) {
 				gel_output_string(gelo, "(");
-				print_etree(gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 				gel_output_string(gelo, ")");
 			} else {
-				print_etree(gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 			}
 			gel_output_string(gelo, "!)");
 			break;
@@ -661,10 +662,10 @@ appendoper(GelOutput *gelo, GelETree *n)
 			     mpw_sgn (l->val.value) < 0 ||
 			     mpw_is_rational (l->val.value))) {
 				gel_output_string(gelo, "(");
-				print_etree(gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 				gel_output_string(gelo, ")");
 			} else {
-				print_etree(gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 			}
 			gel_output_string(gelo, "!!)");
 			break;
@@ -672,14 +673,14 @@ appendoper(GelOutput *gelo, GelETree *n)
 		case E_TRANSPOSE:
 			GET_L(n,l);
 			gel_output_string(gelo, "(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo, ".')");
 			break;
 			
 		case E_CONJUGATE_TRANSPOSE:
 			GET_L(n,l);
 			gel_output_string(gelo, "(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo, "')");
 			break;
 
@@ -712,47 +713,47 @@ appendoper(GelOutput *gelo, GelETree *n)
 		case E_REGION_SEP_BY:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo,":");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,":");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,")");
 			break;
 
 		case E_GET_VELEMENT:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo,"@(");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,"))");
 			break;
 
 		case E_GET_ELEMENT:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo,"@(");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,",");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,"))");
 			break;
 		case E_GET_ROW_REGION:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo,"@[");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,",])");
 			break;
 		case E_GET_COL_REGION:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo,"@[,");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,"])");
 			break;
 
@@ -766,177 +767,159 @@ appendoper(GelOutput *gelo, GelETree *n)
 		case E_IF_CONS:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(if ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," then ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_IFELSE_CONS:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(if ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," then ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo," else ");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_WHILE_CONS:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(while ");
-			print_etree(gelo, l, FALSE);
-			gel_output_string(gelo," do ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, l, FALSE);
+			gel_output_string (gelo," do ");
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_UNTIL_CONS:
 			GET_LR(n,l,r);
-			gel_output_string(gelo,"(until ");
-			print_etree(gelo, l, FALSE);
-			gel_output_string(gelo," do ");
-			print_etree(gelo, r, FALSE);
-			gel_output_string(gelo,")");
+			gel_output_string(gelo, "(until ");
+			gel_print_etree (gelo, l, FALSE);
+			gel_output_string(gelo, " do ");
+			gel_print_etree (gelo, r, FALSE);
+			gel_output_string(gelo, ")");
 			break;
 		case E_DOWHILE_CONS:
 			GET_LR(n,l,r);
-			gel_output_string(gelo,"(do ");
-			print_etree(gelo, l, FALSE);
-			gel_output_string(gelo," while ");
-			print_etree(gelo, r, FALSE);
-			gel_output_string(gelo,")");
+			gel_output_string (gelo, "(do ");
+			gel_print_etree (gelo, l, FALSE);
+			gel_output_string (gelo, " while ");
+			gel_print_etree (gelo, r, FALSE);
+			gel_output_string (gelo, ")");
 			break;
 		case E_DOUNTIL_CONS:
 			GET_LR(n,l,r);
 			gel_output_string(gelo,"(do ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," until ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_FOR_CONS:
-			{
-				GelETree *a,*b,*c,*d;
-				GET_ABCD(n,a,b,c,d);
-				gel_output_string(gelo,"(for ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCD (n, a, b, c, d);
+			gel_output_string (gelo, "(for ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_FORBY_CONS:
-			{
-				GelETree *a,*b,*c,*d,*e;
-				GET_ABCDE(n,a,b,c,d,e);
-				gel_output_string(gelo,"(for ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," by ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, e, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCDE (n, a, b, c, d, e);
+			gel_output_string (gelo, "(for ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " by ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, e, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_FORIN_CONS:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(for ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," in ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo," do ");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_SUM_CONS:
-			{
-				GelETree *a,*b,*c,*d;
-				GET_ABCD(n,a,b,c,d);
-				gel_output_string(gelo,"(sum ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCD (n, a, b, c, d);
+			gel_output_string (gelo, "(sum ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_SUMBY_CONS:
-			{
-				GelETree *a,*b,*c,*d,*e;
-				GET_ABCDE(n,a,b,c,d,e);
-				gel_output_string(gelo,"(sum ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," by ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, e, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCDE (n, a, b, c, d, e);
+			gel_output_string (gelo, "(sum ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " by ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, e, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_SUMIN_CONS:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(sum ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," in ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo," do ");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,")");
 			break;
 		case E_PROD_CONS:
-			{
-				GelETree *a,*b,*c,*d;
-				GET_ABCD(n,a,b,c,d);
-				gel_output_string(gelo,"(prod ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCD(n,a,b,c,d);
+			gel_output_string (gelo, "(prod ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_PRODBY_CONS:
-			{
-				GelETree *a,*b,*c,*d,*e;
-				GET_ABCDE(n,a,b,c,d,e);
-				gel_output_string(gelo,"(prod ");
-				print_etree(gelo, a, FALSE);
-				gel_output_string(gelo," = ");
-				print_etree(gelo, b, FALSE);
-				gel_output_string(gelo," to ");
-				print_etree(gelo, c, FALSE);
-				gel_output_string(gelo," by ");
-				print_etree(gelo, d, FALSE);
-				gel_output_string(gelo," do ");
-				print_etree(gelo, e, FALSE);
-				gel_output_string(gelo,")");
-				break;
-			}
+			GET_ABCDE (n, a, b, c, d, e);
+			gel_output_string (gelo, "(prod ");
+			gel_print_etree (gelo, a, FALSE);
+			gel_output_string (gelo, " = ");
+			gel_print_etree (gelo, b, FALSE);
+			gel_output_string (gelo, " to ");
+			gel_print_etree (gelo, c, FALSE);
+			gel_output_string (gelo, " by ");
+			gel_print_etree (gelo, d, FALSE);
+			gel_output_string (gelo, " do ");
+			gel_print_etree (gelo, e, FALSE);
+			gel_output_string (gelo, ")");
+			break;
 		case E_PRODIN_CONS:
 			GET_LRR(n,l,r,rr);
 			gel_output_string(gelo,"(prod ");
-			print_etree(gelo, l, FALSE);
+			gel_print_etree (gelo, l, FALSE);
 			gel_output_string(gelo," in ");
-			print_etree(gelo, r, FALSE);
+			gel_print_etree (gelo, r, FALSE);
 			gel_output_string(gelo," do ");
-			print_etree(gelo, rr, FALSE);
+			gel_print_etree (gelo, rr, FALSE);
 			gel_output_string(gelo,")");
 			break;
 
@@ -960,18 +943,18 @@ appendoper(GelOutput *gelo, GelETree *n)
 				gel_output_string(gelo,"*");
 				gel_output_string(gelo,t->id.id->token);
 			} else {
-				print_etree (gelo, l, FALSE);
+				gel_print_etree (gelo, l, FALSE);
 				gel_output_string (gelo, " call ");
 			}
 			gel_output_string(gelo,"(");
 			li = n->op.args->any.next;
 			if(li) {
-				print_etree(gelo, li, FALSE);
+				gel_print_etree (gelo, li, FALSE);
 				li=li->any.next;
 			}
 			for(;li!=NULL;li=li->any.next) {
 				gel_output_string(gelo,",");
-				print_etree(gelo, li, FALSE);
+				gel_print_etree (gelo, li, FALSE);
 			}
 			gel_output_string(gelo,"))");
 			break;
@@ -1008,7 +991,7 @@ appendcomp(GelOutput *gelo, GelETree *n)
 	for(oli=n->comp.comp,li=n->comp.args;oli;
 	    li=li->any.next,oli=g_slist_next(oli)) {
 		int oper= GPOINTER_TO_INT(oli->data);
-		print_etree(gelo, li, FALSE);
+		gel_print_etree (gelo, li, FALSE);
 		switch(oper) {
 		case E_EQ_CMP:
 			gel_output_string(gelo,"=="); break;
@@ -1026,7 +1009,7 @@ appendcomp(GelOutput *gelo, GelETree *n)
 			g_assert_not_reached();
 		}
 	}
-	print_etree(gelo, li, FALSE);
+	gel_print_etree (gelo, li, FALSE);
 
 	gel_output_string(gelo,")");
 }
@@ -1043,10 +1026,14 @@ appendmatrix_troff (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 	
 	for (i = 0; i < gel_matrixw_width (m); i++) {
 		gel_output_string (gelo, "rcol { ");
-		print_etree (gelo, gel_matrixw_index (m, i, 0), FALSE);
+		gel_print_etree (gelo,
+				 gel_matrixw_index (m, i, 0),
+				 FALSE);
 		for(j = 1; j < gel_matrixw_height (m); j++) {
 			gel_output_string (gelo, " above ");
-			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+			gel_print_etree (gelo,
+					 gel_matrixw_index (m, i, j),
+					 FALSE);
 		}
 		gel_output_string (gelo, " } ");
 		if (nice)
@@ -1072,10 +1059,14 @@ appendmatrix_latex (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 		gel_output_string (gelo, " ");
 	
 	for (j = 0; j < gel_matrixw_height (m); j++) {
-		print_etree (gelo, gel_matrixw_index (m, 0, j), FALSE);
+		gel_print_etree (gelo,
+				 gel_matrixw_index (m, 0, j),
+				 FALSE);
 		for(i = 1; i < gel_matrixw_width (m); i++) {
 			gel_output_string (gelo, " & ");
-			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+			gel_print_etree (gelo,
+					 gel_matrixw_index (m, i, j),
+					 FALSE);
 		}
 		gel_output_string (gelo, " \\\\");
 		if (nice)
@@ -1102,10 +1093,14 @@ appendmatrix_mathml (GelOutput *gelo, GelMatrixW *m, gboolean nice)
 		if (nice)
 			gel_output_string (gelo, " ");
 		gel_output_string (gelo, "<matrixrow>");
-		print_etree (gelo, gel_matrixw_index (m, 0, j), FALSE);
+		gel_print_etree (gelo,
+				 gel_matrixw_index (m, 0, j),
+				 FALSE);
 		for(i = 1; i < gel_matrixw_width (m); i++) {
 			//gel_output_string (gelo, "</cn><cn>");
-			print_etree (gelo, gel_matrixw_index (m, i, j), FALSE);
+			gel_print_etree (gelo,
+					 gel_matrixw_index (m, i, j),
+					 FALSE);
 		}
 		gel_output_string (gelo, "</matrixrow>");
 		if (nice)
@@ -1136,18 +1131,22 @@ appendmatrix (GelOutput *gelo, GelMatrixW *m)
 
 	gel_output_string(gelo,"[");
 	
-	print_etree(gelo, gel_matrixw_index(m,0,0), FALSE);
+	gel_print_etree (gelo, gel_matrixw_index (m, 0, 0), FALSE);
 	
 	for(i=1;i<gel_matrixw_width(m);i++) {
 		gel_output_string(gelo, ",");
-		print_etree(gelo, gel_matrixw_index(m,i,0), FALSE);
+		gel_print_etree (gelo, gel_matrixw_index (m, i, 0), FALSE);
 	}
 	for(j=1;j<gel_matrixw_height(m);j++) {
 		gel_output_string(gelo, ";");
-		print_etree(gelo, gel_matrixw_index(m,0,j), FALSE);
+		gel_print_etree (gelo,
+				 gel_matrixw_index(m,0,j),
+				 FALSE);
 		for(i=1;i<gel_matrixw_width(m);i++) {
 			gel_output_string(gelo, ",");
-			print_etree(gelo, gel_matrixw_index(m,i,j), FALSE);
+			gel_print_etree (gelo,
+					 gel_matrixw_index (m, i, j),
+					 FALSE);
 		}
 	}
 
@@ -1165,7 +1164,7 @@ appendpolynomial (GelOutput *gelo, GelETree *n)
 	if G_UNLIKELY (n->poly.vars > 3) {
 		/* FIXME: */
 		gel_errorout (_("Cannot currently print polynomials of "
-				"more then 3 vars"));
+				"more than 3 vars"));
 		gel_output_string (gelo, "(?)");
 		return;
 	}
@@ -1232,7 +1231,9 @@ appendpolynomial (GelOutput *gelo, GelETree *n)
 
 /*make a string representation of an expression*/
 void
-print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
+gel_print_etree (GelOutput *gelo,
+		 GelETree *n,
+		 gboolean toplevel)
 {
 	char *p;
 
@@ -1336,7 +1337,7 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 			if G_LIKELY (f->type==GEL_USER_FUNC) {
 				gel_output_string(gelo,")=(");
 				D_ENSURE_USER_BODY (f);
-				print_etree(gelo, f->data.user, FALSE);
+				gel_print_etree (gelo, f->data.user, FALSE);
 				gel_output_string(gelo,"))");
 			} else {
 				/*variable and reference functions should
@@ -1363,13 +1364,197 @@ print_etree(GelOutput *gelo, GelETree *n, gboolean toplevel)
 	gel_output_pop_nonotify (gelo);
 }
 
+static int
+strlen_max (const char *s, int m)
+{
+	int i;
+	for (i = 0; i < m && s[i] != '\0'; i++)
+		;
+	return i;
+}
+
+static char *
+make_sep (int len)
+{
+	char sep[] = "----------------------------------------------------------------------------------";
+	sep[MIN(80,len)] = '\0';
+	return g_strdup (sep);
+}
+
+static char *
+make_empty (int len)
+{
+	char sep[] = "                                                                                 ";
+	sep[MIN(80,len)] = '\0';
+	return g_strdup (sep);
+}
+
+static void
+pretty_print_value_normal (GelOutput *gelo, GelETree *n)
+{
+	int columns = gel_output_get_columns (gelo);
+
+	/* FIXME: what about mixed_fractions, what about rational
+	   complex values, etc... */
+	if ( ! mpw_is_complex (n->val.value) &&
+	    mpw_is_rational (n->val.value)) {
+		int lend, lenn, lenw;
+		mpw_t num, den, whole;
+		mpz_ptr z;
+		char *nums, *dens, *wholes, *sep;
+
+		mpw_init (num);
+		mpw_init (den);
+		mpw_init (whole);
+
+		mpw_numerator (num, n->val.value);
+		mpw_denominator (den, n->val.value);
+
+		z = mpw_peek_real_mpz (den);
+		if (z == NULL ||
+		    mpz_sizeinbase (z, calcstate.integer_output_base) - 1
+		      > calcstate.max_digits) {
+			mpw_clear (den);
+			mpw_clear (num);
+			mpw_clear (whole);
+			goto just_print_a_number;
+		}
+
+		if (calcstate.mixed_fractions &&
+		    mpw_cmp (num, den) > 0) {
+			mpz_t quot;
+			mpz_t rem;
+			mpz_ptr denz;
+
+			mpz_init (quot);
+			mpz_init (rem);
+
+			z = mpw_peek_real_mpz (num);
+			denz = mpw_peek_real_mpz (den);
+
+			mpz_tdiv_qr (quot, rem, z, denz);
+
+			mpw_set_mpz_use (whole, quot);
+			mpw_set_mpz_use (num, rem);
+
+			z = mpw_peek_real_mpz (whole);
+			if (z == NULL ||
+			    mpz_sizeinbase (z, calcstate.integer_output_base) - 1
+			    > calcstate.max_digits) {
+				mpw_clear (den);
+				mpw_clear (num);
+				mpw_clear (whole);
+				goto just_print_a_number;
+			}
+
+			wholes = mpw_getstring (whole,
+						0 /* calcstate.max_digits */,
+						calcstate.scientific_notation,
+						calcstate.results_as_floats,
+						calcstate.mixed_fractions,
+						calcstate.output_style,
+						calcstate.integer_output_base,
+						FALSE);
+			lenw = strlen_max (wholes, columns);
+		} else {
+			wholes = NULL;
+			lenw = -1;
+		}
+
+		z = mpw_peek_real_mpz (num);
+		if (z == NULL ||
+		    mpz_sizeinbase (z, calcstate.integer_output_base) - 1
+		      > calcstate.max_digits) {
+			mpw_clear (den);
+			mpw_clear (num);
+			mpw_clear (whole);
+			goto just_print_a_number;
+		}
+
+		/* we can possibly be one off with max_digits,
+		   since sizeinbase can be 1 off, but that's ok */
+
+		nums = mpw_getstring (num,
+				      0 /* calcstate.max_digits */,
+				      calcstate.scientific_notation,
+				      calcstate.results_as_floats,
+				      calcstate.mixed_fractions,
+				      calcstate.output_style,
+				      calcstate.integer_output_base,
+				      FALSE);
+		lenn = strlen_max (nums, columns);
+		dens = mpw_getstring (den,
+				      0 /* calcstate.max_digits */,
+				      calcstate.scientific_notation,
+				      calcstate.results_as_floats,
+				      calcstate.mixed_fractions,
+				      calcstate.output_style,
+				      calcstate.integer_output_base,
+				      FALSE);
+		lend = strlen_max (dens, columns);
+
+		if ((lenn + 1 + lenw) >= columns ||
+		    (lend + 1 + lenw) >= columns ||
+		    (lenn <= 2 && lend <= 2)) {
+			mpw_clear (den);
+			mpw_clear (num);
+			mpw_clear (whole);
+			g_free (dens);
+			g_free (nums);
+			g_free (wholes);
+			goto just_print_a_number;
+		}
+
+		gel_output_string (gelo, "\n");
+
+		sep = make_sep (MAX (lend, lenn));
+
+		if (lenw > 0) {
+			char *spacer = make_empty (lenw+1);
+			gel_output_string (gelo, spacer);
+			gel_output_string (gelo, nums);
+			gel_output_string (gelo, "\n");
+			gel_output_string (gelo, wholes);
+			gel_output_string (gelo, " ");
+			gel_output_string (gelo, sep);
+			gel_output_string (gelo, "\n");
+			gel_output_string (gelo, spacer);
+			gel_output_string (gelo, dens);
+			g_free (spacer);
+		} else {
+			gel_output_string (gelo, "\n");
+			gel_output_string (gelo, nums);
+			gel_output_string (gelo, "\n");
+			gel_output_string (gelo, sep);
+			gel_output_string (gelo, "\n");
+			gel_output_string (gelo, dens);
+		}
+		g_free (sep);
+		g_free (nums);
+		g_free (dens);
+		g_free (wholes);
+
+		mpw_clear (den);
+		mpw_clear (num);
+		mpw_clear (whole);
+
+		return;
+	}
+
+just_print_a_number:
+	gel_print_etree (gelo, n, TRUE);
+}
+
 void
-pretty_print_etree(GelOutput *gelo, GelETree *n)
+gel_pretty_print_etree (GelOutput *gelo, GelETree *n)
 {
 	/*do a nice printout of matrices if that's the
 	  top node*/
 	gel_output_push_nonotify (gelo);
-	if(n->type == MATRIX_NODE) {
+	if (n->type == VALUE_NODE &&
+	    calcstate.output_style == GEL_OUTPUT_NORMAL) {
+		pretty_print_value_normal (gelo, n);
+	} else if (n->type == MATRIX_NODE) {
 		int i,j;
 
 		if (calcstate.output_style == GEL_OUTPUT_TROFF) {
@@ -1400,17 +1585,19 @@ pretty_print_etree(GelOutput *gelo, GelETree *n)
 					gel_output_string(gelo, "\n ");
 			}
 			for(i=0;i<gel_matrixw_width(n->mat.matrix);i++) {
-				if(i>0) gel_output_string(gelo, "\t");
-				print_etree(gelo,
-					    gel_matrixw_index(n->mat.matrix,i,j),
-					    FALSE);
+				if (i > 0)
+					gel_output_string(gelo, "\t");
+				gel_print_etree (gelo,
+						 gel_matrixw_index
+						    (n->mat.matrix, i, j),
+						 FALSE);
 			}
 		}
 		gel_output_string(gelo, "]");
 	} else {
 		if (calcstate.output_style == GEL_OUTPUT_MATHML)
 			gel_output_string (gelo, "\n<math>\n ");
-		print_etree (gelo, n, TRUE);
+		gel_print_etree (gelo, n, TRUE);
 		if (calcstate.output_style == GEL_OUTPUT_MATHML)
 			gel_output_string (gelo, "\n</math>");
 
@@ -1420,13 +1607,13 @@ pretty_print_etree(GelOutput *gelo, GelETree *n)
 
 /*make a string representation of an expression*/
 char *
-string_print_etree(GelETree *n)
+gel_string_print_etree (GelETree *n)
 {
 	GelOutput *gelo = gel_output_new();
 	char *ret;
 	gel_output_setup_string(gelo, 0, NULL);
 
-	print_etree (gelo, n, TRUE);
+	gel_print_etree (gelo, n, TRUE);
 
 	ret = gel_output_snarf_string(gelo);
 
@@ -1436,59 +1623,6 @@ string_print_etree(GelETree *n)
 		return g_strdup("");
 	else
 		return ret;
-}
-
-/*add the right parenthesis and brackets to the end of the expression*/
-char *
-addparenth(char *s)
-{
-	GSList *stack = NULL;
-	char *p;
-	int l;
-
-	for(p=s;*p!='\0';p++) {
-		switch(*p) {
-			case '[':
-				stack_push(&stack,"]");
-				break;
-			case '(':
-				stack_push(&stack,")");
-				break;
-			case '{':
-				stack_push(&stack,"}");
-				break;
-			case ']':
-				if(!stack)
-					return s; /*too many trailing*/
-				if(*(char *)stack_pop(&stack) != ']') {
-					if(stack) g_slist_free(stack);
-					return s; /*non matching*/
-				}
-				break;
-			case ')':
-				if(!stack)
-					return s; /*too many trailing*/
-				if(*(char *)stack_pop(&stack) != ')') {
-					if(stack) g_slist_free(stack);
-					return s; /*non matching*/
-				}
-				break;
-			case '}':
-				if(!stack)
-					return s; /*too many trailing*/
-				if(*(char *)stack_pop(&stack) != '}') {
-					if(stack) g_slist_free(stack);
-					return s; /*non matching*/
-				}
-				break;
-		}
-	}
-	l = strlen(s);
-	s = g_realloc(s,l+g_slist_length(stack)+1);
-	while(stack)
-		s[l++]=*((char *)stack_pop(&stack));
-	s[l]='\0';
-	return s;
 }
 
 static void
@@ -2754,9 +2888,9 @@ gel_evalexp_parsed (GelETree *parsed,
 			gel_output_string(gelo, prefix);
 		}
 		if(pretty)
-			pretty_print_etree(gelo,ret);
+			gel_pretty_print_etree (gelo, ret);
 		else
-			print_etree(gelo, ret, TRUE);
+			gel_print_etree (gelo, ret, TRUE);
 		gel_output_string(gelo, "\n");
 	}
 
@@ -2800,23 +2934,23 @@ gel_evalexp (const char *str,
 void yyerror(char *s);
 
 void
-yyerror(char *s)
+yyerror (char *s)
 {
 	char *p;
 	
-	if(ignore_end_parse_errors && yytext[0]=='\0') {
+	if (ignore_end_parse_errors && yytext[0] == '\0') {
 		got_end_too_soon = TRUE;
 		return;
 	}
 	
-	if(strcmp(yytext,"\n")==0) {
+	if (strcmp (yytext, "\n") == 0) {
 		gel_errorout (_("ERROR: %s before newline"), s);
-	} else if(yytext[0]=='\0') {
+	} else if (yytext[0] == '\0') {
 		gel_errorout (_("ERROR: %s at end of input"), s);
 	} else {
 		char *tmp = g_strdup (yytext);
 		p = tmp;
-		while( (p = strchr (p, '\n')) != NULL)
+		while ( (p = strchr (p, '\n')) != NULL)
 			*p='.';
 
 		gel_errorout (_("ERROR: %s before '%s'"), s, tmp);

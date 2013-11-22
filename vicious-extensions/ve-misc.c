@@ -403,6 +403,9 @@ ve_unsetenv (const char *name)
 	extern char **environ;
 	int i, len;
 
+	if (environ == NULL)
+		return;
+
 	len = strlen (name);
 	
 	/* Mess directly with the environ array.
@@ -438,7 +441,8 @@ ve_clearenv (void)
 	clearenv ();
 #else
 	extern char **environ;
-	environ[0] = NULL;
+	if (environ != NULL)
+		environ[0] = NULL;
 #endif
 }
 
@@ -473,5 +477,18 @@ ve_is_prog_in_path (const char *prog, const char *path)
 		return TRUE;
 	} else {
 		return FALSE;
+	}
+}
+
+char *
+ve_shell_quote_filename (const char *name)
+{
+	if (name[0] != '-') {
+		return g_shell_quote (name);
+	} else {
+		char *fname = g_strconcat ("./", name, NULL);
+		char *quoted = g_shell_quote (fname);
+		g_free (fname);
+		return quoted;
 	}
 }

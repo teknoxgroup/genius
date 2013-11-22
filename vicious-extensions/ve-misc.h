@@ -98,6 +98,8 @@ const GList * ve_i18n_get_language_list (const gchar *category_name);
 char * ve_find_prog_in_path (const char *prog, const char *path);
 gboolean ve_is_prog_in_path (const char *prog, const char *path);
 
+char *ve_shell_quote_filename (const char *name);
+
 #define VE_IGNORE_EINTR(expr) \
 	do {		\
 		errno = 0;	\

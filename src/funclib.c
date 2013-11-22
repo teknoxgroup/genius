@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2003 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -309,9 +309,9 @@ error_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		GelOutput *gelo = gel_output_new();
 		char *s;
 		gel_output_setup_string (gelo, 0, NULL);
-		pretty_print_etree(gelo, a[0]);
-		s = gel_output_snarf_string(gelo);
-		gel_output_unref(gelo);
+		gel_pretty_print_etree (gelo, a[0]);
+		s = gel_output_snarf_string (gelo);
+		gel_output_unref (gelo);
 		gel_errorout (s != NULL ? s : "");
 		g_free (s);
 	}
@@ -325,7 +325,7 @@ print_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		gel_output_printf_full (main_out, FALSE, "%s\n", a[0]->str.str);
 	} else {
 		/* FIXME: whack limit */
-		pretty_print_etree (main_out, a[0]);
+		gel_pretty_print_etree (main_out, a[0]);
 		gel_output_string (main_out,"\n");
 	}
 	gel_output_flush (main_out);
@@ -344,9 +344,9 @@ static GelETree *
 printn_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	if(a[0]->type==STRING_NODE)
-		gel_output_printf(main_out, "%s", a[0]->str.str);
+		gel_output_printf (main_out, "%s", a[0]->str.str);
 	else
-		print_etree(main_out, a[0], TRUE);
+		gel_print_etree (main_out, a[0], TRUE);
 	gel_output_flush(main_out);
 	return gel_makenum_null();
 }
@@ -357,7 +357,7 @@ display_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if G_UNLIKELY ( ! check_argument_string (a, 0, "display"))
 		return NULL;
 	gel_output_printf(main_out, "%s: ", a[0]->str.str);
-	pretty_print_etree(main_out, a[1]);
+	gel_pretty_print_etree (main_out, a[1]);
 	gel_output_string(main_out, "\n");
 	gel_output_flush(main_out);
 	return gel_makenum_null();
@@ -2790,7 +2790,7 @@ MillerRabinTestSure_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return NULL;
 	if G_UNLIKELY (mpw_cmp_ui (a[0]->val.value, 2) <= 0) {
 		gel_errorout (_("%s: argument must be greater "
-				"then 2"), "MillerRabinTestSure");
+				"than 2"), "MillerRabinTestSure");
 		return NULL;
 	}
 
@@ -3250,9 +3250,9 @@ PolyToString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		if(mpw_sgn(t->val.value)>0) {
 			if(any) g_string_append(gs," + ");
 			if(i==0)
-				print_etree(gelo,t,FALSE);
+				gel_print_etree (gelo, t, FALSE);
 			else if(mpw_cmp_ui(t->val.value,1)!=0) {
-				print_etree(gelo,t,FALSE);
+				gel_print_etree (gelo, t, FALSE);
 				g_string_append_c(gs,'*');
 			}
 			/*negative*/
@@ -3261,9 +3261,9 @@ PolyToString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 			else g_string_append_c(gs,'-');
 			mpw_neg(t->val.value,t->val.value);
 			if(i==0)
-				print_etree(gelo,t,FALSE);
+				gel_print_etree (gelo, t, FALSE);
 			else if(mpw_cmp_ui(t->val.value,1)!=0) {
-				print_etree(gelo,t,FALSE);
+				gel_print_etree (gelo, t, FALSE);
 				g_string_append_c(gs,'*');
 			}
 			mpw_neg(t->val.value,t->val.value);
@@ -4319,7 +4319,7 @@ gel_funclib_addall(void)
 	PARAMETER (OutputStyle, _("Output style: normal, latex or troff"));
 	PARAMETER (IntegerOutputBase, _("Integer output base"));
 	PARAMETER (MixedFractions, _("If true, mixed fractions are printed"));
-	PARAMETER (FullExpressions, _("Print full expressions, even if more then a line"));
+	PARAMETER (FullExpressions, _("Print full expressions, even if more than a line"));
 	PARAMETER (ResultsAsFloats, _("Convert all results to floats before printing"));
 	PARAMETER (ScientificNotation, _("Use scientific notation"));
 
@@ -4341,7 +4341,7 @@ gel_funclib_addall(void)
 
 	FUNC (sin, 1, "x", "trigonometry", _("Calculates the sine function"));
 	sin_function = f;
-	FUNC (cos, 1, "x", "trigonometry", _("Calculates the cossine function"));
+	FUNC (cos, 1, "x", "trigonometry", _("Calculates the cosine function"));
 	cos_function = f;
 	FUNC (sinh, 1, "x", "trigonometry", _("Calculates the hyperbolic sine function"));
 	sinh_function = f;
@@ -4377,10 +4377,10 @@ gel_funclib_addall(void)
 	FUNC (round, 1, "x", "numeric", _("Round a number"));
 	round_function = f;
 	ALIAS (Round, 1, round);
-	FUNC (floor, 1, "x", "numeric", _("Get the highest integer less then or equal to n"));
+	FUNC (floor, 1, "x", "numeric", _("Get the highest integer less than or equal to n"));
 	floor_function = f;
 	ALIAS (Floor, 1, floor);
-	FUNC (ceil, 1, "x", "numeric", _("Get the lowest integer more then or equal to n"));
+	FUNC (ceil, 1, "x", "numeric", _("Get the lowest integer more than or equal to n"));
 	ceil_function = f;
 	ALIAS (Ceiling, 1, ceil);
 	FUNC (trunc, 1, "x", "numeric", _("Truncate number to an integer (return the integer part)"));
@@ -4408,7 +4408,7 @@ gel_funclib_addall(void)
 	FUNC (NextPrime, 1, "n", "number_theory", _("Returns the least prime greater than n (if n is positive)"));
 	FUNC (LucasNumber, 1, "n", "number_theory", _("Returns the n'th Lucas number"));
 	FUNC (ModInvert, 2, "n,m", "number_theory", _("Returns inverse of n mod m"));
-	FUNC (IsPrime, 1, "n", "number_theory", _("Tests primality of integers, for numbers greater then 25*10^9 false positive is with low probability depending on IsPrimeMillerRabinReps"));
+	FUNC (IsPrime, 1, "n", "number_theory", _("Tests primality of integers, for numbers greater than 25*10^9 false positive is with low probability depending on IsPrimeMillerRabinReps"));
 	FUNC (StrongPseudoprimeTest, 2, "n,b", "number_theory", _("Run the strong pseudoprime test base b on n"));
 	FUNC (MillerRabinTest, 2, "n,reps", "number_theory", _("Use the Miller-Rabin primality test on n, reps number of times.  The probability of false positive is (1/4)^reps"));
 	FUNC (MillerRabinTestSure, 1, "n", "number_theory", _("Use the Miller-Rabin primality test on n with enough bases that assuming the Generalized Reimann Hypothesis the result is deterministic"));

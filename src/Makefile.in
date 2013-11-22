@@ -560,7 +560,10 @@ genius.o: genius.c ../config.h calc.h genius-i18n.h structs.h mpwrap.h \
 genius_lists.o: genius_lists.c
 gnome-genius.o: gnome-genius.c ../config.h calc.h genius-i18n.h \
 	structs.h mpwrap.h util.h dict.h eval.h lexer.h geloutput.h \
-	graphing.h plugin.h inter.h gnome-genius.h
+	graphing.h plugin.h inter.h ../vicious-extensions/vicious.h \
+	../vicious-extensions/ve-misc.h \
+	../vicious-extensions/ve-config.h \
+	../vicious-extensions/ve-signal.h gnome-genius.h
 graphing.o: graphing.c ../config.h ../vicious-extensions/vicious.h \
 	../vicious-extensions/ve-misc.h \
 	../vicious-extensions/ve-config.h \

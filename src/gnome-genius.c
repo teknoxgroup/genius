@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2004 George Lebl
+ * Copyright (C) 1997-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@
 #include "plugin.h"
 #include "inter.h"
 
+#include <vicious.h>
+
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -55,11 +57,13 @@
 #include <gtksourceview/gtksourceprintjob.h>
 #endif
 
+#include <libgnomevfs/gnome-vfs-uri.h>
+#include <libgnomevfs/gnome-vfs-ops.h>
+#include <libgnomevfs/gnome-vfs-utils.h>
+
 #include "gnome-genius.h"
 
 /*Globals:*/
-
-#define DEFAULT_FONT "Monospace 10"
 
 /*calculator state*/
 calcstate_t curstate={
@@ -94,10 +98,11 @@ static int errors_printed = 0;
 static char *last_dir = NULL;
 
 GeniusSetup genius_setup = {
-	FALSE,
-	TRUE,
-	1000,
-	NULL
+	FALSE /* error_box */,
+	TRUE /* info_box */,
+	1000 /* scrollback */,
+	NULL /* font */,
+	FALSE /* black on white */
 };
 
 typedef struct {
@@ -113,17 +118,52 @@ typedef struct {
 	GtkWidget *label;
 } Program;
 
+enum {
+	TARGET_URI_LIST = 100
+};
+
+#define TERMINAL_PALETTE_SIZE 16
+const GdkColor
+terminal_palette_black_on_white[TERMINAL_PALETTE_SIZE] =
+{
+  { 0, 0x0000, 0x0000, 0x0000 },
+  { 0, 0xaaaa, 0x0000, 0x0000 },
+  { 0, 0x0000, 0x8888, 0x0000 },
+  { 0, 0xaaaa, 0x5555, 0x0000 },
+  { 0, 0x0000, 0x0000, 0xaaaa },
+  { 0, 0xaaaa, 0x0000, 0xaaaa },
+  { 0, 0x0000, 0xaaaa, 0xaaaa },
+  { 0, 0xaaaa, 0xaaaa, 0xaaaa },
+
+  { 0, 0x0000, 0x0000, 0x0000 },
+  { 0, 0xaaaa, 0x0000, 0x0000 },
+  { 0, 0x0000, 0x8888, 0x0000 },
+  { 0, 0xaaaa, 0x5555, 0x0000 },
+  { 0, 0x0000, 0x0000, 0xaaaa },
+  { 0, 0xaaaa, 0x0000, 0xaaaa },
+  { 0, 0x0000, 0x8888, 0xaaaa },
+  { 0, 0xaaaa, 0xaaaa, 0xaaaa },
+};
+
+static GtkTargetEntry drag_types[] = {
+	{ "text/uri-list", 0, TARGET_URI_LIST },
+};
+
+static gint n_drag_types = sizeof (drag_types) / sizeof (drag_types [0]);
+
 static Program *selected_program = NULL;
 static Program *running_program = NULL;
+
+static char *default_console_font = NULL;
 
 pid_t helper_pid = -1;
 
 static FILE *torlfp = NULL;
 static int fromrl;
 
-static int forzvt[2];
+static int forvte[2];
 
-static GIOChannel *forzvt0_ch;
+static GIOChannel *forvte0_ch;
 
 
 static char *torlfifo = NULL;
@@ -131,7 +171,7 @@ static char *fromrlfifo = NULL;
 
 static char *arg0 = NULL;
 
-static gboolean feed_to_zvt (GIOChannel *source, GIOCondition condition, gpointer data);
+static gboolean feed_to_vte (GIOChannel *source, GIOCondition condition, gpointer data);
 static void new_callback (GtkWidget *menu_item, gpointer data);
 static void open_callback (GtkWidget *w);
 static void save_callback (GtkWidget *w);
@@ -276,6 +316,39 @@ count_char (const char *s, char c)
 	return i;
 }
 
+static gboolean
+uri_exists (const gchar* text_uri)
+{
+	GnomeVFSURI *uri;
+	gboolean res;
+		
+	g_return_val_if_fail (text_uri != NULL, FALSE);
+	
+	uri = gnome_vfs_uri_new (text_uri);
+	g_return_val_if_fail (uri != NULL, FALSE);
+
+	res = gnome_vfs_uri_exists (uri);
+
+	gnome_vfs_uri_unref (uri);
+
+	return res;
+}
+
+static void
+setup_term_color (void)
+{
+	if (genius_setup.black_on_white) {
+		GdkColor black = {0, 0, 0, 0};
+		GdkColor white = {0, 65535, 65535, 65535};
+		vte_terminal_set_colors (VTE_TERMINAL (term),
+					 &black,
+					 &white,
+					 terminal_palette_black_on_white,
+					 TERMINAL_PALETTE_SIZE);
+	} else {
+		vte_terminal_set_default_colors (VTE_TERMINAL (term));
+	}
+}
 
 /*display a message in a messagebox*/
 static GtkWidget *
@@ -284,7 +357,7 @@ geniusbox (gboolean error,
 	   const char *s)
 {
 	GtkWidget *mb;
-	/* if less then 10 lines */
+	/* if less than 10 lines */
 	if (count_char (s, '\n') <= 10) {
 		GtkMessageType type = GTK_MESSAGE_INFO;
 		if (error)
@@ -520,8 +593,9 @@ aboutcb(GtkWidget * widget, gpointer data)
 static void
 set_properties (void)
 {
-	gnome_config_set_string("/genius/properties/pango_font", genius_setup.font?
-				genius_setup.font:DEFAULT_FONT);
+	gnome_config_set_bool("/genius/properties/black_on_white", genius_setup.black_on_white);
+	gnome_config_set_string ("/genius/properties/pango_font",
+				 ve_sure_string (genius_setup.font));
 	gnome_config_set_int("/genius/properties/scrollback", genius_setup.scrollback);
 	gnome_config_set_bool("/genius/properties/error_box", genius_setup.error_box);
 	gnome_config_set_bool("/genius/properties/info_box",
@@ -743,9 +817,13 @@ setup_response (GtkWidget *widget, gint resp, gpointer data)
 		set_new_calcstate (curstate);
 		vte_terminal_set_scrollback_lines (VTE_TERMINAL (term),
 						   genius_setup.scrollback);
-		vte_terminal_set_font_from_string (VTE_TERMINAL (term),
-						   genius_setup.font ?
-						   genius_setup.font : DEFAULT_FONT);
+		vte_terminal_set_font_from_string
+			(VTE_TERMINAL (term),
+			 ve_string_empty (genius_setup.font) ?
+			   default_console_font :
+			   genius_setup.font);
+		setup_term_color ();
+
 		if (resp == GTK_RESPONSE_OK ||
 		    resp == GTK_RESPONSE_CANCEL)
 			gtk_widget_destroy (widget);
@@ -988,14 +1066,23 @@ setup_calc(GtkWidget *widget, gpointer data)
 	
         w = gnome_font_picker_new();
 	gnome_font_picker_set_font_name (GNOME_FONT_PICKER (w),
-					 tmpsetup.font ? tmpsetup.font :
-					 DEFAULT_FONT);
+					 ve_string_empty (tmpsetup.font) ?
+					   default_console_font :
+					   genius_setup.font);
         gnome_font_picker_set_mode (GNOME_FONT_PICKER (w),
 				    GNOME_FONT_PICKER_MODE_FONT_INFO);
         gtk_box_pack_start(GTK_BOX(b),w,TRUE,TRUE,0);
         g_signal_connect (G_OBJECT (w), "font_set",
 			  G_CALLBACK (fontsetcb),
 			  &tmpsetup.font);
+
+	w=gtk_check_button_new_with_label(_("Black on white"));
+	gtk_box_pack_start(GTK_BOX(box),w,FALSE,FALSE,0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (w), 
+				      tmpsetup.black_on_white);
+	g_signal_connect (G_OBJECT(w), "toggled",
+			  G_CALLBACK (optioncb),
+			  (gpointer)&tmpsetup.black_on_white);
 
 
 	g_signal_connect (G_OBJECT (setupdialog), "response",
@@ -1121,7 +1208,7 @@ really_load_cb (GtkWidget *w, GtkFileSelection *fs)
 	s = gtk_file_selection_get_filename (fs);
 #endif
 	if (s == NULL ||
-	    access (s, R_OK) != 0) {
+	    ! uri_exists (s)) {
 		display_error (GTK_WIDGET (fs),
 			       _("Cannot open file!"));
 		return;
@@ -1478,12 +1565,86 @@ changed_cb (GtkTextBuffer *buffer, GtkWidget *tab_widget)
 	}
 }
 
+static gboolean
+save_contents_vfs (const char *file, const char *str, int size)
+{
+	GnomeVFSHandle *handle;
+	GnomeVFSFileSize bytes;
+	GnomeVFSResult result;
+
+	/* FIXME: we should handle errors better by perhaps moving
+	   to a different name first and erasing only when saving
+	   was all fine */
+
+	/* Be safe about saving files, unlink and create in
+	 * exclusive mode */
+	result = gnome_vfs_unlink (file);
+	/* FIXME: error handling, but not if it's
+	 * the file-doesn't-exist kind of error which is fine */
+	result = gnome_vfs_create (&handle, file,
+				   GNOME_VFS_OPEN_WRITE,
+				   TRUE /* exclusive */,
+				   0644);
+	if (result != GNOME_VFS_OK) {
+		/* FIXME: error handling */
+		return FALSE;
+	}
+
+	result = gnome_vfs_write (handle, str, size, &bytes);
+	if (result != GNOME_VFS_OK || bytes != size) {
+		gnome_vfs_close (handle);
+		/* FIXME: error handling */
+		return FALSE;
+	}
+
+	/* add traling \n if needed */
+	if (size > 0 && str[size-1] != '\n')
+		gnome_vfs_write (handle, "\n", 1, &bytes);
+	/* FIXME: error handling? */
+
+	gnome_vfs_close (handle);
+
+	return TRUE;
+}
+
+static char *
+get_contents_vfs (const char *file)
+{
+	GnomeVFSHandle *handle;
+	GnomeVFSFileSize bytes;
+	char buffer[4096];
+	GnomeVFSResult result;
+	GString *str;
+
+	/* FIXME: add limit to avoid reading until never */
+
+	result = gnome_vfs_open (&handle, file,
+				 GNOME_VFS_OPEN_READ);
+	if (result != GNOME_VFS_OK) {
+		/* FIXME: error handling */
+		return NULL;
+	}
+
+	str = g_string_new (NULL);
+
+	while (gnome_vfs_read (handle,
+			       buffer,
+			       sizeof (buffer)-1,
+			       &bytes) == GNOME_VFS_OK) {
+		buffer[bytes] = '\0';
+		g_string_append (str, buffer);
+	}
+
+	gnome_vfs_close (handle);
+
+	return g_string_free (str, FALSE);
+}
+
 static void
 reload_cb (GtkWidget *menu_item)
 {
 	GtkTextIter iter, iter_end;
 	char *contents;
-	int len;
 
 	if (selected_program == NULL ||
 	    ! selected_program->real_file)
@@ -1498,15 +1659,13 @@ reload_cb (GtkWidget *menu_item)
 	gtk_text_buffer_delete (selected_program->buffer,
 				&iter, &iter_end);
 
-	if (g_file_get_contents (selected_program->name,
-				 &contents,
-				 &len,
-				 NULL /* FIXME: error */)) {
+	contents = get_contents_vfs (selected_program->name);
+	if (contents != NULL) {
 		gtk_text_buffer_get_iter_at_offset (selected_program->buffer,
 						    &iter, 0);
 		gtk_text_buffer_insert_with_tags_by_name
 			(selected_program->buffer,
-			 &iter, contents, len, "foo", NULL);
+			 &iter, contents, -1, "foo", NULL);
 		g_free (contents);
 		selected_program->changed = FALSE;
 	} else {
@@ -1618,16 +1777,13 @@ new_program (const char *filename)
 		cnt++;
 	} else {
 		char *contents;
-		int len;
 		p->name = g_strdup (filename);
-		if (g_file_get_contents (filename,
-					 &contents,
-					 &len,
-					 NULL /* FIXME: error */)) {
+		contents = get_contents_vfs (filename);
+		if (contents != NULL) {
 			GtkTextIter iter;
 			gtk_text_buffer_get_iter_at_offset (buffer, &iter, 0);
 			gtk_text_buffer_insert_with_tags_by_name
-				(buffer, &iter, contents, len, "foo", NULL);
+				(buffer, &iter, contents, -1, "foo", NULL);
 			g_free (contents);
 		} else {
 			char *s = g_strdup_printf (_("Cannot open %s"), filename);
@@ -1671,12 +1827,13 @@ really_open_cb (GtkWidget *w, GtkFileSelection *fs)
 #endif
 
 #if GTK_CHECK_VERSION(2,3,5)
-	s = gtk_file_chooser_get_filename (fs);
+	s = gtk_file_chooser_get_uri (fs);
+	printf ("uri: '%s'\n", s);
 #else
 	s = gtk_file_selection_get_filename (fs);
 #endif
 	if (s == NULL ||
-	    access (s, R_OK) != 0) {
+	    ! uri_exists (s) != 0) {
 		display_error (GTK_WIDGET (fs),
 			       _("Cannot open file!"));
 		return;
@@ -1711,6 +1868,7 @@ open_callback (GtkWidget *w)
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  GTK_STOCK_OPEN, GTK_RESPONSE_OK,
 					  NULL);
+	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (fs), FALSE);
 
 	add_filters (GTK_FILE_CHOOSER (fs));
 
@@ -1748,21 +1906,15 @@ open_callback (GtkWidget *w)
 static gboolean
 save_program (Program *p, const char *new_fname)
 {
-	FILE *fp;
 	GtkTextIter iter, iter_end;
 	char *prog;
 	const char *fname;
 	int sz;
-	int wrote;
 
 	if (new_fname == NULL)
 		fname = p->name;
 	else
 		fname = new_fname;
-
-	fp = fopen (fname, "w");
-	if (fp == NULL)
-		return FALSE;
 
 	gtk_text_buffer_get_iter_at_offset (p->buffer, &iter, 0);
 	gtk_text_buffer_get_iter_at_offset (p->buffer, &iter_end, -1);
@@ -1770,19 +1922,10 @@ save_program (Program *p, const char *new_fname)
 					 FALSE /* include_hidden_chars */);
 	sz = strlen (prog);
 
-	wrote = fwrite (prog, 1, sz, fp);
-	if (sz != wrote) {
+	if ( ! save_contents_vfs (fname, prog, sz)) {
 		g_free (prog);
-		fclose (fp);
 		return FALSE;
 	}
-
-	/* add trailing \n */
-	if (sz > 0 && prog[sz-1] != '\n')
-		fwrite ("\n", 1, 1, fp);
-
-	g_free (prog);
-	fclose (fp);
 
 	if (p->name != fname) {
 		g_free (p->name);
@@ -1845,7 +1988,7 @@ really_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
 		return;
 
 #if GTK_CHECK_VERSION(2,3,5)
-	s = g_strdup (gtk_file_chooser_get_filename (fs));
+	s = g_strdup (gtk_file_chooser_get_uri (fs));
 #else
 	s = g_strdup (gtk_file_selection_get_filename (fs));
 #endif
@@ -1860,7 +2003,7 @@ really_save_as_cb (GtkWidget *w, GtkFileSelection *fs)
 	}
 	g_free (base);
 	
-	if (access (s, F_OK) == 0 &&
+	if ( ! uri_exists (s) &&
 	    ! ask_question (GTK_WIDGET (fs),
 			    _("File already exists.  Overwrite it?"))) {
 		g_free (s);
@@ -1925,6 +2068,7 @@ save_as_callback (GtkWidget *w)
 					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 					  GTK_STOCK_SAVE, GTK_RESPONSE_OK,
 					  NULL);
+	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (fs), FALSE);
 
 	add_filters (GTK_FILE_CHOOSER (fs));
 
@@ -2128,8 +2272,11 @@ get_properties (void)
 {
 	gchar buf[256];
 
+	g_snprintf(buf,256,"/genius/properties/black_on_white=%s",
+		   (genius_setup.black_on_white)?"true":"false");
+	genius_setup.black_on_white = gnome_config_get_bool(buf);
 	g_snprintf (buf, 256, "/genius/properties/pango_font=%s",
-		    genius_setup.font ? genius_setup.font : DEFAULT_FONT);
+		    ve_sure_string (genius_setup.font));
 	genius_setup.font = gnome_config_get_string (buf);
 	g_snprintf(buf,256,"/genius/properties/scrollback=%d",
 		   genius_setup.scrollback);
@@ -2159,7 +2306,7 @@ get_properties (void)
 }
 
 static void
-feed_to_zvt_from_string (const char *str, int size)
+feed_to_vte_from_string (const char *str, int size)
 {
 	/*do our own crlf translation*/
 	char *s;
@@ -2178,12 +2325,13 @@ feed_to_zvt_from_string (const char *str, int size)
 			s[sz] = '\r';
 		} else s[sz] = str[i];
 	}
-	vte_terminal_feed (VTE_TERMINAL (term), s, sz);
+	vte_terminal_feed (VTE_TERMINAL (term), 
+			   s, sz);
 	g_free(s);
 }
 
 static gboolean
-feed_to_zvt (GIOChannel *source, GIOCondition condition, gpointer data)
+feed_to_vte (GIOChannel *source, GIOCondition condition, gpointer data)
 {
 	if (condition & G_IO_IN) {
 		int fd = g_io_channel_unix_get_fd (source);
@@ -2192,7 +2340,7 @@ feed_to_zvt (GIOChannel *source, GIOCondition condition, gpointer data)
 		while ((size = read (fd, buf, 256)) > 0 ||
 		       errno == EINTR) {
 			if (size > 0)
-				feed_to_zvt_from_string (buf, size);
+				feed_to_vte_from_string (buf, size);
 		}
 	}
 
@@ -2204,8 +2352,8 @@ output_notify_func (GelOutput *output)
 {
 	const char *s = gel_output_peek_string (output);
 	if (s != NULL) {
-		feed_to_zvt (forzvt0_ch, G_IO_IN, NULL);
-		feed_to_zvt_from_string ((char *)s, strlen (s));
+		feed_to_vte (forvte0_ch, G_IO_IN, NULL);
+		feed_to_vte_from_string ((char *)s, strlen (s));
 		gel_output_clear_string (output);
 	}
 }
@@ -2387,12 +2535,25 @@ genius_got_etree (GelETree *e)
 }
 
 static char *
-make_a_fifo (void)
+make_a_fifo (const char *postfix)
 {
-	static int cnt = 1;
+	if (g_get_home_dir () != NULL) {
+		char *name = g_strdup_printf ("%s/.genius-fifo-%s",
+					      g_get_home_dir (),
+					      postfix);
+		/* this will not work if we don't own this, but this will
+		 * make sure we clean up old links */
+		unlink (name);
+		if (mkfifo (name, 0600) == 0) {
+			return name;
+		}
+		g_free (name);
+	}
+       
 	for (;;) {
-		char *name = g_strdup_printf ("/tmp/genius-fifo-%d-%d",
-					      (int)getpid(), cnt++);
+		char *name = g_strdup_printf ("/tmp/genius-fifo-%x-%s",
+					      (guint)g_random_int (),
+					      postfix);
 		/* this will not work if we don't own this, but this will
 		 * make sure we clean up old links */
 		unlink (name);
@@ -2406,8 +2567,8 @@ make_a_fifo (void)
 static void
 setup_rl_fifos (void)
 {
-	torlfifo = make_a_fifo ();
-	fromrlfifo = make_a_fifo ();
+	torlfifo = make_a_fifo ("torl");
+	fromrlfifo = make_a_fifo ("fromrl");
 }
 
 static void
@@ -2529,6 +2690,28 @@ loadup_files_from_cmdline (GnomeProgram *program)
 	}
 }
 
+static void 
+drag_data_received (GtkWidget *widget, GdkDragContext *context, 
+		    gint x, gint y, GtkSelectionData *selection_data, 
+		    guint info, guint time)
+{
+	GList *list;
+	GList *li;
+	
+	if (info != TARGET_URI_LIST)
+		return;
+			
+	list = gnome_vfs_uri_list_parse (selection_data->data);
+
+	for (li = list; li != NULL; li = li->next) {
+		const GnomeVFSURI *uri = li->data;
+		char *s = gnome_vfs_uri_to_string (uri,
+						   GNOME_VFS_URI_HIDE_NONE);
+		new_program (s);
+	}
+	
+	gnome_vfs_uri_list_free (list);
+}
 
 int
 main (int argc, char *argv[])
@@ -2556,16 +2739,16 @@ main (int argc, char *argv[])
 				      /* GNOME_PARAM_POPT_TABLE, options, */
 				      NULL);
 
-	if (pipe (forzvt) < 0)
+	if (pipe (forvte) < 0)
 		g_error ("Can't pipe");
 
 	setup_rl_fifos ();
 
-	fcntl (forzvt[0], F_SETFL, O_NONBLOCK);
+	fcntl (forvte[0], F_SETFL, O_NONBLOCK);
 
-	forzvt0_ch = g_io_channel_unix_new (forzvt[0]);
-	g_io_add_watch_full (forzvt0_ch, G_PRIORITY_DEFAULT, G_IO_IN | G_IO_HUP | G_IO_ERR, 
-			     feed_to_zvt, NULL, NULL);
+	forvte0_ch = g_io_channel_unix_new (forvte[0]);
+	g_io_add_watch_full (forvte0_ch, G_PRIORITY_DEFAULT, G_IO_IN | G_IO_HUP | G_IO_ERR, 
+			     feed_to_vte, NULL, NULL);
 
 	main_out = gel_output_new();
 	gel_output_setup_string (main_out, 80, get_term_width);
@@ -2581,6 +2764,18 @@ main (int argc, char *argv[])
 	
         /*set up the top level window*/
 	genius_window = create_main_window();
+
+	/* Drag and drop support */
+	gtk_drag_dest_set (GTK_WIDGET (genius_window),
+			   GTK_DEST_DEFAULT_MOTION |
+			   GTK_DEST_DEFAULT_HIGHLIGHT |
+			   GTK_DEST_DEFAULT_DROP,
+			   drag_types, n_drag_types,
+			   GDK_ACTION_COPY);
+		
+	g_signal_connect (G_OBJECT (genius_window), "drag_data_received",
+			  G_CALLBACK (drag_data_received), 
+			  NULL);
 
 	/*set up the tooltips*/
 	tips = gtk_tooltips_new();
@@ -2609,7 +2804,6 @@ main (int argc, char *argv[])
 	/* FIXME: how come does backspace and not delete */
 	vte_terminal_set_delete_binding (VTE_TERMINAL (term),
 					 VTE_ERASE_ASCII_DELETE);
-
 	g_signal_connect (G_OBJECT (term), "selection_changed",
 			  G_CALLBACK (selection_changed),
 			  NULL);
@@ -2672,7 +2866,7 @@ main (int argc, char *argv[])
 				  hbox,
 				  gtk_label_new (_("Console")));
 	/* FIXME:
-	gtk_widget_queue_resize (zvt);
+	gtk_widget_queue_resize (vte);
 	*/
 	gtk_container_set_border_width(
 		GTK_CONTAINER (GNOME_APP (genius_window)->contents), 5);
@@ -2691,24 +2885,45 @@ main (int argc, char *argv[])
 
 	gtk_widget_show_all (genius_window);
 
+	/* Try to deduce the standard font size, kind of evil, but sorta
+	 * works.  The user can always set the font themselves. */
+	{
+		GtkStyle *style = gtk_widget_get_style (genius_window);
+		int sz = (style == NULL ||
+			  style->font_desc == NULL) ? 10 :
+			pango_font_description_get_size (style->font_desc) / PANGO_SCALE;
+		if (sz == 0) sz = 10;
+		default_console_font = g_strdup_printf ("Monospace %d", sz);
+	}
+
 	/* for some reason we must set the font here and not above
 	 * or the "monospace 12" (or default terminal font or whatnot)
 	 * will get used */
-	vte_terminal_set_font_from_string (VTE_TERMINAL (term), 
-					   genius_setup.font ?
-					   genius_setup.font : DEFAULT_FONT);
-
+	vte_terminal_set_font_from_string (VTE_TERMINAL (term),
+					   ve_string_empty (genius_setup.font) ?
+					     default_console_font :
+					     genius_setup.font);
+	setup_term_color ();
+	vte_terminal_set_encoding (VTE_TERMINAL (term), "UTF-8");
 
 	gtk_widget_show_now (genius_window);
 
 	gel_output_printf (main_out,
-			   _("\e[0;32mGenius %s\e[0m\n"
+			   _("%sGenius %s%s\n"
 			     "%s\n"
 			     "This is free software with ABSOLUTELY NO WARRANTY.\n"
-			     "For license details type `\e[01;36mwarranty\e[0m'.\n"
-			     "For help type '\e[01;36mmanual\e[0m' or '\e[01;36mhelp\e[0m'.%s\n\n"),
+			     "For license details type `%swarranty%s'.\n"
+			     "For help type '%smanual%s' or '%shelp%s'.%s\n\n"),
+			   "\e[0;32m" /* green */,
+			   "\e[0m" /* white on black */,
 			   VERSION,
 			   COPYRIGHT_STRING,
+			   "\e[01;36m" /* cyan */,
+			   "\e[0m" /* white on black */,
+			   "\e[01;36m" /* cyan */,
+			   "\e[0m" /* white on black */,
+			   "\e[01;36m" /* cyan */,
+			   "\e[0m" /* white on black */,
 			   get_version_details ());
 	gel_output_flush (main_out);
 	check_events ();

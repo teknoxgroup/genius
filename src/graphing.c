@@ -1,7 +1,7 @@
 /* GENIUS Calculator
- * Copyright (C) 2003-2004 George Lebl
+ * Copyright (C) 2003-2004 Jiri (George) Lebl
  *
- * Author: George Lebl
+ * Author: Jiri (George) Lebl
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -774,7 +774,7 @@ label_func (GelCtx *ctx, int i, GelEFunc *func, const char *color)
 		/* FIXME: the push/pop of style is UGLY */
 		old_style = calcstate.output_style;
 		calcstate.output_style = GEL_OUTPUT_NORMAL;
-		print_etree (out, func->data.user, TRUE /* toplevel */);
+		gel_print_etree (out, func->data.user, TRUE /* toplevel */);
 		calcstate.output_style = old_style;
 
 		text = gel_output_snarf_string (out);
@@ -1204,6 +1204,7 @@ plot_from_dialog (void)
 	int i;
 	gboolean last_info;
 	gboolean last_error;
+	const char *error_to_print = NULL;
 
 	last_info = genius_setup.info_box;
 	last_error = genius_setup.error_box;
@@ -1234,7 +1235,8 @@ plot_from_dialog (void)
 	}
 
 	if (funcs == 0) {
-		display_error (_("No functions to plot or no functions could be parsed"));
+		error_to_print = _("No functions to plot or no functions "
+				   "could be parsed");
 		goto whack_copied_funcs;
 	}
 
@@ -1256,12 +1258,12 @@ plot_from_dialog (void)
 	}
 
 	if (x1 == x2) {
-		display_error (_("Invalid X range"));
+		error_to_print = _("Invalid X range");
 		goto whack_copied_funcs;
 	}
 
 	if (y1 == y2) {
-		display_error (_("Invalid Y range"));
+		error_to_print = _("Invalid Y range");
 		goto whack_copied_funcs;
 	}
 
@@ -1299,6 +1301,9 @@ whack_copied_funcs:
 	gel_printout_infos ();
 	genius_setup.info_box = last_info;
 	genius_setup.error_box = last_error;
+
+	if (error_to_print != NULL)
+		display_error (error_to_print);
 }
 
 static void
@@ -1326,10 +1331,10 @@ genius_lineplot_dialog (void)
 		(_("Create Line Plot") /* title */,
 		 GTK_WINDOW (genius_window) /* parent */,
 		 0 /* flags */,
-		 _("_Plot"),
-		 RESPONSE_PLOT,
 		 GTK_STOCK_CLOSE,
 		 GTK_RESPONSE_CLOSE,
+		 _("_Plot"),
+		 RESPONSE_PLOT,
 		 NULL);
 	gtk_dialog_set_default_response (GTK_DIALOG (plot_dialog),
 					 RESPONSE_PLOT);

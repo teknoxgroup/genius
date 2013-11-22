@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: genius\n"
-"POT-Creation-Date: 2004-03-30 15:06-0800\n"
+"POT-Creation-Date: 2004-06-14 10:48-0700\n"
 "PO-Revision-Date: 2004-03-26 17:43+0100\n"
 "Last-Translator: Danilo Šegan <danilo@prevod.org>\n"
 "Language-Team: Serbian (sr) <gnom@prevod.org>\n"
@@ -25,93 +25,94 @@ msgstr "Nesvrstano"
 msgid "Trying to set an alias for an alias"
 msgstr "Pokušava da podesi nadimak za nadimak"
 
-#: src/calc.c:956
+#: src/calc.c:939
 msgid "Bad identifier for function node!"
 msgstr "Loša oznaka za čvor funkcije!"
 
-#: src/calc.c:994 src/eval.c:5442 src/eval.c:5626
+#: src/calc.c:977 src/eval.c:5520 src/eval.c:5704
 msgid "Unexpected operator!"
 msgstr "Neočekivani operator!"
 
 #. FIXME:
-#: src/calc.c:1167
-msgid "Cannot currently print polynomials of more then 3 vars"
+#: src/calc.c:1166
+#, fuzzy
+msgid "Cannot currently print polynomials of more than 3 vars"
 msgstr "Trenutno ne mogu da ispisujem polinome sa više od 3 promenljive"
 
-#: src/calc.c:1240
+#: src/calc.c:1241
 msgid "NULL tree!"
 msgstr "Nula-stablo!"
 
-#: src/calc.c:1315
+#: src/calc.c:1316
 msgid "NULL function!"
 msgstr "Nula-funkcija!"
 
 #. variable and reference functions should
 #. never be in the etree
-#: src/calc.c:1344
+#: src/calc.c:1345
 msgid "Unexpected function type!"
 msgstr "Neočekivani tip funkcije!"
 
-#: src/calc.c:1353 src/eval.c:5800
+#: src/calc.c:1354 src/eval.c:5878
 msgid "Unexpected node!"
 msgstr "Neočekivani čvor!"
 
-#: src/calc.c:1628
+#: src/calc.c:1762
 #, c-format
 msgid "File '%s' is a wrong version of GEL"
 msgstr "Datoteka „%s“ je pogrešne verzije GEL-a"
 
-#: src/calc.c:1675 src/calc.c:1684 src/calc.c:1689 src/calc.c:1698
-#: src/calc.c:1703 src/calc.c:1712 src/calc.c:1717 src/calc.c:1726
-#: src/calc.c:1731 src/calc.c:1742 src/calc.c:1747 src/calc.c:1758
-#: src/calc.c:1765 src/calc.c:1778 src/calc.c:1784 src/calc.c:1791
-#: src/calc.c:1800 src/calc.c:1806 src/calc.c:1813 src/calc.c:1819
-#: src/calc.c:1828 src/calc.c:1838
+#: src/calc.c:1809 src/calc.c:1818 src/calc.c:1823 src/calc.c:1832
+#: src/calc.c:1837 src/calc.c:1846 src/calc.c:1851 src/calc.c:1860
+#: src/calc.c:1865 src/calc.c:1876 src/calc.c:1881 src/calc.c:1892
+#: src/calc.c:1899 src/calc.c:1912 src/calc.c:1918 src/calc.c:1925
+#: src/calc.c:1934 src/calc.c:1940 src/calc.c:1947 src/calc.c:1953
+#: src/calc.c:1962 src/calc.c:1972
 msgid "Badly formed record"
 msgstr "Loše obrazovan slog"
 
-#: src/calc.c:1678
+#: src/calc.c:1812
 msgid "Record out of place"
 msgstr "Slog na pogrešnom mestu"
 
-#: src/calc.c:1853
+#: src/calc.c:1987
 msgid "Missing value for function"
 msgstr "Nedostajuća vrednost funkcije"
 
-#: src/calc.c:1872
+#: src/calc.c:2006
 msgid "Extra dictionary for NULL function"
 msgstr "Dodarni rečnik za nula-funkciju"
 
-#: src/calc.c:1912 src/calc.c:2327 src/calc.c:2361
+#: src/calc.c:2046 src/calc.c:2461 src/calc.c:2495
 #, c-format
 msgid "Can't open file: '%s'"
 msgstr "Ne mogu da otvorim datoteku: „%s“"
 
-#: src/calc.c:2059
+#: src/calc.c:2193
 msgid "Load a file into the interpretor"
 msgstr "Učitaj datoteku u prevodioca"
 
-#: src/calc.c:2062
+#: src/calc.c:2196
 msgid "Load a plugin"
 msgstr "Učitaj dodatak"
 
-#: src/calc.c:2065
+#: src/calc.c:2199
 msgid "List files in the current directory"
 msgstr "Ispiši datoteke iz tekućeg direktorijuma"
 
-#: src/calc.c:2068
+#: src/calc.c:2202
 msgid "Change directory"
 msgstr "Promeni direktorijum"
 
-#: src/calc.c:2071
+#: src/calc.c:2205
 msgid "Print current directory"
 msgstr "Ispiši tekući direktorijum"
 
-#: src/calc.c:2074
+#: src/calc.c:2208
 msgid "Print help (or help on a function/command)"
 msgstr "Ispiši pomoć (ili pomoć za funkciju/naredbu)"
 
-#: src/calc.c:2091
+#: src/calc.c:2225
 msgid ""
 "\n"
 "For a manual on using Genius and the GEL language type:\n"
@@ -119,11 +120,11 @@ msgstr ""
 "\n"
 "Za uputstvo za upotrebu Genija i GEL jezika ukucajte:\n"
 
-#: src/calc.c:2093
+#: src/calc.c:2227
 msgid "  manual\n"
 msgstr "  ručno\n"
 
-#: src/calc.c:2097
+#: src/calc.c:2231
 msgid ""
 "\n"
 "For help on a specific function type:\n"
@@ -131,11 +132,11 @@ msgstr ""
 "\n"
 "Za pomoć za određenu funkciju ukucajte:\n"
 
-#: src/calc.c:2099
+#: src/calc.c:2233
 msgid "  help FunctionName\n"
 msgstr "  help ImeFunkcije\n"
 
-#: src/calc.c:2103
+#: src/calc.c:2237
 msgid ""
 "\n"
 "Commands:\n"
@@ -143,7 +144,7 @@ msgstr ""
 "\n"
 "Naredbe:\n"
 
-#: src/calc.c:2151
+#: src/calc.c:2285
 msgid ""
 "\n"
 "Undocumented:\n"
@@ -154,58 +155,58 @@ msgstr ""
 #. func
 #. aliasfor
 #. category
-#: src/calc.c:2194
+#: src/calc.c:2328
 msgid "Not documented"
 msgstr "Nije dokumentovano"
 
-#: src/calc.c:2213
+#: src/calc.c:2347
 #, c-format
 msgid "'%s' is not documented"
 msgstr "„%s“ nije dokumentovana"
 
-#: src/calc.c:2220
+#: src/calc.c:2354
 #, c-format
 msgid "%s is an alias for %s\n"
 msgstr "%s je nadimak za %s\n"
 
-#: src/calc.c:2252
+#: src/calc.c:2386
 msgid "Aliases:"
 msgstr "Nadimci:"
 
-#: src/calc.c:2264
+#: src/calc.c:2398
 #, c-format
 msgid "Description: %s\n"
 msgstr "Opis: %s\n"
 
-#: src/calc.c:2400 src/calc.c:2411
+#: src/calc.c:2534 src/calc.c:2545
 #, c-format
 msgid "Can't expand '%s'"
 msgstr "Ne mogu da rastavim „%s“"
 
-#: src/calc.c:2481
+#: src/calc.c:2615
 #, c-format
 msgid "Cannot open plugin '%s'!"
 msgstr "Ne mogu da otvorim dodatak „%s“!"
 
-#: src/calc.c:2686
+#: src/calc.c:2820
 msgid "ERROR: Probably corrupt stack!"
 msgstr "Greška: verovatno uništen stek!"
 
-#: src/calc.c:2709
+#: src/calc.c:2843
 msgid "ERROR: Can't execute more things at once!"
 msgstr "Greška: ne mogu da izvršim više stvari odjednom!"
 
-#: src/calc.c:2813
+#: src/calc.c:2947
 #, c-format
 msgid "ERROR: %s before newline"
 msgstr "Greška: %s pre kraja reda"
 
-#: src/calc.c:2815
+#: src/calc.c:2949
 #, c-format
 msgid "ERROR: %s at end of input"
 msgstr "Greška: %s na kraju unosa"
 
-#: src/calc.c:2822
+#: src/calc.c:2956
 #, c-format
 msgid "ERROR: %s before '%s'"
 msgstr "Greška: %s pre „%s“"
@@ -215,77 +216,92 @@ msgid "Bad tree record when decompiling"
 msgstr "Loš slog drveta pri dekompilaciji"
 
 # bug: matrixes -> matrices
-#: src/eval.c:1185 src/eval.c:1222 src/eval.c:1236
+#: src/eval.c:1186 src/eval.c:1223 src/eval.c:1237
 msgid "Cannot compare non value-only matrixes"
 msgstr "Ne mogu da poredim matrice koje se ne sastoje samo iz vrednosti"
 
 #. also on rationals but as integers
-#: src/eval.c:1286 src/eval.c:1332
+#: src/eval.c:1293 src/eval.c:1339
 msgid "Modulo arithmetic only works on integers"
 msgstr "Aritmetika po ostatku radi samo sa celim brojevima"
 
-#: src/eval.c:1536
+#: src/eval.c:1543
 msgid "Can't add/subtract two matricies of different sizes"
 msgstr "Ne mogu da dodam/oduzmem dve matrice raznih formata"
 
-#: src/eval.c:1538
+#: src/eval.c:1545
 msgid ""
 "Can't do element by element operations on two matricies of different sizes"
 msgstr "Ne mogu da izvedem elementarne operacije na dve matrice raznih formata"
 
-#: src/eval.c:1596
+#: src/eval.c:1603
 msgid "Can't multiply matricies of wrong sizes"
 msgstr "Ne mogu da pomnožim matrice pogrešnih formata"
 
-#: src/eval.c:1645
+#: src/eval.c:1652
 msgid "Powers are defined on (square matrix)^(integer) only"
 msgstr "Stepeni su definisani samo za (kvadratna matrica)^(ceo broj)"
 
-#: src/eval.c:1651
+#: src/eval.c:1658
 msgid "Powers on matrices in modulo mode are defined on integer matrices only"
 msgstr "Stepeni matrica po ostatku su definisani samo za celobrojne matrice"
 
-#: src/eval.c:1659
+#: src/eval.c:1666
 msgid "Exponent too large"
 msgstr "Stepen je preveliki"
 
-#: src/eval.c:1687 src/eval.c:1803 src/eval.c:1870
+#: src/eval.c:1694 src/eval.c:1810 src/eval.c:1877
 msgid "Matrix appears singular and can't be inverted"
 msgstr "Čini se da je matrica singularna, i ne može se invertovati"
 
-#: src/eval.c:1779
+#: src/eval.c:1786
 msgid "Can't divide matrices of different sizes or non-square matrices"
 msgstr "Ne mogu da podelim matrice raznih formata ili nekvadratne matrice"
 
-#: src/eval.c:1851
+#: src/eval.c:1858
 msgid "Can't divide by a non-square matrix"
 msgstr "Ne mogu da podelim sa nekvadratnom matricom"
 
-#: src/eval.c:2209 src/eval.c:2236 src/eval.c:2257 src/eval.c:2281
-#: src/eval.c:2326
+#: src/eval.c:2217 src/eval.c:2244 src/eval.c:2265 src/eval.c:2289
+#: src/eval.c:2334
 msgid "Operations on functions with variable argument list not supported"
 msgstr ""
 "Nisu podržane operacije nad funkcijama sa promenljivim brojem argumenata"
 
-#: src/eval.c:2214
+#: src/eval.c:2222
 msgid ""
 "Operations on functions with different number of arguments not supported"
 msgstr "Nisu podržane operacije nad funkcijama sa drugačijim brojem argumenata"
 
-#: src/eval.c:2331
+#: src/eval.c:2339
 msgid "Function creation with wrong number of arguments"
 msgstr "Pravljenje funkcije sa pogrešnim brojem argumenata"
 
-#: src/eval.c:2848 src/eval.c:3919
+#: src/eval.c:2856 src/eval.c:3997
 msgid "Unevaluatable function type encountered!"
 msgstr "Naišao sam na tip neizračunljive funkcije!"
 
-#: src/eval.c:2870 src/eval.c:2888 src/eval.c:3699
+#: src/eval.c:2878
+msgid "' or '"
+msgstr ""
+
+#: src/eval.c:2913
+msgid ""
+"Variable 'i' used uninitialized.  Perhaps you meant to write '1i' for the "
+"imaginary number (square root of -1)."
+msgstr ""
+
+#: src/eval.c:2919 src/eval.c:2947
+#, fuzzy, c-format
+msgid "Variable '%s' used uninitialized, perhaps you meant %s."
+msgstr "Promenljiva „%s“ se koristi bez prethodne dodele"
+
+#: src/eval.c:2926 src/eval.c:2954 src/eval.c:3777
 #, c-format
 msgid "Variable '%s' used uninitialized"
 msgstr "Promenljiva „%s“ se koristi bez prethodne dodele"
 
-#: src/eval.c:2891 src/eval.c:3744
+#: src/eval.c:2958 src/eval.c:3822
 #, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
@@ -294,276 +310,281 @@ msgstr ""
 "Poziv „%s“ sa pogrešnim brojem argumenata!\n"
 "(treba da bude %d)"
 
-#: src/eval.c:2894
+#: src/eval.c:2961
 #, c-format
 msgid "Trying to dereference '%s' which is not a reference!\n"
 msgstr "Pokušavam da odreferenciram „%s“ što ne predstavlja referencu!\n"
 
-#: src/eval.c:2899
+#: src/eval.c:2966
 msgid "NULL reference encountered!"
 msgstr "Naišao sam na nula-referencu!"
 
-#: src/eval.c:3019
+#: src/eval.c:3086
 msgid "Cannot compare matrixes"
 msgstr "Ne mogu da poredim matrice"
 
-#: src/eval.c:3061
+#: src/eval.c:3128
 msgid "Primitives must get numeric/matrix/string arguments"
 msgstr ""
 "Primitivne funkcije moraju da dobiju brojne/matrične/tekstualne argumente"
 
-#: src/eval.c:3134
+#: src/eval.c:3201
 msgid "Bad argument to modular operation"
 msgstr "Loš argument za operaciju po ostatku"
 
-#: src/eval.c:3685
+#: src/eval.c:3755
+#, fuzzy, c-format
+msgid "Function '%s' used uninitialized, perhaps you meant %s."
+msgstr "Funkcija „%s“ je korišćena bez prethodne dodele"
+
+#: src/eval.c:3762
 #, c-format
 msgid "Function '%s' used uninitialized"
 msgstr "Funkcija „%s“ je korišćena bez prethodne dodele"
 
-#: src/eval.c:3705
+#: src/eval.c:3783
 #, c-format
 msgid "Can't dereference '%s'!"
 msgstr "Ne mogu da deferenciram „%s“!"
 
-#: src/eval.c:3713
+#: src/eval.c:3791
 msgid "Can't call a non-function!"
 msgstr "Ne mogu da pozovem ne-funkciju!"
 
-#: src/eval.c:3749
-#, c-format
+#: src/eval.c:3827
+#, fuzzy, c-format
 msgid ""
 "Call of '%s' with the wrong number of arguments!\n"
-"(should be greater then %d)"
+"(should be greater than %d)"
 msgstr ""
 "Poziv „%s“ sa pogrešnim brojem argumenata!\n"
 "(treba da bude veći od %d)"
 
-#: src/eval.c:3788
+#: src/eval.c:3866
 #, c-format
 msgid "Referencing an undefined variable %s!"
 msgstr "Poziva se na nedefinisanu promenljivu %s!"
 
-#: src/eval.c:3898
+#: src/eval.c:3976
 msgid "Reference function with arguments encountered!"
 msgstr "Naišao sam na pozivanu funkciju sa argumentima!"
 
-#: src/eval.c:3903
+#: src/eval.c:3981
 msgid "Unnamed reference function encountered!"
 msgstr "Naišao sam na bezimenu pozivanu funkciju!"
 
-#: src/eval.c:4012
+#: src/eval.c:4090
 msgid "Bad type for 'for/sum/prod' loop!"
 msgstr "Loš tip za ciklus „for/sum/prod“!"
 
-#: src/eval.c:4017
+#: src/eval.c:4095
 msgid "'for/sum/prod' loop increment can't be 0"
 msgstr "Korak uvećanja za „for/sum/prod“ cikluse ne može biti 0"
 
-#: src/eval.c:4123
+#: src/eval.c:4201
 msgid "Bad type for 'for in' loop!"
 msgstr "Loš tip za ciklus „for in“!"
 
-#: src/eval.c:4267 src/eval.c:4295
+#: src/eval.c:4345 src/eval.c:4373
 msgid "Continue or break outside a loop, assuming \"return null\""
 msgstr "Nastavi ili izađi iz ciklusa, pretpostavljajući „return null“"
 
-#: src/eval.c:4345
+#: src/eval.c:4423
 msgid "Wrong argument type as matrix index"
 msgstr "Argument lošeg tipa za indeks matrice"
 
-#: src/eval.c:4355
+#: src/eval.c:4433
 msgid "Matrix index too large"
 msgstr "Indeks matrice je prevelik"
 
-#: src/eval.c:4358
+#: src/eval.c:4436
 msgid "Matrix index less than 1"
 msgstr "Indeks matrice je manji od 1"
 
-#: src/eval.c:4381 src/eval.c:4396
+#: src/eval.c:4459 src/eval.c:4474
 msgid "Matrix index out of range"
 msgstr "Indeks matrice je van opsega"
 
-#: src/eval.c:4443 src/eval.c:4504 src/eval.c:4566 src/eval.c:4610
+#: src/eval.c:4521 src/eval.c:4582 src/eval.c:4644 src/eval.c:4688
 #, c-format
 msgid "Trying to set a protected id '%s'"
 msgstr "Pokušava da postavi zaštićeni IB „%s“"
 
-#: src/eval.c:4461 src/eval.c:4500
+#: src/eval.c:4539 src/eval.c:4578
 msgid "Indexed Lvalue not user function"
 msgstr "Indeksirana Lvrednost nije funkcija korisnika"
 
-#: src/eval.c:4484 src/eval.c:4595
+#: src/eval.c:4562 src/eval.c:4673
 msgid "Dereference of non-identifier!"
 msgstr "Dereferenciranje ne-oznake!"
 
-#: src/eval.c:4490 src/eval.c:4601
+#: src/eval.c:4568 src/eval.c:4679
 msgid "Dereference of undefined variable!"
 msgstr "Dereferenciranje nedefinisane promenljive!"
 
-#: src/eval.c:4494 src/eval.c:4605
+#: src/eval.c:4572 src/eval.c:4683
 msgid "Dereference of non-reference!"
 msgstr "Dereferenciranje ne-reference!"
 
-#: src/eval.c:4522
+#: src/eval.c:4600
 msgid "Indexed Lvalue not an identifier or a dereference"
 msgstr "Indeksirana Lvrednost nije oznaka ili dereferenca"
 
-#: src/eval.c:4560
+#: src/eval.c:4638
 msgid "Lvalue not an identifier/dereference/matrix location!"
 msgstr "Lvrednost ne predstavlja položaj oznake/dereferencu/matricu!"
 
-#: src/eval.c:4582 src/eval.c:4622
+#: src/eval.c:4660 src/eval.c:4700
 msgid "Referencing an undefined variable!"
 msgstr "Poziva se na nedefinisanu promenljivu!"
 
-#: src/eval.c:4668 src/eval.c:4746 src/eval.c:4755
+#: src/eval.c:4746 src/eval.c:4824 src/eval.c:4833
 msgid "Wrong matrix dimensions when setting"
 msgstr "Loš format matrice pri postavljanju"
 
-#: src/eval.c:4686 src/eval.c:4726 src/eval.c:4792 src/eval.c:4971
-#: src/eval.c:5024
+#: src/eval.c:4764 src/eval.c:4804 src/eval.c:4870 src/eval.c:5049
+#: src/eval.c:5102
 msgid "Matrix index not an integer or a vector"
 msgstr "Indeks matrice nije ceo broj ili vektor"
 
-#: src/eval.c:4813
+#: src/eval.c:4891
 msgid "Parameters can only be created in the global context"
 msgstr "Parametri se mogu obrazovati jedino u opštem kontekstu"
 
-#: src/eval.c:4866 src/eval.c:4908 src/eval.c:4983
+#: src/eval.c:4944 src/eval.c:4986 src/eval.c:5061
 msgid "Index works only on matricies"
 msgstr "Indeks radi samo za matrice"
 
-#: src/eval.c:4896
+#: src/eval.c:4974
 msgid "Vector index not an integer or a vector"
 msgstr "Vektorski indeks nije ceo broj ili vektor"
 
-#: src/eval.c:5045
+#: src/eval.c:5123
 msgid "number"
 msgstr "broj"
 
-#: src/eval.c:5046
+#: src/eval.c:5124
 msgid "matrix"
 msgstr "matrica"
 
-#: src/eval.c:5047
+#: src/eval.c:5125
 msgid "string"
 msgstr "niska"
 
-#: src/eval.c:5048
+#: src/eval.c:5126
 msgid "function"
 msgstr "funkcija"
 
-#: src/eval.c:5072
+#: src/eval.c:5150
 msgid "Absolute value"
 msgstr "Apsolutna vrednost"
 
-#: src/eval.c:5073
+#: src/eval.c:5151
 msgid "Addition"
 msgstr "Sabiranje"
 
-#: src/eval.c:5074
+#: src/eval.c:5152
 msgid "Subtraction"
 msgstr "Oduzimanje"
 
-#: src/eval.c:5075
+#: src/eval.c:5153
 msgid "Multiplication"
 msgstr "Množenje"
 
-#: src/eval.c:5076
+#: src/eval.c:5154
 msgid "Element by element multiplication"
 msgstr "Množenje element po element"
 
-#: src/eval.c:5077
+#: src/eval.c:5155
 msgid "Division"
 msgstr "Deljenje"
 
-#: src/eval.c:5078
+#: src/eval.c:5156
 msgid "Element by element division"
 msgstr "Deljenje element po element"
 
-#: src/eval.c:5079
+#: src/eval.c:5157
 msgid "Back division"
 msgstr "Deljenje unazad"
 
-#: src/eval.c:5080
+#: src/eval.c:5158
 msgid "Element by element back division"
 msgstr "Deljenje unazad element po element"
 
-#: src/eval.c:5081
+#: src/eval.c:5159
 msgid "Modulo"
 msgstr "Moduo"
 
-#: src/eval.c:5082
+#: src/eval.c:5160
 msgid "Element by element modulo"
 msgstr "Moduo element po element"
 
-#: src/eval.c:5083
+#: src/eval.c:5161
 msgid "Negation"
 msgstr "Negacija"
 
-#: src/eval.c:5084
+#: src/eval.c:5162
 msgid "Power"
 msgstr "Na stepen"
 
-#: src/eval.c:5085
+#: src/eval.c:5163
 msgid "Element by element power"
 msgstr "Na stepen element po element"
 
-#: src/eval.c:5086
+#: src/eval.c:5164
 msgid "Factorial"
 msgstr "Faktorijel"
 
-#: src/eval.c:5087
+#: src/eval.c:5165
 msgid "Double factorial"
 msgstr "Dvostruki faktorijel"
 
-#: src/eval.c:5088
+#: src/eval.c:5166
 msgid "Transpose"
 msgstr "Transponuj"
 
-#: src/eval.c:5089
+#: src/eval.c:5167
 msgid "ConjugateTranspose"
 msgstr "Konjugovano transponovano"
 
-#: src/eval.c:5090
+#: src/eval.c:5168
 msgid "Comparison (<=>)"
 msgstr "Poređenje (<=>)"
 
-#: src/eval.c:5091
+#: src/eval.c:5169
 msgid "XOR"
 msgstr "ILLI"
 
-#: src/eval.c:5092
+#: src/eval.c:5170
 msgid "NOT"
 msgstr "NE"
 
-#: src/eval.c:5112
+#: src/eval.c:5190
 #, c-format
 msgid "Bad types for '%s'"
 msgstr "Loši tipovi za „%s“"
 
-#: src/eval.c:5123
+#: src/eval.c:5201
 #, c-format
 msgid "%s not defined on <%s> and <%s>"
 msgstr "%s nije definisan na <%s> i <%s>"
 
-#: src/eval.c:5142
+#: src/eval.c:5220
 #, c-format
 msgid "Bad type for '%s'"
 msgstr "Loš tip za „%s“"
 
-#: src/eval.c:5152
+#: src/eval.c:5230
 #, c-format
 msgid "%s not defined on <%s>"
 msgstr "%s nije definisan na <%s>"
 
-#: src/eval.c:5171 src/eval.c:5188
+#: src/eval.c:5249 src/eval.c:5266
 msgid "Vector building only works on numbers"
 msgstr "Izgradnja vektora radi samo sa brojevima"
 
 #. FIXME: perhaps we should just return null like octave?
-#: src/eval.c:5181
+#: src/eval.c:5259
 msgid "Impossible arguments to vector building operator"
 msgstr "Nedozvoljeni argumenti operatoru za izgradnju vektora"
 
@@ -746,8 +767,8 @@ msgid "fourth argument"
 msgstr "četvrti argument"
 
 #: src/funclib.c:2792
-#, c-format
-msgid "%s: argument must be greater then 2"
+#, fuzzy, c-format
+msgid "%s: argument must be greater than 2"
 msgstr "%s: argument mora biti veći od 2"
 
 #: src/funclib.c:2907
@@ -908,7 +929,7 @@ msgstr "Obrazuje slučajan broj u pokretnom zarezu"
 msgid "Generate random integer"
 msgstr "Obrazuje slučajan ceo broj"
 
-#: src/funclib.c:4316 src/gnome-genius.c:911
+#: src/funclib.c:4316 src/gnome-genius.c:989
 msgid "Floating point precision"
 msgstr "Preciznost za pokretni zarez"
 
@@ -934,7 +955,8 @@ msgstr "Ukoliko je postavljeno, ispisuju se mešani razlomci"
 
 # bug: rewrite this like 'even if longer than a line'
 #: src/funclib.c:4322
-msgid "Print full expressions, even if more then a line"
+#, fuzzy
+msgid "Print full expressions, even if more than a line"
 msgstr "Ispiši pune izraze, čak i kada su duži od jednog reda"
 
 #: src/funclib.c:4323
@@ -978,7 +1000,8 @@ msgid "Calculates the sine function"
 msgstr "Izračunava sinusnu funkciju"
 
 #: src/funclib.c:4344
-msgid "Calculates the cossine function"
+#, fuzzy
+msgid "Calculates the cosine function"
 msgstr "Izračunava kosinusnu funkciju"
 
 #: src/funclib.c:4346
@@ -1042,11 +1065,13 @@ msgid "Round a number"
 msgstr "Zaokrugli broj"
 
 #: src/funclib.c:4380
-msgid "Get the highest integer less then or equal to n"
+#, fuzzy
+msgid "Get the highest integer less than or equal to n"
 msgstr "Odredi najveći ceo broj manji ili jednak n-u"
 
 #: src/funclib.c:4383
-msgid "Get the lowest integer more then or equal to n"
+#, fuzzy
+msgid "Get the lowest integer more than or equal to n"
 msgstr "Odredi najmanji ceo broj veći ili jednak n-u"
 
 #: src/funclib.c:4386
@@ -1106,8 +1131,9 @@ msgid "Returns inverse of n mod m"
 msgstr "Vraća inverz za n mod m"
 
 #: src/funclib.c:4411
+#, fuzzy
 msgid ""
-"Tests primality of integers, for numbers greater then 25*10^9 false positive "
+"Tests primality of integers, for numbers greater than 25*10^9 false positive "
 "is with low probability depending on IsPrimeMillerRabinReps"
 msgstr ""
 "Proverava da li su celi brojevi prosti, za brojeve veće od 25*10^9 pogrešna "
@@ -1394,7 +1420,7 @@ msgstr "red %d: %s\n"
 msgid "Too many errors! (%d followed)\n"
 msgstr "Previše grešaka! (%d je usledilo)\n"
 
-#: src/genius.c:179 src/gnome-genius.c:2504
+#: src/genius.c:179 src/gnome-genius.c:2665
 msgid ""
 "\n"
 "Note: Compiled without MPFR (some operations may be slow) see www.mpfr.org"
@@ -1403,7 +1429,7 @@ msgstr ""
 "Beleška: Prevedeno bez MPFR-a (neke operacije će biti spore); pogledajte www."
 "mpfr.org"
 
-#: src/genius.c:255
+#: src/genius.c:259
 #, c-format
 msgid ""
 "Genius %s usage:\n"
@@ -1442,7 +1468,7 @@ msgstr ""
 "\t                  \t(uvek uključeno pri prevođenju) [isključeno]\n"
 "\n"
 
-#: src/genius.c:296
+#: src/genius.c:300
 #, c-format
 msgid ""
 "Genius %s\n"
@@ -1459,14 +1485,14 @@ msgstr ""
 "Za pomoć ukucajte „manual“ ili „help“.%s\n"
 "\n"
 
-#: src/genius.c:351 src/gnome-genius.c:2764
+#: src/genius.c:355 src/gnome-genius.c:2979
 msgid ""
 "The only thing that interferes with my learning is my education.  -- Albert "
 "Einstein"
 msgstr ""
 "Jedina stvar koje usporava moje učenje je obrazovanje.  — Albert Ajnštajn"
 
-#: src/genius.c:372 src/genius.c:432
+#: src/genius.c:376 src/genius.c:436
 msgid "Can't open file"
 msgstr "Ne mogu da otvorim datoteku"
 
@@ -1506,156 +1532,153 @@ msgstr "Skripte"
 msgid "String"
 msgstr "Niz znakova"
 
-#: src/gnome-genius.c:161
+#: src/gnome-genius.c:201
 msgid "_New Program"
 msgstr "_Novi program"
 
-#: src/gnome-genius.c:161
+#: src/gnome-genius.c:201
 msgid "Create new program tab"
 msgstr "Napravi novi programski list"
 
-#: src/gnome-genius.c:168
+#: src/gnome-genius.c:208
 msgid "_Reload from Disk"
 msgstr "_Ponovo učitaj sa diska"
 
-#: src/gnome-genius.c:168
+#: src/gnome-genius.c:208
 msgid "Reload the selected program from disk"
 msgstr "Ponovo učitaj izabrani program sa diska"
 
-#: src/gnome-genius.c:172
+#: src/gnome-genius.c:212
 msgid "_Load and Run..."
 msgstr "Uč_itaj i pokreni..."
 
-#: src/gnome-genius.c:172
+#: src/gnome-genius.c:212
 msgid "Load and execute a file in genius"
 msgstr "Učitaj i izvrši datoteku u Geniju"
 
-#: src/gnome-genius.c:185
+#: src/gnome-genius.c:225
 msgid "Copy Answer As Plain _Text"
 msgstr "Umnoži odgovor kao običan _tekst"
 
-#: src/gnome-genius.c:186
+#: src/gnome-genius.c:226
 msgid "Copy last answer into the clipboard in plain text"
 msgstr "Umnoži poslednji odgovor u spisak isečaka kao običan tekst"
 
-#: src/gnome-genius.c:189
+#: src/gnome-genius.c:229
 msgid "Copy Answer As _LaTeX"
 msgstr "Umnoži odgovor kao _LaTeH"
 
-#: src/gnome-genius.c:190
+#: src/gnome-genius.c:230
 msgid "Copy last answer into the clipboard as LaTeX"
 msgstr "Umnoži poslednji odgovor u spisak isečaka kao LaTeH kod"
 
-#: src/gnome-genius.c:193
+#: src/gnome-genius.c:233
 msgid "Copy Answer As _MathML"
 msgstr "Umnoži odgovor kao _MathML"
 
-#: src/gnome-genius.c:194
+#: src/gnome-genius.c:234
 msgid "Copy last answer into the clipboard as MathML"
 msgstr "Umnoži poslednji odgovor u spisak isečaka kao MathML kod"
 
-#: src/gnome-genius.c:197
+#: src/gnome-genius.c:237
 msgid "Copy Answer As T_roff"
 msgstr "Umnoži odgovor kao T_roff"
 
-#: src/gnome-genius.c:198
+#: src/gnome-genius.c:238
 msgid "Copy last answer into the clipboard as Troff eqn"
 msgstr "Umnoži poslednji odgovor u spisak isečaka kao Troff eqn kod"
 
-#: src/gnome-genius.c:211
+#: src/gnome-genius.c:251
 msgid "_Run"
 msgstr "Po_kreni"
 
-#: src/gnome-genius.c:211 src/gnome-genius.c:258
+#: src/gnome-genius.c:251 src/gnome-genius.c:298
 msgid "Run current program"
 msgstr "Pokreni tekući program"
 
-#: src/gnome-genius.c:212
+#: src/gnome-genius.c:252
 msgid "_Interrupt"
 msgstr "_Prekini"
 
-#: src/gnome-genius.c:212 src/gnome-genius.c:256
+#: src/gnome-genius.c:252 src/gnome-genius.c:296
 msgid "Interrupt current calculation"
 msgstr "Prekini tekuća izračunavanja"
 
-#. title
-#. parent
-#. flags
-#: src/gnome-genius.c:214 src/graphing.c:1329
+#: src/gnome-genius.c:254 src/graphing.c:1336
 msgid "_Plot"
 msgstr "_Crtaj"
 
-#: src/gnome-genius.c:214 src/gnome-genius.c:260
+#: src/gnome-genius.c:254 src/gnome-genius.c:300
 msgid "Plot a function"
 msgstr "Iscrtaj funkciju"
 
 #. FIXME: no help
 #. * GNOMEUIINFO_HELP("genius"),
-#: src/gnome-genius.c:221
+#: src/gnome-genius.c:261
 msgid "_Manual"
 msgstr "Uput_stvo"
 
-#: src/gnome-genius.c:222
+#: src/gnome-genius.c:262
 msgid "Display the manual"
 msgstr "Prikaži uputstvo"
 
-#: src/gnome-genius.c:225
+#: src/gnome-genius.c:265
 msgid "_Warranty"
 msgstr "_Garancija"
 
-#: src/gnome-genius.c:226
+#: src/gnome-genius.c:266
 msgid "Display warranty information"
 msgstr "Prikaži podatke o garanciji"
 
-#: src/gnome-genius.c:244
+#: src/gnome-genius.c:284
 msgid "_Calculator"
 msgstr "_Kalkulator"
 
-#: src/gnome-genius.c:246
+#: src/gnome-genius.c:286
 msgid "P_lugins"
 msgstr "_Dodaci"
 
-#: src/gnome-genius.c:248
+#: src/gnome-genius.c:288
 msgid "_Programs"
 msgstr "Programi"
 
-#: src/gnome-genius.c:256
+#: src/gnome-genius.c:296
 msgid "Interrupt"
 msgstr "Prekini"
 
-#: src/gnome-genius.c:258
+#: src/gnome-genius.c:298
 msgid "Run"
 msgstr "Pokreni"
 
-#: src/gnome-genius.c:259
+#: src/gnome-genius.c:299
 msgid "Open"
 msgstr "Otvori"
 
-#: src/gnome-genius.c:259
+#: src/gnome-genius.c:299
 msgid "Open a GEL file for running"
 msgstr "Otvori GEL datoteku za pokretanje"
 
-#: src/gnome-genius.c:260
+#: src/gnome-genius.c:300
 msgid "Plot"
 msgstr "Crtaj"
 
-#: src/gnome-genius.c:261
+#: src/gnome-genius.c:301
 msgid "Exit"
 msgstr "Izlaz"
 
-#: src/gnome-genius.c:261
+#: src/gnome-genius.c:301
 msgid "Exit genius"
 msgstr "Izađi iz Genija"
 
-#: src/gnome-genius.c:305
+#: src/gnome-genius.c:378
 msgid "Error"
 msgstr "Greška"
 
-#: src/gnome-genius.c:305
+#: src/gnome-genius.c:378
 msgid "Information"
 msgstr "Obaveštenje"
 
-#: src/gnome-genius.c:360
+#: src/gnome-genius.c:433
 #, c-format
 msgid ""
 "\n"
@@ -1665,7 +1688,7 @@ msgstr ""
 "Previše grešaka! (sledilo je %d)"
 
 # bug: Remove markup from messages
-#: src/gnome-genius.c:370
+#: src/gnome-genius.c:443
 #, c-format
 msgid "\\e[01;31mToo many errors! (%d followed)\\e[0m\n"
 msgstr "\\e[01;31mPreviše grešaka! (sledilo je %d)\\e[0m\n"
@@ -1674,18 +1697,18 @@ msgstr "\\e[01;31mPreviše grešaka! (sledilo je %d)\\e[0m\n"
 #. * which will give them credit in the About box.
 #. * E.g. "Fulano de Tal <fulano@detal.com>"
 #.
-#: src/gnome-genius.c:493
+#: src/gnome-genius.c:566
 msgid "translator_credits-PLEASE_ADD_YOURSELF_HERE"
 msgstr ""
 "Danilo Šegan <dsegan@gmx.net>\n"
 "\n"
 "Prevod.org — prevod na srpski jezik."
 
-#: src/gnome-genius.c:496
+#: src/gnome-genius.c:569
 msgid "About Genius"
 msgstr "O Geniju"
 
-#: src/gnome-genius.c:499
+#: src/gnome-genius.c:572
 msgid ""
 "The Gnome calculator style edition of the genius calculator.  For license/"
 "warranty details, type 'warranty' into the console."
@@ -1693,7 +1716,7 @@ msgstr ""
 "Izdanje Genijalnog kalkulatora u stilu Gnomovog kalkulatora. Za detalje o "
 "licenci/garanciji ukucajte „warranty“ u konzolu."
 
-#: src/gnome-genius.c:661
+#: src/gnome-genius.c:735
 msgid ""
 "Genius is executing something, and furthermore there are unsaved programs.\n"
 "Are you sure you wish to quit?"
@@ -1701,67 +1724,67 @@ msgstr ""
 "Genije nešto izvršava, a ima i nesačuvanih programa.\n"
 "Da li ste sigurni da želite da izađete?"
 
-#: src/gnome-genius.c:669
+#: src/gnome-genius.c:743
 msgid "There are unsaved programs, are you sure you wish to quit?"
 msgstr "Ima nesačuvanih programa, da li ste sigurni da želite da izađete?"
 
-#: src/gnome-genius.c:676
+#: src/gnome-genius.c:750
 msgid "Genius is executing something, are you sure you wish to quit?"
 msgstr "Genije nešto izvršava, da li ste sigurni da želite da izađete?"
 
-#: src/gnome-genius.c:683
+#: src/gnome-genius.c:757
 msgid "Are you sure you wish to quit?"
 msgstr "Sigurni ste da želite da završite?"
 
-#: src/gnome-genius.c:782
+#: src/gnome-genius.c:860
 msgid "Genius Setup"
 msgstr "Podešavanje Genija"
 
-#: src/gnome-genius.c:799
+#: src/gnome-genius.c:877
 msgid "Output"
 msgstr "Izlaz"
 
-#: src/gnome-genius.c:802
+#: src/gnome-genius.c:880
 msgid "Number/Expression output options"
 msgstr "Opcije ispisa brojeva/izraza"
 
-#: src/gnome-genius.c:812
+#: src/gnome-genius.c:890
 msgid "Maximum digits to output (0=unlimited)"
 msgstr "Najveći dozvoljen broj za ispis cifara"
 
-#: src/gnome-genius.c:832
+#: src/gnome-genius.c:910
 msgid "Results as floats"
 msgstr "Rezultati kao realni brojevi"
 
-#: src/gnome-genius.c:840
+#: src/gnome-genius.c:918
 msgid "Floats in scientific notation"
 msgstr "Realni brojevi u naučnom obeležavanju"
 
-#: src/gnome-genius.c:848
+#: src/gnome-genius.c:926
 msgid "Always print full expressions"
 msgstr "Uvek štampaj pune izraze"
 
-#: src/gnome-genius.c:857
+#: src/gnome-genius.c:935
 msgid "Error/Info output options"
 msgstr "Opcije ispisa grešaka/podataka"
 
-#: src/gnome-genius.c:865
+#: src/gnome-genius.c:943
 msgid "Display errors in a dialog"
 msgstr "Prikaži greške u prozorčetu"
 
-#: src/gnome-genius.c:873
+#: src/gnome-genius.c:951
 msgid "Display information messages in a dialog"
 msgstr "Prikaži obaveštajne poruke u prozorčetu"
 
-#: src/gnome-genius.c:884
+#: src/gnome-genius.c:962
 msgid "Maximum errors to display (0=unlimited)"
 msgstr "Najviše prikazanih grešaka (0=neograničeno)"
 
-#: src/gnome-genius.c:908
+#: src/gnome-genius.c:986
 msgid "Precision"
 msgstr "Preciznost"
 
-#: src/gnome-genius.c:918
+#: src/gnome-genius.c:996
 msgid ""
 "NOTE: The floating point precision might not take effect\n"
 "for all numbers immediately, only new numbers calculated\n"
@@ -1771,27 +1794,31 @@ msgstr ""
 "uzeti maha za sve brojeve, već će uticati jedino na nove\n"
 "izračunate brojeve i promenljive."
 
-#: src/gnome-genius.c:927
+#: src/gnome-genius.c:1005
 msgid "Floating point precision (bits)"
 msgstr "Preciznost pokretnog zareza (bitova)"
 
-#: src/gnome-genius.c:951
+#: src/gnome-genius.c:1029
 msgid "Terminal"
 msgstr "Terminal"
 
-#: src/gnome-genius.c:954
+#: src/gnome-genius.c:1032
 msgid "Terminal options"
 msgstr "Podešavanje terminala"
 
-#: src/gnome-genius.c:963
+#: src/gnome-genius.c:1041
 msgid "Scrollback lines"
 msgstr "Zapamti koliko redova"
 
-#: src/gnome-genius.c:986
+#: src/gnome-genius.c:1064
 msgid "Font:"
 msgstr "Slovo:"
 
-#: src/gnome-genius.c:1022
+#: src/gnome-genius.c:1079
+msgid "Black on white"
+msgstr ""
+
+#: src/gnome-genius.c:1109
 msgid ""
 "<b>Genius is currently executing something.</b>\n"
 "\n"
@@ -1801,57 +1828,57 @@ msgstr ""
 "\n"
 "Molim probajte ponovo kasnije ili prekinite tekuću operaciju."
 
-#: src/gnome-genius.c:1087
+#: src/gnome-genius.c:1174
 msgid "GEL files"
 msgstr "GEL datoteke"
 
-#: src/gnome-genius.c:1092
+#: src/gnome-genius.c:1179
 msgid "All files"
 msgstr "Sve datoteke"
 
-#: src/gnome-genius.c:1126 src/gnome-genius.c:1681
+#: src/gnome-genius.c:1213 src/gnome-genius.c:1838
 msgid "Cannot open file!"
 msgstr "Ne mogu da otvorim datoteku!"
 
-#: src/gnome-genius.c:1155 src/gnome-genius.c:1173
+#: src/gnome-genius.c:1242 src/gnome-genius.c:1260
 msgid "Load and Run"
 msgstr "Učitaj i pokreni"
 
-#: src/gnome-genius.c:1159
+#: src/gnome-genius.c:1246
 msgid "_Load"
 msgstr "U_čitaj"
 
-#: src/gnome-genius.c:1513
+#: src/gnome-genius.c:1672
 msgid "Cannot open file"
 msgstr "Ne mogu da otvorim datoteku"
 
-#: src/gnome-genius.c:1545 src/gnome-genius.c:2489
+#: src/gnome-genius.c:1704 src/gnome-genius.c:2650
 #, c-format
 msgid "Line: %d"
 msgstr "Red: %d"
 
 #. the file name will have an underscore
-#: src/gnome-genius.c:1616
+#: src/gnome-genius.c:1775
 #, c-format
 msgid "Program_%d.gel"
 msgstr "Program_%d.gel"
 
-#: src/gnome-genius.c:1617
+#: src/gnome-genius.c:1776
 #, c-format
 msgid "Program %d"
 msgstr "Program %d"
 
-#: src/gnome-genius.c:1633
+#: src/gnome-genius.c:1789
 #, c-format
 msgid "Cannot open %s"
 msgstr "Ne mogu da otvorim %s"
 
-#: src/gnome-genius.c:1708 src/gnome-genius.c:1726
+#: src/gnome-genius.c:1865 src/gnome-genius.c:1884
 msgid "Open..."
 msgstr "Otvori..."
 
 #. new fname
-#: src/gnome-genius.c:1816 src/gnome-genius.c:1871
+#: src/gnome-genius.c:1959 src/gnome-genius.c:2014
 #, c-format
 msgid ""
 "<b>Cannot save file</b>\n"
@@ -1860,15 +1887,15 @@ msgstr ""
 "<b>Ne mogu da sačuvam datoteku</b>\n"
 "Detalji: %s"
 
-#: src/gnome-genius.c:1865
+#: src/gnome-genius.c:2008
 msgid "File already exists.  Overwrite it?"
 msgstr "Datoteka već postoji. Da je presnimim?"
 
-#: src/gnome-genius.c:1922 src/gnome-genius.c:1943
+#: src/gnome-genius.c:2065 src/gnome-genius.c:2087
 msgid "Save As..."
 msgstr "Sačuvaj kao..."
 
-#: src/gnome-genius.c:2017
+#: src/gnome-genius.c:2161
 msgid ""
 "<b>No program selected.</b>\n"
 "\n"
@@ -1878,16 +1905,16 @@ msgstr ""
 "\n"
 "Napravite novi program ili izaberite tekući list u svesci."
 
-#: src/gnome-genius.c:2114
+#: src/gnome-genius.c:2258
 #, c-format
 msgid "Genius %s"
 msgstr "Genije %s"
 
-#: src/gnome-genius.c:2296
+#: src/gnome-genius.c:2444
 msgid "Can't execute genius-readline-helper-fifo!\n"
 msgstr "Ne mogu da izvršim genius-readline-helper-fifo!\n"
 
-#: src/gnome-genius.c:2508
+#: src/gnome-genius.c:2669
 msgid ""
 "\n"
 "Note: Compiled without GtkSourceView (better source editor)"
@@ -1895,26 +1922,25 @@ msgstr ""
 "\n"
 "Beleška: Prevedeno bez GtkSourceView-a (bolji uređivač izvornog koda)"
 
-#: src/gnome-genius.c:2673
+#: src/gnome-genius.c:2867
 msgid "Console"
 msgstr "Konzola"
 
-# bug: remove markup from messages
-#: src/gnome-genius.c:2705
-#, c-format
+#: src/gnome-genius.c:2912
+#, fuzzy, c-format
 msgid ""
-"\\e[0;32mGenius %s\\e[0m\n"
+"%sGenius %s%s\n"
 "%s\n"
 "This is free software with ABSOLUTELY NO WARRANTY.\n"
-"For license details type `\\e[01;36mwarranty\\e[0m'.\n"
-"For help type '\\e[01;36mmanual\\e[0m' or '\\e[01;36mhelp\\e[0m'.%s\n"
+"For license details type `%swarranty%s'.\n"
+"For help type '%smanual%s' or '%shelp%s'.%s\n"
 "\n"
 msgstr ""
-"\\e[0;32mGenije %s\\e[0m\n"
+"Genije %s\n"
 "%s\n"
 "Ovo je slobodan softver bez ikakve garancije.\n"
-"Za detalje o licenci ukucajte „\\e[01;36mwarranty\\e[0m“.\n"
-"Za pomoć ukucajte „\\e[01;36mmanual\\e[0m“ ili „\\e[01;36mhelp\\e[0m“.%s\n"
+"Za detalje o licenci ukucajte „warranty“.\n"
+"Za pomoć ukucajte „manual“ ili „help“.%s\n"
 "\n"
 
 #: src/gnome-genius.desktop.in.h:1
@@ -1985,48 +2011,48 @@ msgstr "do:"
 msgid "Y from:"
 msgstr "Y od:"
 
-#: src/graphing.c:1237
+#: src/graphing.c:1238
 msgid "No functions to plot or no functions could be parsed"
 msgstr "Nema funkcija za crtanje ili nisam mogao da iščitam funkcije"
 
-#: src/graphing.c:1259
+#: src/graphing.c:1261
 msgid "Invalid X range"
 msgstr "Neispravan X opseg"
 
-#: src/graphing.c:1264
+#: src/graphing.c:1266
 msgid "Invalid Y range"
 msgstr "Neispravan Y opseg"
 
-#: src/graphing.c:1326
+#: src/graphing.c:1331
 msgid "Create Line Plot"
 msgstr "Napravi linijski crtež"
 
-#: src/graphing.c:1373
+#: src/graphing.c:1378
 #, c-format
 msgid "%s: only up to 10 functions supported"
 msgstr "%s: podržano je samo do 10 funkcija"
 
-#: src/graphing.c:1378
+#: src/graphing.c:1383
 #, c-format
 msgid "%s: argument not a function"
 msgstr "%s: argument nije funkcija"
 
-#: src/graphing.c:1429
+#: src/graphing.c:1434
 #, c-format
 msgid "%s: invalid X range"
 msgstr "%s: neispravan X opseg"
 
-#: src/graphing.c:1434
+#: src/graphing.c:1439
 #, c-format
 msgid "%s: invalid Y range"
 msgstr "%s: neispravan Y opseg"
 
-#: src/graphing.c:1496
+#: src/graphing.c:1501
 msgid "Plotting"
 msgstr "Crtanje"
 
 #. bogus value
-#: src/graphing.c:1528
+#: src/graphing.c:1533
 msgid ""
 "Plot a function with a line (very rudimentary).  First come the functions "
 "(up to 10) then optionally limits as x1,x2,y1,y2"
@@ -2034,7 +2060,7 @@ msgstr ""
 "Iscrtaj funkciju pomoću linije (veoma jednostavno). Prvo dolaze funkcije (do "
 "10), a zatim po želji i ograničenja x1,x2,y1,y2"
 
-#: src/graphing.c:1530
+#: src/graphing.c:1535
 msgid "Plotting window (limits) as a 4-vector of the form [x1,x2,y1,y2]"
 msgstr "Oblast iscrtavanja (ograničenja) kao četvorka oblika [x1,x2,y1,y2]"
 
@@ -2112,7 +2138,7 @@ msgstr "Broj je preveliki za izračunavanje faktorijela!"
 msgid "Can't do factorials of negative numbers!"
 msgstr "Ne mogu da izračunam faktorijel negativnih brojeva!"
 
-#: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4658 src/mpwrap.c:4675
+#: src/mpwrap.c:2727 src/mpwrap.c:2795 src/mpwrap.c:4657 src/mpwrap.c:4674
 #, c-format
 msgid "%s: Bad types for mod power"
 msgstr "%s: Loši tipovi za stepen modula"
@@ -2134,97 +2160,97 @@ msgstr "Opseg za ceo slučajan broj mora biti pozitivan"
 msgid "Can't get numerator of floating types"
 msgstr "Ne mogu da nađem brojioc za tipove u pokretnom zarezu"
 
-#: src/mpwrap.c:4039 src/mpwrap.c:5260 src/mpwrap.c:5272
+#: src/mpwrap.c:4038 src/mpwrap.c:5259 src/mpwrap.c:5271
 msgid "Can't compare complex numbers"
 msgstr "Ne mogu da poredim kompleksne brojeve"
 
-#: src/mpwrap.c:4248 src/mpwrap.c:4263 src/mpwrap.c:4314 src/mpwrap.c:4337
-#: src/mpwrap.c:4350 src/mpwrap.c:4395
+#: src/mpwrap.c:4247 src/mpwrap.c:4262 src/mpwrap.c:4313 src/mpwrap.c:4336
+#: src/mpwrap.c:4349 src/mpwrap.c:4394
 msgid "Division by zero!"
 msgstr "Deljenje sa nulom!"
 
-#: src/mpwrap.c:4404
+#: src/mpwrap.c:4403
 msgid "Can't modulo complex numbers"
 msgstr "Ne mogu da tražim moduo kompleksnih brojeva"
 
-#: src/mpwrap.c:4423
+#: src/mpwrap.c:4422
 #, c-format
 msgid "Inverse of %s modulo %s not found!"
 msgstr "Inverz od %s po modulu %s nije nađen!"
 
-#: src/mpwrap.c:4432
+#: src/mpwrap.c:4431
 msgid "Can't do modulo invert on complex numbers"
 msgstr "Ne mogu da vršim izvrtanje modula sa kompleksnim brojevima"
 
-#: src/mpwrap.c:4445
+#: src/mpwrap.c:4444
 msgid "Can't GCD complex numbers"
 msgstr "Ne mogu da nađem NZD za kompleksne brojeve"
 
-#: src/mpwrap.c:4468
+#: src/mpwrap.c:4467
 msgid "Can't LCM complex numbers"
 msgstr "Ne mogu da nađem NZS za kompleksne brojeve"
 
-#: src/mpwrap.c:4481
+#: src/mpwrap.c:4480
 msgid "Can't get jacobi symbols of complex numbers"
 msgstr "Ne mogu da odredim Jakobijeve simbole kompleksnih brojeva"
 
-#: src/mpwrap.c:4493
+#: src/mpwrap.c:4492
 msgid "Can't get legendre symbols complex numbers"
 msgstr "Ne mogu da odredim Ležendrove simbole kompleksnih brojeva"
 
-#: src/mpwrap.c:4505
+#: src/mpwrap.c:4504
 msgid "Can't get jacobi symbol with Kronecker extension for complex numbers"
 msgstr ""
 "Ne mogu da odredim Jakobijeve vrednosti sa Kronekerovim proširenjem za "
 "kompleksne brojeve"
 
-#: src/mpwrap.c:4517
+#: src/mpwrap.c:4516
 msgid "Can't get lucas number for complex numbers"
 msgstr "Ne mogu da odredim Lukasov broj za kompleksne brojeve"
 
-#: src/mpwrap.c:4529
+#: src/mpwrap.c:4528
 msgid "Can't get next prime for complex numbers"
 msgstr "Ne mogu da odredim naredni prost broj za kompleksne brojeve"
 
-#: src/mpwrap.c:4539 src/mpwrap.c:4551 src/mpwrap.c:4563 src/mpwrap.c:4575
+#: src/mpwrap.c:4538 src/mpwrap.c:4550 src/mpwrap.c:4562 src/mpwrap.c:4574
 #, c-format
 msgid "%s: can't work on complex numbers"
 msgstr "%s: ne mogu da radim sa kompleksnim brojevima."
 
-#: src/mpwrap.c:4749 src/mpwrap.c:4820 src/mpwrap.c:4887
+#: src/mpwrap.c:4748 src/mpwrap.c:4819 src/mpwrap.c:4886
 #, c-format
 msgid "%s: can't take logarithm of 0"
 msgstr "%s: ne mogu da izračunam logaritam od 0"
 
-#: src/mpwrap.c:5189
+#: src/mpwrap.c:5188
 msgid "Can't make random integer out of a complex number"
 msgstr "Ne mogu da dobijem slučajan ceo broj od kompleksnog broja"
 
-#: src/mpwrap.c:5310 src/mpwrap.c:5323
+#: src/mpwrap.c:5309 src/mpwrap.c:5322
 msgid "Can't make factorials of complex numbers"
 msgstr "Ne mogu da odredim faktorijele za kompleksne brojeve"
 
-#: src/mpwrap.c:5605 src/mpwrap.c:5627 src/mpwrap.c:5649
+#: src/mpwrap.c:5603 src/mpwrap.c:5625 src/mpwrap.c:5647
 msgid "Can't determine type of a complex number"
 msgstr "Ne mogu da odredim vrstu kompleksnog broja"
 
-#: src/mpwrap.c:5741 src/mpwrap.c:5764
+#: src/mpwrap.c:5739 src/mpwrap.c:5762
 msgid "Can't convert complex number into integer"
 msgstr "Ne mogu da pretvorim kompleksan u ceo broj"
 
-#: src/mpwrap.c:5747
+#: src/mpwrap.c:5745
 msgid "Can't convert real number to integer"
 msgstr "Ne mogu da pretvorim realan broj u ceo broj"
 
-#: src/mpwrap.c:5751
+#: src/mpwrap.c:5749
 msgid "Integer too large for this operation"
 msgstr "Ceo broj je prevelik za ovu operaciju"
 
-#: src/mpwrap.c:5773
+#: src/mpwrap.c:5771
 msgid "Can't convert real number to double"
 msgstr "Ne mogu da pretvorim realan broj u dvostruku tačnost"
 
-#: src/mpwrap.c:5779
+#: src/mpwrap.c:5777
 msgid "Number too large for this operation"
 msgstr "Vroj je prevelik za ovu operaciju"
 
@@ -2268,9 +2294,25 @@ msgstr ""
 "To je to, nije li zabavno\n"
 "\n"
 
-#: src/util.c:116
+#: src/util.c:96
 msgid "Stack underflow!"
 msgstr "Potkoračenje steka!"
+
+# bug: remove markup from messages
+#~ msgid ""
+#~ "\\e[0;32mGenius %s\\e[0m\n"
+#~ "%s\n"
+#~ "This is free software with ABSOLUTELY NO WARRANTY.\n"
+#~ "For license details type `\\e[01;36mwarranty\\e[0m'.\n"
+#~ "For help type '\\e[01;36mmanual\\e[0m' or '\\e[01;36mhelp\\e[0m'.%s\n"
+#~ "\n"
+#~ msgstr ""
+#~ "\\e[0;32mGenije %s\\e[0m\n"
+#~ "%s\n"
+#~ "Ovo je slobodan softver bez ikakve garancije.\n"
+#~ "Za detalje o licenci ukucajte „\\e[01;36mwarranty\\e[0m“.\n"
+#~ "Za pomoć ukucajte „\\e[01;36mmanual\\e[0m“ ili „\\e[01;36mhelp\\e[0m“.%s\n"
+#~ "\n"
 
 #~ msgid "GENIUS Calculator"
 #~ msgstr "Genijalni kalkulator"

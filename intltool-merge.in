@@ -849,8 +849,9 @@ sub parseTree
                 #
                 my $string = $sub;
 
-                $string =~ s/^[\s]+//;
-                $string =~ s/[\s]+$//;
+                $string =~ s/\s+/ /g;
+                $string =~ s/^ //;
+                $string =~ s/ $//;
 
                 push(@translation_strings, $string);
 
@@ -1106,9 +1107,9 @@ sub schemas_merge_translations
     while ($source =~ s/
                         (.*?)
                         (\s+)(<locale\ name="C">(\s*)
-                            (<default>\s*(.*?)\s*<\/default>)?(\s*)
-                            (<short>\s*(.*?)\s*<\/short>)?(\s*)
-                            (<long>\s*(.*?)\s*<\/long>)?(\s*)
+                            (<default>\s*(?:<!--[^>]*?-->\s*)?(.*?)\s*<\/default>)?(\s*)
+                            (<short>\s*(?:<!--[^>]*?-->\s*)?(.*?)\s*<\/short>)?(\s*)
+                            (<long>\s*(?:<!--[^>]*?-->\s*)?(.*?)\s*<\/long>)?(\s*)
                         <\/locale>)
                        //sx) 
     {

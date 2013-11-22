@@ -154,7 +154,16 @@ l = @l@
 
 SUBDIRS = po vicious-extensions src lib doc
 
-EXTRA_DIST =  	genius.spec 	genius.spec.in 	intltool-modules/XML/Parser/Style/OrigTree.pm 	intltool-extract.in		intltool-merge.in		intltool-update.in
+mimeinfodir = $(datadir)/mime-info
+mimeinfo_DATA = genius.keys genius.mime
+
+appregdir = $(datadir)/application-registry
+appreg_DATA = genius.applications
+
+packagesdir = $(datadir)/mime/packages
+packages_DATA = genius.xml
+
+EXTRA_DIST =  	genius.spec 	genius.spec.in 	genius.xml 	genius.mime 	genius.keys 	genius.applications 	intltool-modules/XML/Parser/Style/OrigTree.pm 	intltool-extract.in		intltool-merge.in		intltool-update.in
 
 
 DISTCLEANFILES =  	intltool-extract		intltool-merge			intltool-update
@@ -163,6 +172,8 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = config.h
 CONFIG_CLEAN_FILES =  genius.spec
+DATA =  $(appreg_DATA) $(mimeinfo_DATA) $(packages_DATA)
+
 DIST_COMMON =  README ./stamp-h.in ABOUT-NLS AUTHORS COPYING ChangeLog \
 INSTALL Makefile.am Makefile.in NEWS TODO acconfig.h acinclude.m4 \
 aclocal.m4 config.guess config.h.in config.sub configure configure.in \
@@ -219,6 +230,63 @@ distclean-hdr:
 maintainer-clean-hdr:
 genius.spec: $(top_builddir)/config.status genius.spec.in
 	cd $(top_builddir) && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
+
+install-appregDATA: $(appreg_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(appregdir)
+	@list='$(appreg_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(appregdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(appregdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(appregdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(appregdir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-appregDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(appreg_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(appregdir)/$$p; \
+	done
+
+install-mimeinfoDATA: $(mimeinfo_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(mimeinfodir)
+	@list='$(mimeinfo_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(mimeinfodir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(mimeinfodir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(mimeinfodir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(mimeinfodir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-mimeinfoDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(mimeinfo_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(mimeinfodir)/$$p; \
+	done
+
+install-packagesDATA: $(packages_DATA)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(packagesdir)
+	@list='$(packages_DATA)'; for p in $$list; do \
+	  if test -f $(srcdir)/$$p; then \
+	    echo " $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(packagesdir)/$$p"; \
+	    $(INSTALL_DATA) $(srcdir)/$$p $(DESTDIR)$(packagesdir)/$$p; \
+	  else if test -f $$p; then \
+	    echo " $(INSTALL_DATA) $$p $(DESTDIR)$(packagesdir)/$$p"; \
+	    $(INSTALL_DATA) $$p $(DESTDIR)$(packagesdir)/$$p; \
+	  fi; fi; \
+	done
+
+uninstall-packagesDATA:
+	@$(NORMAL_UNINSTALL)
+	list='$(packages_DATA)'; for p in $$list; do \
+	  rm -f $(DESTDIR)$(packagesdir)/$$p; \
+	done
 
 # This directory's subdirectories are mostly independent; you can cd
 # into them and run `make' without going through this Makefile.
@@ -382,20 +450,26 @@ all-recursive-am: config.h
 install-exec-am:
 install-exec: install-exec-recursive
 
-install-data-am:
+install-data-am: install-appregDATA install-mimeinfoDATA \
+		install-packagesDATA
+	@$(NORMAL_INSTALL)
+	$(MAKE) $(AM_MAKEFLAGS) install-data-hook
 install-data: install-data-recursive
 
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-recursive
-uninstall-am:
+uninstall-am: uninstall-appregDATA uninstall-mimeinfoDATA \
+		uninstall-packagesDATA
 uninstall: uninstall-recursive
-all-am: Makefile config.h
+all-am: Makefile $(DATA) config.h
 all-redirect: all-recursive-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) AM_INSTALL_PROGRAM_FLAGS=-s install
 installdirs: installdirs-recursive
 installdirs-am:
+	$(mkinstalldirs)  $(DESTDIR)$(appregdir) $(DESTDIR)$(mimeinfodir) \
+		$(DESTDIR)$(packagesdir)
 
 
 mostlyclean-generic:
@@ -431,6 +505,8 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f config.status
 
 .PHONY: mostlyclean-hdr distclean-hdr clean-hdr maintainer-clean-hdr \
+uninstall-appregDATA install-appregDATA uninstall-mimeinfoDATA \
+install-mimeinfoDATA uninstall-packagesDATA install-packagesDATA \
 install-data-recursive uninstall-data-recursive install-exec-recursive \
 uninstall-exec-recursive installdirs-recursive uninstalldirs-recursive \
 all-recursive check-recursive installcheck-recursive info-recursive \
@@ -443,6 +519,9 @@ install uninstall-am uninstall all-redirect all-am all installdirs-am \
 installdirs mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
+
+install-data-hook: 
+	-update-mime-database "$(DESTDIR)${datadir}/mime"
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
