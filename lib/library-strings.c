@@ -83,6 +83,7 @@ char *fake = N_("Is a matrix upper triangular");
 char *fake = N_("Is argument a horizontal or a vertical vector");
 char *fake = N_("Zero out entries above the diagonal");
 char *fake = N_("Make diagonal matrix from a vector");
+char *fake = N_("Make column vector out of matrix by putting columns above each other");
 char *fake = N_("Calculate the product of all elements in a matrix");
 char *fake = N_("Calculate the sum of all elements in a matrix");
 char *fake = N_("Calculate the sum of squares of all elements in a matrix");
@@ -101,6 +102,7 @@ char *fake = N_("Return a function that evaluates two vectors with respect to th
 char *fake = N_("Get the characteristic polynomial as a vector");
 char *fake = N_("Get the characteristic polynomial as a function");
 char *fake = N_("Get a basis matrix for the columnspace of a matrix");
+char *fake = N_("Return the commutation matrix K(m,n) which is the unique m*n by m*n matrix such that K(m,n) * MakeVector(A) = MakeVector(A.') for all m by n matrices A.");
 char *fake = N_("Companion matrix of a polynomial (as vector)");
 char *fake = N_("Conjugate transpose of a matrix (adjoint)");
 char *fake = N_("Calculate convolution of two horizontal vectors");
@@ -148,6 +150,7 @@ char *fake = N_("Evaluate (v,w) with respect to the sesquilinear form given by t
 char *fake = N_("Return a function that evaluates two vectors with respect to the sesquilinear form given by A");
 char *fake = N_("Smith Normal Form for fields (will end up with 1's on the diagonal)");
 char *fake = N_("Smith Normal Form for square integer matrices (not its characteristic)");
+char *fake = N_("Return the Toeplitz matrix constructed given the first column c and (optionally) the first row r.");
 char *fake = N_("Calculate the trace of a matrix");
 char *fake = N_("Transpose of a matrix");
 char *fake = N_("Return the Vandermonde matrix");
@@ -212,11 +215,14 @@ char *fake = N_("The unit step function = 0 for x<0, 1 otherwise.  This is the i
 char *fake = N_("The cis function, that is cos(x)+i*sin(x)");
 char *fake = N_("Convert degrees to radians");
 char *fake = N_("Convert radians to degrees");
+char *fake = N_("Find roots of a cubic polynomial (given as vector of coefficients)");
 char *fake = N_("Use classical Euler's method to numerically solve y'=f(x,y) for initial x0,y0 going to x1 with n increments, returns y at x1");
 char *fake = N_("Find root of a function using the bisection method");
 char *fake = N_("Find root of a function using the method of false position");
 char *fake = N_("Find root of a function using the Muller's method");
 char *fake = N_("Find root of a function using the secant method");
+char *fake = N_("Find roots of a polynomial (given as vector of coefficients)");
+char *fake = N_("Find roots of a quadratic polynomial (given as vector of coefficients)");
 char *fake = N_("Use classical non-adaptive Runge-Kutta of fourth order method to numerically solve y'=f(x,y) for initial x0,y0 going to x1 with n increments, returns y at x1");
 char *fake = N_("Calculate average of an entire matrix");
 char *fake = N_("Integral of the GaussFunction from 0 to x (area under the normal curve)");

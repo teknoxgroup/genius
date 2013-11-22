@@ -64,8 +64,9 @@ GelEFunc *Numerator_function = NULL;
 GelEFunc *Denominator_function = NULL;
 GelEFunc *Re_function = NULL;
 GelEFunc *Im_function = NULL;
-/* GelEFunc *ErrorFunction_function = NULL; */
-/* GelEFunc *RiemannZeta_function = NULL; */
+/*GelEFunc *ErrorFunction_function = NULL;*/
+GelEFunc *RiemannZeta_function = NULL;
+GelEFunc *GammaFunction_function = NULL;
 GelEFunc *pi_function = NULL;
 GelEFunc *e_function = NULL;
 GelEFunc *GoldenRatio_function = NULL;
@@ -239,7 +240,7 @@ IntegerFromBoolean_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return NULL;
 
 	if (a[0]->type == VALUE_NODE)
-		i = (mpw_sgn(a[0]->val.value)!=0) ? 1 : 0;
+		i = mpw_eql_ui (a[0]->val.value, 0) ? 0 : 1;
 	else /* a->type == BOOL_NODE */
 		i = a[0]->bool_.bool_ ? 1 : 0;
 
@@ -855,7 +856,7 @@ CountZeroColumns_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 			if ( ! ( t == NULL ||
 				 t->type == NULL_NODE ||
 				 (t->type == VALUE_NODE &&
-				  mpw_cmp_ui (t->val.value, 0) == 0))) {
+				  mpw_eql_ui (t->val.value, 0)))) {
 				cnt++;
 				break;
 			}
@@ -892,7 +893,7 @@ StripZeroColumns_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 			if ( ! ( t == NULL ||
 				 t->type == NULL_NODE ||
 				 (t->type == VALUE_NODE &&
-				  mpw_cmp_ui (t->val.value, 0) == 0))) {
+				  mpw_eql_ui (t->val.value, 0)))) {
 				cols = g_slist_prepend (cols,
 							GINT_TO_POINTER (i));
 				cnt++;
@@ -1203,7 +1204,7 @@ GoldenRatio_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	return gel_makenum (golden_ratio_cache);
 }
 
-/*
+/*  FIXME: I have bad GEL implementation that handles complex values
 static GelETree *
 ErrorFunction_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
@@ -1220,8 +1221,13 @@ ErrorFunction_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if (a[0]->type == MATRIX_NODE)
 		return gel_apply_func_to_matrix (ctx, a[0], ErrorFunction_op, "ErrorFunction", exception);
 
-	if G_UNLIKELY ( ! check_argument_real_number (a, 0, "ErrorFunction"))
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "ErrorFunction"))
 		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "ErrorFunction");
+		return NULL;
+	}
 
 	MPW_MPF_REAL (num, a[0]->val.value, tmp);
 
@@ -1235,6 +1241,7 @@ ErrorFunction_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	return gel_makenum (retw);
 }
+*/
 
 static GelETree *
 RiemannZeta_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
@@ -1252,13 +1259,18 @@ RiemannZeta_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if (a[0]->type == MATRIX_NODE)
 		return gel_apply_func_to_matrix (ctx, a[0], RiemannZeta_op, "RiemannZeta", exception);
 
-	if G_UNLIKELY ( ! check_argument_real_number (a, 0, "RiemannZeta"))
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "RiemannZeta"))
 		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "RiemannZeta");
+		return NULL;
+	}
 
 	MPW_MPF_REAL (num, a[0]->val.value, tmp);
 
 	mpf_init (ret);
-	mpfr_erf (ret, num, GMP_RNDN);
+	mpfr_zeta (ret, num, GMP_RNDN);
 
 	MPW_MPF_KILL (num, tmp);
 
@@ -1267,7 +1279,43 @@ RiemannZeta_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	return gel_makenum (retw);
 }
-*/
+
+static GelETree *
+GammaFunction_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	mpfr_ptr num;
+	mpfr_t tmp;
+	mpfr_t ret;
+	mpw_t retw;
+
+	if (a[0]->type == FUNCTION_NODE ||
+	    a[0]->type == IDENTIFIER_NODE) {
+		return function_from_function (GammaFunction_function, a[0]);
+	}
+
+	if (a[0]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrix (ctx, a[0], GammaFunction_op, "GammaFunction", exception);
+
+	if G_UNLIKELY ( ! check_argument_number (a, 0, "GammaFunction"))
+		return NULL;
+	if G_UNLIKELY (mpw_is_complex (a[0]->val.value)) {
+		gel_errorout (_("%s: Not implemented (yet) for complex values"),
+			      "GammaFunction");
+		return NULL;
+	}
+
+	MPW_MPF_REAL (num, a[0]->val.value, tmp);
+
+	mpf_init (ret);
+	mpfr_gamma (ret, num, GMP_RNDN);
+
+	MPW_MPF_KILL (num, tmp);
+
+	mpw_init (retw);
+	mpw_set_mpf_use (retw, ret);
+
+	return gel_makenum (retw);
+}
 
 
 static GelETree *
@@ -2909,7 +2957,7 @@ is_row_zero (GelMatrixW *m, int r)
 		if (node != NULL &&
 		    (node->type != VALUE_NODE ||
 		     /* FIXME: perhaps use some zero tolerance */
-		     mpw_sgn (node->val.value) != 0)) {
+		     ! mpw_eql_ui (node->val.value, 0))) {
 			return FALSE;
 		}
 	}
@@ -3367,7 +3415,7 @@ poly_cut_zeros(GelMatrixW *m)
 	int cutoff;
 	for(i=gel_matrixw_width(m)-1;i>=1;i--) {
 		GelETree *t = gel_matrixw_index(m,i,0);
-	       	if(mpw_sgn(t->val.value)!=0)
+	       	if ( ! mpw_eql_ui(t->val.value, 0))
 			break;
 	}
 	cutoff = i+1;
@@ -3524,8 +3572,8 @@ MultiplyPoly_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 			GelETree *l,*r,*nn;
 			l = gel_matrixw_index(m1,i,0);
 			r = gel_matrixw_index(m2,j,0);
-			if(mpw_sgn(l->val.value)==0 ||
-			   mpw_sgn(r->val.value)==0)
+			if (mpw_eql_ui (l->val.value, 0) ||
+			    mpw_eql_ui (r->val.value, 0))
 				continue;
 			mpw_mul(accu,l->val.value,r->val.value);
 			nn = gel_matrixw_set_index(mn,i+j,0);
@@ -3692,7 +3740,7 @@ PolyToString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	GelETree *n;
 	int i;
 	GString *gs;
-	int any = FALSE;
+	gboolean any = FALSE;
 	GelMatrixW *m;
 	char *var;
 	GelOutput *gelo;
@@ -3725,25 +3773,38 @@ PolyToString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	for(i=gel_matrixw_width(m)-1;i>=0;i--) {
 		GelETree *t;
 		t = gel_matrixw_index(m,i,0);
-		if(mpw_sgn(t->val.value)==0)
+		if (mpw_eql_ui (t->val.value, 0))
 			continue;
-		/*positive*/
-		if(mpw_sgn(t->val.value)>0) {
+		/*positive (or complex) */
+		if (mpw_is_complex (t->val.value) ||
+		    mpw_sgn (t->val.value) > 0) {
 			if(any) g_string_append(gs," + ");
-			if(i==0)
-				gel_print_etree (gelo, t, FALSE);
-			else if(mpw_cmp_ui(t->val.value,1)!=0) {
-				gel_print_etree (gelo, t, FALSE);
-				g_string_append_c(gs,'*');
+			if (MPW_IS_COMPLEX (t->val.value)) {
+				g_string_append_c (gs, '(');
+				if (i==0) {
+					gel_print_etree (gelo, t, FALSE);
+					g_string_append_c (gs, ')');
+				} else if ( ! mpw_eql_ui(t->val.value,1)) {
+					gel_print_etree (gelo, t, FALSE);
+					g_string_append_c (gs, ')');
+					g_string_append_c(gs,'*');
+				}
+			} else {
+				if (i == 0) {
+					gel_print_etree (gelo, t, FALSE);
+				} else if ( ! mpw_eql_ui (t->val.value, 1)) {
+					gel_print_etree (gelo, t, FALSE);
+					g_string_append_c(gs,'*');
+				}
 			}
 			/*negative*/
 		} else {
 			if(any) g_string_append(gs," - ");
 			else g_string_append_c(gs,'-');
 			mpw_neg(t->val.value,t->val.value);
-			if(i==0)
+			if (i == 0) {
 				gel_print_etree (gelo, t, FALSE);
-			else if(mpw_cmp_ui(t->val.value,1)!=0) {
+			} else if ( ! mpw_eql_ui (t->val.value, 1)) {
 				gel_print_etree (gelo, t, FALSE);
 				g_string_append_c(gs,'*');
 			}
@@ -3834,7 +3895,7 @@ PolyToFunction_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	for(i=gel_matrixw_width(m)-1;i>=0;i--) {
 		GelETree *t;
 		t = gel_matrixw_index(m,i,0);
-		if(mpw_sgn(t->val.value)==0)
+		if (mpw_eql_ui (t->val.value, 0))
 			continue;
 		
 		if(!nn)
@@ -4743,7 +4804,7 @@ set_ResultsAsFloats (GelETree * a)
 	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_ResultsAsFloats"))
 		return NULL;
 	if (a->type == VALUE_NODE)
-		calcstate.results_as_floats = mpw_sgn(a->val.value)!=0;
+		calcstate.results_as_floats = ! mpw_eql_ui (a->val.value, 0);
 	else /* a->type == BOOL_NODE */
 		calcstate.results_as_floats = a->bool_.bool_;
 	if(statechange_hook)
@@ -4762,7 +4823,7 @@ set_ScientificNotation (GelETree * a)
 	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_ScientificNotation"))
 		return NULL;
 	if (a->type == VALUE_NODE)
-		calcstate.scientific_notation = mpw_sgn(a->val.value)!=0;
+		calcstate.scientific_notation = ! mpw_eql_ui (a->val.value, 0);
 	else /* a->type == BOOL_NODE */
 		calcstate.scientific_notation = a->bool_.bool_;
 	if(statechange_hook)
@@ -4781,7 +4842,7 @@ set_FullExpressions (GelETree * a)
 	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_FullExpressions"))
 		return NULL;
 	if (a->type == VALUE_NODE)
-		calcstate.full_expressions = mpw_sgn(a->val.value)!=0;
+		calcstate.full_expressions = ! mpw_eql_ui (a->val.value, 0);
 	else /* a->type == BOOL_NODE */
 		calcstate.full_expressions = a->bool_.bool_;
 	if(statechange_hook)
@@ -4885,7 +4946,7 @@ set_MixedFractions (GelETree * a)
 	if G_UNLIKELY ( ! check_argument_bool (&a, 0, "set_MixedFractions"))
 		return NULL;
 	if (a->type == VALUE_NODE)
-		calcstate.mixed_fractions = mpw_sgn(a->val.value)!=0;
+		calcstate.mixed_fractions = ! mpw_eql_ui (a->val.value, 0);
 	else /* a->type == BOOL_NODE */
 		calcstate.mixed_fractions = a->bool_.bool_;
 	if(statechange_hook)
@@ -5087,15 +5148,15 @@ gel_funclib_addall(void)
 	FUNC (CatalanConstant, 0, "", "constants",
 	      N_("Catalan's Constant (0.915...)"));
 
-	/* FIXME: need to handle complex values */
-	/*
-	FUNC (ErrorFunction, 1, "x", "functions", N_("The error function, 2/sqrt(2) * int_0^x e^(-t^2) dt"));
+	/*FUNC (ErrorFunction, 1, "x", "functions", N_("The error function, 2/sqrt(2) * int_0^x e^(-t^2) dt (only real values implemented)"));
 	ErrorFunction_function = f;
-	ALIAS (erf, 1, ErrorFunction);
-	FUNC (RiemannZeta, 1, "x", "functions", N_("The Riemann zeta function"));
+	ALIAS (erf, 1, ErrorFunction);*/
+	FUNC (RiemannZeta, 1, "x", "functions", N_("The Riemann zeta function (only real values implemented)"));
 	RiemannZeta_function = f;
 	ALIAS (zeta, 1, RiemannZeta);
-	*/
+	FUNC (GammaFunction, 1, "x", "functions", N_("The Gamma function (only real values implemented)"));
+	GammaFunction_function = f;
+	ALIAS (Gamma, 1, GammaFunction);
 
 	FUNC (sqrt, 1, "x", "numeric", N_("The square root"));
 	f->propagate_mod = 1;
