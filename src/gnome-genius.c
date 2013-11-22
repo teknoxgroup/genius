@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2007 Jiri (George) Lebl
+ * Copyright (C) 1997-2008 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -187,21 +187,16 @@ pid_t helper_pid = -1;
 static FILE *torlfp = NULL;
 static int fromrl;
 
-static int forvte[2];
-
-static GIOChannel *forvte0_ch;
-
-
 static char *torlfifo = NULL;
 static char *fromrlfifo = NULL;
 
 static char *arg0 = NULL;
 
-static gboolean feed_to_vte (GIOChannel *source, GIOCondition condition, gpointer data);
 static void new_callback (GtkWidget *menu_item, gpointer data);
 static void open_callback (GtkWidget *w);
 static void save_callback (GtkWidget *w);
 static void save_all_cb (GtkWidget *w);
+static void save_console_cb (GtkWidget *w);
 static void save_as_callback (GtkWidget *w);
 static void close_callback (GtkWidget *menu_item, gpointer data);
 static void load_cb (GtkWidget *w);
@@ -229,6 +224,7 @@ static void prog_menu_activated (GtkWidget *item, gpointer data);
 static void setup_calc (GtkWidget *widget, gpointer data);
 static void run_program (GtkWidget *menu_item, gpointer data);
 static void show_user_vars (GtkWidget *menu_item, gpointer data);
+static void monitor_user_var (GtkWidget *menu_item, gpointer data);
 static void full_answer (GtkWidget *menu_item, gpointer data);
 static void warranty_call (GtkWidget *widget, gpointer data);
 static void aboutcb (GtkWidget * widget, gpointer data);
@@ -242,7 +238,7 @@ static GnomeUIInfo file_menu[] = {
 #define FILE_SAVE_ITEM 2
 	GNOMEUIINFO_MENU_SAVE_ITEM (save_callback,NULL),
 #define FILE_SAVE_ALL_ITEM 3
-	GNOMEUIINFO_ITEM_STOCK(N_("Save all _unsaved"),N_("Save all unsaved programs"), save_all_cb, GTK_STOCK_SAVE),
+	GNOMEUIINFO_ITEM_STOCK(N_("Save All _Unsaved"),N_("Save all unsaved programs"), save_all_cb, GTK_STOCK_SAVE),
 #define FILE_SAVE_AS_ITEM 4
 	GNOMEUIINFO_MENU_SAVE_AS_ITEM (save_as_callback,NULL),
 #define FILE_RELOAD_ITEM 5
@@ -251,6 +247,8 @@ static GnomeUIInfo file_menu[] = {
 	GNOMEUIINFO_MENU_CLOSE_ITEM (close_callback, NULL),
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_ITEM_STOCK(N_("_Load and Run..."),N_("Load and execute a file in genius"), load_cb, GTK_STOCK_OPEN),
+	GNOMEUIINFO_SEPARATOR,
+	GNOMEUIINFO_ITEM_STOCK(N_("Save Console Ou_tput..."),N_("Save what is visible on the console (including scrollback) to a text file"), save_console_cb, GTK_STOCK_SAVE),
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_MENU_EXIT_ITEM (quitapp,NULL),
 	GNOMEUIINFO_END,
@@ -310,6 +308,7 @@ static GnomeUIInfo calc_menu[] = {
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_ITEM_STOCK (N_("Show _Full Answer"), N_("Show the full text of last answer"), full_answer, GTK_STOCK_DIALOG_INFO),
 	GNOMEUIINFO_ITEM_STOCK (N_("Show User _Variables"), N_("Show the current value of all user variables"), show_user_vars, GTK_STOCK_DIALOG_INFO),
+	GNOMEUIINFO_ITEM_STOCK (N_("_Monitor a Variable"), N_("Monitor a variable continuously"), monitor_user_var, GTK_STOCK_DIALOG_INFO),
 	GNOMEUIINFO_SEPARATOR,
 	GNOMEUIINFO_ITEM_STOCK (N_("_Plot"), N_("Plot a function"), genius_plot_dialog, GNOME_STOCK_BOOK_OPEN),
 	GNOMEUIINFO_END,
@@ -444,7 +443,7 @@ setup_term_color (void)
 }
 
 static void
-help_on_entry_activate (GtkWidget *e, gpointer data)
+dialog_entry_activate (GtkWidget *e, gpointer data)
 {
 	GtkWidget *d = data;
 	gtk_dialog_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
@@ -474,7 +473,7 @@ help_on_function (GtkWidget *menuitem, gpointer data)
 
 	e = gtk_entry_new ();
 	g_signal_connect (G_OBJECT (e), "activate",
-			  G_CALLBACK (help_on_entry_activate), d);
+			  G_CALLBACK (dialog_entry_activate), d);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
 			    e,
 			    FALSE, FALSE, 0);
@@ -513,6 +512,7 @@ run_help_dlg_again:
 			}
 			display_warning (genius_window, warn);
 			g_free (warn);
+			g_free (txt);
 			goto run_help_dlg_again;
 		} else if ( ! found && help != NULL) {
 			if (help->aliasfor != NULL)
@@ -532,6 +532,7 @@ geniusbox (gboolean error,
 	   gboolean always_textbox,
 	   const char *textbox_title,
 	   gboolean bind_response,
+	   gboolean wrap,
 	   const char *s)
 {
 	GtkWidget *mb;
@@ -579,6 +580,14 @@ geniusbox (gboolean error,
 		tv = gtk_text_view_new ();
 		buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (tv));
 		gtk_text_view_set_editable (GTK_TEXT_VIEW (tv), FALSE);
+ 
+		if (wrap)
+			gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv),
+						     GTK_WRAP_CHAR);
+		else
+			gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (tv),
+						     GTK_WRAP_NONE);
+
 		gtk_text_buffer_create_tag (buffer, "foo",
 					    "editable", FALSE,
 					    "family", "monospace",
@@ -854,19 +863,268 @@ show_user_vars (GtkWidget *menu_item, gpointer data)
 	populate_var_box (buffer);
 }
 
+typedef struct {
+	guint tm;
+	GelToken *var;
+	GtkWidget *tv;
+	GtkTextBuffer *buf;
+	GtkWidget *updatecb;
+	GelOutput *out;
+} MonitorData;
+
+static void
+monitor_destroyed (GtkWidget *d, gpointer data)
+{
+	MonitorData *md = data;
+	g_source_remove (md->tm);
+	gel_output_unref (md->out);
+	g_free (md);
+}
+
+static gboolean
+monitor_timeout (gpointer data)
+{
+	MonitorData *md = data;
+	char *s;
+	GSList *li;
+	GelEFunc *func;
+	GtkTextIter iter;
+	GtkTextIter iter_end;
+	gboolean any_matrix = FALSE;
+
+	if ( ! gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (md->updatecb)))
+		return TRUE;
+
+	/* get iterator */
+	gtk_text_buffer_get_iter_at_offset (md->buf, &iter, 0);
+
+	if (md->var == NULL ||
+	    md->var->refs == NULL) {
+		s = g_strdup_printf (_("%s undefined"), md->var->token);
+		gtk_text_buffer_insert_with_tags_by_name
+			(md->buf, &iter, s, -1, "value", NULL);
+		g_free (s);
+	} else {
+		int vars = 0;
+
+		for (li = md->var->refs; li != NULL; li = li->next) {
+			func = li->data;
+			if ((func->type != GEL_VARIABLE_FUNC &&
+			     func->type != GEL_USER_FUNC) ||
+			    func->id == NULL ||
+			    func->id->parameter ||
+			    func->id->protected_ ||
+			    func->id->token == NULL ||
+			    func->data.user == NULL)
+				continue;
+
+			/* This is a hack: it fakes the pretty
+			 * output routine to add a newline when printing
+			 * a matrix */
+			gel_output_string (md->out, "\n ");
+			gel_output_clear_string (md->out);
+
+			if (func->data.user->type == MATRIX_NODE)
+				any_matrix = TRUE;
+			gel_pretty_print_etree (md->out, func->data.user);
+
+			if (vars > 0)
+				gtk_text_buffer_insert_with_tags_by_name
+					(md->buf, &iter, "\n", -1,
+					 "value", NULL);
+
+			if (func->context == 0)
+				/* printed before a global variable */
+				s = g_strdup (_("(global) "));
+			else
+				/* printed before local variable in certain
+				 * context */
+				s = g_strdup_printf (_("(context %d) "),
+						     func->context);
+			gtk_text_buffer_insert_with_tags_by_name
+				(md->buf, &iter, s, -1, "context", NULL);
+			g_free (s);
+
+			gtk_text_buffer_insert_with_tags_by_name
+				(md->buf, &iter, md->var->token, -1,
+				 "variable", NULL);
+			gtk_text_buffer_insert_with_tags_by_name
+				(md->buf, &iter, " = ", -1,
+				 "value", NULL);
+
+			gtk_text_buffer_insert_with_tags_by_name
+				(md->buf, &iter,
+				 gel_output_peek_string (md->out), -1,
+				 "value", NULL);
+
+			gel_output_clear_string (md->out);
+			vars ++;
+		}
+		if (vars == 0) {
+			s = g_strdup_printf (_("%s not a user variable"),
+					     md->var->token);
+			gtk_text_buffer_insert_with_tags_by_name
+				(md->buf, &iter, s, -1, "value", NULL);
+			g_free (s);
+		}
+	}
+
+	/* matrices look better unwrapped */
+	if (any_matrix)
+		gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (md->tv), GTK_WRAP_NONE);
+	else
+		gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW (md->tv), GTK_WRAP_CHAR);
+
+	/* delete everything left over */
+	gtk_text_buffer_get_iter_at_offset (md->buf, &iter_end, -1);
+	gtk_text_buffer_delete (md->buf, &iter, &iter_end);
+
+	return TRUE;
+}
+
+static void
+run_monitor (const char *var)
+{
+	GtkWidget *d;
+	MonitorData *md;
+	GtkWidget *sw;
+	char *s;
+
+	md = g_new0 (MonitorData, 1);
+	md->var = d_intern (var);
+	md->out = gel_output_new ();
+	gel_output_setup_string (md->out, 0, NULL);
+
+	s = g_strdup_printf (_("Monitoring: %s"), var);
+	d = gtk_dialog_new_with_buttons
+		(s,
+		 GTK_WINDOW (genius_window) /* parent */,
+		 0 /* flags */,
+		 GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+		 NULL);
+	g_free (s);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (d), FALSE);
+
+	g_signal_connect (G_OBJECT (d), "response",
+			  G_CALLBACK (gtk_widget_destroy),
+			  NULL);
+
+	sw = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
+					GTK_POLICY_AUTOMATIC,
+					GTK_POLICY_AUTOMATIC);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    sw,
+			    TRUE, TRUE, 0);
+
+
+	md->tv = gtk_text_view_new ();
+	gtk_text_view_set_editable (GTK_TEXT_VIEW (md->tv), FALSE);
+	md->buf = gtk_text_view_get_buffer (GTK_TEXT_VIEW (md->tv));
+
+	gtk_text_buffer_create_tag (md->buf, "variable",
+				    "editable", FALSE,
+				    "family", "monospace",
+				    "weight", PANGO_WEIGHT_BOLD,
+				    NULL);
+
+	gtk_text_buffer_create_tag (md->buf, "context",
+				    "editable", FALSE,
+				    "family", "monospace",
+				    "style", PANGO_STYLE_ITALIC,
+				    NULL);
+
+	gtk_text_buffer_create_tag (md->buf, "value",
+				    "editable", FALSE,
+				    "family", "monospace",
+				    NULL);
+
+	gtk_container_add (GTK_CONTAINER (sw), md->tv);
+
+	md->updatecb = gtk_check_button_new_with_label
+		(_("Update continuously"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    md->updatecb,
+			    FALSE, FALSE, 0);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (md->updatecb), TRUE);
+
+	gtk_window_set_default_size
+		(GTK_WINDOW (d), 270, 150);
+
+	md->tm = g_timeout_add (1500,
+				monitor_timeout,
+				md);
+
+	g_signal_connect (G_OBJECT (d), "destroy",
+			  G_CALLBACK (monitor_destroyed),
+			  md);
+
+	gtk_widget_show_all (d);
+
+	monitor_timeout (md);
+}
+
+static void
+monitor_user_var (GtkWidget *menu_item, gpointer data)
+{
+	GtkWidget *d;
+	GtkWidget *e;
+	int ret;
+
+	d = gtk_dialog_new_with_buttons
+		(_("Monitor a Variable"),
+		 GTK_WINDOW (genius_window) /* parent */,
+		 0 /* flags */,
+		 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+		 GTK_STOCK_OK, GTK_RESPONSE_OK,
+		 NULL);
+
+	gtk_dialog_set_default_response (GTK_DIALOG (d), GTK_RESPONSE_OK);
+
+	gtk_dialog_set_has_separator (GTK_DIALOG (d), FALSE);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    gtk_label_new (_("Variable name:")),
+			    FALSE, FALSE, 0);
+
+	e = gtk_entry_new ();
+	g_signal_connect (G_OBJECT (e), "activate",
+			  G_CALLBACK (dialog_entry_activate), d);
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d)->vbox),
+			    e,
+			    FALSE, FALSE, 0);
+
+	gtk_widget_show_all (d);
+	ret = gtk_dialog_run (GTK_DIALOG (d));
+
+	if (ret == GTK_RESPONSE_OK) {
+		char *txt = g_strstrip (g_strdup (gtk_entry_get_text (GTK_ENTRY (e))));
+		run_monitor (txt);
+		g_free (txt);
+	}
+
+	gtk_widget_destroy (d);
+}
+
 static void
 full_answer (GtkWidget *menu_item, gpointer data)
 {
 	GelOutput *out;
 	const char *s;
 	GelEFunc *ans;
+	gboolean wrap;
 
 	out = gel_output_new ();
 	gel_output_setup_string (out, 0, NULL);
 
 	ans = d_lookup_only_global (d_intern ("Ans"));
+
+	wrap = TRUE;
+
 	if (ans != NULL) {
 		if (ans->type == GEL_VARIABLE_FUNC) {
+			if (ans->data.user->type == MATRIX_NODE)
+				wrap = FALSE;
 			gel_pretty_print_etree (out, ans->data.user);
 		} else {
 			/* ugly? maybe! */
@@ -884,6 +1142,7 @@ full_answer (GtkWidget *menu_item, gpointer data)
 		   TRUE /*always textbox*/,
 		   _("Full Answer") /*textbox_title*/,
 		   TRUE /*bind_response*/,
+		   wrap /* wrap */,
 		   ve_sure_string (s));
 
 	gel_output_unref (out);
@@ -904,6 +1163,7 @@ printout_error_num_and_reset(void)
 				   FALSE /*always textbox*/,
 				   NULL /*textbox_title*/,
 				   TRUE /*bind_response*/,
+				   FALSE /* wrap */,
 				   errors->str);
 			g_string_free(errors,TRUE);
 			errors=NULL;
@@ -1002,6 +1262,7 @@ gel_printout_infos (void)
 			   FALSE /*always textbox*/,
 			   NULL /*textbox_title*/,
 			   TRUE /*bind_response*/,
+			   FALSE /* wrap */,
 			   infos->str);
 		g_string_free (infos, TRUE);
 		infos = NULL;
@@ -2978,6 +3239,125 @@ save_as_callback (GtkWidget *w)
 	gtk_widget_show (fs);
 }
 
+/* vte_terminal_get_text_range is totally and utterly a broken API.  There is
+ * no good way to get at the buffer currently.  We'd have to just keep the
+ * buffer ourselves over again.  That is stupid.  At some point we must get rid of
+ * VTE, then we can implement this sucker. */
+
+static gboolean
+always_selected (VteTerminal *terminal, glong column, glong row, gpointer data)
+{
+	return TRUE;
+}
+
+static void
+really_save_console_cb (GtkFileChooser *fs, int response, gpointer data)
+{
+	char *s;
+	char *base;
+	char *output;
+	glong row, column;
+	int sz;
+
+	if (response != GTK_RESPONSE_OK) {
+		gtk_widget_destroy (GTK_WIDGET (fs));
+		/* FIXME: don't want to deal with modality issues right now */
+		gtk_widget_set_sensitive (genius_window, TRUE);
+		return;
+	}
+
+	s = g_strdup (gtk_file_chooser_get_uri (fs));
+	if (s == NULL)
+		return;
+	base = g_path_get_basename (s);
+	if (base != NULL && base[0] != '\0' &&
+	    strchr (base, '.') == NULL) {
+		char *n = g_strconcat (s, ".gel", NULL);
+		g_free (s);
+		s = n;
+	}
+	g_free (base);
+	
+	if (uri_exists (s) &&
+	    ! genius_ask_question (GTK_WIDGET (fs),
+			    _("File already exists.  Overwrite it?"))) {
+		g_free (s);
+		return;
+	}
+
+	/* this is moronic! VTE has an idiotic API, there is no
+	 * way to find out what the proper row range is! */
+	vte_terminal_get_cursor_position (VTE_TERMINAL (term),
+					  &column, &row);
+	output = vte_terminal_get_text_range (VTE_TERMINAL (term),
+					      MAX(row-genius_setup.scrollback+1, 0),
+					      0,
+					      row,
+					      VTE_TERMINAL (term)->column_count - 1,
+					      always_selected,
+					      NULL,
+					      NULL);
+	sz = strlen (output);
+
+	if ( ! save_contents_vfs (s, output, sz)) {
+		char *err = g_strdup_printf (_("<b>Cannot save file</b>\n"
+					       "Details: %s"),
+					     g_strerror (errno));
+		genius_display_error (GTK_WIDGET (fs), err);
+		g_free (err);
+		g_free (output);
+		g_free (s);
+		return;
+	}
+	g_free (output);
+
+	g_free (last_dir);
+	last_dir = gtk_file_chooser_get_current_folder (fs);
+
+	gtk_widget_destroy (GTK_WIDGET (fs));
+	/* FIXME: don't want to deal with modality issues right now */
+	gtk_widget_set_sensitive (genius_window, TRUE);
+
+	g_free (s);
+}
+
+static void
+save_console_cb (GtkWidget *w)
+{
+	static GtkWidget *fs = NULL;
+
+	if (fs != NULL) {
+		gtk_window_present (GTK_WINDOW (fs));
+		return;
+	}
+
+	/* FIXME: don't want to deal with modality issues right now */
+	gtk_widget_set_sensitive (genius_window, FALSE);
+
+	fs = gtk_file_chooser_dialog_new (_("Save Console Output..."),
+					  GTK_WINDOW (genius_window),
+					  GTK_FILE_CHOOSER_ACTION_SAVE,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  GTK_STOCK_SAVE, GTK_RESPONSE_OK,
+					  NULL);
+	gtk_file_chooser_set_local_only (GTK_FILE_CHOOSER (fs), FALSE);
+
+	g_signal_connect (G_OBJECT (fs), "destroy",
+			  G_CALLBACK (gtk_widget_destroyed), &fs);
+	g_signal_connect (G_OBJECT (fs), "response",
+			  G_CALLBACK (really_save_console_cb), NULL);
+
+	if (last_dir != NULL) {
+		gtk_file_chooser_set_current_folder
+			(GTK_FILE_CHOOSER (fs), last_dir);
+	}
+
+	gtk_file_chooser_set_current_name
+		(GTK_FILE_CHOOSER (fs), "Genius-Console-Output.txt");
+
+	gtk_widget_show (fs);
+}
+
 
 static void
 whack_program (Program *p)
@@ -3301,8 +3681,11 @@ feed_to_vte_from_string (const char *str, int size)
 	/*do our own crlf translation*/
 	char *s;
 	int i,sz;
-	for(i=0,sz=0;i<size;i++,sz++)
-		if(str[i]=='\n') sz++;
+	for(i=0,sz=0;i<size;i++,sz++) {
+		if (str[i] == '\n') {
+			sz++;
+		}
+	}
 	if (sz == size) {
 		feed_by_chunks (str, size);
 		/* FIXME: bugs in vte cause segfaults
@@ -3326,29 +3709,11 @@ feed_to_vte_from_string (const char *str, int size)
 	g_free(s);
 }
 
-static gboolean
-feed_to_vte (GIOChannel *source, GIOCondition condition, gpointer data)
-{
-	if (condition & G_IO_IN) {
-		int fd = g_io_channel_unix_get_fd (source);
-		int size;
-		char buf[256];
-		while ((size = read (fd, buf, 256)) > 0 ||
-		       errno == EINTR) {
-			if (size > 0)
-				feed_to_vte_from_string (buf, size);
-		}
-	}
-
-	return TRUE;
-}
-
 static void
 output_notify_func (GelOutput *output)
 {
 	const char *s = gel_output_peek_string (output);
 	if (s != NULL) {
-		feed_to_vte (forvte0_ch, G_IO_IN, NULL);
 		feed_to_vte_from_string ((char *)s, strlen (s));
 		gel_output_clear_string (output);
 	}
@@ -3422,7 +3787,8 @@ fork_a_helper (void)
 
 	foo = NULL;
 
-	if (access ("./genius-readline-helper-fifo", X_OK) == 0)
+	if (genius_in_dev_dir &&
+	    access ("./genius-readline-helper-fifo", X_OK) == 0)
 		foo = g_strdup ("./genius-readline-helper-fifo");
 
 	file = g_build_filename (libexecdir, "genius-readline-helper-fifo",
@@ -3460,6 +3826,7 @@ fork_a_helper (void)
 					  FALSE /*always textbox*/,
 					  NULL /*textbox_title*/,
 					  FALSE /*bind_response*/,
+					  FALSE /*wrap*/,
 					  _("Can't execute genius-readline-helper-fifo!\n"));
 
 		gtk_dialog_run (GTK_DIALOG (d));
@@ -3857,16 +4224,7 @@ main (int argc, char *argv[])
 				      /* GNOME_PARAM_POPT_TABLE, options, */
 				      NULL);
 
-	if (pipe (forvte) < 0)
-		g_error ("Can't pipe");
-
 	setup_rl_fifos ();
-
-	fcntl (forvte[0], F_SETFL, O_NONBLOCK);
-
-	forvte0_ch = g_io_channel_unix_new (forvte[0]);
-	g_io_add_watch_full (forvte0_ch, G_PRIORITY_DEFAULT, G_IO_IN | G_IO_HUP | G_IO_ERR, 
-			     feed_to_vte, NULL, NULL);
 
 	main_out = gel_output_new();
 	gel_output_setup_string (main_out, 80, get_term_width);
@@ -3888,7 +4246,8 @@ main (int argc, char *argv[])
 				 "apps",
 				 "gnome-genius.png",
 				 NULL);
-	gtk_window_set_default_icon_from_file (file, NULL);
+	if (access (file, F_OK) == 0)
+		gtk_window_set_default_icon_from_file (file, NULL);
 	g_free (file);
 
 	
@@ -4084,6 +4443,8 @@ main (int argc, char *argv[])
 	  will also register the builtin routines with the global
 	  dictionary*/
 	d_singlecontext ();
+
+	gel_init ();
 
 	gel_add_graph_functions ();
 

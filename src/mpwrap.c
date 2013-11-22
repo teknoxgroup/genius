@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2007 Jiri (George) Lebl
+ * Copyright (C) 1997-2008 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -3357,6 +3357,18 @@ mpw_sgn(mpw_ptr op)
 	return 0;
 }
 
+int
+mpw_re_sgn(mpw_ptr op)
+{
+	return mpwl_sgn(op->r);
+}
+
+int
+mpw_im_sgn(mpw_ptr op)
+{
+	return mpwl_sgn(op->i);
+}
+
 void
 mpw_abs(mpw_ptr rop,mpw_ptr op)
 {
@@ -3368,7 +3380,6 @@ mpw_abs(mpw_ptr rop,mpw_ptr op)
 	} else {
 		MpwRealNum t = {{NULL}};
 
-		MAKE_REAL(rop);
 		if (rop != op) {
 			MAKE_EMPTY(rop->r, op->r->type);
 		} else {
@@ -3384,6 +3395,40 @@ mpw_abs(mpw_ptr rop,mpw_ptr op)
 		mpwl_free(&t,TRUE);
 
 		mpwl_sqrt(rop->r,rop->r);
+
+		MAKE_REAL (rop);
+	}
+}
+
+void
+mpw_abs_sq (mpw_ptr rop,mpw_ptr op)
+{
+	if (MPW_IS_REAL (op)) {
+		if(mpwl_sgn(op->r)<0)
+			mpw_neg(rop,op);
+		else
+			mpw_set(rop,op);
+
+		/* have to actually square now */
+		mpw_mul (rop, rop, rop);
+	} else {
+		MpwRealNum t = {{NULL}};
+
+		if (rop != op) {
+			MAKE_EMPTY(rop->r, op->r->type);
+		} else {
+			MAKE_COPY (rop->r);
+		}
+		
+		mpwl_init_type (&t, op->i->type);
+		
+		mpwl_mul(rop->r,op->r,op->r);
+		mpwl_mul(&t,op->i,op->i);
+		mpwl_add(rop->r,rop->r,&t);
+
+		mpwl_free(&t,TRUE);
+
+		MAKE_REAL (rop);
 	}
 }
 
@@ -5198,7 +5243,7 @@ mpw_set_str_one(mpw_ptr rop,const char *s,int base)
 		char *p = g_strdup(s);
 		char *pp;
 		mpw_t tmp;
-		char *ptrptr;
+		char *ptrptr = NULL;
 
 		mpw_init(tmp);
 
@@ -5267,7 +5312,7 @@ mpw_set_str(mpw_ptr rop,const char *s,int base)
 {
 	char *p;
 	char *d;
-	char *ptrptr;
+	char *ptrptr = NULL;
 	mpw_t tmp;
 	p = strchr(s,' ');
 	if(!p) {
@@ -5363,17 +5408,28 @@ mpw_is_complex_float(mpw_ptr op)
 void
 mpw_im(mpw_ptr rop, mpw_ptr op)
 {
+	if (rop == op) {
+		MAKE_IMAG(rop);
+		rop->r = rop->i;
+		rop->i = gel_zero;
+		return;
+	}
 	MAKE_REAL(rop);
-	rop->r=op->i;
-	op->i->alloc.usage++;
+	DEALLOC_MPWL (rop->r);
+	rop->r = op->i;
+	ALLOC_MPWL (rop->r);
 }
 
 void
 mpw_re(mpw_ptr rop, mpw_ptr op)
 {
 	MAKE_REAL(rop);
-	rop->r=op->r;
-	op->r->alloc.usage++;
+	if (rop == op) {
+		return;
+	}
+	DEALLOC_MPWL (rop->r);
+	rop->r = op->r;
+	ALLOC_MPWL (rop->r);
 }
 
 void

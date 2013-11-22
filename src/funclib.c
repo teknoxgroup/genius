@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2007 Jiri (George) Lebl
+ * Copyright (C) 1997-2008 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -109,8 +109,9 @@ gel_get_nonnegative_integer (mpw_ptr z, const char *funcname)
 		error_num = 0;
 		return -1;
 	}
-	if G_UNLIKELY (i <= 0) {
-		gel_errorout (_("%s: argument can't be negative or 0"), funcname);
+	if G_UNLIKELY (i < 0) {
+		/* This should already have been checked */
+		/*gel_errorout (_("%s: argument can't be negative"), funcname);*/
 		return -1;
 	}
 	if G_UNLIKELY (i > G_MAXINT) {
@@ -200,7 +201,7 @@ version_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new_with_matrix (m);
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (m);
 	n->mat.quoted = FALSE;
 
 	return n;
@@ -260,6 +261,61 @@ shrubbery_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 }
 
 static GelETree *
+IsDefined_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelToken *tok;
+
+	if (a[0]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrix
+			(ctx, a[0], IsDefined_op, "IsDefined",
+			 exception);
+
+	if G_UNLIKELY ( ! check_argument_string_or_identifier (a, 0, "IsDefined"))
+		return NULL;
+
+	if (a[0]->type == IDENTIFIER_NODE) {
+		tok = a[0]->id.id;
+	} else /* STRING_NODE */ {
+		tok = d_intern (a[0]->str.str);
+	}
+
+	if (d_lookup_global (tok) != NULL)
+		return gel_makenum_bool (1);
+	else
+		return gel_makenum_bool (0);
+}
+
+static GelETree *
+undefine_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelToken *tok;
+
+	if (a[0]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrix
+			(ctx, a[0], undefine_op, "undefine",
+			 exception);
+
+	if G_UNLIKELY ( ! check_argument_string_or_identifier (a, 0, "undefine"))
+		return NULL;
+
+	if (a[0]->type == IDENTIFIER_NODE) {
+		tok = a[0]->id.id;
+	} else /* STRING_NODE */ {
+		tok = d_intern (a[0]->str.str);
+	}
+
+	if G_UNLIKELY (tok->protected_) {
+		gel_errorout (_("%s: trying to undefine a protected id!"),
+			      "undefine");
+		return NULL;
+	}
+
+	d_delete (tok);
+
+	return gel_makenum_null ();
+}
+
+static GelETree *
 true_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	return gel_makenum_bool (1);
@@ -316,7 +372,7 @@ wait_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	int secs;
 
-	if ( ! check_argument_integer (a, 0, "wait"))
+	if ( ! check_argument_nonnegative_integer (a, 0, "wait"))
 		return NULL;
 
 	secs = gel_get_nonnegative_integer (a[0]->val.value, "wait");
@@ -486,12 +542,15 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		GelMatrix *m;
 		int size, i;
 
-		if ( ! check_argument_integer (a, 0, "rand"))
+		if ( ! check_argument_nonnegative_integer (a, 0, "rand"))
 			return NULL;
 
 		size = gel_get_nonnegative_integer (a[0]->val.value, "rand");
 		if (size < 0)
 			return NULL;
+
+		if (size == 0)
+			return gel_makenum_null ();
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, size, 1, FALSE /* padding */);
@@ -505,7 +564,7 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		GET_NEW_NODE (n);
 		n->type = MATRIX_NODE;
-		n->mat.matrix = gel_matrixw_new_with_matrix (m);
+		n->mat.matrix = gel_matrixw_new_with_matrix_value_only_real_nonrational (m);
 		n->mat.quoted = FALSE;
 
 		return n;
@@ -514,8 +573,8 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		GelMatrix *m;
 		int sizex, sizey, i, j;
 
-		if ( ! check_argument_integer (a, 0, "rand") ||
-		     ! check_argument_integer (a, 1, "rand"))
+		if ( ! check_argument_nonnegative_integer (a, 0, "rand") ||
+		     ! check_argument_nonnegative_integer (a, 1, "rand"))
 			return NULL;
 
 		sizey = gel_get_nonnegative_integer (a[0]->val.value, "rand");
@@ -524,6 +583,9 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		sizex = gel_get_nonnegative_integer (a[1]->val.value, "rand");
 		if (sizex < 0)
 			return NULL;
+
+		if (sizex == 0 || sizey == 0)
+			return gel_makenum_null ();
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, sizex, sizey, FALSE /* padding */);
@@ -539,7 +601,7 @@ rand_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		GET_NEW_NODE (n);
 		n->type = MATRIX_NODE;
-		n->mat.matrix = gel_matrixw_new_with_matrix (m);
+		n->mat.matrix = gel_matrixw_new_with_matrix_value_only_real_nonrational (m);
 		n->mat.quoted = FALSE;
 
 		return n;
@@ -582,12 +644,15 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		int size, i;
 
 		if ( ! check_argument_integer (a, 0, "randint") ||
-		     ! check_argument_integer (a, 1, "randint"))
+		     ! check_argument_nonnegative_integer (a, 1, "randint"))
 			return NULL;
 
 		size = gel_get_nonnegative_integer (a[1]->val.value, "randint");
 		if (size < 0)
 			return NULL;
+
+		if (size == 0)
+			return gel_makenum_null ();
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, size, 1, FALSE /* padding */);
@@ -611,7 +676,7 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		GET_NEW_NODE (n);
 		n->type = MATRIX_NODE;
-		n->mat.matrix = gel_matrixw_new_with_matrix (m);
+		n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (m);
 		n->mat.quoted = FALSE;
 
 		return n;
@@ -621,8 +686,8 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		int sizex, sizey, i, j;
 
 		if ( ! check_argument_integer (a, 0, "randint") ||
-		     ! check_argument_integer (a, 1, "randint") ||
-		     ! check_argument_integer (a, 2, "randint"))
+		     ! check_argument_nonnegative_integer (a, 1, "randint") ||
+		     ! check_argument_nonnegative_integer (a, 2, "randint"))
 			return NULL;
 
 		sizey = gel_get_nonnegative_integer (a[1]->val.value, "randint");
@@ -631,6 +696,9 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		sizex = gel_get_nonnegative_integer (a[2]->val.value, "randint");
 		if (sizex < 0)
 			return NULL;
+
+		if (sizex == 0 || sizey == 0)
+			return gel_makenum_null ();
 
 		m = gel_matrix_new ();
 		gel_matrix_set_size (m, sizex, sizey, FALSE /* padding */);
@@ -656,7 +724,7 @@ randint_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 		GET_NEW_NODE (n);
 		n->type = MATRIX_NODE;
-		n->mat.matrix = gel_matrixw_new_with_matrix (m);
+		n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (m);
 		n->mat.quoted = FALSE;
 
 		return n;
@@ -2613,12 +2681,15 @@ I_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	static int cached_size = -1;
 	static GelMatrixW *cached_m = NULL;
 
-	if G_UNLIKELY ( ! check_argument_integer (a, 0, "I"))
+	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 0, "I"))
 		return NULL;
 
 	size = gel_get_nonnegative_integer (a[0]->val.value, "I");
 	if G_UNLIKELY (size < 0)
 		return NULL;
+
+	if (size == 0)
+		return gel_makenum_null ();
 
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
@@ -2628,19 +2699,32 @@ I_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if (cached_size == size) {
 		n->mat.matrix = gel_matrixw_copy (cached_m);
 	} else {
+		GelMatrixW *m;
+
 		if (cached_m != NULL)
 			gel_matrixw_free (cached_m);
-		n->mat.matrix = gel_matrixw_new();
-		gel_matrixw_set_size(n->mat.matrix,size,size);
+		n->mat.matrix = m = gel_matrixw_new();
+		gel_matrixw_set_size (m, size, size);
 
 		for (i = 0; i < size; i++)
-			gel_matrixw_set_index (n->mat.matrix, i, i) =
+			gel_matrixw_set_index (m, i, i) =
 				gel_makenum_ui(1);
 		/* This is in row reduced form, duh! */
-		n->mat.matrix->rref = 1;
+		m->rref = 1;
 
-		cached_m = gel_matrixw_copy (n->mat.matrix);
-		cached_size = -1;
+		m->cached_value_only = 1;
+		m->value_only = 1;
+		m->cached_value_only_real = 1;
+		m->value_only_real = 1;
+		m->cached_value_only_rational = 1;
+		m->value_only_rational = 1;
+		m->cached_value_only_integer = 1;
+		m->value_only_integer = 1;
+		m->cached_value_or_bool_only = 1;
+		m->value_or_bool_only = 1;
+
+		cached_m = gel_matrixw_copy (m);
+		cached_size = size;
 	}
 
 	return n;
@@ -2650,11 +2734,12 @@ static GelETree *
 zeros_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
+	GelMatrixW *m;
 	long rows, cols;
 
-	if G_UNLIKELY ( ! check_argument_integer (a, 0, "zeros") ||
+	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 0, "zeros") ||
 			(a[1] != NULL &&
-			 ! check_argument_integer (a, 1, "zeros")))
+			 ! check_argument_nonnegative_integer (a, 1, "zeros")))
 		return NULL;
 
 	if G_UNLIKELY (a[1] != NULL && a[2] != NULL) {
@@ -2675,12 +2760,29 @@ zeros_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		rows = 1;
 	}
 
+	if (cols == 0 || rows == 0)
+		return gel_makenum_null ();
+
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new();
+	n->mat.matrix = m = gel_matrixw_new();
 	n->mat.quoted = FALSE;
-	gel_matrixw_set_size(n->mat.matrix,cols,rows);
+	gel_matrixw_set_size (m, cols, rows);
+
+	/* trivially rref */
+	m->rref = 1;
+
+	m->cached_value_only = 1;
+	m->value_only = 1;
+	m->cached_value_only_real = 1;
+	m->value_only_real = 1;
+	m->cached_value_only_rational = 1;
+	m->value_only_rational = 1;
+	m->cached_value_only_integer = 1;
+	m->value_only_integer = 1;
+	m->cached_value_or_bool_only = 1;
+	m->value_or_bool_only = 1;
 	
 	return n;
 }
@@ -2689,12 +2791,13 @@ static GelETree *
 ones_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelETree *n;
+	GelMatrixW *m;
 	long rows, cols;
 	int i, j;
 
-	if G_UNLIKELY ( ! check_argument_integer (a, 0, "ones") ||
+	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 0, "ones") ||
 			(a[1] != NULL &&
-			 ! check_argument_integer (a, 1, "ones")))
+			 ! check_argument_nonnegative_integer (a, 1, "ones")))
 		return NULL;
 
 	if G_UNLIKELY (a[1] != NULL && a[2] != NULL) {
@@ -2715,17 +2818,31 @@ ones_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
 		rows = 1;
 	}
 
+	if (cols == 0 || rows == 0)
+		return gel_makenum_null ();
+
 	/*make us a new empty node*/
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new();
+	n->mat.matrix = m = gel_matrixw_new();
 	n->mat.quoted = FALSE;
-	gel_matrixw_set_size(n->mat.matrix,cols,rows);
+	gel_matrixw_set_size (m, cols, rows);
+
+	m->cached_value_only = 1;
+	m->value_only = 1;
+	m->cached_value_only_real = 1;
+	m->value_only_real = 1;
+	m->cached_value_only_rational = 1;
+	m->value_only_rational = 1;
+	m->cached_value_only_integer = 1;
+	m->value_only_integer = 1;
+	m->cached_value_or_bool_only = 1;
+	m->value_or_bool_only = 1;
 	
 	for(j=0;j<rows;j++)
 		for(i=0;i<cols;i++)
-			gel_matrixw_set_index(n->mat.matrix,i,j) =
-				gel_makenum_ui(1);
+			gel_matrixw_set_index (m, i, j) =
+				gel_makenum_ui (1);
 
 	return n;
 }
@@ -2856,9 +2973,9 @@ SetMatrixSize_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	if G_UNLIKELY ( ! check_argument_matrix (a, 0, "SetMatrixSize"))
 		return NULL;
-	if G_UNLIKELY ( ! check_argument_number (a, 1, "SetMatrixSize"))
+	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 1, "SetMatrixSize"))
 		return NULL;
-	if G_UNLIKELY ( ! check_argument_number (a, 2, "SetMatrixSize"))
+	if G_UNLIKELY ( ! check_argument_nonnegative_integer (a, 2, "SetMatrixSize"))
 		return NULL;
 
 	w = gel_get_nonnegative_integer (a[1]->val.value, "SetMatrixSize");
@@ -2867,6 +2984,9 @@ SetMatrixSize_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	h = gel_get_nonnegative_integer (a[2]->val.value, "SetMatrixSize");
 	if G_UNLIKELY (h < 0)
 		return NULL;
+
+	if (w == 0 || h == 0)
+		return gel_makenum_null ();
 
 	n = gel_stealnode (a[0]);
 	gel_matrixw_set_size (n->mat.matrix, h, w);
@@ -2885,12 +3005,16 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	int len;
 
 	if G_UNLIKELY ( ! check_argument_integer_or_matrix (a, 0, "IndexComplement") ||
-			! check_argument_integer (a, 1, "IndexComplement"))
+			! check_argument_nonnegative_integer (a, 1, "IndexComplement"))
 		return NULL;
 
 	len = gel_get_nonnegative_integer (a[1]->val.value, "IndexComplement");
 	if G_UNLIKELY (len < 0)
 		return NULL;
+
+	if G_UNLIKELY (len == 0)
+		return gel_makenum_null ();
+
 	if (a[0]->type == MATRIX_NODE) {
 		index = g_new0 (char, len);
 
@@ -2910,6 +3034,14 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 				g_free (index);
 				return NULL;
 			}
+
+			if G_UNLIKELY (elt == 0) {
+				gel_errorout (_("%s: argument can't be negative or 0"),
+					      "IndexComplement");
+				g_free (index);
+				return NULL;
+			}
+
 			elt--;
 			if G_UNLIKELY (elt >= len) {
 				gel_errorout (_("%s: vector argument has too large entries"), "IndexComplement");
@@ -2923,8 +3055,10 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 			}
 		}
 
-		if (nml <= 0)
+		if (nml <= 0) {
+			g_free (index);
 			return gel_makenum_null ();
+		}
 
 		nm = gel_matrix_new ();
 		gel_matrix_set_size (nm, nml, 1, FALSE /* padding */);
@@ -2940,6 +3074,11 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		int elt = gel_get_nonnegative_integer (a[0]->val.value, "IndexComplement");
 		if G_UNLIKELY (elt < 0)
 			return NULL;
+		if G_UNLIKELY (elt == 0) {
+			gel_errorout (_("%s: argument can't be negative or 0"),
+				      "IndexComplement");
+			return NULL;
+		}
 		if G_UNLIKELY (elt > len) {
 			gel_errorout (_("%s: vector argument has too large entries"), "IndexComplement");
 			return NULL;
@@ -2958,7 +3097,7 @@ IndexComplement_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (nm);
 	if (a[0]->type == MATRIX_NODE)
 		n->mat.quoted = a[0]->mat.quoted;
 	else
@@ -3232,7 +3371,7 @@ ref_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	GET_NEW_NODE(n);
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_copy(a[0]->mat.matrix);
-	gel_value_matrix_gauss (ctx, n->mat.matrix, FALSE, FALSE, FALSE, NULL, NULL);
+	gel_value_matrix_gauss (ctx, n->mat.matrix, FALSE, FALSE, FALSE, FALSE, NULL, NULL);
 	n->mat.quoted = FALSE;
 	return n;
 }
@@ -3247,8 +3386,7 @@ rref_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	n->type = MATRIX_NODE;
 	n->mat.matrix = gel_matrixw_copy(a[0]->mat.matrix);
 	if ( ! n->mat.matrix->rref) {
-		gel_value_matrix_gauss (ctx, n->mat.matrix, TRUE, FALSE, FALSE, NULL, NULL);
-		n->mat.matrix->rref = 1;
+		gel_value_matrix_gauss (ctx, n->mat.matrix, TRUE, FALSE, FALSE, FALSE, NULL, NULL);
 	}
 	n->mat.quoted = FALSE;
 	return n;
@@ -3307,7 +3445,7 @@ PivotColumns_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if ( ! m->rref) {
 		m = gel_matrixw_copy (m);
 		/* only do ref, not rref for speed */
-		gel_value_matrix_gauss (ctx, m, FALSE, FALSE, FALSE, NULL, NULL);
+		gel_value_matrix_gauss (ctx, m, FALSE, FALSE, FALSE, FALSE, NULL, NULL);
 		copied_m = TRUE;
 	}
 
@@ -3336,7 +3474,7 @@ PivotColumns_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (nm);
 	n->mat.quoted = FALSE;
 
 	g_free (cols);
@@ -3388,7 +3526,16 @@ NullSpace_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	m = a[0]->mat.matrix;
 	if ( ! m->rref) {
 		m = gel_matrixw_copy (m);
-		gel_value_matrix_gauss (ctx, m, TRUE, FALSE, FALSE, NULL, NULL);
+		if (gel_value_matrix_gauss (ctx, m,
+					    TRUE /* reduce */,
+					    FALSE /* uppertriang */,
+					    FALSE /* stopsing */,
+					    TRUE /* stopnonsing */,
+					    NULL /* detop */,
+					    NULL /* simul */)) {
+			gel_matrixw_free (m);
+			return gel_makenum_null ();
+		}
 		copied_m = TRUE;
 	}
 
@@ -3451,7 +3598,7 @@ NullSpace_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new_with_matrix (nm);
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only (nm);
 	n->mat.quoted = FALSE;
 
 	return n;
@@ -3532,7 +3679,7 @@ SolveLinearSystem_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	RM = gel_matrixw_copy(a[0]->mat.matrix);
 	RV = gel_matrixw_copy(a[1]->mat.matrix);
 
-	ret = gel_value_matrix_gauss (ctx, RM, TRUE, FALSE, FALSE, NULL, RV);
+	ret = gel_value_matrix_gauss (ctx, RM, TRUE, FALSE, FALSE, FALSE, NULL, RV);
 
 	if (retm != NULL) {
 		GET_NEW_NODE(n);
@@ -3621,7 +3768,7 @@ Prime_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	if(a[0]->type==MATRIX_NODE)
 		return gel_apply_func_to_matrix(ctx,a[0],Prime_op,"prime", exception);
 
-	if G_UNLIKELY ( ! check_argument_integer (a, 0, "Prime"))
+	if G_UNLIKELY ( ! check_argument_positive_integer (a, 0, "Prime"))
 		return NULL;
 
 	num = gel_get_nonnegative_integer (a[0]->val.value, "Prime");
@@ -3773,6 +3920,8 @@ MillerRabinTest_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 		return NULL;
 
 	reps = gel_get_nonnegative_integer (a[1]->val.value, "MillerRabinTest");
+	if (reps < 0)
+		return NULL;
 
 	num = mpw_peek_real_mpz (a[0]->val.value);
 
@@ -4207,7 +4356,7 @@ DividePoly_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	gel_matrixw_set_size (mn, size, 1);
 
 	rem = gel_matrixw_copy (pm);
-	gel_matrixw_make_private (rem);
+	gel_matrixw_make_private (rem, TRUE /* kill_type_caches */);
 
 	/* we know ql can't be zero */
 	ql = gel_matrixw_index (qm, sizeq-1, 0);
@@ -4355,6 +4504,87 @@ IsPoly_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 	else
 		return gel_makenum_bool (0);
 }
+
+static GelETree *
+QuadraticFormula_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
+{
+	GelETree *n;
+	GelMatrixW *m;
+	GelMatrix *nm;
+
+	mpw_ptr aa, bb, cc;
+	mpw_t r1, r2;
+
+	if G_UNLIKELY (a[0]->type == NULL_NODE)
+		return gel_makenum_null ();
+
+	if G_UNLIKELY ( ! check_poly(a,1,"QuadraticFormula",TRUE))
+		return NULL;
+
+	m = a[0]->mat.matrix;
+
+	if G_UNLIKELY (gel_matrixw_elements (m) != 3 ||
+		       mpw_zero_p (gel_matrixw_index(m,2,0)->val.value)) {
+		gel_errorout (_("%s: argument 1 must be a quadratic polynomial"),
+			      "QuadraticFormula");
+		return NULL;
+	}
+
+	aa = gel_matrixw_index(m,2,0)->val.value;
+	bb = gel_matrixw_index(m,1,0)->val.value;
+	cc = gel_matrixw_index(m,0,0)->val.value;
+
+	mpw_init (r1);
+	mpw_init (r2);
+
+	if (mpw_zero_p (cc)) {
+		mpw_div (r1, bb, aa);
+		mpw_neg (r1, r1);
+		mpw_set_ui (r2, 0);
+	} else if (mpw_zero_p (bb)) {
+		mpw_mul (r1, aa, cc);
+		mpw_neg (r1, r1);
+		mpw_sqrt (r1, r1);
+		mpw_div (r1, r1, aa);
+		mpw_neg (r2, r1);
+	} else {
+		mpw_mul (r1, bb, bb);
+		mpw_mul (r2, aa, cc);
+		mpw_mul_ui (r2, r2, 4);
+		mpw_sub (r1, r1, r2);
+		mpw_sqrt (r1, r1);
+		/* r1 is now the sqrt of the discriminant */
+
+		/* try to avoid instability */
+		if (mpw_re_sgn (r1) != mpw_re_sgn (bb)) {
+			mpw_neg (r1, r1);
+		}
+
+		mpw_add (r1, r1, bb);
+		mpw_div_ui (r1, r1, 2);
+		mpw_neg (r1, r1);
+
+		/* r1 = (bb + s * sqrt(bb^2 - 4*aa*cc)) / (-2); */
+
+		/* set r2 first */
+		mpw_div (r2, cc, r1);
+
+		mpw_div (r1, r1, aa);
+	}
+
+	nm = gel_matrix_new ();
+	gel_matrix_set_size (nm, 1, 2, FALSE /* padding */);
+	gel_matrix_index (nm, 0, 0) = gel_makenum_use (r1);
+	gel_matrix_index (nm, 0, 1) = gel_makenum_use (r2);
+
+	GET_NEW_NODE (n);
+	n->type = MATRIX_NODE;
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only (nm);
+	n->mat.quoted = FALSE;
+
+	return n;
+}
+
 
 static GelETree *
 PolyToString_op (GelCtx *ctx, GelETree * * a, gboolean *exception)
@@ -4778,7 +5008,7 @@ etree_out_of_int_vector (int *vec, int len)
 
 	GET_NEW_NODE (n);
 	n->type = MATRIX_NODE;
-	n->mat.matrix = gel_matrixw_new_with_matrix (mm);
+	n->mat.matrix = gel_matrixw_new_with_matrix_value_only_integer (mm);
 	n->mat.quoted = FALSE;
 
 	return n;
@@ -5126,6 +5356,11 @@ protect_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelToken *tok;
 
+	if (a[0]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrix
+			(ctx, a[0], protect_op, "protect",
+			 exception);
+
 	if G_UNLIKELY ( ! check_argument_string_or_identifier (a, 0, "protect"))
 		return NULL;
 
@@ -5144,6 +5379,11 @@ static GelETree *
 unprotect_op(GelCtx *ctx, GelETree * * a, gboolean *exception)
 {
 	GelToken *tok;
+
+	if (a[0]->type == MATRIX_NODE)
+		return gel_apply_func_to_matrix
+			(ctx, a[0], unprotect_op, "unprotect",
+			 exception);
 
 	if G_UNLIKELY ( ! check_argument_string_or_identifier (a, 0, "unprotect"))
 		return NULL;
@@ -6071,6 +6311,8 @@ gel_funclib_addall(void)
 	VFUNC (PolyToString, 2, "p,var", "polynomial", N_("Make string out of a polynomial (as vector)"));
 	FUNC (PolyToFunction, 1, "p", "polynomial", N_("Make function out of a polynomial (as vector)"));
 
+	FUNC (QuadraticFormula, 1, "p", "equation_solving", N_("Find roots of a quadratic polynomial (given as vector of coefficients)"));
+
 	FUNC (Combinations, 2, "k,n", "combinatorics", N_("Get all combinations of k numbers from 1 to n as a vector of vectors"));
 	FUNC (NextCombination, 2, "v,n", "combinatorics", N_("Get combination that would come after v in call to combinations, first combination should be [1:k]."));
 	FUNC (Permutations, 2, "k,n", "combinatorics", N_("Get all permutations of k numbers from 1 to n as a vector of vectors"));
@@ -6088,6 +6330,8 @@ gel_funclib_addall(void)
 	FUNC (unprotect, 1, "id", "basic", N_("Unprotect a variable from being modified"));
 	VFUNC (SetFunctionFlags, 2, "id,flags", "basic", N_("Set flags for a function, currently \"PropagateMod\" and \"NoModuloArguments\""));
 	FUNC (GetCurrentModulo, 0, "", "basic", N_("Get current modulo from the context outside the function"));
+	FUNC (IsDefined, 1, "id", "basic", N_("Check if a variable or function is defined"));
+	FUNC (undefine, 1, "id", "basic", N_("Undefine a variable (including locals and globals)"));
 
 	FUNC (CompositeSimpsonsRule, 4, "f,a,b,n", "calculus", N_("Integration of f by Composite Simpson's Rule on the interval [a,b] with n subintervals with error of max(f'''')*h^4*(b-a)/180, note that n should be even"));
 	f->no_mod_all_args = 1;

@@ -1,3 +1,59 @@
+2008-06-09  Hendrik Richter  <hendrikr@gnome.org>
+
+	* de.po: Updated German translation.
+
+2008-06-09  Hendrik Richter  <hendrikr@gnome.org>
+
+	* de.po: Updated German translation.
+
+Wed Jun 04 21:26:01 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: fix some grammar.  Thanks to P. Kovar
+
+Wed Jun 04 21:16:46 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: change accelerator for line graph, pointed out by L.
+	  Lommer and P. Kovar.
+
+2008-06-05  Andre Klapper  <a9016009@gmx.de>
+
+    	* de.po: Updated German translation.
+
+Wed Jun 04 04:11:22 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update
+
+2008-05-19  Jonh Wendell  <jwendell@gnome.org>  
+
+	* pt_BR.po: Updated Brazilian Portuguese translation by Andrius da Costa.
+
+2008-02-29  Jorge Gonzalez  <jorgegonz@svn.gnome.org>  
+
+	* es.po: Updated Spanish translation
+
+Fri Feb 22 01:38:07 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update
+
+2008-02-14  Pawan Chitrakar <chautari@gmail.com>
+
+	* ne.po: Updated Nepali Translation.
+
+2007-12-31  Yannig Marchegay <yannig@marchegay.org>
+
+	* oc.po: Updated Occitan translation.
+2007-12-01  Jorge Gonzalez  <jorgegonz@svn.gnome.org> 
+
+        * es.po: Updated Spanish translation
+
+Thu Nov 29 10:36:11 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* cs.po: update
+
+2007-11-21  Jorge Gonzalez  <jorgegonz@svn.gnome.org>
+
+        * es.po: Updated Spanish translation
+
 Tue Nov 20 12:27:55 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* cs.po: Translate "End"

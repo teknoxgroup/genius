@@ -1,5 +1,5 @@
 /* GENIUS Calculator
- * Copyright (C) 1997-2007 Jiri (George) Lebl
+ * Copyright (C) 1997-2008 Jiri (George) Lebl
  *
  * Author: Jiri (George) Lebl
  *
@@ -201,7 +201,13 @@ void
 gel_matrix_conjugate_transpose (GelMatrixW *m)
 {
 	int i, j, w, h;
-	gel_matrixw_make_private (m);
+
+	if (gel_is_matrix_value_only_real (m)) {
+		m->tr = !m->tr;
+		return;
+	}
+
+	gel_matrixw_make_private (m, FALSE /* kill_type_caches */);
 	m->tr = !m->tr;
 	w = gel_matrixw_width (m);
 	h = gel_matrixw_height (m);
@@ -238,7 +244,7 @@ gel_value_matrix_multiply (GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2,
 	int i, j, k, w, h, m1w;
 	mpw_t tmp;
 	mpw_init(tmp);
-	gel_matrixw_make_private(res);
+	gel_matrixw_make_private(res, TRUE /* kill_type_caches */);
 
 	w = gel_matrixw_width (res);
 	h = gel_matrixw_height (res);
@@ -283,13 +289,15 @@ gel_value_matrix_multiply (GelMatrixW *res, GelMatrixW *m1, GelMatrixW *m2,
 	mpw_clear(tmp);
 }
 
+/* m must be made private before */
 static void
 swap_rows(GelMatrixW *m, int row, int row2)
 {
 	int i, w;
 	if(row==row2) return;
 	
-	gel_matrixw_make_private(m);
+	/* no need for this, only used within gauss and matrix is already private
+	gel_matrixw_make_private(m);*/
 	
 	w = gel_matrixw_width (m);
 	for (i = 0; i < w; i++) {
@@ -299,6 +307,7 @@ swap_rows(GelMatrixW *m, int row, int row2)
 	}
 }
 
+/* m must be made private before */
 static gboolean
 div_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t div)
 {
@@ -308,7 +317,8 @@ div_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t div)
 	if (mpw_eql_ui (div, 1))
 		return TRUE;
 
-	gel_matrixw_make_private(m);
+	/* no need for this, only used within gauss and matrix is already private
+	gel_matrixw_make_private(m);*/
 	
 	w = gel_matrixw_width (m);
 	for (i = 0; i < w; i++) {
@@ -326,6 +336,7 @@ div_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t div)
 	return ret;
 }
 
+/* m must be made private before */
 static gboolean
 mul_sub_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t mul, int row2)
 {
@@ -333,7 +344,8 @@ mul_sub_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t mul, int row2)
 	mpw_t tmp;
 	gboolean ret = TRUE;
 	
-	gel_matrixw_make_private(m);
+	/* no need for this, only used within gauss and matrix is already private
+	gel_matrixw_make_private(m);*/
 	
 	mpw_init(tmp);
 	w = gel_matrixw_width(m);
@@ -369,8 +381,13 @@ mul_sub_row (GelCtx *ctx, GelMatrixW *m, int row, mpw_t mul, int row2)
 /* return FALSE if singular */
 /* FIXME: if modular arithmetic is on, work over the modulo properly!!!! */
 gboolean
-gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
-			uppertriang, gboolean stopsing, mpw_ptr detop,
+gel_value_matrix_gauss (GelCtx *ctx,
+			GelMatrixW *m,
+			gboolean reduce,
+			gboolean uppertriang,
+			gboolean stopsing,
+			gboolean stopnonsing,
+			mpw_ptr detop,
 			GelMatrixW *simul)
 {
 	int i, j, d, ii, w, h;
@@ -378,24 +395,74 @@ gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
 	mpw_t tmp;
 	gboolean ret = TRUE;
 	gboolean made_private = FALSE;
-	
+	gboolean matrix_rational = FALSE;
+	int *pivots = NULL;
+	int pivots_max = -1;
+
+	w = gel_matrixw_width (m);
+        h = gel_matrixw_height (m);
+
 	if(detop)
 		mpw_set_ui(detop,1);
 
+	if (m->rref) {
+		/* test for singularity */
+		if (w > h) {
+			ret = FALSE;
+		} else {
+			GelETree *t = gel_matrixw_get_index(m,w-1,w-1);
+			if (t == NULL ||
+			    mpw_zero_p (t->val.value))
+				ret = FALSE;
+		}
+		return ret;
+	}
+	
+	matrix_rational = gel_is_matrix_value_only_rational (m);
+
 	mpw_init(tmp);
 	d = 0;
-	w = gel_matrixw_width (m);
-        h = gel_matrixw_height (m);
+
+	if (reduce) {
+		pivots = g_alloca (sizeof(int) * h);
+	}
+
 	for (i = 0; i < w && d < h; i++) {
-		for (j = d; j < h; j++) {
-			GelETree *t = gel_matrixw_get_index(m,i,j);
-			if (t != NULL &&
-			    ! mpw_zero_p (t->val.value))
-				break;
+		if (matrix_rational) {
+			for (j = d; j < h; j++) {
+				GelETree *t = gel_matrixw_get_index(m,i,j);
+				if (t != NULL &&
+				    ! mpw_zero_p (t->val.value))
+					break;
+			}
+		} else {
+			/* kind of a hack */
+			int bestj = h;
+			mpw_t best_abs_sq;
+			mpw_init (best_abs_sq);
+			GelETree *bestpiv = NULL;
+			for (j = d; j < h; j++) {
+				GelETree *t = gel_matrixw_get_index(m,i,j);
+				if (t != NULL &&
+				    ! mpw_zero_p (t->val.value)) {
+					if (bestpiv == NULL) {
+						bestpiv = t;
+						bestj = j;
+					} else {
+						mpw_abs_sq (tmp, t->val.value);
+						if (mpw_cmp (tmp, best_abs_sq) > 0) {
+							bestpiv = t;
+							bestj = j;
+						}
+					}
+				}
+			}
+			mpw_clear (best_abs_sq);
+
+			j = bestj;
 		}
 
 		if (j == h) {
-			ret = FALSE;
 			if(stopsing) {
 				mpw_clear(tmp);
 				return FALSE;
@@ -404,8 +471,20 @@ gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
 		}
 
 		if ( ! made_private) {
-			gel_matrixw_make_private(m);
+			gel_matrixw_make_private (m, TRUE /* kill_type_caches */);
+			if (simul)
+				gel_matrixw_make_private (simul, TRUE /* kill_type_caches */);
 			made_private = TRUE;
+
+			/* the matrix will be value only */
+			m->cached_value_only = 1;
+			m->value_only = 1;
+
+			if (matrix_rational) {
+				/* the matrix will be value only rational */
+				m->cached_value_only_rational = 1;
+				m->value_only_rational = 1;
+			}
 		}
 		
 		if (j > d) {
@@ -431,7 +510,7 @@ gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
 					return FALSE;
 				}
 				if(simul) {
-					if ( !  mul_sub_row (ctx, simul, d, tmp, j) &&
+					if ( ! mul_sub_row (ctx, simul, d, tmp, j) &&
 					     stopsing) {
 						mpw_clear(tmp);
 						return FALSE;
@@ -448,27 +527,11 @@ gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
 		}
 
 		if(reduce) {
-			for(j=0;j<d;j++) {
-				GelETree *t = gel_matrixw_get_index(m,i,j);
-				if (t != NULL &&
-				    ! mpw_zero_p (t->val.value)) {
-					mpw_div(tmp,t->val.value,piv->val.value);
-					if ( ! mul_sub_row (ctx, m, d, tmp, j) &&
-					     stopsing) {
-						mpw_clear(tmp);
-						return FALSE;
-					}
-					if(simul) {
-						if ( !  mul_sub_row (ctx, simul, d, tmp, j) &&
-						     stopsing) {
-							mpw_clear(tmp);
-							return FALSE;
-						}
-					}
-				}
-			}
+			pivots[d] = i;
+			pivots_max = d;
 		}
 
+		/* make pivot 1 */
 		for (ii = i+1; ii < w; ii++) {
 			GelETree *t = gel_matrixw_get_index(m,ii,d);
 			if(t) {
@@ -495,15 +558,52 @@ gel_value_matrix_gauss (GelCtx *ctx, GelMatrixW *m, gboolean reduce, gboolean
 				return FALSE;
 			}
 		}
-
 		mpw_set_ui(piv->val.value,1);
 		d++;
+	}
+
+	if (d < w)
+		ret = FALSE;
+
+	if (stopnonsing && d == w) {
+		mpw_clear(tmp);
+		return TRUE;
+	}
+
+	if(reduce) {
+		for(d = pivots_max; d >= 0; d--) {
+			i = pivots[d];
+			for(j=0;j<d;j++) {
+				GelETree *t = gel_matrixw_get_index(m,i,j);
+				if (t != NULL &&
+				    ! mpw_zero_p (t->val.value)) {
+					/* subtle: must copy t->val.value,
+					 * else we wipe it out */
+					mpw_set (tmp, t->val.value);
+					if ( ! mul_sub_row (ctx, m, d, tmp, j) &&
+					     stopsing) {
+						mpw_clear(tmp);
+						return FALSE;
+					}
+					if(simul) {
+						if ( ! mul_sub_row (ctx, simul, d, tmp, j) &&
+						     stopsing) {
+							mpw_clear(tmp);
+							return FALSE;
+						}
+					}
+				}
+			}
+		}
 	}
 
 	if (detop && ctx->modulo != NULL) {
 		/* FIXME: this may fail!!! */
 		gel_mod_integer_rational (detop, ctx->modulo);
 	}
+
+	if (reduce && ! uppertriang)
+		m->rref = 1;
 	
 	mpw_clear(tmp);
 	return ret;
@@ -615,7 +715,13 @@ gel_value_matrix_det (GelCtx *ctx, mpw_t rop, GelMatrixW *m)
 	default:
 		mpw_init(tmp);
 		mm = gel_matrixw_copy(m);
-		gel_value_matrix_gauss(ctx,mm,FALSE,TRUE,FALSE,tmp,NULL);
+		gel_value_matrix_gauss(ctx,mm,
+				       FALSE /* reduce */,
+				       TRUE /* uppertriang */,
+				       FALSE /* stopsing */,
+				       FALSE /* stopnonsing */,
+				       tmp,
+				       NULL);
 		mpw_mul(rop,tmp,gel_matrixw_index(mm,0,0)->val.value);
 		mpw_clear(tmp);
 		for (i = 1; i < w; i++) {

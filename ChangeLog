@@ -1,3 +1,164 @@
+Tue Jun 10 09:18:46 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* Release 1.0.3
+
+Sat Jun 07 13:02:21 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matop.c, src/funclib.c, src/eval.c: Add a new flag to not do
+	  backsubstitution in gauss if we are interested in nullspace and
+	  the matrix is nonsingular
+	
+	* src/matop.c: fix the return value of gauss.  Singular means
+	  nonempty nullspace, i.e. maximal row rank.  This also fixes
+	  SolveLinearSystem which didn't work according to specs, i.e. it is
+	  supposed to return null when solution is nonunique.
+
+	* src/geniustests.txt: add more tests
+
+Thu Jun 05 11:40:58 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: fix argument checking in MillerRabin.  Also
+	  zeros, ones, rand, randint, I, SetMatrixSize now accept 0 for size
+	  and return null as an empty matrix.  Also wait, IndexComplement
+	  accept 0 and work accordingly.
+	
+	* help/C/gel-function-list.gel: update accordingly
+
+Wed Jun 04 11:56:25 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml, help/C/gel-function-list.gel: update the docs
+	  a little, fix a few typos, add links.
+
+Wed Jun 04 03:51:25 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: figure out a way to work around VTE nonsense,
+	  one way to get at current absolute row is by checking the cursor
+	  location and assuming it is on the last line.  Improve
+	  monitoring by using a text buffer and allow to turn off the 
+	  automatic updates.  Full answer is now wrapped if not a matrix.
+	  Don't set icon if it doesn't exist to avoid warning.  Don't try
+	  to use readline helper from current dir if not in dev dir.
+
+Tue Jun 03 20:14:34 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/gnome-genius.c: fix some capitalization issues, implement
+	  a variable monitor dialog.  Also add code to save current console
+	  but that is disabled due to VTE having useless (read: unusable)
+	  API for getting at the buffer.  You require some private knowledge
+	  to use the get_text_range function.  Otherwise the API is
+	  pointless.
+
+Thu May 22 01:10:40 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/funclib.c: fix identity matrix caching, setup type caches for
+	  identity, zeros and ones
+
+	* src/matop.c: move rref caching to gauss to speed up inverting
+	  matrices in rref form etc...
+
+Tue May 20 02:36:47 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* lib/number_theory/primes.gel: update slightly the upper bound on
+	  double checked mersenne prime exponents to newest value
+
+Tue May 20 00:25:10 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/matrixw.[ch], matop.c, src/eval.c, src/funclib.c:  Optimize
+	  matrix manipulation a bit.  Don't be overly conservative with
+	  making things private.  And OMG we used Gauss-Jordan instead of
+	  backaddition.  Also when the matrix is not rational, do pivotting
+	  (use largest entry, not first nonzero one)
+
+	* src/mpwrap.c: fix mpw_abs if called with same arguments for in and
+	  out and add mpw_abs_sq for getting the absolute value squared,
+	  which doesn't involve a sqrt
+
+	* src/genius.c, src/gnome-genius.c, src/eval.[ch], src/matrixw.c: 
+	  init the_zero during the startup
+
+	* src/mpzextra.c: very minor optimizations
+
+	* src/Makefile.am: fix BUILDDIR setup
+
+Mon May 19 19:56:37 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpzextra.c: fix leak on mympz_is_prime.
+
+Sun Feb 24 18:38:31 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/genius.xml: update
+
+Sun Feb 24 18:35:45 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c: print extra dict of a function by printing a list
+	  of variable assignments before the function body.
+
+	* src/dict.c: a little cleanup and fix the problem with subst list
+	  updating and d_replacefunc which happened when a local variable
+	  which was previously set to something else was set to a function.
+
+	* src/geniustests.txt: add more tests on returning functions
+	  and the subst list handling
+
+	* help/C/genius.xml: add section on returning functions from
+	  functions
+
+Sun Feb 24 15:25:45 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/dict.c, src/funclib.c: Add IsDefined and undefine.  Implement
+	  d_delete.  protect and unprotect now work with matrices of
+	  identifiers.
+
+	* src/geniustests.txt: add tests
+
+	* help/C/*.xml: update docs
+
+	* TODO: problems with subst lists can lead to crash, document this
+
+Fri Feb 22 02:44:23 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/calc.c, src/mpwrap.c: avoid warning
+
+Fri Feb 22 02:41:35 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/*.[ch]: update copyright string as appropriate
+
+Fri Feb 22 02:11:03 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* configure.in: raise version
+
+	* lib/number_theory/primes.gel:  Add IsMersennePrime and
+	  MersennePrimeExponents
+
+	* help/C/gel-function-list.xml, help/C/genius.xml: document the above
+
+Fri Feb 22 01:38:54 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/mpwrap.[ch]: add mpw_re_sgn and mpw_im_sgn functions and fix
+	  memory leak in mpw_re and mpw_im
+
+	* src/funclib.c: Implement QuadraticFormula internally, marginally
+	  improving performance, but mainly handle special cases better
+	  and avoid instability in solutions (avoid bad cancellation in most
+	  cases)
+
+	* lib/equation_solving/formulas.gel: remove QuadraticFormula from
+	  here
+
+	* src/longtest.gel: add tests for quadratic formula
+
+Sat Jan 12 15:03:19 2008  Jiri (George) Lebl <jirka@5z.com>
+
+	* src/eval.c: make internal function calling a bit faster.  Can be
+	  noticeable (tested 10% on fast operations)
+
+	* src/funclib.c: fix memory leak
+
+Thu Nov 29 10:34:41 2007  Jiri (George) Lebl <jirka@5z.com>
+
+	* help/C/gel-function-list.gel, lib/combinatorics/misc.gel:  Fix
+	  spelling of the Fibonacci function name.
+
 Tue Nov 20 23:20:58 2007  Jiri (George) Lebl <jirka@5z.com>
 
 	* Release 1.0.2
